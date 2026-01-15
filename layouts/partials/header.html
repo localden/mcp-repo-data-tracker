@@ -1,7 +1,7 @@
 <header class="site-header">
   <div class="container">
     <div class="header-left">
-      <a href="{{ "/" | relURL }}" class="site-title">{{ .Site.Title }}</a>
+      <a href="{{ .Site.BaseURL }}" class="site-title">{{ .Site.Title }}</a>
       {{/* Repo Picker */}}
       {{ $reposIndex := site.Data.repos }}
       {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
@@ -24,7 +24,7 @@
       {{ end }}
     </div>
     <nav class="site-nav">
-      <a href="{{ "/" | relURL }}" {{ if .IsHome }}class="active"{{ end }}>Overview</a>
+      <a href="{{ .Site.BaseURL }}" {{ if .IsHome }}class="active"{{ end }}>Overview</a>
       <a href="{{ "issues/" | relURL }}" {{ if eq .Title "Issues" }}class="active"{{ end }}>Issues</a>
       <a href="{{ "pulls/" | relURL }}" {{ if eq .Title "Pull Requests" }}class="active"{{ end }}>Pull Requests</a>
       <a href="{{ "contributors/" | relURL }}" {{ if eq .Title "Contributors" }}class="active"{{ end }}>Contributors</a>
