@@ -1,0 +1,60 @@
+{{/*
+  Repository Data Helper
+
+  This partial provides backward-compatible access to repository metrics.
+  It looks for data in both the new multi-repo structure (data/repos/{slug}/)
+  and the legacy single-repo structure (data/).
+
+  Usage:
+    {{ $repoData := partial "repo-data.html" . }}
+    {{ $m := $repoData.metrics }}
+    {{ $contributors := $repoData.contributors }}
+    {{ $snapshots := $repoData.snapshots }}
+
+  Context can optionally include:
+    - slug: specific repository slug to load (e.g., "modelcontextprotocol--modelcontextprotocol")
+
+  If no slug is provided, it will:
+    1. Try to load from the first repo in data/repos.json
+    2. Fall back to legacy data/metrics.json
+*/}}
+
+{{ $result := dict }}
+
+{{/* Check for multi-repo structure first */}}
+{{ $reposIndex := site.Data.repos }}
+{{ $slug := .slug | default "" }}
+
+{{ if and $reposIndex $reposIndex.repositories }}
+  {{/* Multi-repo mode */}}
+  {{ if not $slug }}
+    {{/* Use first repository if no slug specified */}}
+    {{ $firstRepo := index $reposIndex.repositories 0 }}
+    {{ $slug = $firstRepo.slug }}
+  {{ end }}
+
+  {{/* Load repo-specific data */}}
+  {{ $repoData := index site.Data.repos $slug }}
+  {{ if $repoData }}
+    {{ $result = dict
+      "metrics" $repoData.metrics
+      "contributors" $repoData.contributors
+      "snapshots" $repoData.snapshots
+      "slug" $slug
+      "multiRepo" true
+    }}
+  {{ end }}
+{{ end }}
+
+{{/* Fallback to legacy single-repo structure */}}
+{{ if not $result.metrics }}
+  {{ $result = dict
+    "metrics" site.Data.metrics
+    "contributors" site.Data.contributors
+    "snapshots" site.Data.snapshots
+    "slug" ""
+    "multiRepo" false
+  }}
+{{ end }}
+
+{{ return $result }}

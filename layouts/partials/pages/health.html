@@ -1,6 +1,14 @@
 {{/* Health & Trends Page Content */}}
-{{ $m := site.Data.metrics }}
-{{ $snapshots := site.Data.snapshots }}
+{{/* Support both direct context and dict with context/repoKey */}}
+{{ $context := . }}
+{{ $repoKey := "" }}
+{{ if reflect.IsMap . }}
+  {{ with .context }}{{ $context = . }}{{ end }}
+  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
+{{ end }}
+{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
+{{ $m := $data.metrics }}
+{{ $snapshots := $data.snapshots }}
 
 {{ if not $m }}
 <div class="no-data">
@@ -16,46 +24,50 @@
 
   {{ if $m.hotspots.by_file }}
   <h3>Top Files</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>File</th>
-        <th>PRs</th>
-        <th>Total Changes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{ range $m.hotspots.by_file }}
-      <tr>
-        <td><code>{{ .path }}</code></td>
-        <td>{{ .pr_count }}</td>
-        <td>{{ .total_changes }}</td>
-      </tr>
-      {{ end }}
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>PRs</th>
+          <th>Total Changes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $m.hotspots.by_file }}
+        <tr>
+          <td><code>{{ .path }}</code></td>
+          <td>{{ .pr_count }}</td>
+          <td>{{ .total_changes }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
   {{ end }}
 
   {{ if $m.hotspots.by_directory }}
   <h3>Top Directories</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Directory</th>
-        <th>PRs</th>
-        <th>Files Touched</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{ range $m.hotspots.by_directory }}
-      <tr>
-        <td><code>{{ .path }}</code></td>
-        <td>{{ .pr_count }}</td>
-        <td>{{ .file_count }}</td>
-      </tr>
-      {{ end }}
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Directory</th>
+          <th>PRs</th>
+          <th>Files Touched</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $m.hotspots.by_directory }}
+        <tr>
+          <td><code>{{ .path }}</code></td>
+          <td>{{ .pr_count }}</td>
+          <td>{{ .file_count }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
   {{ end }}
 </div>
 {{ end }}

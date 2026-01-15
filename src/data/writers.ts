@@ -9,10 +9,28 @@ import type {
   MaintainersData,
   ContributorsData,
   DailySnapshot,
+  RepoConfig,
 } from '../types/index.js';
 
 const DATA_DIR = 'data';
-const SNAPSHOTS_DIR = join(DATA_DIR, 'snapshots');
+
+/**
+ * Get the data directory for a specific repository
+ * Structure: data/repos/<owner>/<repo>/
+ */
+function getRepoDataDir(repoConfig?: RepoConfig): string {
+  if (repoConfig) {
+    return join(DATA_DIR, 'repos', repoConfig.owner, repoConfig.repo);
+  }
+  return DATA_DIR;
+}
+
+/**
+ * Get the snapshots directory for a specific repository
+ */
+function getSnapshotsDir(repoConfig?: RepoConfig): string {
+  return join(getRepoDataDir(repoConfig), 'snapshots');
+}
 
 /**
  * Ensure directory exists
@@ -26,16 +44,17 @@ async function ensureDir(dir: string): Promise<void> {
 }
 
 /**
- * Write metrics.json
+ * Write metrics.json for a repository
  */
-export async function writeMetrics(metrics: Metrics): Promise<void> {
-  const filePath = join(process.cwd(), DATA_DIR, 'metrics.json');
+export async function writeMetrics(metrics: Metrics, repoConfig?: RepoConfig): Promise<void> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'metrics.json');
   await ensureDir(dirname(filePath));
   await writeFile(filePath, JSON.stringify(metrics, null, 2));
 }
 
 /**
- * Write maintainers.json
+ * Write maintainers.json (global, not per-repo)
  */
 export async function writeMaintainers(maintainers: MaintainersData): Promise<void> {
   const filePath = join(process.cwd(), DATA_DIR, 'maintainers.json');
@@ -44,10 +63,11 @@ export async function writeMaintainers(maintainers: MaintainersData): Promise<vo
 }
 
 /**
- * Update contributors.json (append-only merge)
+ * Update contributors.json for a repository (append-only merge)
  */
-export async function updateContributors(allContributors: string[]): Promise<void> {
-  const filePath = join(process.cwd(), DATA_DIR, 'contributors.json');
+export async function updateContributors(allContributors: string[], repoConfig?: RepoConfig): Promise<void> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'contributors.json');
   await ensureDir(dirname(filePath));
 
   // Load existing contributors
@@ -72,11 +92,12 @@ export async function updateContributors(allContributors: string[]): Promise<voi
 }
 
 /**
- * Write daily snapshot
+ * Write daily snapshot for a repository
  */
-export async function writeSnapshot(metrics: Metrics): Promise<void> {
+export async function writeSnapshot(metrics: Metrics, repoConfig?: RepoConfig): Promise<void> {
+  const snapshotsDir = getSnapshotsDir(repoConfig);
   const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const filePath = join(process.cwd(), SNAPSHOTS_DIR, `${date}.json`);
+  const filePath = join(process.cwd(), snapshotsDir, `${date}.json`);
   await ensureDir(dirname(filePath));
 
   const snapshot: DailySnapshot = {
@@ -99,4 +120,40 @@ export async function writeSnapshot(metrics: Metrics): Promise<void> {
   };
 
   await writeFile(filePath, JSON.stringify(snapshot, null, 2));
+}
+
+/**
+ * Write repository index file listing all configured repos
+ */
+export async function writeRepoIndex(repos: RepoConfig[]): Promise<void> {
+  const filePath = join(process.cwd(), DATA_DIR, 'repos.json');
+  await ensureDir(dirname(filePath));
+
+  const data = {
+    lastUpdated: new Date().toISOString(),
+    repositories: repos.map(r => ({
+      owner: r.owner,
+      repo: r.repo,
+      name: r.name || `${r.owner}/${r.repo}`,
+      description: r.description || '',
+    })),
+  };
+
+  await writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
+/**
+ * Load existing contributors for a repository
+ */
+export async function loadContributors(repoConfig?: RepoConfig): Promise<string[]> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'contributors.json');
+
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const data: ContributorsData = JSON.parse(content);
+    return data.contributors;
+  } catch {
+    return [];
+  }
 }

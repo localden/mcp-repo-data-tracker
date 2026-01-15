@@ -1,6 +1,28 @@
 <header class="site-header">
   <div class="container">
-    <a href="{{ "/" | relURL }}" class="site-title">{{ .Site.Title }}</a>
+    <div class="header-left">
+      <a href="{{ "/" | relURL }}" class="site-title">{{ .Site.Title }}</a>
+      {{/* Repo Picker */}}
+      {{ $reposIndex := site.Data.repos }}
+      {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
+      <div class="repo-picker">
+        <button class="repo-picker-trigger" id="repo-picker-trigger" aria-expanded="false" aria-haspopup="listbox">
+          <span class="repo-picker-label" id="repo-picker-label">Select Repository</span>
+          <svg class="repo-picker-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <ul class="repo-picker-menu" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
+          {{ range $index, $repo := $reposIndex.repositories }}
+          <li class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
+            <span class="repo-picker-item-name">{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}</span>
+            <code class="repo-picker-item-path"><span class="repo-picker-owner">{{ $repo.owner }}</span>/<span class="repo-picker-repo">{{ $repo.repo }}</span></code>
+          </li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ end }}
+    </div>
     <nav class="site-nav">
       <a href="{{ "/" | relURL }}" {{ if .IsHome }}class="active"{{ end }}>Overview</a>
       <a href="{{ "issues/" | relURL }}" {{ if eq .Title "Issues" }}class="active"{{ end }}>Issues</a>

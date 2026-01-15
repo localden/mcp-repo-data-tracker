@@ -2,37 +2,26 @@
  * Calculate contributor metrics
  */
 
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import type { IssueData, PullRequestData, ContributorMetrics, ContributorsData } from '../types/index.js';
+import type {
+  IssueData,
+  PullRequestData,
+  ContributorMetrics,
+  RepoConfig,
+} from '../types/index.js';
+import { loadContributors } from '../data/writers.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const DATA_DIR = 'data';
-
-/**
- * Load existing contributors from contributors.json
- */
-async function loadExistingContributors(): Promise<Set<string>> {
-  try {
-    const filePath = join(process.cwd(), DATA_DIR, 'contributors.json');
-    const content = await readFile(filePath, 'utf-8');
-    const data: ContributorsData = JSON.parse(content);
-    return new Set(data.contributors);
-  } catch {
-    // File doesn't exist or is invalid - start fresh
-    return new Set();
-  }
-}
 
 /**
  * Calculate contributor metrics
  */
 export async function calculateContributorMetrics(
   issues: IssueData,
-  pulls: PullRequestData
+  pulls: PullRequestData,
+  repoConfig?: RepoConfig
 ): Promise<ContributorMetrics> {
   const now = Date.now();
-  const existingContributors = await loadExistingContributors();
+  const existingContributors = new Set(await loadContributors(repoConfig));
 
   // Collect all contributors from current data
   const currentContributors = new Set<string>();

@@ -5,8 +5,10 @@
 export interface CliArgs {
   dryRun: boolean;
   verbose: boolean;
-  owner: string;
-  repo: string;
+  configPath?: string;
+  // Legacy single-repo mode (deprecated, use config file instead)
+  owner?: string;
+  repo?: string;
 }
 
 export function parseArgs(): CliArgs {
@@ -15,8 +17,6 @@ export function parseArgs(): CliArgs {
   const result: CliArgs = {
     dryRun: false,
     verbose: false,
-    owner: 'modelcontextprotocol',
-    repo: 'modelcontextprotocol',
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -26,6 +26,8 @@ export function parseArgs(): CliArgs {
       result.dryRun = true;
     } else if (arg === '--verbose' || arg === '-v') {
       result.verbose = true;
+    } else if ((arg === '--config' || arg === '-c') && args[i + 1]) {
+      result.configPath = args[++i];
     } else if (arg === '--owner' && args[i + 1]) {
       result.owner = args[++i];
     } else if (arg === '--repo' && args[i + 1]) {
@@ -53,14 +55,30 @@ MCP Repository Data Tracker
 Usage: npm run aggregate [options]
 
 Options:
-  --dry-run, -n    Compute metrics but don't write files
-  --verbose, -v    Enable verbose logging
-  --owner <name>   Repository owner (default: modelcontextprotocol)
-  --repo <name>    Repository name (default: modelcontextprotocol)
-  --help, -h       Show this help message
+  --config, -c <path>  Path to repos.json configuration file (default: ./repos.json)
+  --dry-run, -n        Compute metrics but don't write files
+  --verbose, -v        Enable verbose logging
+  --help, -h           Show this help message
+
+Legacy Options (deprecated, use config file instead):
+  --owner <name>       Repository owner
+  --repo <name>        Repository name
 
 Environment Variables:
-  GITHUB_TOKEN     GitHub Personal Access Token (required)
-  GH_PAT           Alternative name for GitHub token
+  GITHUB_TOKEN         GitHub Personal Access Token (required)
+  GH_PAT               Alternative name for GitHub token
+
+Configuration File (repos.json):
+  {
+    "repositories": [
+      { "owner": "org", "repo": "repo-name", "name": "Display Name" }
+    ],
+    "maintainers": {
+      "source": "github",
+      "owner": "org",
+      "repo": "access-repo",
+      "path": "path/to/users.ts"
+    }
+  }
 `);
 }

@@ -1,5 +1,13 @@
 {{/* Pull Requests Page Content */}}
-{{ $m := site.Data.metrics }}
+{{/* Support both direct context and dict with context/repoKey */}}
+{{ $context := . }}
+{{ $repoKey := "" }}
+{{ if reflect.IsMap . }}
+  {{ with .context }}{{ $context = . }}{{ end }}
+  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
+{{ end }}
+{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
+{{ $m := $data.metrics }}
 
 {{ if not $m }}
 <div class="no-data">
@@ -30,8 +38,8 @@
 <div class="section">
   <h2>Merge Time</h2>
   <div class="metrics-grid">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (printf "%.1fh" $m.pulls.merge_time.avg_hours) "small" true) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (printf "%.1fh" $m.pulls.merge_time.median_hours) "small" true) }}
+    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.merge_time.avg_hours) "small" true) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours) "small" true) }}
   </div>
 </div>
 

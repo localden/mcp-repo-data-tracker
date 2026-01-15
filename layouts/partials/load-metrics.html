@@ -1,0 +1,96 @@
+{{/*
+  Load Metrics Partial
+
+  Provides backward-compatible access to repository metrics.
+  Supports both multi-repo (data/repos/<owner>/<repo>/) and legacy (data/) structures.
+
+  Usage:
+    {{ $data := partial "load-metrics.html" . }}
+    {{ $m := $data.metrics }}
+    {{ $contributors := $data.contributors }}
+    {{ $snapshots := $data.snapshots }}
+    {{ $repoName := $data.repoName }}
+
+  For multi-repo views:
+    {{ $data := partial "load-metrics.html" (dict "context" . "repoKey" "owner/repo") }}
+
+  Returns a dict with:
+    - metrics: The metrics.json data
+    - contributors: The contributors.json data
+    - snapshots: The snapshots data (for charts)
+    - repoName: Display name for the repository
+    - owner: Repository owner
+    - repo: Repository name
+    - repoKey: The owner/repo key for data attributes
+    - allRepos: Array of all available repositories (for iterating)
+*/}}
+
+{{ $result := dict "metrics" false "contributors" false "snapshots" false "repoName" "" "owner" "" "repo" "" "repoKey" "" "allRepos" slice }}
+
+{{/* Handle both direct context and dict with context key */}}
+{{ $context := . }}
+{{ $requestedRepoKey := "" }}
+{{ if reflect.IsMap . }}
+  {{ with .context }}{{ $context = . }}{{ end }}
+  {{ with .repoKey }}{{ $requestedRepoKey = . }}{{ end }}
+{{ end }}
+
+{{ $reposIndex := site.Data.repos }}
+
+{{ if and $reposIndex $reposIndex.repositories }}
+  {{/* Multi-repo mode */}}
+  {{ $allRepos := slice }}
+  {{ range $reposIndex.repositories }}
+    {{ $allRepos = $allRepos | append (dict "owner" .owner "repo" .repo "name" (.name | default (printf "%s/%s" .owner .repo)) "description" (.description | default "")) }}
+  {{ end }}
+
+  {{/* Determine which repo to load - use requested or default to first */}}
+  {{ $targetRepo := index $reposIndex.repositories 0 }}
+  {{ if $requestedRepoKey }}
+    {{ $parts := split $requestedRepoKey "/" }}
+    {{ if eq (len $parts) 2 }}
+      {{ $reqOwner := index $parts 0 }}
+      {{ $reqRepo := index $parts 1 }}
+      {{ range $reposIndex.repositories }}
+        {{ if and (eq .owner $reqOwner) (eq .repo $reqRepo) }}
+          {{ $targetRepo = . }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+
+  {{ $owner := $targetRepo.owner }}
+  {{ $repo := $targetRepo.repo }}
+  {{ $repoName := $targetRepo.name | default (printf "%s/%s" $owner $repo) }}
+  {{ $repoKey := printf "%s/%s" $owner $repo }}
+
+  {{/* Access nested data: site.Data.repos.<owner>.<repo> */}}
+  {{ with index site.Data.repos $owner }}
+    {{ with index . $repo }}
+      {{ $result = dict
+        "metrics" .metrics
+        "contributors" .contributors
+        "snapshots" .snapshots
+        "repoName" $repoName
+        "owner" $owner
+        "repo" $repo
+        "repoKey" $repoKey
+        "allRepos" $allRepos
+      }}
+    {{ end }}
+  {{ end }}
+{{ else }}
+  {{/* Legacy single-repo mode */}}
+  {{ $result = dict
+    "metrics" site.Data.metrics
+    "contributors" site.Data.contributors
+    "snapshots" site.Data.snapshots
+    "repoName" (site.Params.repo | default "Repository")
+    "owner" ""
+    "repo" ""
+    "repoKey" ""
+    "allRepos" slice
+  }}
+{{ end }}
+
+{{ return $result }}

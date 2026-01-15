@@ -1,6 +1,14 @@
 {{/* Contributors Page Content */}}
-{{ $m := site.Data.metrics }}
-{{ $contributors := site.Data.contributors }}
+{{/* Support both direct context and dict with context/repoKey */}}
+{{ $context := . }}
+{{ $repoKey := "" }}
+{{ if reflect.IsMap . }}
+  {{ with .context }}{{ $context = . }}{{ end }}
+  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
+{{ end }}
+{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
+{{ $m := $data.metrics }}
+{{ $contributors := $data.contributors }}
 
 {{ if not $m }}
 <div class="no-data">
@@ -24,30 +32,32 @@
 <div class="section">
   <h2>Maintainers</h2>
   <p>{{ len $maintainers.maintainers }} maintainers identified from <code>modelcontextprotocol/access</code></p>
-  <table>
-    <thead>
-      <tr>
-        <th>GitHub</th>
-        <th>Roles</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{ range $maintainers.maintainers }}
-      <tr>
-        <td>
-          <a href="https://github.com/{{ .github }}" target="_blank" rel="noopener">
-            @{{ .github }}
-          </a>
-        </td>
-        <td>
-          {{ range .roles }}
-          <span class="label-badge">{{ . }}</span>
-          {{ end }}
-        </td>
-      </tr>
-      {{ end }}
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table class="maintainers-table">
+      <thead>
+        <tr>
+          <th>GitHub ID</th>
+          <th>Roles</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $maintainers.maintainers }}
+        <tr>
+          <td>
+            <a href="https://github.com/{{ .github }}" target="_blank" rel="noopener">
+              @{{ .github }}
+            </a>
+          </td>
+          <td>
+            {{ range .roles }}
+            <span class="label-badge">{{ . }}</span>
+            {{ end }}
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
 </div>
 {{ end }}
 

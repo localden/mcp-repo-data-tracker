@@ -1,0 +1,19 @@
+{{/*
+  Format Hours Partial
+
+  Converts hours to days when >= 24 hours.
+
+  Usage: {{ partial "format-hours.html" 536.1 }}
+
+  Output:
+    - 12h (for values < 24)
+    - 2d (for values >= 24)
+*/}}
+
+{{- $hours := . -}}
+{{- if ge $hours 24 -}}
+  {{- $days := div $hours 24 -}}
+  {{- printf "%.0fd" $days -}}
+{{- else -}}
+  {{- printf "%.0fh" $hours -}}
+{{- end -}}

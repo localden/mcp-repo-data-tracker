@@ -1,108 +1,165 @@
 {{ define "main" }}
-{{ $m := site.Data.metrics }}
+{{/*
+  Load metrics - supports multi-repo with dynamic switching.
+  Renders content for all repos, JavaScript handles showing the selected one.
+*/}}
+{{ $reposIndex := site.Data.repos }}
 
-{{ if not $m }}
-<div class="no-data">
-  <h2>No data available</h2>
-  <p>Run the aggregation script to populate metrics data.</p>
-</div>
+{{ if and $reposIndex $reposIndex.repositories }}
+  {{/* Multi-repo mode - render content for each repository */}}
+  {{ range $index, $repoConfig := $reposIndex.repositories }}
+    {{ $owner := $repoConfig.owner }}
+    {{ $repo := $repoConfig.repo }}
+    {{ $repoKey := printf "%s/%s" $owner $repo }}
+    {{ $repoName := $repoConfig.name | default $repoKey }}
+    {{ $m := false }}
+
+    {{ with index site.Data.repos $owner }}
+      {{ with index . $repo }}
+        {{ $m = .metrics }}
+      {{ end }}
+    {{ end }}
+
+    <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
+      {{ if not $m }}
+      <div class="no-data">
+        <h2>No data available</h2>
+        <p>Run the aggregation script to populate metrics data for {{ $repoName }}.</p>
+      </div>
+      {{ else }}
+
+      <h1>{{ $repoName }}</h1>
+
+      <!-- Repository Stats -->
+      <div class="section">
+        <h2>Repository</h2>
+        <div class="metrics-grid">
+          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars) }}
+          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks) }}
+          {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known) }}
+          {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d) }}
+        </div>
+      </div>
+
+      <!-- Issues Summary -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Issues</h2>
+          <a href="{{ "issues/" | relURL }}">View details →</a>
+        </div>
+        <div class="metrics-grid">
+          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
+          {{ partial "metric-card.html" (dict "label" "Closed (7d)" "value" $m.issues.closed_7d) }}
+          {{ partial "metric-card.html" (dict "label" "Closed (30d)" "value" $m.issues.closed_30d) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "subtext" ">24h without response") }}
+        </div>
+
+        <h3>Response Time</h3>
+        {{ partial "time-breakdown.html" (dict "data" $m.issues.response_time) }}
+      </div>
+
+      <!-- PRs Summary -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Pull Requests</h2>
+          <a href="{{ "pulls/" | relURL }}">View details →</a>
+        </div>
+        <div class="metrics-grid">
+          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
+          {{ partial "metric-card.html" (dict "label" "Merged (7d)" "value" $m.pulls.merged_7d) }}
+          {{ partial "metric-card.html" (dict "label" "Merged (30d)" "value" $m.pulls.merged_30d) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "subtext" ">24h without review") }}
+        </div>
+
+        <h3>Review Time</h3>
+        {{ partial "time-breakdown.html" (dict "data" $m.pulls.review_time) }}
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="section">
+        <h2>At a Glance</h2>
+        <div class="two-column">
+          <div>
+            <h3>Issue Health</h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Stale (>30d)</td>
+                    <td>{{ $m.issues.stale_30d }}</td>
+                  </tr>
+                  <tr>
+                    <td>Stale (>60d)</td>
+                    <td>{{ $m.issues.stale_60d }}</td>
+                  </tr>
+                  <tr>
+                    <td>Stale (>90d)</td>
+                    <td>{{ $m.issues.stale_90d }}</td>
+                  </tr>
+                  <tr>
+                    <td>Reopen Rate</td>
+                    <td>{{ printf "%.0f%%" (mul $m.issues.reopen_rate 100) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3>PR Health</h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Draft PRs</td>
+                    <td>{{ $m.pulls.draft_count }}</td>
+                  </tr>
+                  <tr>
+                    <td>Closed (not merged, 90d)</td>
+                    <td>{{ $m.pulls.closed_not_merged_90d }}</td>
+                  </tr>
+                  <tr>
+                    <td>Avg Merge Time</td>
+                    <td>{{ partial "format-hours.html" $m.pulls.merge_time.avg_hours }}</td>
+                  </tr>
+                  <tr>
+                    <td>Median Merge Time</td>
+                    <td>{{ partial "format-hours.html" $m.pulls.merge_time.median_hours }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{ end }}
+    </div>
+  {{ end }}
 {{ else }}
+  {{/* Legacy single-repo mode */}}
+  {{ $m := site.Data.metrics }}
+  {{ $repoName := site.Params.repo | default "Repository" }}
 
-<h1>Repository Overview</h1>
-
-<!-- Repository Stats -->
-<div class="section">
-  <h2>Repository</h2>
-  <div class="metrics-grid">
-    {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars) }}
-    {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks) }}
-    {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known) }}
-    {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d) }}
+  {{ if not $m }}
+  <div class="no-data">
+    <h2>No data available</h2>
+    <p>Run the aggregation script to populate metrics data.</p>
   </div>
-</div>
-
-<!-- Issues Summary -->
-<div class="section">
-  <div class="section-header">
-    <h2>Issues</h2>
-    <a href="{{ "issues/" | relURL }}">View details →</a>
-  </div>
-  <div class="metrics-grid">
-    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
-    {{ partial "metric-card.html" (dict "label" "Closed (7d)" "value" $m.issues.closed_7d) }}
-    {{ partial "metric-card.html" (dict "label" "Closed (30d)" "value" $m.issues.closed_30d) }}
-    {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "subtext" ">24h without response") }}
-  </div>
-
-  <h3>Response Time</h3>
-  {{ partial "time-breakdown.html" (dict "data" $m.issues.response_time) }}
-</div>
-
-<!-- PRs Summary -->
-<div class="section">
-  <div class="section-header">
-    <h2>Pull Requests</h2>
-    <a href="{{ "pulls/" | relURL }}">View details →</a>
-  </div>
-  <div class="metrics-grid">
-    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
-    {{ partial "metric-card.html" (dict "label" "Merged (7d)" "value" $m.pulls.merged_7d) }}
-    {{ partial "metric-card.html" (dict "label" "Merged (30d)" "value" $m.pulls.merged_30d) }}
-    {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "subtext" ">24h without review") }}
-  </div>
-
-  <h3>Review Time</h3>
-  {{ partial "time-breakdown.html" (dict "data" $m.pulls.review_time) }}
-</div>
-
-<!-- Quick Stats -->
-<div class="section">
-  <h2>At a Glance</h2>
-  <div class="two-column">
-    <div>
-      <h3>Issue Health</h3>
-      <table>
-        <tr>
-          <td>Stale (>30d)</td>
-          <td><strong>{{ $m.issues.stale_30d }}</strong></td>
-        </tr>
-        <tr>
-          <td>Stale (>60d)</td>
-          <td><strong>{{ $m.issues.stale_60d }}</strong></td>
-        </tr>
-        <tr>
-          <td>Stale (>90d)</td>
-          <td><strong>{{ $m.issues.stale_90d }}</strong></td>
-        </tr>
-        <tr>
-          <td>Reopen Rate</td>
-          <td><strong>{{ printf "%.1f%%" (mul $m.issues.reopen_rate 100) }}</strong></td>
-        </tr>
-      </table>
-    </div>
-    <div>
-      <h3>PR Health</h3>
-      <table>
-        <tr>
-          <td>Draft PRs</td>
-          <td><strong>{{ $m.pulls.draft_count }}</strong></td>
-        </tr>
-        <tr>
-          <td>Closed (not merged, 90d)</td>
-          <td><strong>{{ $m.pulls.closed_not_merged_90d }}</strong></td>
-        </tr>
-        <tr>
-          <td>Avg Merge Time</td>
-          <td><strong>{{ printf "%.1fh" $m.pulls.merge_time.avg_hours }}</strong></td>
-        </tr>
-        <tr>
-          <td>Median Merge Time</td>
-          <td><strong>{{ printf "%.1fh" $m.pulls.merge_time.median_hours }}</strong></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-</div>
-
+  {{ else }}
+  <h1>{{ $repoName }}</h1>
+  <!-- Content for legacy mode would go here -->
+  {{ end }}
 {{ end }}
 {{ end }}

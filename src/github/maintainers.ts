@@ -1,16 +1,20 @@
 /**
- * Fetch and parse maintainer data from modelcontextprotocol/access
+ * Fetch and parse maintainer data from modelcontextprotocol/access repository
+ *
+ * Maintainers are always fetched from the canonical source:
+ * https://github.com/modelcontextprotocol/access/blob/main/src/config/users.ts
  */
 
 import type { GitHubClient } from './client.js';
 import type { MaintainersData, Maintainer } from '../types/index.js';
 
-const ACCESS_REPO_OWNER = 'modelcontextprotocol';
-const ACCESS_REPO_NAME = 'access';
-const USERS_FILE_PATH = 'src/config/users.ts';
+// Canonical maintainers source (constant)
+const MAINTAINERS_OWNER = 'modelcontextprotocol';
+const MAINTAINERS_REPO = 'access';
+const MAINTAINERS_PATH = 'src/config/users.ts';
 
 /**
- * Fetch maintainer list from the access repository
+ * Fetch maintainer list from modelcontextprotocol/access
  */
 export async function fetchMaintainers(
   client: GitHubClient,
@@ -18,13 +22,13 @@ export async function fetchMaintainers(
 ): Promise<MaintainersData> {
   try {
     if (verbose) {
-      console.log(`  Fetching ${ACCESS_REPO_OWNER}/${ACCESS_REPO_NAME}/${USERS_FILE_PATH}`);
+      console.log(`  Fetching ${MAINTAINERS_OWNER}/${MAINTAINERS_REPO}/${MAINTAINERS_PATH}`);
     }
 
     const response = await client.rest.repos.getContent({
-      owner: ACCESS_REPO_OWNER,
-      repo: ACCESS_REPO_NAME,
-      path: USERS_FILE_PATH,
+      owner: MAINTAINERS_OWNER,
+      repo: MAINTAINERS_REPO,
+      path: MAINTAINERS_PATH,
     });
 
     // Handle file content (not directory)

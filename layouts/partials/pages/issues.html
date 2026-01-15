@@ -1,5 +1,13 @@
 {{/* Issues Page Content */}}
-{{ $m := site.Data.metrics }}
+{{/* Support both direct context and dict with context/repoKey */}}
+{{ $context := . }}
+{{ $repoKey := "" }}
+{{ if reflect.IsMap . }}
+  {{ with .context }}{{ $context = . }}{{ end }}
+  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
+{{ end }}
+{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
+{{ $m := $data.metrics }}
 
 {{ if not $m }}
 <div class="no-data">
@@ -41,7 +49,7 @@
     {{ partial "metric-card.html" (dict "label" "Stale >30 days" "value" $m.issues.stale_30d) }}
     {{ partial "metric-card.html" (dict "label" "Stale >60 days" "value" $m.issues.stale_60d) }}
     {{ partial "metric-card.html" (dict "label" "Stale >90 days" "value" $m.issues.stale_90d) }}
-    {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.1f%%" (mul $m.issues.reopen_rate 100)) "small" true) }}
+    {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.0f%%" (mul $m.issues.reopen_rate 100)) "small" true) }}
   </div>
 </div>
 

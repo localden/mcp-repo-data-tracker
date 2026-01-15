@@ -3,17 +3,40 @@
   <h1>{{ .Title }}</h1>
 
   {{ $pageName := .File.BaseFileName }}
+  {{ $reposIndex := site.Data.repos }}
 
-  {{ if eq $pageName "issues" }}
-    {{ partial "pages/issues.html" . }}
-  {{ else if eq $pageName "pulls" }}
-    {{ partial "pages/pulls.html" . }}
-  {{ else if eq $pageName "contributors" }}
-    {{ partial "pages/contributors.html" . }}
-  {{ else if eq $pageName "health" }}
-    {{ partial "pages/health.html" . }}
+  {{ if and $reposIndex $reposIndex.repositories (or (eq $pageName "issues") (eq $pageName "pulls") (eq $pageName "contributors") (eq $pageName "health")) }}
+    {{/* Multi-repo mode - render content for each repository */}}
+    {{ range $index, $repoConfig := $reposIndex.repositories }}
+      {{ $owner := $repoConfig.owner }}
+      {{ $repo := $repoConfig.repo }}
+      {{ $repoKey := printf "%s/%s" $owner $repo }}
+
+      <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
+        {{ if eq $pageName "issues" }}
+          {{ partial "pages/issues.html" (dict "context" $ "repoKey" $repoKey) }}
+        {{ else if eq $pageName "pulls" }}
+          {{ partial "pages/pulls.html" (dict "context" $ "repoKey" $repoKey) }}
+        {{ else if eq $pageName "contributors" }}
+          {{ partial "pages/contributors.html" (dict "context" $ "repoKey" $repoKey) }}
+        {{ else if eq $pageName "health" }}
+          {{ partial "pages/health.html" (dict "context" $ "repoKey" $repoKey) }}
+        {{ end }}
+      </div>
+    {{ end }}
   {{ else }}
-    {{ .Content }}
+    {{/* Single repo or non-metrics page */}}
+    {{ if eq $pageName "issues" }}
+      {{ partial "pages/issues.html" . }}
+    {{ else if eq $pageName "pulls" }}
+      {{ partial "pages/pulls.html" . }}
+    {{ else if eq $pageName "contributors" }}
+      {{ partial "pages/contributors.html" . }}
+    {{ else if eq $pageName "health" }}
+      {{ partial "pages/health.html" . }}
+    {{ else }}
+      {{ .Content }}
+    {{ end }}
   {{ end }}
 </article>
 {{ end }}

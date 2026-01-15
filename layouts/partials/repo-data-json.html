@@ -1,0 +1,36 @@
+{{/*
+  Repo Data JSON Partial
+
+  Outputs all repository metrics as a JSON object for client-side repo switching.
+  This allows the JavaScript to switch between repos without page reload.
+*/}}
+{{ $reposIndex := site.Data.repos }}
+{{ $allData := dict }}
+
+{{ if and $reposIndex $reposIndex.repositories }}
+  {{ range $repo := $reposIndex.repositories }}
+    {{ $owner := $repo.owner }}
+    {{ $repoName := $repo.repo }}
+    {{ $displayName := $repo.name | default (printf "%s/%s" $owner $repoName) }}
+    {{ $key := printf "%s/%s" $owner $repoName }}
+
+    {{ with index site.Data.repos $owner }}
+      {{ with index . $repoName }}
+        {{ $repoData := dict
+          "owner" $owner
+          "repo" $repoName
+          "name" $displayName
+          "description" ($repo.description | default "")
+          "metrics" .metrics
+          "contributors" .contributors
+          "snapshots" .snapshots
+        }}
+        {{ $allData = merge $allData (dict $key $repoData) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+<script id="repo-data" type="application/json">
+{{ $allData | jsonify }}
+</script>

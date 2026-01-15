@@ -282,3 +282,23 @@ export interface HotspotRawData {
   prNumber: number;
   files: GitHubPRFile[];
 }
+
+// =============================================================================
+// Repository Configuration
+// =============================================================================
+
+export interface RepoConfig {
+  owner: string;
+  repo: string;
+  name?: string;
+  description?: string;
+}
+
+export interface ReposConfig {
+  repositories: RepoConfig[];
+}
+
+/** Helper to get the path segments for a repository */
+export function repoPath(config: RepoConfig): { owner: string; repo: string } {
+  return { owner: config.owner, repo: config.repo };
+}
