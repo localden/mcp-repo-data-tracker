@@ -8,19 +8,10 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
-  aggregate-and-deploy:
+  aggregate:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -42,35 +33,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: npm run aggregate
 
-      - name: Commit data changes
+      - name: Commit and push data changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data/
-          git diff --staged --quiet || git commit -m "Update repository metrics data
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update repository metrics data
 
           Automated data sync at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push
-
-      - name: Setup Hugo
-        run: |
-          HUGO_VERSION="0.141.0"
-          wget -q "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb" -O hugo.deb
-          sudo dpkg -i hugo.deb
-          hugo version
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
-
-      - name: Build Hugo site
-        run: hugo --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+            git push
+          fi
