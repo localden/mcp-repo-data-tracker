@@ -8,6 +8,7 @@
 {{ end }}
 {{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
 {{ $m := $data.metrics }}
+{{ $snapshots := $data.snapshots }}
 
 {{ if not $m }}
 <div class="alert alert-warning">
@@ -15,11 +16,23 @@
 </div>
 {{ else }}
 
+{{/* Extract sparkline data for PR metrics */}}
+{{ $pullsOpenSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.open") }}
+{{ $pullsAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.without_review_24h") }}
+{{ $pullsReviewMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.median_hours") }}
+{{ $pullsMergeMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.merge_time.median_hours") }}
+
+{{/* Calculate trends from sparkline data */}}
+{{ $pullsOpenTrend := partial "calc-trend.html" (dict "sparkline" $pullsOpenSparkline) }}
+{{ $pullsAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $pullsAwaitingSparkline) }}
+{{ $pullsReviewTrend := partial "calc-trend.html" (dict "sparkline" $pullsReviewMedianSparkline) }}
+{{ $pullsMergeTrend := partial "calc-trend.html" (dict "sparkline" $pullsMergeMedianSparkline) }}
+
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
+    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count) }}
     {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days") }}
     {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days") }}
@@ -33,7 +46,7 @@
   <h2 class="text-sm font-semibold mb-3">Time to First Review</h2>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsReviewTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours)) }}
     {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours)) }}
   </div>
@@ -44,7 +57,7 @@
   <h2 class="text-sm font-semibold mb-3">Merge Time</h2>
   <div class="grid grid-cols-2 gap-3">
     {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.merge_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours) "sparkline" $pullsMergeMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsMergeTrend "trendGoodDirection" "down") }}
   </div>
 </section>
 
@@ -52,7 +65,7 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">PRs Needing Attention</h2>
   <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours") }}
+    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days") }}
   </div>
 </section>

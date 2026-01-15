@@ -8,6 +8,7 @@
 {{ end }}
 {{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
 {{ $m := $data.metrics }}
+{{ $snapshots := $data.snapshots }}
 
 {{ if not $m }}
 <div class="alert alert-warning">
@@ -15,11 +16,23 @@
 </div>
 {{ else }}
 
+{{/* Extract sparkline data for issues metrics */}}
+{{ $issuesOpenSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.open") }}
+{{ $issuesAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.without_response_24h") }}
+{{ $issuesResponseMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.response_time.median_hours") }}
+{{ $issuesStale30dSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.stale_30d") }}
+
+{{/* Calculate trends from sparkline data */}}
+{{ $issuesOpenTrend := partial "calc-trend.html" (dict "sparkline" $issuesOpenSparkline) }}
+{{ $issuesAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $issuesAwaitingSparkline) }}
+{{ $issuesResponseTrend := partial "calc-trend.html" (dict "sparkline" $issuesResponseMedianSparkline) }}
+{{ $issuesStale30dTrend := partial "calc-trend.html" (dict "sparkline" $issuesStale30dSparkline) }}
+
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
+    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "sparkline" $issuesOpenSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesOpenTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days") }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days") }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_90d "descriptor" "last 90 days") }}
@@ -32,7 +45,7 @@
   <p class="text-[10px] text-base-content/40 mb-3">Time to first maintainer response</p>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.issues.response_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.issues.response_time.median_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.issues.response_time.median_hours) "sparkline" $issuesResponseMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $issuesResponseTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.issues.response_time.p90_hours)) }}
     {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.issues.response_time.p95_hours)) }}
   </div>
@@ -42,7 +55,7 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Issues Needing Attention</h2>
   <div class="grid grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours") }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_7d "descriptor" ">7 days") }}
     {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_30d "descriptor" ">30 days") }}
   </div>
@@ -53,7 +66,7 @@
   <h2 class="text-sm font-semibold mb-1">Stale Issues</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Issues with no activity</p>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_30d "descriptor" ">30 days") }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_30d "descriptor" ">30 days" "sparkline" $issuesStale30dSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $issuesStale30dTrend "trendGoodDirection" "down") }}
     {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_60d "descriptor" ">60 days") }}
     {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_90d "descriptor" ">90 days") }}
     {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.0f%%" (mul $m.issues.reopen_rate 100))) }}

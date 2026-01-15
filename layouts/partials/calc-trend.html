@@ -1,0 +1,19 @@
+{{/*
+  Calculate trend percentage from sparkline data
+
+  Usage: {{ partial "calc-trend.html" (dict "sparkline" $sparklineData) }}
+
+  Returns: percentage change from first to last value (or 0 if insufficient data)
+*/}}
+{{- $sparkline := .sparkline -}}
+{{- $trend := 0.0 -}}
+
+{{- if and $sparkline (gt (len $sparkline) 1) -}}
+  {{- $first := index $sparkline 0 -}}
+  {{- $last := index $sparkline (sub (len $sparkline) 1) -}}
+  {{- if and $first (gt $first 0) -}}
+    {{- $trend = mul (div (sub $last $first) $first) 100.0 -}}
+  {{- end -}}
+{{- end -}}
+
+{{- return $trend -}}

@@ -52,14 +52,25 @@
         </a>
       </div>
 
+      {{/* Calculate trends from sparkline data */}}
+      {{ $starsTrend := partial "calc-trend.html" (dict "sparkline" $starsSparkline) }}
+      {{ $forksTrend := partial "calc-trend.html" (dict "sparkline" $forksSparkline) }}
+      {{ $contributorsTrend := partial "calc-trend.html" (dict "sparkline" $contributorsSparkline) }}
+      {{ $issuesTrend := partial "calc-trend.html" (dict "sparkline" $issuesSparkline) }}
+      {{ $issuesAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $issuesAwaitingSparkline) }}
+      {{ $issuesResponseTrend := partial "calc-trend.html" (dict "sparkline" $issuesResponseMedianSparkline) }}
+      {{ $pullsTrend := partial "calc-trend.html" (dict "sparkline" $pullsSparkline) }}
+      {{ $pullsAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $pullsAwaitingSparkline) }}
+      {{ $pullsReviewTrend := partial "calc-trend.html" (dict "sparkline" $pullsReviewMedianSparkline) }}
+
       <!-- Repository Stats -->
       <section class="mb-6">
         <h2 class="text-sm font-semibold mb-3">Repository</h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars "info" "Total GitHub stars on this repository" "sparkline" $starsSparkline "sparklineColor" "rgb(255, 193, 7)") }}
-          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks "info" "Total forks of this repository" "sparkline" $forksSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars "info" "Total GitHub stars on this repository" "sparkline" $starsSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $starsTrend "trendGoodDirection" "up") }}
+          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks "info" "Total forks of this repository" "sparkline" $forksSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $forksTrend "trendGoodDirection" "up") }}
           {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "info" "All known contributors who have ever contributed") }}
-          {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d "info" "Contributors with activity in the last 30 days" "sparkline" $contributorsSparkline "sparklineColor" "rgb(40, 167, 69)") }}
+          {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d "info" "Contributors with activity in the last 30 days" "sparkline" $contributorsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $contributorsTrend "trendGoodDirection" "up") }}
         </div>
       </section>
 
@@ -70,15 +81,15 @@
           <a href="{{ "issues/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)") }}
+          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesTrend "trendGoodDirection" "down") }}
           {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days") }}
           {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days") }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)") }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down") }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Response Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.issues.response_time.avg_hours) "info" "Average time to first response on issues") }}
-          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.issues.response_time.median_hours) "info" "Median time to first response (50th percentile)" "sparkline" $issuesResponseMedianSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.issues.response_time.median_hours) "info" "Median time to first response (50th percentile)" "sparkline" $issuesResponseMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $issuesResponseTrend "trendGoodDirection" "down") }}
           {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.issues.response_time.p90_hours) "info" "90th percentile response time") }}
           {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.issues.response_time.p95_hours) "info" "95th percentile response time") }}
         </div>
@@ -91,15 +102,15 @@
           <a href="{{ "pulls/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)") }}
+          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsTrend "trendGoodDirection" "down") }}
           {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days") }}
           {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days") }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)") }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Review Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours) "info" "Average time to first review on PRs") }}
-          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "info" "Median time to first review (50th percentile)" "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "info" "Median time to first review (50th percentile)" "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsReviewTrend "trendGoodDirection" "down") }}
           {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours) "info" "90th percentile review time") }}
           {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours) "info" "95th percentile review time") }}
         </div>
