@@ -1,0 +1,12 @@
+<header class="site-header">
+  <div class="container">
+    <a href="{{ "/" | relURL }}" class="site-title">{{ .Site.Title }}</a>
+    <nav class="site-nav">
+      <a href="{{ "/" | relURL }}" {{ if .IsHome }}class="active"{{ end }}>Overview</a>
+      <a href="{{ "issues/" | relURL }}" {{ if eq .Title "Issues" }}class="active"{{ end }}>Issues</a>
+      <a href="{{ "pulls/" | relURL }}" {{ if eq .Title "Pull Requests" }}class="active"{{ end }}>Pull Requests</a>
+      <a href="{{ "contributors/" | relURL }}" {{ if eq .Title "Contributors" }}class="active"{{ end }}>Contributors</a>
+      <a href="{{ "health/" | relURL }}" {{ if eq .Title "Health & Trends" }}class="active"{{ end }}>Trends</a>
+    </nav>
+  </div>
+</header>

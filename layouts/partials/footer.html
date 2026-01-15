@@ -1,0 +1,15 @@
+<footer class="site-footer">
+  <div class="container">
+    {{ $metrics := site.Data.metrics }}
+    {{ if $metrics }}
+    <p class="last-updated">
+      Last updated: {{ $metrics.timestamp | time.Format "Jan 2, 2006 at 3:04 PM UTC" }}
+    </p>
+    {{ end }}
+    <p class="repo-link">
+      <a href="https://github.com/{{ .Site.Params.repo }}" target="_blank" rel="noopener">
+        View {{ .Site.Params.repo }} on GitHub
+      </a>
+    </p>
+  </div>
+</footer>

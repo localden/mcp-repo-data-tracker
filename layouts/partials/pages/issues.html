@@ -1,0 +1,60 @@
+{{/* Issues Page Content */}}
+{{ $m := site.Data.metrics }}
+
+{{ if not $m }}
+<div class="no-data">
+  <p>No data available. Run the aggregation script.</p>
+</div>
+{{ else }}
+
+<!-- Volume Metrics -->
+<div class="section">
+  <h2>Volume</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
+    {{ partial "metric-card.html" (dict "label" "Closed (7 days)" "value" $m.issues.closed_7d) }}
+    {{ partial "metric-card.html" (dict "label" "Closed (30 days)" "value" $m.issues.closed_30d) }}
+    {{ partial "metric-card.html" (dict "label" "Closed (90 days)" "value" $m.issues.closed_90d) }}
+  </div>
+</div>
+
+<!-- Response Time -->
+<div class="section">
+  <h2>Response Time (to first maintainer response)</h2>
+  {{ partial "time-breakdown.html" (dict "data" $m.issues.response_time) }}
+</div>
+
+<!-- Issues Needing Attention -->
+<div class="section">
+  <h2>Issues Needing Attention</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "No response >24h" "value" $m.issues.without_response_24h) }}
+    {{ partial "metric-card.html" (dict "label" "No response >7d" "value" $m.issues.without_response_7d) }}
+    {{ partial "metric-card.html" (dict "label" "No response >30d" "value" $m.issues.without_response_30d) }}
+  </div>
+</div>
+
+<!-- Stale Issues -->
+<div class="section">
+  <h2>Stale Issues (no activity)</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Stale >30 days" "value" $m.issues.stale_30d) }}
+    {{ partial "metric-card.html" (dict "label" "Stale >60 days" "value" $m.issues.stale_60d) }}
+    {{ partial "metric-card.html" (dict "label" "Stale >90 days" "value" $m.issues.stale_90d) }}
+    {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.1f%%" (mul $m.issues.reopen_rate 100)) "small" true) }}
+  </div>
+</div>
+
+<!-- Label Distribution -->
+{{ if $m.issues.by_label }}
+<div class="section">
+  <h2>Issues by Label</h2>
+  <div>
+    {{ range $label, $count := $m.issues.by_label }}
+    <span class="label-badge">{{ $label }}: {{ $count }}</span>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{ end }}

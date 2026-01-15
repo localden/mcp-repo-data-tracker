@@ -1,0 +1,54 @@
+{{/* Contributors Page Content */}}
+{{ $m := site.Data.metrics }}
+{{ $contributors := site.Data.contributors }}
+
+{{ if not $m }}
+<div class="no-data">
+  <p>No data available. Run the aggregation script.</p>
+</div>
+{{ else }}
+
+<!-- Overview -->
+<div class="section">
+  <h2>Overview</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "subtext" "All-time unique contributors") }}
+    {{ partial "metric-card.html" (dict "label" "Active (30 days)" "value" $m.contributors.active_30d "subtext" "Contributors with recent activity") }}
+    {{ partial "metric-card.html" (dict "label" "First-time (30 days)" "value" $m.contributors.first_time_30d "subtext" "New contributors this month") }}
+  </div>
+</div>
+
+<!-- Maintainers -->
+{{ $maintainers := site.Data.maintainers }}
+{{ if $maintainers }}
+<div class="section">
+  <h2>Maintainers</h2>
+  <p>{{ len $maintainers.maintainers }} maintainers identified from <code>modelcontextprotocol/access</code></p>
+  <table>
+    <thead>
+      <tr>
+        <th>GitHub</th>
+        <th>Roles</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $maintainers.maintainers }}
+      <tr>
+        <td>
+          <a href="https://github.com/{{ .github }}" target="_blank" rel="noopener">
+            @{{ .github }}
+          </a>
+        </td>
+        <td>
+          {{ range .roles }}
+          <span class="label-badge">{{ . }}</span>
+          {{ end }}
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>
+{{ end }}
+
+{{ end }}

@@ -1,0 +1,27 @@
+{{/*
+  Metric Card Partial
+
+  Usage: {{ partial "metric-card.html" (dict "label" "Open Issues" "value" 42 "subtext" "5 new this week") }}
+
+  Parameters:
+    - label: The metric label
+    - value: The metric value
+    - subtext: Optional subtext below the value
+    - small: Optional boolean to use smaller value font
+*/}}
+
+<div class="metric-card">
+  <div class="label">{{ .label }}</div>
+  <div class="value{{ if .small }} small{{ end }}">
+    {{- with .value -}}
+      {{- if (eq (printf "%T" .) "float64") -}}
+        {{ printf "%.1f" . }}
+      {{- else -}}
+        {{ . }}
+      {{- end -}}
+    {{- else -}}
+      —
+    {{- end -}}
+  </div>
+  {{ with .subtext }}<div class="subtext">{{ . }}</div>{{ end }}
+</div>

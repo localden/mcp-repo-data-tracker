@@ -1,0 +1,31 @@
+{{/*
+  Time Breakdown Partial
+
+  Usage: {{ partial "time-breakdown.html" (dict "data" $metrics.response_time "suffix" "h") }}
+
+  Parameters:
+    - data: Object with avg_hours, median_hours, p90_hours, p95_hours
+    - suffix: Optional suffix (default: "h")
+*/}}
+
+{{ $suffix := default "h" .suffix }}
+{{ $data := .data }}
+
+<div class="time-breakdown">
+  <div class="item">
+    <div class="value">{{ printf "%.1f" $data.avg_hours }}{{ $suffix }}</div>
+    <div class="label">Average</div>
+  </div>
+  <div class="item">
+    <div class="value">{{ printf "%.1f" $data.median_hours }}{{ $suffix }}</div>
+    <div class="label">Median</div>
+  </div>
+  <div class="item">
+    <div class="value">{{ printf "%.1f" $data.p90_hours }}{{ $suffix }}</div>
+    <div class="label">P90</div>
+  </div>
+  <div class="item">
+    <div class="value">{{ printf "%.1f" $data.p95_hours }}{{ $suffix }}</div>
+    <div class="label">P95</div>
+  </div>
+</div>

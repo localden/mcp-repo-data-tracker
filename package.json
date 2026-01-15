@@ -1,0 +1,38 @@
+{
+  "name": "mcp-repo-data-tracker",
+  "version": "1.0.0",
+  "description": "Data aggregation for MCP repository metrics dashboard",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "aggregate": "node dist/index.js",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "dashboard",
+    "github",
+    "metrics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^7.0.2",
+    "@octokit/rest": "^20.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

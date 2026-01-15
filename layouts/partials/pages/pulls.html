@@ -1,0 +1,57 @@
+{{/* Pull Requests Page Content */}}
+{{ $m := site.Data.metrics }}
+
+{{ if not $m }}
+<div class="no-data">
+  <p>No data available. Run the aggregation script.</p>
+</div>
+{{ else }}
+
+<!-- Volume Metrics -->
+<div class="section">
+  <h2>Volume</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
+    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count) }}
+    {{ partial "metric-card.html" (dict "label" "Merged (7 days)" "value" $m.pulls.merged_7d) }}
+    {{ partial "metric-card.html" (dict "label" "Merged (30 days)" "value" $m.pulls.merged_30d) }}
+    {{ partial "metric-card.html" (dict "label" "Merged (90 days)" "value" $m.pulls.merged_90d) }}
+    {{ partial "metric-card.html" (dict "label" "Closed not merged (90d)" "value" $m.pulls.closed_not_merged_90d) }}
+  </div>
+</div>
+
+<!-- Review Time -->
+<div class="section">
+  <h2>Time to First Review</h2>
+  {{ partial "time-breakdown.html" (dict "data" $m.pulls.review_time) }}
+</div>
+
+<!-- Merge Time -->
+<div class="section">
+  <h2>Merge Time</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Average" "value" (printf "%.1fh" $m.pulls.merge_time.avg_hours) "small" true) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (printf "%.1fh" $m.pulls.merge_time.median_hours) "small" true) }}
+  </div>
+</div>
+
+<!-- PRs Needing Attention -->
+<div class="section">
+  <h2>PRs Needing Attention</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "No review >24h" "value" $m.pulls.without_review_24h) }}
+    {{ partial "metric-card.html" (dict "label" "No review >7d" "value" $m.pulls.without_review_7d) }}
+  </div>
+</div>
+
+<!-- Size Distribution -->
+<div class="section">
+  <h2>PR Size Distribution (Open PRs)</h2>
+  <div class="metrics-grid">
+    {{ partial "metric-card.html" (dict "label" "Small (<100 lines)" "value" $m.pulls.by_size.small) }}
+    {{ partial "metric-card.html" (dict "label" "Medium (100-500)" "value" $m.pulls.by_size.medium) }}
+    {{ partial "metric-card.html" (dict "label" "Large (>500)" "value" $m.pulls.by_size.large) }}
+  </div>
+</div>
+
+{{ end }}

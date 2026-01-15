@@ -1,0 +1,157 @@
+{{/* Health & Trends Page Content */}}
+{{ $m := site.Data.metrics }}
+{{ $snapshots := site.Data.snapshots }}
+
+{{ if not $m }}
+<div class="no-data">
+  <p>No data available. Run the aggregation script.</p>
+</div>
+{{ else }}
+
+<!-- Hotspots -->
+{{ if $m.hotspots }}
+<div class="section">
+  <h2>Code Hotspots</h2>
+  <p>Files most frequently modified in merged PRs (last 90 days)</p>
+
+  {{ if $m.hotspots.by_file }}
+  <h3>Top Files</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>PRs</th>
+        <th>Total Changes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $m.hotspots.by_file }}
+      <tr>
+        <td><code>{{ .path }}</code></td>
+        <td>{{ .pr_count }}</td>
+        <td>{{ .total_changes }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ end }}
+
+  {{ if $m.hotspots.by_directory }}
+  <h3>Top Directories</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Directory</th>
+        <th>PRs</th>
+        <th>Files Touched</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $m.hotspots.by_directory }}
+      <tr>
+        <td><code>{{ .path }}</code></td>
+        <td>{{ .pr_count }}</td>
+        <td>{{ .file_count }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ end }}
+</div>
+{{ end }}
+
+<!-- Historical Trends -->
+{{ if $snapshots }}
+<div class="section">
+  <h2>Historical Trends</h2>
+
+  {{ $dates := slice }}
+  {{ $issuesOpen := slice }}
+  {{ $pullsOpen := slice }}
+  {{ $stars := slice }}
+
+  {{ range $filename, $data := $snapshots }}
+    {{ $dates = $dates | append $data.date }}
+    {{ $issuesOpen = $issuesOpen | append $data.issues.open }}
+    {{ $pullsOpen = $pullsOpen | append $data.pulls.open }}
+    {{ $stars = $stars | append $data.repository.stars }}
+  {{ end }}
+
+  {{ if gt (len $dates) 1 }}
+  <div class="chart-container">
+    <h3>Open Issues Over Time</h3>
+    <canvas data-chart='{
+      "type": "line",
+      "data": {
+        "labels": {{ $dates | jsonify }},
+        "datasets": [{
+          "label": "Open Issues",
+          "data": {{ $issuesOpen | jsonify }},
+          "borderColor": "rgb(0, 102, 204)",
+          "backgroundColor": "rgba(0, 102, 204, 0.1)",
+          "fill": true,
+          "tension": 0.3
+        }]
+      },
+      "options": {
+        "responsive": true,
+        "plugins": { "legend": { "display": false } }
+      }
+    }'></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h3>Open PRs Over Time</h3>
+    <canvas data-chart='{
+      "type": "line",
+      "data": {
+        "labels": {{ $dates | jsonify }},
+        "datasets": [{
+          "label": "Open PRs",
+          "data": {{ $pullsOpen | jsonify }},
+          "borderColor": "rgb(40, 167, 69)",
+          "backgroundColor": "rgba(40, 167, 69, 0.1)",
+          "fill": true,
+          "tension": 0.3
+        }]
+      },
+      "options": {
+        "responsive": true,
+        "plugins": { "legend": { "display": false } }
+      }
+    }'></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h3>Stars Over Time</h3>
+    <canvas data-chart='{
+      "type": "line",
+      "data": {
+        "labels": {{ $dates | jsonify }},
+        "datasets": [{
+          "label": "Stars",
+          "data": {{ $stars | jsonify }},
+          "borderColor": "rgb(255, 193, 7)",
+          "backgroundColor": "rgba(255, 193, 7, 0.1)",
+          "fill": true,
+          "tension": 0.3
+        }]
+      },
+      "options": {
+        "responsive": true,
+        "plugins": { "legend": { "display": false } }
+      }
+    }'></canvas>
+  </div>
+  {{ else }}
+  <p class="no-data">Not enough historical data yet. Trends will appear after multiple data syncs.</p>
+  {{ end }}
+</div>
+{{ else }}
+<div class="section">
+  <h2>Historical Trends</h2>
+  <p class="no-data">No snapshot data available yet. Trends will appear after daily snapshots accumulate.</p>
+</div>
+{{ end }}
+
+{{ end }}
