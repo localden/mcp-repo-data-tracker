@@ -1,10 +1,17 @@
 <header class="navbar bg-base-100 border-b border-base-300 px-4 overflow-visible">
   <div class="navbar-start gap-2 overflow-visible">
     <a href="{{ .Site.BaseURL }}" class="text-sm font-semibold hover:opacity-80">{{ .Site.Title }}</a>
+    <span class="relative inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
+      <span class="absolute inset-[1px] rounded-full bg-base-100"></span>
+      <i class="fa-solid fa-flask text-[8px] relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent"></i>
+      <span class="relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent">Experimental</span>
+    </span>
+  </div>
+  <div class="navbar-end gap-2 overflow-visible">
     {{/* Repo Picker */}}
     {{ $reposIndex := site.Data.repos }}
     {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
-    <div class="dropdown" id="repo-picker">
+    <div class="dropdown dropdown-end" id="repo-picker">
       <button tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-base-300 rounded-md hover:bg-base-200" id="repo-picker-trigger" aria-expanded="false" aria-haspopup="listbox">
         <span id="repo-picker-label">Select Repository</span>
         <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,8 +30,6 @@
       </div>
     </div>
     {{ end }}
-  </div>
-  <div class="navbar-end">
     <nav class="flex items-center gap-1">
       <a href="{{ .Site.BaseURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if .IsHome }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Overview</a>
       <a href="{{ "issues/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Issues" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Issues</a>

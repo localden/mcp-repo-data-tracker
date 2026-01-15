@@ -1,9 +1,9 @@
-# mcp-repo-data-tracker
+# MCP Open Source Repository Health Tracker
 
 [![Aggregate Repository Data](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml/badge.svg)](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml)
 [![Deploy to GitHub Pages](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml)
 
-A data-driven dashboard for tracking issues and pull requests in the `modelcontextprotocol/modelcontextprotocol` repository. Built with Hugo static site generator and deployed to GitHub Pages.
+Project designed to monitor the health of Model Context Protocol open source repositories. **Only public repositories are tracked**.
 
 ## Prerequisites
 
