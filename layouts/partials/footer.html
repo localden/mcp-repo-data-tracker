@@ -1,14 +1,44 @@
 <footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-300">
-  <aside class="flex flex-col sm:flex-row items-center gap-2 text-sm">
-    {{ $metrics := site.Data.metrics }}
-    {{ if $metrics }}
-    <span class="opacity-70">
-      Last updated: {{ $metrics.timestamp | time.Format "Jan 2, 2006 at 3:04 PM UTC" }}
-    </span>
-    <span class="hidden sm:inline opacity-50">•</span>
+  <aside class="flex flex-col sm:flex-row items-center gap-3 text-xs font-mono">
+    {{/* Get metrics timestamp from first available repo */}}
+    {{ $timestamp := "" }}
+    {{ $reposIndex := site.Data.repos }}
+    {{ if and $reposIndex $reposIndex.repositories }}
+      {{ range $reposIndex.repositories }}
+        {{ if not $timestamp }}
+          {{ with index site.Data.repos .owner }}
+            {{ with index . $.repo }}
+              {{ with .metrics }}
+                {{ $timestamp = .timestamp }}
+              {{ end }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
     {{ end }}
-    <a href="https://github.com/{{ .Site.Params.repo }}" target="_blank" rel="noopener" class="link link-hover">
-      View {{ .Site.Params.repo }} on GitHub
+    {{ if not $timestamp }}
+      {{ with site.Data.metrics }}
+        {{ $timestamp = .timestamp }}
+      {{ end }}
+    {{ end }}
+
+    <div class="flex items-center gap-4 text-base-content/60">
+      {{ if $timestamp }}
+      <div class="flex items-center gap-1.5">
+        <span class="text-base-content/40">data:</span>
+        <code class="px-1.5 py-0.5 bg-base-200 rounded text-base-content/80">{{ $timestamp | time.Format "2006-01-02 15:04 UTC" }}</code>
+      </div>
+      {{ end }}
+      {{ with .GitInfo }}
+      <div class="flex items-center gap-1.5">
+        <span class="text-base-content/40">commit:</span>
+        <a href="https://github.com/localden/mcp-repo-data-tracker/commit/{{ .Hash }}" target="_blank" rel="noopener" class="px-1.5 py-0.5 bg-base-200 rounded text-base-content/80 hover:bg-base-300 transition-colors">{{ .AbbreviatedHash }}</a>
+      </div>
+      {{ end }}
+    </div>
+    <span class="hidden sm:inline text-base-content/30">|</span>
+    <a href="https://github.com/localden/mcp-repo-data-tracker" target="_blank" rel="noopener" class="text-base-content/60 hover:text-base-content transition-colors">
+      VISR
     </a>
   </aside>
 </footer>
