@@ -1,5 +1,5 @@
 {{/*
-  Time Breakdown Partial
+  Time Breakdown Partial - ShadCN-style grid
 
   Usage: {{ partial "time-breakdown.html" (dict "data" $metrics.response_time) }}
 
@@ -11,21 +11,21 @@
 
 {{ $data := .data }}
 
-<div class="time-breakdown">
-  <div class="item">
-    <div class="value">{{ partial "format-hours.html" $data.avg_hours }}</div>
-    <div class="label">Average</div>
+<div class="grid grid-cols-4 gap-4">
+  <div class="text-center">
+    <div class="text-xl font-bold">{{ partial "format-hours.html" $data.avg_hours }}</div>
+    <div class="text-xs font-medium text-base-content/60">Average</div>
   </div>
-  <div class="item">
-    <div class="value">{{ partial "format-hours.html" $data.median_hours }}</div>
-    <div class="label">Median</div>
+  <div class="text-center">
+    <div class="text-xl font-bold">{{ partial "format-hours.html" $data.median_hours }}</div>
+    <div class="text-xs font-medium text-base-content/60">Median</div>
   </div>
-  <div class="item">
-    <div class="value">{{ partial "format-hours.html" $data.p90_hours }}</div>
-    <div class="label">P90</div>
+  <div class="text-center">
+    <div class="text-xl font-bold">{{ partial "format-hours.html" $data.p90_hours }}</div>
+    <div class="text-xs font-medium text-base-content/60">P90</div>
   </div>
-  <div class="item">
-    <div class="value">{{ partial "format-hours.html" $data.p95_hours }}</div>
-    <div class="label">P95</div>
+  <div class="text-center">
+    <div class="text-xl font-bold">{{ partial "format-hours.html" $data.p95_hours }}</div>
+    <div class="text-xs font-medium text-base-content/60">P95</div>
   </div>
 </div>

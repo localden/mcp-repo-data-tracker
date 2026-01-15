@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="{{ .Site.LanguageCode }}" data-theme="light">
 <head>
   {{- partial "head.html" . -}}
 </head>
-<body>
+<body class="min-h-screen bg-base-200">
   {{- partial "header.html" . -}}
-  <main class="container">
+  <main class="container mx-auto px-4 py-8 max-w-6xl">
     {{- block "main" . }}{{- end }}
   </main>
   {{- partial "footer.html" . -}}

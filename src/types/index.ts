@@ -140,17 +140,52 @@ export interface DailySnapshot {
   date: string;
   issues: {
     open: number;
+    closed_7d: number;
     closed_30d: number;
-    response_time_median_hours: number;
+    closed_90d: number;
+    without_response_24h: number;
+    without_response_7d: number;
+    without_response_30d: number;
+    stale_30d: number;
+    stale_60d: number;
+    stale_90d: number;
+    reopen_rate: number;
+    response_time: {
+      avg_hours: number;
+      median_hours: number;
+      p90_hours: number;
+      p95_hours: number;
+    };
   };
   pulls: {
     open: number;
+    merged_7d: number;
     merged_30d: number;
-    review_time_median_hours: number;
+    merged_90d: number;
+    closed_not_merged_90d: number;
+    draft_count: number;
+    without_review_24h: number;
+    without_review_7d: number;
+    review_time: {
+      avg_hours: number;
+      median_hours: number;
+      p90_hours: number;
+      p95_hours: number;
+    };
+    merge_time: {
+      avg_hours: number;
+      median_hours: number;
+    };
+    by_size: {
+      small: number;
+      medium: number;
+      large: number;
+    };
   };
   repository: RepositoryStats;
   contributors: {
     total: number;
+    active_30d: number;
     first_time_30d: number;
   };
 }

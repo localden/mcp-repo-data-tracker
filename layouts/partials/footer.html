@@ -1,15 +1,14 @@
-<footer class="site-footer">
-  <div class="container">
+<footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-300">
+  <aside class="flex flex-col sm:flex-row items-center gap-2 text-sm">
     {{ $metrics := site.Data.metrics }}
     {{ if $metrics }}
-    <p class="last-updated">
+    <span class="opacity-70">
       Last updated: {{ $metrics.timestamp | time.Format "Jan 2, 2006 at 3:04 PM UTC" }}
-    </p>
+    </span>
+    <span class="hidden sm:inline opacity-50">•</span>
     {{ end }}
-    <p class="repo-link">
-      <a href="https://github.com/{{ .Site.Params.repo }}" target="_blank" rel="noopener">
-        View {{ .Site.Params.repo }} on GitHub
-      </a>
-    </p>
-  </div>
+    <a href="https://github.com/{{ .Site.Params.repo }}" target="_blank" rel="noopener" class="link link-hover">
+      View {{ .Site.Params.repo }} on GitHub
+    </a>
+  </aside>
 </footer>

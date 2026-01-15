@@ -105,25 +105,14 @@ export async function consolidateSnapshots(): Promise<void> {
 function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): DailySnapshot {
   // Use the last day of the month as the representative date
   const lastSnapshot = snapshots[snapshots.length - 1];
+  const len = snapshots.length;
 
-  // Calculate averages
-  const avgIssuesOpen = Math.round(
-    snapshots.reduce((sum, s) => sum + s.issues.open, 0) / snapshots.length
-  );
-  const avgIssuesClosed = Math.round(
-    snapshots.reduce((sum, s) => sum + s.issues.closed_30d, 0) / snapshots.length
-  );
-  const avgResponseTime =
-    snapshots.reduce((sum, s) => sum + s.issues.response_time_median_hours, 0) / snapshots.length;
+  // Helper for averaging with fallback to 0 for missing fields
+  const avg = (getter: (s: DailySnapshot) => number | undefined): number =>
+    Math.round(snapshots.reduce((sum, s) => sum + (getter(s) ?? 0), 0) / len);
 
-  const avgPRsOpen = Math.round(
-    snapshots.reduce((sum, s) => sum + s.pulls.open, 0) / snapshots.length
-  );
-  const avgPRsMerged = Math.round(
-    snapshots.reduce((sum, s) => sum + s.pulls.merged_30d, 0) / snapshots.length
-  );
-  const avgReviewTime =
-    snapshots.reduce((sum, s) => sum + s.pulls.review_time_median_hours, 0) / snapshots.length;
+  const avgFloat = (getter: (s: DailySnapshot) => number | undefined): number =>
+    Math.round((snapshots.reduce((sum, s) => sum + (getter(s) ?? 0), 0) / len) * 10) / 10;
 
   // Use max for cumulative metrics
   const maxStars = Math.max(...snapshots.map((s) => s.repository.stars));
@@ -133,14 +122,48 @@ function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): D
   return {
     date: `${monthKey}-01`, // First day of month as representative
     issues: {
-      open: avgIssuesOpen,
-      closed_30d: avgIssuesClosed,
-      response_time_median_hours: Math.round(avgResponseTime * 10) / 10,
+      open: avg((s) => s.issues.open),
+      closed_7d: avg((s) => s.issues.closed_7d),
+      closed_30d: avg((s) => s.issues.closed_30d),
+      closed_90d: avg((s) => s.issues.closed_90d),
+      without_response_24h: avg((s) => s.issues.without_response_24h),
+      without_response_7d: avg((s) => s.issues.without_response_7d),
+      without_response_30d: avg((s) => s.issues.without_response_30d),
+      stale_30d: avg((s) => s.issues.stale_30d),
+      stale_60d: avg((s) => s.issues.stale_60d),
+      stale_90d: avg((s) => s.issues.stale_90d),
+      reopen_rate: avgFloat((s) => s.issues.reopen_rate),
+      response_time: {
+        avg_hours: avgFloat((s) => s.issues.response_time?.avg_hours),
+        median_hours: avgFloat((s) => s.issues.response_time?.median_hours),
+        p90_hours: avgFloat((s) => s.issues.response_time?.p90_hours),
+        p95_hours: avgFloat((s) => s.issues.response_time?.p95_hours),
+      },
     },
     pulls: {
-      open: avgPRsOpen,
-      merged_30d: avgPRsMerged,
-      review_time_median_hours: Math.round(avgReviewTime * 10) / 10,
+      open: avg((s) => s.pulls.open),
+      merged_7d: avg((s) => s.pulls.merged_7d),
+      merged_30d: avg((s) => s.pulls.merged_30d),
+      merged_90d: avg((s) => s.pulls.merged_90d),
+      closed_not_merged_90d: avg((s) => s.pulls.closed_not_merged_90d),
+      draft_count: avg((s) => s.pulls.draft_count),
+      without_review_24h: avg((s) => s.pulls.without_review_24h),
+      without_review_7d: avg((s) => s.pulls.without_review_7d),
+      review_time: {
+        avg_hours: avgFloat((s) => s.pulls.review_time?.avg_hours),
+        median_hours: avgFloat((s) => s.pulls.review_time?.median_hours),
+        p90_hours: avgFloat((s) => s.pulls.review_time?.p90_hours),
+        p95_hours: avgFloat((s) => s.pulls.review_time?.p95_hours),
+      },
+      merge_time: {
+        avg_hours: avgFloat((s) => s.pulls.merge_time?.avg_hours),
+        median_hours: avgFloat((s) => s.pulls.merge_time?.median_hours),
+      },
+      by_size: {
+        small: avg((s) => s.pulls.by_size?.small),
+        medium: avg((s) => s.pulls.by_size?.medium),
+        large: avg((s) => s.pulls.by_size?.large),
+      },
     },
     repository: {
       stars: maxStars,
@@ -148,6 +171,7 @@ function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): D
     },
     contributors: {
       total: maxContributors,
+      active_30d: avg((s) => s.contributors.active_30d),
       first_time_30d: lastSnapshot.contributors.first_time_30d, // Use last value
     },
   };

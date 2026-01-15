@@ -40,6 +40,47 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to initialize chart:', e);
     }
   });
+
+  // Initialize sparkline charts
+  document.querySelectorAll('canvas.sparkline[data-sparkline]').forEach((canvas) => {
+    try {
+      const data = JSON.parse(canvas.dataset.sparkline);
+      const color = canvas.dataset.color || CHART_COLORS.primary;
+
+      new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: data.map((_, i) => i),
+          datasets: [{
+            data: data,
+            borderColor: color,
+            backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+            borderWidth: 1.5,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+          interaction: { enabled: false },
+          animation: false,
+        }
+      });
+    } catch (e) {
+      console.error('Failed to initialize sparkline:', e);
+    }
+  });
 });
 
 // Utility function to format numbers

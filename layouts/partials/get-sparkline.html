@@ -1,0 +1,55 @@
+{{/*
+  Get Sparkline Data Partial
+
+  Extracts an array of values from snapshots for use in sparkline charts.
+  Returns the last 10 data points (or fewer if less data available).
+
+  Usage: {{ $sparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.open") }}
+
+  Parameters:
+    - snapshots: The snapshots map from load-metrics
+    - path: Dot-notation path to the value (e.g., "issues.open", "repository.stars")
+
+  Returns: Array of numeric values sorted by date (oldest to newest)
+*/}}
+
+{{ $result := slice }}
+{{ $snapshots := .snapshots }}
+{{ $path := .path }}
+
+{{ if $snapshots }}
+  {{/* Collect all snapshot data with dates */}}
+  {{ $entries := slice }}
+  {{ range $filename, $data := $snapshots }}
+    {{ $date := $data.date }}
+    {{ $value := $data }}
+
+    {{/* Navigate the path */}}
+    {{ $parts := split $path "." }}
+    {{ range $parts }}
+      {{ if $value }}
+        {{ $value = index $value . }}
+      {{ end }}
+    {{ end }}
+
+    {{ if and $date $value }}
+      {{ $entries = $entries | append (dict "date" $date "value" $value) }}
+    {{ end }}
+  {{ end }}
+
+  {{/* Sort by date and take last 10 */}}
+  {{ $sorted := sort $entries "date" }}
+  {{ $count := len $sorted }}
+  {{ $start := 0 }}
+  {{ if gt $count 10 }}
+    {{ $start = sub $count 10 }}
+  {{ end }}
+
+  {{ range $i, $entry := $sorted }}
+    {{ if ge $i $start }}
+      {{ $result = $result | append $entry.value }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ return $result }}

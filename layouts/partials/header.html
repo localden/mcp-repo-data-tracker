@@ -1,34 +1,36 @@
-<header class="site-header">
-  <div class="container">
-    <div class="header-left">
-      <a href="{{ .Site.BaseURL }}" class="site-title">{{ .Site.Title }}</a>
-      {{/* Repo Picker */}}
-      {{ $reposIndex := site.Data.repos }}
-      {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
-      <div class="repo-picker">
-        <button class="repo-picker-trigger" id="repo-picker-trigger" aria-expanded="false" aria-haspopup="listbox">
-          <span class="repo-picker-label" id="repo-picker-label">Select Repository</span>
-          <svg class="repo-picker-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <ul class="repo-picker-menu" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
-          {{ range $index, $repo := $reposIndex.repositories }}
-          <li class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
-            <span class="repo-picker-item-name">{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}</span>
-            <code class="repo-picker-item-path"><span class="repo-picker-owner">{{ $repo.owner }}</span>/<span class="repo-picker-repo">{{ $repo.repo }}</span></code>
-          </li>
-          {{ end }}
-        </ul>
+<header class="navbar bg-base-100 border-b border-base-300 px-4 overflow-visible">
+  <div class="navbar-start gap-2 overflow-visible">
+    <a href="{{ .Site.BaseURL }}" class="text-sm font-semibold hover:opacity-80">{{ .Site.Title }}</a>
+    {{/* Repo Picker */}}
+    {{ $reposIndex := site.Data.repos }}
+    {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
+    <div class="dropdown" id="repo-picker">
+      <button tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-base-300 rounded-md hover:bg-base-200" id="repo-picker-trigger" aria-expanded="false" aria-haspopup="listbox">
+        <span id="repo-picker-label">Select Repository</span>
+        <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <div tabindex="0" class="dropdown-content bg-base-100 rounded-lg z-[100] w-80 p-1.5 shadow-xl border border-base-300" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
+        {{ range $index, $repo := $reposIndex.repositories }}
+        <div class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
+          <a class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
+            <span class="text-xs font-medium">{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}</span>
+            <code class="font-mono text-[10px] text-base-content/50">{{ $repo.owner }}/{{ $repo.repo }}</code>
+          </a>
+        </div>
+        {{ end }}
       </div>
-      {{ end }}
     </div>
-    <nav class="site-nav">
-      <a href="{{ .Site.BaseURL }}" {{ if .IsHome }}class="active"{{ end }}>Overview</a>
-      <a href="{{ "issues/" | relURL }}" {{ if eq .Title "Issues" }}class="active"{{ end }}>Issues</a>
-      <a href="{{ "pulls/" | relURL }}" {{ if eq .Title "Pull Requests" }}class="active"{{ end }}>Pull Requests</a>
-      <a href="{{ "contributors/" | relURL }}" {{ if eq .Title "Contributors" }}class="active"{{ end }}>Contributors</a>
-      <a href="{{ "health/" | relURL }}" {{ if eq .Title "Health & Trends" }}class="active"{{ end }}>Trends</a>
+    {{ end }}
+  </div>
+  <div class="navbar-end">
+    <nav class="flex items-center gap-1">
+      <a href="{{ .Site.BaseURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if .IsHome }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Overview</a>
+      <a href="{{ "issues/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Issues" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Issues</a>
+      <a href="{{ "pulls/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Pull Requests" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">PRs</a>
+      <a href="{{ "contributors/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Contributors" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Contributors</a>
+      <a href="{{ "health/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Health & Trends" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Trends</a>
     </nav>
   </div>
 </header>

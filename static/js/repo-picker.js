@@ -2,6 +2,7 @@
  * Repo Picker - Dropdown for switching between repositories
  * Uses URL query parameter (?repo=owner/repo) for state management
  * Switches content without page reload when pre-rendered content exists
+ * Works with DaisyUI dropdown component
  */
 (function() {
   'use strict';
@@ -68,24 +69,31 @@
     const items = menu.querySelectorAll('.repo-picker-item');
     items.forEach(item => {
       const itemKey = `${item.dataset.owner}/${item.dataset.repo}`;
+      const anchor = item.querySelector('a');
       if (itemKey === repoKey) {
         item.classList.add('selected');
         item.setAttribute('aria-selected', 'true');
+        if (anchor) anchor.classList.add('active');
         label.textContent = item.dataset.name;
       } else {
         item.classList.remove('selected');
         item.setAttribute('aria-selected', 'false');
+        if (anchor) anchor.classList.remove('active');
       }
     });
   }
 
+  // Close DaisyUI dropdown by blurring the active element
+  function closeDropdown() {
+    document.activeElement?.blur();
+  }
+
   // Initialize the picker
   function initRepoPicker() {
-    const trigger = document.getElementById('repo-picker-trigger');
+    const dropdown = document.getElementById('repo-picker');
     const menu = document.getElementById('repo-picker-menu');
-    const label = document.getElementById('repo-picker-label');
 
-    if (!trigger || !menu) return;
+    if (!dropdown || !menu) return;
 
     const items = menu.querySelectorAll('.repo-picker-item');
     const selectedRepo = getSelectedRepo() || getDefaultRepo();
@@ -102,65 +110,17 @@
       updatePickerUI(repoKey);
     }
 
-    // Toggle menu
-    trigger.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const isOpen = menu.classList.contains('open');
-      if (isOpen) {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    });
-
     // Handle item selection
     items.forEach(item => {
-      item.addEventListener('click', function() {
-        const owner = this.dataset.owner;
-        const repo = this.dataset.repo;
-        closeMenu();
-        setSelectedRepo(owner, repo);
-      });
-    });
-
-    // Close on outside click
-    document.addEventListener('click', function(e) {
-      if (!trigger.contains(e.target) && !menu.contains(e.target)) {
-        closeMenu();
-      }
-    });
-
-    // Keyboard navigation
-    trigger.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        trigger.click();
-      } else if (e.key === 'Escape') {
-        closeMenu();
-      }
-    });
-
-    menu.addEventListener('keydown', function(e) {
-      const focusedItem = document.activeElement;
-      const itemArray = Array.from(items);
-      const currentIndex = itemArray.indexOf(focusedItem);
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        const nextIndex = Math.min(currentIndex + 1, items.length - 1);
-        itemArray[nextIndex].focus();
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        const prevIndex = Math.max(currentIndex - 1, 0);
-        itemArray[prevIndex].focus();
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (focusedItem.classList.contains('repo-picker-item')) {
-          focusedItem.click();
-        }
-      } else if (e.key === 'Escape') {
-        closeMenu();
-        trigger.focus();
+      const anchor = item.querySelector('a');
+      if (anchor) {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const owner = item.dataset.owner;
+          const repo = item.dataset.repo;
+          closeDropdown();
+          setSelectedRepo(owner, repo);
+        });
       }
     });
 
@@ -172,19 +132,6 @@
         updatePickerUI(repoKey);
       }
     });
-
-    function openMenu() {
-      menu.classList.add('open');
-      trigger.setAttribute('aria-expanded', 'true');
-      // Focus selected or first item
-      const selected = menu.querySelector('.repo-picker-item.selected') || items[0];
-      if (selected) selected.focus();
-    }
-
-    function closeMenu() {
-      menu.classList.remove('open');
-      trigger.setAttribute('aria-expanded', 'false');
-    }
   }
 
   // Export for use in other scripts
@@ -196,7 +143,7 @@
 
   // Preserve repo param when clicking navigation links
   function initNavLinkPreservation() {
-    const navLinks = document.querySelectorAll('.site-nav a, .site-title');
+    const navLinks = document.querySelectorAll('.tabs a, .navbar-start > a');
     navLinks.forEach(link => {
       link.addEventListener('click', function(e) {
         const repoParam = new URLSearchParams(window.location.search).get(REPO_PARAM);

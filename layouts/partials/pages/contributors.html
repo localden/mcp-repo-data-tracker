@@ -11,54 +11,56 @@
 {{ $contributors := $data.contributors }}
 
 {{ if not $m }}
-<div class="no-data">
-  <p>No data available. Run the aggregation script.</p>
+<div class="alert alert-warning">
+  <span>No data available. Run the aggregation script.</span>
 </div>
 {{ else }}
 
 <!-- Overview -->
-<div class="section">
-  <h2>Overview</h2>
-  <div class="metrics-grid">
-    {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "subtext" "All-time unique contributors") }}
-    {{ partial "metric-card.html" (dict "label" "Active (30 days)" "value" $m.contributors.active_30d "subtext" "Contributors with recent activity") }}
-    {{ partial "metric-card.html" (dict "label" "First-time (30 days)" "value" $m.contributors.first_time_30d "subtext" "New contributors this month") }}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-3">Overview</h2>
+  <div class="grid grid-cols-3 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "subtext" "All-time unique") }}
+    {{ partial "metric-card.html" (dict "label" "Active (30 days)" "value" $m.contributors.active_30d "subtext" "Recent activity") }}
+    {{ partial "metric-card.html" (dict "label" "First-time (30 days)" "value" $m.contributors.first_time_30d "subtext" "New this month") }}
   </div>
-</div>
+</section>
 
 <!-- Maintainers -->
 {{ $maintainers := site.Data.maintainers }}
 {{ if $maintainers }}
-<div class="section">
-  <h2>Maintainers</h2>
-  <p>{{ len $maintainers.maintainers }} maintainers identified from <code>modelcontextprotocol/access</code></p>
-  <div class="table-container">
-    <table class="maintainers-table">
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-1">Maintainers</h2>
+  <p class="text-xs text-base-content/50 mb-3">{{ len $maintainers.maintainers }} maintainers from <code class="text-xs bg-base-200 px-1 rounded">modelcontextprotocol/access</code></p>
+  <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+    <table class="table table-sm table-bordered w-full">
       <thead>
         <tr>
-          <th>GitHub ID</th>
-          <th>Roles</th>
+          <th class="bg-base-200">GitHub ID</th>
+          <th class="bg-base-200">Roles</th>
         </tr>
       </thead>
       <tbody>
         {{ range $maintainers.maintainers }}
         <tr>
           <td>
-            <a href="https://github.com/{{ .github }}" target="_blank" rel="noopener">
+            <a href="https://github.com/{{ .github }}" target="_blank" rel="noopener" class="link link-primary">
               @{{ .github }}
             </a>
           </td>
           <td>
-            {{ range .roles }}
-            <span class="label-badge">{{ . }}</span>
-            {{ end }}
+            <div class="flex flex-wrap gap-1">
+              {{ range .roles }}
+              <span class="badge badge-sm">{{ . }}</span>
+              {{ end }}
+            </div>
           </td>
         </tr>
         {{ end }}
       </tbody>
     </table>
   </div>
-</div>
+</section>
 {{ end }}
 
 {{ end }}

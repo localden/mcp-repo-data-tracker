@@ -14,135 +14,165 @@
     {{ $repoName := $repoConfig.name | default $repoKey }}
     {{ $m := false }}
 
+    {{ $snapshots := false }}
     {{ with index site.Data.repos $owner }}
       {{ with index . $repo }}
         {{ $m = .metrics }}
+        {{ $snapshots = .snapshots }}
       {{ end }}
     {{ end }}
 
+    {{/* Extract sparkline data for key metrics */}}
+    {{ $starsSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "repository.stars") }}
+    {{ $forksSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "repository.forks") }}
+    {{ $contributorsSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "contributors.active_30d") }}
+    {{ $issuesSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.open") }}
+    {{ $issuesAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.without_response_24h") }}
+    {{ $issuesResponseMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.response_time.median_hours") }}
+    {{ $pullsSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.open") }}
+    {{ $pullsAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.without_review_24h") }}
+    {{ $pullsReviewMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.median_hours") }}
+
     <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
       {{ if not $m }}
-      <div class="no-data">
-        <h2>No data available</h2>
-        <p>Run the aggregation script to populate metrics data for {{ $repoName }}.</p>
+      <div class="alert alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <div>
+          <h3 class="font-bold">No data available</h3>
+          <div class="text-sm">Run the aggregation script to populate metrics data for {{ $repoName }}.</div>
+        </div>
       </div>
       {{ else }}
 
-      <h1>{{ $repoName }}</h1>
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold">{{ $repoName }}</h1>
+        <a href="https://github.com/{{ $repoKey }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs text-base-content/50 hover:text-base-content/70 mt-1">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          <code class="font-mono">{{ $repoKey }}</code>
+        </a>
+      </div>
 
       <!-- Repository Stats -->
-      <div class="section">
-        <h2>Repository</h2>
-        <div class="metrics-grid">
-          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars) }}
-          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks) }}
-          {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known) }}
-          {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d) }}
+      <section class="mb-6">
+        <h2 class="text-sm font-semibold mb-3">Repository</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars "info" "Total GitHub stars on this repository" "sparkline" $starsSparkline "sparklineColor" "rgb(255, 193, 7)") }}
+          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks "info" "Total forks of this repository" "sparkline" $forksSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "info" "All known contributors who have ever contributed") }}
+          {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d "info" "Contributors with activity in the last 30 days" "sparkline" $contributorsSparkline "sparklineColor" "rgb(40, 167, 69)") }}
         </div>
-      </div>
+      </section>
 
       <!-- Issues Summary -->
-      <div class="section">
-        <div class="section-header">
-          <h2>Issues</h2>
-          <a href="{{ "issues/" | relURL }}">View details →</a>
+      <section class="mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-semibold">Issues</h2>
+          <a href="{{ "issues/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
-        <div class="metrics-grid">
-          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
-          {{ partial "metric-card.html" (dict "label" "Closed (7d)" "value" $m.issues.closed_7d) }}
-          {{ partial "metric-card.html" (dict "label" "Closed (30d)" "value" $m.issues.closed_30d) }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "subtext" ">24h without response") }}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)") }}
+          {{ partial "metric-card.html" (dict "label" "Closed (7d)" "value" $m.issues.closed_7d "info" "Issues closed in the last 7 days") }}
+          {{ partial "metric-card.html" (dict "label" "Closed (30d)" "value" $m.issues.closed_30d "info" "Issues closed in the last 30 days") }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "subtext" ">24h without response" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)") }}
         </div>
-
-        <h3>Response Time</h3>
-        {{ partial "time-breakdown.html" (dict "data" $m.issues.response_time) }}
-      </div>
+        <h3 class="text-xs font-semibold text-base-content/70 mb-3">Response Time</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.issues.response_time.avg_hours) "info" "Average time to first response on issues") }}
+          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.issues.response_time.median_hours) "info" "Median time to first response (50th percentile)" "sparkline" $issuesResponseMedianSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.issues.response_time.p90_hours) "info" "90th percentile response time") }}
+          {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.issues.response_time.p95_hours) "info" "95th percentile response time") }}
+        </div>
+      </section>
 
       <!-- PRs Summary -->
-      <div class="section">
-        <div class="section-header">
-          <h2>Pull Requests</h2>
-          <a href="{{ "pulls/" | relURL }}">View details →</a>
+      <section class="mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-semibold">Pull Requests</h2>
+          <a href="{{ "pulls/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
-        <div class="metrics-grid">
-          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
-          {{ partial "metric-card.html" (dict "label" "Merged (7d)" "value" $m.pulls.merged_7d) }}
-          {{ partial "metric-card.html" (dict "label" "Merged (30d)" "value" $m.pulls.merged_30d) }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "subtext" ">24h without review") }}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)") }}
+          {{ partial "metric-card.html" (dict "label" "Merged (7d)" "value" $m.pulls.merged_7d "info" "PRs merged in the last 7 days") }}
+          {{ partial "metric-card.html" (dict "label" "Merged (30d)" "value" $m.pulls.merged_30d "info" "PRs merged in the last 30 days") }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "subtext" ">24h without review" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)") }}
         </div>
-
-        <h3>Review Time</h3>
-        {{ partial "time-breakdown.html" (dict "data" $m.pulls.review_time) }}
-      </div>
+        <h3 class="text-xs font-semibold text-base-content/70 mb-3">Review Time</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours) "info" "Average time to first review on PRs") }}
+          {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "info" "Median time to first review (50th percentile)" "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)") }}
+          {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours) "info" "90th percentile review time") }}
+          {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours) "info" "95th percentile review time") }}
+        </div>
+      </section>
 
       <!-- Quick Stats -->
-      <div class="section">
-        <h2>At a Glance</h2>
-        <div class="two-column">
+      <section class="mb-6">
+        <h2 class="text-sm font-semibold mb-3">At a Glance</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h3>Issue Health</h3>
-            <div class="table-container">
-              <table>
+            <h3 class="text-xs font-medium text-base-content/70 mb-2">Issue Health</h3>
+            <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+              <table class="table table-sm table-bordered table-fixed w-full">
                 <thead>
                   <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
+                    <th class="bg-base-200 w-1/2">Metric</th>
+                    <th class="bg-base-200 w-1/2 text-right">Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td>Stale (>30d)</td>
-                    <td>{{ $m.issues.stale_30d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_30d }}</td>
                   </tr>
                   <tr>
                     <td>Stale (>60d)</td>
-                    <td>{{ $m.issues.stale_60d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_60d }}</td>
                   </tr>
                   <tr>
                     <td>Stale (>90d)</td>
-                    <td>{{ $m.issues.stale_90d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_90d }}</td>
                   </tr>
                   <tr>
                     <td>Reopen Rate</td>
-                    <td>{{ printf "%.0f%%" (mul $m.issues.reopen_rate 100) }}</td>
+                    <td class="text-right font-semibold">{{ printf "%.0f%%" (mul $m.issues.reopen_rate 100) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
           <div>
-            <h3>PR Health</h3>
-            <div class="table-container">
-              <table>
+            <h3 class="text-xs font-medium text-base-content/70 mb-2">PR Health</h3>
+            <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+              <table class="table table-sm table-bordered table-fixed w-full">
                 <thead>
                   <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
+                    <th class="bg-base-200 w-1/2">Metric</th>
+                    <th class="bg-base-200 w-1/2 text-right">Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td>Draft PRs</td>
-                    <td>{{ $m.pulls.draft_count }}</td>
+                    <td class="text-right font-semibold">{{ $m.pulls.draft_count }}</td>
                   </tr>
                   <tr>
                     <td>Closed (not merged, 90d)</td>
-                    <td>{{ $m.pulls.closed_not_merged_90d }}</td>
+                    <td class="text-right font-semibold">{{ $m.pulls.closed_not_merged_90d }}</td>
                   </tr>
                   <tr>
                     <td>Avg Merge Time</td>
-                    <td>{{ partial "format-hours.html" $m.pulls.merge_time.avg_hours }}</td>
+                    <td class="text-right font-semibold">{{ partial "format-hours.html" $m.pulls.merge_time.avg_hours }}</td>
                   </tr>
                   <tr>
                     <td>Median Merge Time</td>
-                    <td>{{ partial "format-hours.html" $m.pulls.merge_time.median_hours }}</td>
+                    <td class="text-right font-semibold">{{ partial "format-hours.html" $m.pulls.merge_time.median_hours }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {{ end }}
     </div>
@@ -153,12 +183,15 @@
   {{ $repoName := site.Params.repo | default "Repository" }}
 
   {{ if not $m }}
-  <div class="no-data">
-    <h2>No data available</h2>
-    <p>Run the aggregation script to populate metrics data.</p>
+  <div class="alert alert-warning">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+    <div>
+      <h3 class="font-bold">No data available</h3>
+      <div class="text-sm">Run the aggregation script to populate metrics data.</div>
+    </div>
   </div>
   {{ else }}
-  <h1>{{ $repoName }}</h1>
+  <h1 class="text-3xl font-bold mb-6">{{ $repoName }}</h1>
   <!-- Content for legacy mode would go here -->
   {{ end }}
 {{ end }}

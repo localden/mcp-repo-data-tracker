@@ -1,29 +1,44 @@
 {{/*
-  Metric Card Partial
+  Metric Card Partial - ShadCN-style individual card
 
-  Usage: {{ partial "metric-card.html" (dict "label" "Open Issues" "value" 42 "subtext" "5 new this week") }}
+  Usage: {{ partial "metric-card.html" (dict "label" "Open Issues" "value" 42 "subtext" "5 new this week" "info" "Tooltip text") }}
 
   Parameters:
     - label: The metric label
     - value: The metric value
     - subtext: Optional subtext below the value
-    - small: Optional boolean to use smaller value font
+    - info: Optional tooltip text explaining the metric
+    - sparkline: Optional array of values for a mini chart (last 10 data points)
+    - sparklineColor: Optional color for sparkline (default: primary blue)
 */}}
 
-<div class="metric-card">
-  <div class="label">{{ .label }}</div>
-  <div class="value{{ if .small }} small{{ end }}">
-    {{- with .value -}}
-      {{- if (eq (printf "%T" .) "float64") -}}
-        {{ lang.FormatNumber 0 . }}
-      {{- else if (eq (printf "%T" .) "int") -}}
-        {{ lang.FormatNumber 0 . }}
+<div class="bg-base-100 border border-base-300 rounded-lg p-4 overflow-visible">
+  <div class="text-xs font-medium text-base-content/70 mb-1 inline-flex items-center gap-1 overflow-visible">
+    {{ .label }}
+    {{ with .info }}<div class="tooltip tooltip-top"><div class="tooltip-content">{{ . }}</div><i class="fa-solid fa-circle-info text-base-content/40 cursor-help"></i></div>{{ end }}
+  </div>
+  <div class="flex items-end justify-between gap-2">
+    <div class="text-2xl font-bold">
+      {{- with .value -}}
+        {{- if (eq (printf "%T" .) "float64") -}}
+          {{ lang.FormatNumber 0 . }}
+        {{- else if (eq (printf "%T" .) "int") -}}
+          {{ lang.FormatNumber 0 . }}
+        {{- else -}}
+          {{ . }}
+        {{- end -}}
       {{- else -}}
-        {{ . }}
+        —
       {{- end -}}
-    {{- else -}}
-      —
+    </div>
+    {{- with .sparkline -}}
+      {{- if gt (len .) 1 -}}
+        {{- $color := $.sparklineColor | default "rgb(0, 102, 204)" -}}
+        <div class="h-8 w-16 flex-shrink-0">
+          <canvas class="sparkline" data-sparkline='{{ . | jsonify }}' data-color='{{ $color }}'></canvas>
+        </div>
+      {{- end -}}
     {{- end -}}
   </div>
-  {{ with .subtext }}<div class="subtext">{{ . }}</div>{{ end }}
+  {{ with .subtext }}<div class="text-[10px] text-base-content/40 mt-1">{{ . }}</div>{{ end }}
 </div>
