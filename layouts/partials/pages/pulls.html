@@ -21,10 +21,10 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
     {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count) }}
     {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count) }}
-    {{ partial "metric-card.html" (dict "label" "Merged (7 days)" "value" $m.pulls.merged_7d) }}
-    {{ partial "metric-card.html" (dict "label" "Merged (30 days)" "value" $m.pulls.merged_30d) }}
-    {{ partial "metric-card.html" (dict "label" "Merged (90 days)" "value" $m.pulls.merged_90d) }}
-    {{ partial "metric-card.html" (dict "label" "Closed not merged (90d)" "value" $m.pulls.closed_not_merged_90d) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days") }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days") }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days") }}
+    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days") }}
   </div>
 </section>
 
@@ -52,8 +52,8 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">PRs Needing Attention</h2>
   <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No review >24h" "value" $m.pulls.without_review_24h) }}
-    {{ partial "metric-card.html" (dict "label" "No review >7d" "value" $m.pulls.without_review_7d) }}
+    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours") }}
+    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days") }}
   </div>
 </section>
 
@@ -62,9 +62,9 @@
   <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
   <div class="grid grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Small (<100 lines)" "value" $m.pulls.by_size.small) }}
-    {{ partial "metric-card.html" (dict "label" "Medium (100-500)" "value" $m.pulls.by_size.medium) }}
-    {{ partial "metric-card.html" (dict "label" "Large (>500)" "value" $m.pulls.by_size.large) }}
+    {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
+    {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
+    {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
   </div>
 </section>
 

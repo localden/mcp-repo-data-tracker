@@ -6,6 +6,7 @@
   Parameters:
     - label: The metric label
     - value: The metric value
+    - descriptor: Optional muted descriptor shown at bottom (e.g., ">30 days", "last 7d")
     - subtext: Optional subtext below the value
     - info: Optional tooltip text explaining the metric
     - sparkline: Optional array of values for a mini chart (last 10 data points)
@@ -41,4 +42,5 @@
     {{- end -}}
   </div>
   {{ with .subtext }}<div class="text-[10px] text-base-content/40 mt-1">{{ . }}</div>{{ end }}
+  {{ with .descriptor }}<div class="text-[10px] text-base-content/30 mt-1.5 font-normal">{{ . }}</div>{{ end }}
 </div>

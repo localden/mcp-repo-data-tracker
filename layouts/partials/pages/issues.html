@@ -20,9 +20,9 @@
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count) }}
-    {{ partial "metric-card.html" (dict "label" "Closed (7 days)" "value" $m.issues.closed_7d) }}
-    {{ partial "metric-card.html" (dict "label" "Closed (30 days)" "value" $m.issues.closed_30d) }}
-    {{ partial "metric-card.html" (dict "label" "Closed (90 days)" "value" $m.issues.closed_90d) }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days") }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days") }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_90d "descriptor" "last 90 days") }}
   </div>
 </section>
 
@@ -42,9 +42,9 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Issues Needing Attention</h2>
   <div class="grid grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No response >24h" "value" $m.issues.without_response_24h) }}
-    {{ partial "metric-card.html" (dict "label" "No response >7d" "value" $m.issues.without_response_7d) }}
-    {{ partial "metric-card.html" (dict "label" "No response >30d" "value" $m.issues.without_response_30d) }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours") }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_7d "descriptor" ">7 days") }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_30d "descriptor" ">30 days") }}
   </div>
 </section>
 
@@ -53,9 +53,9 @@
   <h2 class="text-sm font-semibold mb-1">Stale Issues</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Issues with no activity</p>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Stale >30 days" "value" $m.issues.stale_30d) }}
-    {{ partial "metric-card.html" (dict "label" "Stale >60 days" "value" $m.issues.stale_60d) }}
-    {{ partial "metric-card.html" (dict "label" "Stale >90 days" "value" $m.issues.stale_90d) }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_30d "descriptor" ">30 days") }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_60d "descriptor" ">60 days") }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_90d "descriptor" ">90 days") }}
     {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.0f%%" (mul $m.issues.reopen_rate 100))) }}
   </div>
 </section>
@@ -64,15 +64,31 @@
 {{ if $m.issues.by_label }}
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Issues by Label</h2>
-  <div class="bg-base-100 border border-base-300 rounded-lg p-3">
-    <div class="flex flex-wrap gap-1.5">
-      {{ range $label, $count := $m.issues.by_label }}
-      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border border-base-300 bg-base-200">
-        {{ $label }}
-        <span class="font-medium">{{ $count }}</span>
-      </span>
-      {{ end }}
-    </div>
+  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
+    <table class="table table-xs w-full">
+      <thead>
+        <tr class="border-b border-base-300">
+          <th class="bg-base-200/50 text-xs font-medium">Label</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{/* Convert map to slice for sorting */}}
+        {{ $labelSlice := slice }}
+        {{ range $label, $count := $m.issues.by_label }}
+          {{ $labelSlice = $labelSlice | append (dict "label" $label "count" $count) }}
+        {{ end }}
+        {{/* Sort by count descending */}}
+        {{ range sort $labelSlice "count" "desc" }}
+        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/30">
+          <td class="text-xs">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border border-base-300 bg-base-200">{{ .label }}</span>
+          </td>
+          <td class="text-xs font-medium text-right">{{ .count }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
   </div>
 </section>
 {{ end }}
