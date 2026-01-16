@@ -13,7 +13,7 @@
 {{- $hours := . -}}
 {{- if ge $hours 24 -}}
   {{- $days := div $hours 24 -}}
-  {{- printf "%.0f" $days -}}<span class="text-base-content/40 font-normal text-lg">d</span>
+  {{- printf "%.0f" $days -}}<span class="time-unit">d</span>
 {{- else -}}
-  {{- printf "%.0f" $hours -}}<span class="text-base-content/40 font-normal text-lg">h</span>
+  {{- printf "%.0f" $hours -}}<span class="time-unit">h</span>
 {{- end -}}
