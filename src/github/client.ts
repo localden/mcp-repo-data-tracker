@@ -48,3 +48,41 @@ export function logRateLimit(response: { headers?: Record<string, string> }, ver
     console.log(`  Rate limit: ${remaining}/${limit} remaining (resets at ${resetDate})`);
   }
 }
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Process items in batches with rate limiting
+ * @param items - Array of items to process
+ * @param batchSize - Number of items to process in parallel
+ * @param delayMs - Delay in milliseconds between batches
+ * @param processor - Async function to process each item
+ */
+export async function processBatched<T, R>(
+  items: T[],
+  batchSize: number,
+  delayMs: number,
+  processor: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+
+    // Process batch in parallel
+    const batchResults = await Promise.all(batch.map(processor));
+    results.push(...batchResults);
+
+    // Add delay between batches (but not after the last batch)
+    if (i + batchSize < items.length) {
+      await sleep(delayMs);
+    }
+  }
+
+  return results;
+}

@@ -3,10 +3,13 @@
  */
 
 import type { GitHubClient } from './client.js';
+import { sleep } from './client.js';
 import type { GitHubIssue, GitHubComment, IssueData } from '../types/index.js';
 import { FETCH_ISSUES_QUERY, FETCH_ISSUE_COMMENTS_QUERY } from './queries.js';
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+// Delay between paginated requests to avoid secondary rate limits
+const PAGE_DELAY_MS = 300;
 
 interface IssuesQueryResponse {
   repository: {
@@ -101,6 +104,10 @@ async function fetchIssuesByState(
     if (hasNextPage) {
       hasNextPage = pageInfo.hasNextPage;
       cursor = pageInfo.endCursor;
+      // Add delay between pages to avoid secondary rate limits
+      if (hasNextPage) {
+        await sleep(PAGE_DELAY_MS);
+      }
     }
 
     if (verbose) {
@@ -135,6 +142,11 @@ async function fetchAdditionalComments(
 
     hasNextPage = pageInfo.hasNextPage;
     currentCursor = pageInfo.endCursor;
+
+    // Add delay between pages
+    if (hasNextPage) {
+      await sleep(PAGE_DELAY_MS);
+    }
 
     if (verbose) {
       console.log(`      Fetched ${comments.length} additional comments...`);

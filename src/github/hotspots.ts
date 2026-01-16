@@ -3,9 +3,12 @@
  */
 
 import type { GitHubClient } from './client.js';
+import { processBatched } from './client.js';
 import type { GitHubPullRequest, GitHubPRFile, HotspotRawData } from '../types/index.js';
 
-const BATCH_SIZE = 20;
+// Reduced batch size and added delay to avoid secondary rate limits
+const BATCH_SIZE = 5;
+const BATCH_DELAY_MS = 1000; // 1 second between batches
 
 /**
  * Fetch files for merged PRs to analyze hotspots
@@ -17,50 +20,47 @@ export async function fetchHotspotData(
   mergedPRs: GitHubPullRequest[],
   verbose: boolean
 ): Promise<HotspotRawData[]> {
-  const results: HotspotRawData[] = [];
+  let processed = 0;
 
-  // Process PRs in batches
-  for (let i = 0; i < mergedPRs.length; i += BATCH_SIZE) {
-    const batch = mergedPRs.slice(i, i + BATCH_SIZE);
+  const results = await processBatched(
+    mergedPRs,
+    BATCH_SIZE,
+    BATCH_DELAY_MS,
+    async (pr) => {
+      try {
+        const response = await client.rest.pulls.listFiles({
+          owner,
+          repo,
+          pull_number: pr.number,
+          per_page: 300,
+        });
 
-    // Fetch files for each PR in parallel
-    const batchResults = await Promise.all(
-      batch.map(async (pr) => {
-        try {
-          const response = await client.rest.pulls.listFiles({
-            owner,
-            repo,
-            pull_number: pr.number,
-            per_page: 300,
-          });
+        const files: GitHubPRFile[] = response.data.map((file) => ({
+          filename: file.filename,
+          additions: file.additions,
+          deletions: file.deletions,
+          changes: file.changes,
+        }));
 
-          const files: GitHubPRFile[] = response.data.map((file) => ({
-            filename: file.filename,
-            additions: file.additions,
-            deletions: file.deletions,
-            changes: file.changes,
-          }));
-
-          return {
-            prNumber: pr.number,
-            files,
-          };
-        } catch (error) {
-          console.warn(`Warning: Failed to fetch files for PR #${pr.number}:`, error);
-          return {
-            prNumber: pr.number,
-            files: [],
-          };
+        processed++;
+        if (verbose && processed % 10 === 0) {
+          console.log(`    Processed ${processed}/${mergedPRs.length} PRs...`);
         }
-      })
-    );
 
-    results.push(...batchResults);
-
-    if (verbose) {
-      console.log(`    Processed ${Math.min(i + BATCH_SIZE, mergedPRs.length)}/${mergedPRs.length} PRs...`);
+        return {
+          prNumber: pr.number,
+          files,
+        };
+      } catch (error) {
+        console.warn(`Warning: Failed to fetch files for PR #${pr.number}:`, error);
+        processed++;
+        return {
+          prNumber: pr.number,
+          files: [],
+        };
+      }
     }
-  }
+  );
 
   return results;
 }

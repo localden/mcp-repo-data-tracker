@@ -3,10 +3,13 @@
  */
 
 import type { GitHubClient } from './client.js';
+import { sleep } from './client.js';
 import type { GitHubPullRequest, PullRequestData } from '../types/index.js';
 import { FETCH_PRS_QUERY } from './queries.js';
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+// Delay between paginated requests to avoid secondary rate limits
+const PAGE_DELAY_MS = 300;
 
 interface PRsQueryResponse {
   repository: {
@@ -78,6 +81,10 @@ async function fetchPRsByState(
     if (hasNextPage) {
       hasNextPage = pageInfo.hasNextPage;
       cursor = pageInfo.endCursor;
+      // Add delay between pages to avoid secondary rate limits
+      if (hasNextPage) {
+        await sleep(PAGE_DELAY_MS);
+      }
     }
 
     if (verbose) {
