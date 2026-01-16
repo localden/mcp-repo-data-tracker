@@ -23,53 +23,93 @@
   <p class="text-[10px] text-base-content/40 mb-3">Files most frequently modified in merged PRs (last 90 days)</p>
 
   {{ if $m.hotspots.by_file }}
+  {{/* Build GitHub base URL */}}
+  {{ $ghFileBase := printf "https://github.com/%s/blob/main" $repoKey }}
   <div class="mb-4">
     <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Files</h3>
-    <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
-      <table class="table table-sm table-bordered table-fixed w-full">
-        <thead>
-          <tr>
-            <th class="bg-base-200 w-1/2">File</th>
-            <th class="bg-base-200 w-1/4">PRs</th>
-            <th class="bg-base-200 w-1/4">Total Changes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{ range $m.hotspots.by_file }}
-          <tr>
-            <td><code class="text-xs break-all">{{ .path }}</code></td>
-            <td>{{ .pr_count }}</td>
-            <td>{{ .total_changes }}</td>
-          </tr>
-          {{ end }}
-        </tbody>
-      </table>
+    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+      {{/* Find max PR count for scaling */}}
+      {{ $maxPR := 0 }}
+      {{ range $m.hotspots.by_file }}
+        {{ if gt .pr_count $maxPR }}{{ $maxPR = .pr_count }}{{ end }}
+      {{ end }}
+
+      <div class="hotspot-grid">
+        {{ range first 10 $m.hotspots.by_file }}
+          {{ $ratio := div (float .pr_count) (float $maxPR) }}
+          {{ $filled := int (math.Round (mul $ratio 10)) }}
+          {{ if lt $filled 1 }}{{ $filled = 1 }}{{ end }}
+          {{ $level := int (math.Round (mul $ratio 4)) }}
+          {{ if lt $level 1 }}{{ $level = 1 }}{{ end }}
+          {{ if gt $level 4 }}{{ $level = 4 }}{{ end }}
+          {{ $fileLink := printf "%s/%s" $ghFileBase .path }}
+
+          <div class="hotspot-row">
+            <span class="hotspot-file" title="{{ .path }}">
+              <a href="{{ $fileLink }}" target="_blank" rel="noopener">{{ .path }}</a>
+            </span>
+            <div class="hotspot-squares">
+              {{ range seq 10 }}
+                {{ if le . $filled }}
+                  <span class="hotspot-sq hotspot-sq-{{ $level }}"></span>
+                {{ else }}
+                  <span class="hotspot-sq hotspot-sq-0"></span>
+                {{ end }}
+              {{ end }}
+            </div>
+            <div class="hotspot-stats">
+              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .pr_count }}</span><span class="hotspot-stat-label">PRs</span></span>
+              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ lang.FormatNumber 0 .total_changes }}</span><span class="hotspot-stat-label">Δ</span></span>
+            </div>
+          </div>
+        {{ end }}
+      </div>
     </div>
   </div>
   {{ end }}
 
   {{ if $m.hotspots.by_directory }}
+  {{/* Build GitHub base URL for directories */}}
+  {{ $ghDirBase := printf "https://github.com/%s/tree/main" $repoKey }}
   <div>
     <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Directories</h3>
-    <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
-      <table class="table table-sm table-bordered table-fixed w-full">
-        <thead>
-          <tr>
-            <th class="bg-base-200 w-1/2">Directory</th>
-            <th class="bg-base-200 w-1/4">PRs</th>
-            <th class="bg-base-200 w-1/4">Files Touched</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{ range $m.hotspots.by_directory }}
-          <tr>
-            <td><code class="text-xs break-all">{{ .path }}</code></td>
-            <td>{{ .pr_count }}</td>
-            <td>{{ .file_count }}</td>
-          </tr>
-          {{ end }}
-        </tbody>
-      </table>
+    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+      {{/* Find max PR count for scaling */}}
+      {{ $maxDirPR := 0 }}
+      {{ range $m.hotspots.by_directory }}
+        {{ if gt .pr_count $maxDirPR }}{{ $maxDirPR = .pr_count }}{{ end }}
+      {{ end }}
+
+      <div class="hotspot-grid">
+        {{ range first 10 $m.hotspots.by_directory }}
+          {{ $ratio := div (float .pr_count) (float $maxDirPR) }}
+          {{ $filled := int (math.Round (mul $ratio 10)) }}
+          {{ if lt $filled 1 }}{{ $filled = 1 }}{{ end }}
+          {{ $level := int (math.Round (mul $ratio 4)) }}
+          {{ if lt $level 1 }}{{ $level = 1 }}{{ end }}
+          {{ if gt $level 4 }}{{ $level = 4 }}{{ end }}
+          {{ $dirLink := printf "%s/%s" $ghDirBase .path }}
+
+          <div class="hotspot-row">
+            <span class="hotspot-file" title="{{ .path }}">
+              <a href="{{ $dirLink }}" target="_blank" rel="noopener">{{ .path }}</a>
+            </span>
+            <div class="hotspot-squares">
+              {{ range seq 10 }}
+                {{ if le . $filled }}
+                  <span class="hotspot-sq hotspot-sq-{{ $level }}"></span>
+                {{ else }}
+                  <span class="hotspot-sq hotspot-sq-0"></span>
+                {{ end }}
+              {{ end }}
+            </div>
+            <div class="hotspot-stats">
+              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .pr_count }}</span><span class="hotspot-stat-label">PRs</span></span>
+              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .file_count }}</span><span class="hotspot-stat-label">files</span></span>
+            </div>
+          </div>
+        {{ end }}
+      </div>
     </div>
   </div>
   {{ end }}

@@ -66,10 +66,14 @@
       {{/* Build GitHub filter URLs */}}
       {{ $ghRepoUrl := printf "https://github.com/%s" $repoKey }}
       {{ $openIssuesLink := printf "%s/issues?q=is:issue+is:open" $ghRepoUrl }}
+      {{ $opened7dIssuesLink := printf "%s/issues?q=is:issue+created:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+      {{ $opened30dIssuesLink := printf "%s/issues?q=is:issue+created:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
       {{ $closed7dIssuesLink := printf "%s/issues?q=is:issue+is:closed+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
       {{ $closed30dIssuesLink := printf "%s/issues?q=is:issue+is:closed+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
       {{ $noResponse24hLink := printf "%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $ghRepoUrl (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
       {{ $openPRsLink := printf "%s/pulls?q=is:pr+is:open" $ghRepoUrl }}
+      {{ $opened7dPRsLink := printf "%s/pulls?q=is:pr+created:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+      {{ $opened30dPRsLink := printf "%s/pulls?q=is:pr+created:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
       {{ $merged7dPRsLink := printf "%s/pulls?q=is:pr+is:merged+merged:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
       {{ $merged30dPRsLink := printf "%s/pulls?q=is:pr+is:merged+merged:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
       {{ $noReview24hLink := printf "%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $ghRepoUrl (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
@@ -95,9 +99,11 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesTrend "trendGoodDirection" "down" "link" $openIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.issues.opened_7d "descriptor" "last 7 days" "info" "Issues opened in the last 7 days" "link" $opened7dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.issues.opened_30d "descriptor" "last 30 days" "info" "Issues opened in the last 30 days" "link" $opened30dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
           {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days" "link" $closed7dIssuesLink) }}
           {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days" "link" $closed30dIssuesLink) }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Response Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -116,9 +122,11 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_7d "descriptor" "last 7 days" "info" "PRs opened in the last 7 days" "link" $opened7dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_30d "descriptor" "last 30 days" "info" "PRs opened in the last 30 days" "link" $opened30dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
           {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days" "link" $merged7dPRsLink) }}
           {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days" "link" $merged30dPRsLink) }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Review Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">

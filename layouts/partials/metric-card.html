@@ -21,10 +21,12 @@
 
 {{- $hasLink := .link -}}
 {{- $linkClasses := cond $hasLink "hover:border-base-content/30 hover:shadow-sm transition-all cursor-pointer group" "" -}}
-<div class="relative bg-base-100 border border-base-300 rounded-lg p-4 overflow-hidden {{ $linkClasses }}"{{ with .link }} onclick="window.open('{{ . }}', '_blank')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')window.open('{{ . }}', '_blank')"{{ end }}>
+<div class="relative bg-base-100 border border-base-300 rounded-lg p-4 {{ $linkClasses }}"{{ with .link }} onclick="window.open('{{ . }}', '_blank')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')window.open('{{ . }}', '_blank')"{{ end }}>
   {{- if $hasLink -}}
   {{/* Corner fold/earmark indicator for clickable cards - grows on hover */}}
-  <svg class="earmark" style="position:absolute;bottom:0;right:0;width:16px;height:16px;transition:all 0.2s ease;opacity:0.5;" viewBox="0 0 16 16" fill="currentColor"><path d="M16 0 L16 16 L0 16 Z"/></svg>
+  <div class="absolute bottom-0 right-0 overflow-hidden rounded-br-lg" style="width:24px;height:24px;">
+    <svg class="earmark absolute bottom-0 right-0" style="width:16px;height:16px;transition:all 0.2s ease;opacity:0.5;" viewBox="0 0 16 16" fill="currentColor"><path d="M16 0 L16 16 L0 16 Z"/></svg>
+  </div>
   {{- end -}}
   <div class="flex items-start justify-between gap-2 mb-1">
     <div class="text-xs font-medium text-base-content/70 inline-flex items-center gap-1 overflow-visible">

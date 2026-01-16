@@ -24,3 +24,67 @@
   height: 24px !important;
   opacity: 1 !important;
 }
+
+/* Hotspot Grid - GitHub contribution style */
+.hotspot-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hotspot-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hotspot-file {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hotspot-file a {
+  color: var(--color-primary, #0066cc);
+  text-decoration: none;
+}
+.hotspot-file a:hover {
+  text-decoration: underline;
+}
+.hotspot-squares {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.hotspot-sq {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.hotspot-sq-0 { background: #ebedf0; }
+.hotspot-sq-1 { background: #9be9a8; }
+.hotspot-sq-2 { background: #40c463; }
+.hotspot-sq-3 { background: #30a14e; }
+.hotspot-sq-4 { background: #216e39; }
+.hotspot-stats {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 10px;
+}
+.hotspot-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-base-content, inherit);
+  opacity: 0.6;
+}
+.hotspot-stat-value {
+  font-weight: 500;
+  min-width: 24px;
+  text-align: right;
+}
+.hotspot-stat-label {
+  opacity: 0.7;
+}

@@ -32,6 +32,9 @@
 {{ $repoKey := $data.repoKey }}
 {{ $openPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open" $repoKey }}
 {{ $draftPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+draft:true" $repoKey }}
+{{ $opened7dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $opened30dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $opened90dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 {{ $merged7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
 {{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
 {{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
@@ -40,9 +43,12 @@
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
     {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count "link" $draftPRsLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_7d "descriptor" "last 7 days" "link" $opened7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_30d "descriptor" "last 30 days" "link" $opened30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_90d "descriptor" "last 90 days" "link" $opened90dLink) }}
     {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "link" $merged7dLink) }}
     {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "link" $merged30dLink) }}
     {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days" "link" $merged90dLink) }}

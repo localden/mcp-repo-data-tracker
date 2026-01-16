@@ -35,12 +35,18 @@
 {{ $closed7dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
 {{ $closed30dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
 {{ $closed90dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+{{ $opened7dLink := printf "https://github.com/%s/issues?q=is:issue+created:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $opened30dLink := printf "https://github.com/%s/issues?q=is:issue+created:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $opened90dLink := printf "https://github.com/%s/issues?q=is:issue+created:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "sparkline" $issuesOpenSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesOpenTrend "trendGoodDirection" "down" "link" $openIssuesLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.issues.opened_7d "descriptor" "last 7 days" "link" $opened7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.issues.opened_30d "descriptor" "last 30 days" "link" $opened30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.issues.opened_90d "descriptor" "last 90 days" "link" $opened90dLink) }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "link" $closed7dLink) }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "link" $closed30dLink) }}
     {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_90d "descriptor" "last 90 days" "link" $closed90dLink) }}
