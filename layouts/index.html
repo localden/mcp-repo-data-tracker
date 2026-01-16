@@ -147,14 +147,13 @@
       {{ $stale30dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_30d "denominator" $m.issues.open_count) }}
       {{ $stale60dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_60d "denominator" $m.issues.open_count) }}
       {{ $stale90dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_90d "denominator" $m.issues.open_count) }}
-      {{/* Calculate PR rejection rate (closed not merged as % of all closed PRs in 90d) */}}
-      {{ $totalClosed90d := add $m.pulls.merged_90d $m.pulls.closed_not_merged_90d }}
-      {{ $prRejectRate90d := partial "calc-percent.html" (dict "numerator" $m.pulls.closed_not_merged_90d "denominator" $totalClosed90d) }}
+      {{/* PR rejection rate is now pre-computed in metrics */}}
+      {{ $prRejectRate90d := $m.pulls.rejection_rate_pct | default 0.0 }}
 
       <!-- Quick Stats -->
       <section class="mb-6">
         <h2 class="text-sm font-semibold mb-3">At a Glance</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <h3 class="text-xs font-medium text-base-content/70 mb-2">Issue Health</h3>
             <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
@@ -166,13 +165,17 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <tr>
+                    <td>Label Coverage</td>
+                    <td class="text-left font-semibold">{{ printf "%.0f%%" ($m.issues.label_coverage_pct | default 0) }}</td>
+                  </tr>
+                  <tr>
+                    <td>Median Close Time</td>
+                    <td class="text-left font-semibold">{{ printf "%.1f" ($m.issues.close_time.median_days | default 0) }}d</td>
+                  </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale30dLink }}', '_blank')">
                     <td>Stale (>30d)</td>
                     <td class="text-left font-semibold">{{ $m.issues.stale_30d }}{{ if gt $stale30dPct 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $stale30dPct }}%)</span>{{ end }}</td>
-                  </tr>
-                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale60dLink }}', '_blank')">
-                    <td>Stale (>60d)</td>
-                    <td class="text-left font-semibold">{{ $m.issues.stale_60d }}{{ if gt $stale60dPct 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $stale60dPct }}%)</span>{{ end }}</td>
                   </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale90dLink }}', '_blank')">
                     <td>Stale (>90d)</td>
@@ -197,21 +200,60 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <tr>
+                    <td>Code Review Rate</td>
+                    <td class="text-left font-semibold">{{ printf "%.0f%%" ($m.pulls.code_review_rate_pct | default 0) }}</td>
+                  </tr>
+                  <tr>
+                    <td>Avg Reviews/PR</td>
+                    <td class="text-left font-semibold">{{ printf "%.1f" ($m.pulls.avg_reviews_per_pr | default 0) }}</td>
+                  </tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $closedUnmerged90dLink }}', '_blank')">
+                    <td>Rejection Rate (90d)</td>
+                    <td class="text-left font-semibold">{{ printf "%.0f%%" $prRejectRate90d }}</td>
+                  </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $draftPRsLink }}', '_blank')">
                     <td>Draft PRs</td>
                     <td class="text-left font-semibold">{{ $m.pulls.draft_count }}</td>
                   </tr>
-                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $closedUnmerged90dLink }}', '_blank')">
-                    <td>Closed (not merged, 90d)</td>
-                    <td class="text-left font-semibold">{{ $m.pulls.closed_not_merged_90d }}{{ if gt $prRejectRate90d 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $prRejectRate90d }}%)</span>{{ end }}</td>
-                  </tr>
-                  <tr>
-                    <td>Avg Merge Time</td>
-                    <td class="text-left font-semibold">{{ partial "format-hours.html" $m.pulls.merge_time.avg_hours }}</td>
-                  </tr>
                   <tr>
                     <td>Median Merge Time</td>
                     <td class="text-left font-semibold">{{ partial "format-hours.html" $m.pulls.merge_time.median_hours }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-xs font-medium text-base-content/70 mb-2">Contributor Health</h3>
+            <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+              <table class="table table-sm table-bordered table-fixed w-full">
+                <thead>
+                  <tr>
+                    <th class="bg-base-200 w-1/2">Metric</th>
+                    <th class="bg-base-200 w-1/2 text-left">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Retention Rate</td>
+                    <td class="text-left font-semibold">{{ printf "%.0f%%" ($m.contributors.retention_rate_pct | default 0) }}</td>
+                  </tr>
+                  <tr>
+                    <td>Churned (30d)</td>
+                    <td class="text-left font-semibold">{{ $m.contributors.churned_30d | default 0 }}</td>
+                  </tr>
+                  <tr>
+                    <td>Commits/Week (avg)</td>
+                    <td class="text-left font-semibold">{{ printf "%.1f" ($m.contributors.commits_per_week_avg | default 0) }}</td>
+                  </tr>
+                  <tr>
+                    <td>First-Time (30d)</td>
+                    <td class="text-left font-semibold">{{ $m.contributors.first_time_30d | default 0 }}</td>
+                  </tr>
+                  <tr>
+                    <td>Active (30d)</td>
+                    <td class="text-left font-semibold">{{ $m.contributors.active_30d }}</td>
                   </tr>
                 </tbody>
               </table>

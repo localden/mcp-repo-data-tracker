@@ -42,6 +42,23 @@ export interface ResponseTimeMetrics {
 // Issue Metrics
 // =============================================================================
 
+export interface CloseTimeMetrics {
+  avg_days: number;
+  median_days: number;
+  p90_days: number;
+}
+
+/** An issue that needs maintainer attention */
+export interface IssueNeedingAttention {
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  daysWaiting: number;
+  labels: string[];
+  commentCount: number;
+}
+
 export interface IssueMetrics {
   open_count: number;
   closed_7d: number;
@@ -53,8 +70,13 @@ export interface IssueMetrics {
   without_response_24h: number;
   without_response_7d: number;
   without_response_30d: number;
+  /** Full list of issues without maintainer response, sorted by oldest first */
+  issues_without_maintainer_response: IssueNeedingAttention[];
   by_label: Record<string, number>;
   response_time: ResponseTimeMetrics;
+  close_time: CloseTimeMetrics;
+  label_coverage_pct: number;
+  unlabeled_count: number;
   stale_30d: number;
   stale_60d: number;
   stale_90d: number;
@@ -70,6 +92,21 @@ export interface MergeTimeMetrics {
   median_hours: number;
 }
 
+/** A PR that needs maintainer attention */
+export interface PRNeedingAttention {
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  daysWaiting: number;
+  labels: string[];
+  isDraft: boolean;
+  additions: number;
+  deletions: number;
+  reviewCount: number;
+  author: string | null;
+}
+
 export interface PRMetrics {
   open_count: number;
   merged_7d: number;
@@ -82,8 +119,13 @@ export interface PRMetrics {
   draft_count: number;
   without_review_24h: number;
   without_review_7d: number;
+  /** Full list of PRs without maintainer review, sorted by oldest first */
+  prs_without_maintainer_review: PRNeedingAttention[];
   review_time: ResponseTimeMetrics;
   merge_time: MergeTimeMetrics;
+  code_review_rate_pct: number;
+  rejection_rate_pct: number;
+  avg_reviews_per_pr: number;
   by_size: {
     small: number;
     medium: number;
@@ -99,8 +141,18 @@ export interface ContributorMetrics {
   total_known: number;
   active_30d: number;
   first_time_30d: number;
+  retention_rate_pct: number;
+  churned_30d: number;
+  commits_per_week_avg: number;
+  commits_per_week_trend: number[];
+  /** Active contributors who are maintainers */
+  active_maintainers_30d: number;
+  /** Active contributors who are community members (non-maintainers) */
+  active_community_30d: number;
   /** Internal: full list of contributor usernames (for append-only tracking) */
   allContributors: string[];
+  /** Internal: contributors active in previous 30d window (for retention tracking) */
+  previousPeriodContributors: string[];
 }
 
 // =============================================================================
@@ -134,7 +186,7 @@ export interface Metrics {
   repository: RepositoryStats;
   issues: IssueMetrics;
   pulls: PRMetrics;
-  contributors: Omit<ContributorMetrics, 'allContributors'>;
+  contributors: Omit<ContributorMetrics, 'allContributors' | 'previousPeriodContributors'>;
   hotspots: HotspotMetrics;
 }
 
@@ -165,6 +217,12 @@ export interface DailySnapshot {
       p90_hours: number;
       p95_hours: number;
     };
+    close_time: {
+      avg_days: number;
+      median_days: number;
+      p90_days: number;
+    };
+    label_coverage_pct: number;
   };
   pulls: {
     open: number;
@@ -188,6 +246,9 @@ export interface DailySnapshot {
       avg_hours: number;
       median_hours: number;
     };
+    code_review_rate_pct: number;
+    rejection_rate_pct: number;
+    avg_reviews_per_pr: number;
     by_size: {
       small: number;
       medium: number;
@@ -199,6 +260,11 @@ export interface DailySnapshot {
     total: number;
     active_30d: number;
     first_time_30d: number;
+    retention_rate_pct: number;
+    churned_30d: number;
+    commits_per_week_avg: number;
+    active_maintainers_30d: number;
+    active_community_30d: number;
   };
 }
 
@@ -230,6 +296,7 @@ export interface GitHubTimelineEvent {
 export interface GitHubIssue {
   id: string;
   number: number;
+  title: string;
   state: 'OPEN' | 'CLOSED';
   createdAt: string;
   updatedAt: string;
@@ -273,6 +340,7 @@ export interface GitHubReview {
 export interface GitHubPullRequest {
   id: string;
   number: number;
+  title: string;
   state: 'OPEN' | 'CLOSED' | 'MERGED';
   isDraft: boolean;
   createdAt: string;

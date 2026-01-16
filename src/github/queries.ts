@@ -10,6 +10,7 @@ export const FETCH_ISSUES_QUERY = `
         nodes {
           id
           number
+          title
           state
           createdAt
           updatedAt
@@ -60,6 +61,7 @@ export const FETCH_PRS_QUERY = `
         nodes {
           id
           number
+          title
           state
           isDraft
           createdAt
@@ -91,6 +93,29 @@ export const FETCH_PRS_QUERY = `
           timelineItems(first: 20, itemTypes: [REOPENED_EVENT]) {
             nodes {
               ... on ReopenedEvent { createdAt }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const FETCH_COMMITS_QUERY = `
+  query FetchCommits($owner: String!, $repo: String!, $since: GitTimestamp!, $after: String) {
+    repository(owner: $owner, name: $repo) {
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: 100, since: $since, after: $after) {
+              pageInfo { hasNextPage endCursor }
+              totalCount
+              nodes {
+                committedDate
+                author {
+                  user { login }
+                }
+              }
             }
           }
         }

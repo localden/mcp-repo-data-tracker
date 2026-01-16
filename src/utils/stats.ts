@@ -44,6 +44,13 @@ export function msToHours(ms: number): number {
 }
 
 /**
+ * Convert milliseconds to days
+ */
+export function msToDays(ms: number): number {
+  return ms / (1000 * 60 * 60 * 24);
+}
+
+/**
  * Round to specified decimal places
  */
 export function round(value: number, decimals = 1): number {

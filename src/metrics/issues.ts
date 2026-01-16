@@ -2,22 +2,15 @@
  * Calculate issue metrics
  */
 
-import type { IssueData, IssueMetrics, GitHubIssue } from '../types/index.js';
-import { average, median, percentile, msToHours, round } from '../utils/stats.js';
+import type { IssueData, IssueMetrics, GitHubIssue, IssueNeedingAttention } from '../types/index.js';
+import { average, median, percentile, msToHours, msToDays, round } from '../utils/stats.js';
+import { isBot } from '../utils/bots.js';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
-
-/**
- * Check if a comment author is a bot
- */
-function isBot(login: string | undefined): boolean {
-  if (!login) return true;
-  return login.endsWith('[bot]') || login.includes('bot');
-}
 
 /**
  * Calculate time to first maintainer response for an issue
@@ -62,7 +55,9 @@ function hasBeenReopened(issue: GitHubIssue): boolean {
  */
 export function calculateIssueMetrics(
   issues: IssueData,
-  maintainerSet: Set<string>
+  maintainerSet: Set<string>,
+  owner?: string,
+  repo?: string
 ): IssueMetrics {
   const now = Date.now();
   const allIssues = [...issues.open, ...issues.closed];
@@ -96,19 +91,37 @@ export function calculateIssueMetrics(
   let without_response_24h = 0;
   let without_response_7d = 0;
   let without_response_30d = 0;
+  const issuesWithoutMaintainerResponse: IssueNeedingAttention[] = [];
 
   for (const issue of issues.open) {
     const responseTime = getTimeToFirstMaintainerResponse(issue, maintainerSet);
     if (responseTime !== null) {
       responseTimes.push(responseTime);
     } else {
-      // No maintainer response yet
+      // No maintainer response yet - collect this issue
       const age = now - new Date(issue.createdAt).getTime();
+      const daysWaiting = Math.floor(age / (24 * 60 * 60 * 1000));
+
+      issuesWithoutMaintainerResponse.push({
+        number: issue.number,
+        title: issue.title,
+        url: owner && repo
+          ? `https://github.com/${owner}/${repo}/issues/${issue.number}`
+          : `#${issue.number}`,
+        createdAt: issue.createdAt,
+        daysWaiting,
+        labels: issue.labels.nodes.map(l => l.name),
+        commentCount: issue.comments.totalCount,
+      });
+
       if (age > TWENTY_FOUR_HOURS_MS) without_response_24h++;
       if (age > SEVEN_DAYS_MS) without_response_7d++;
       if (age > THIRTY_DAYS_MS) without_response_30d++;
     }
   }
+
+  // Sort by oldest first (most days waiting)
+  issuesWithoutMaintainerResponse.sort((a, b) => b.daysWaiting - a.daysWaiting);
 
   // Also check recently closed issues for response times
   for (const issue of closedIssues) {
@@ -122,13 +135,32 @@ export function calculateIssueMetrics(
     .map((t) => msToHours(t))
     .sort((a, b) => a - b);
 
-  // Label breakdown
+  // Label breakdown and coverage
   const by_label: Record<string, number> = {};
+  let labeledCount = 0;
   for (const issue of issues.open) {
-    for (const label of issue.labels.nodes) {
-      by_label[label.name] = (by_label[label.name] || 0) + 1;
+    const hasLabels = issue.labels.nodes.length > 0;
+    if (hasLabels) {
+      labeledCount++;
+      for (const label of issue.labels.nodes) {
+        by_label[label.name] = (by_label[label.name] || 0) + 1;
+      }
     }
   }
+  const unlabeled_count = issues.open.length - labeledCount;
+  const label_coverage_pct = issues.open.length > 0
+    ? round((labeledCount / issues.open.length) * 100, 1)
+    : 0;
+
+  // Time to close (for recently closed issues)
+  const closeTimes = closedIssues
+    .filter((i) => i.closedAt)
+    .map((i) => {
+      const created = new Date(i.createdAt).getTime();
+      const closed = new Date(i.closedAt!).getTime();
+      return msToDays(closed - created);
+    })
+    .sort((a, b) => a - b);
 
   // Stale issues (open issues without recent activity)
   let stale_30d = 0;
@@ -157,6 +189,7 @@ export function calculateIssueMetrics(
     without_response_24h,
     without_response_7d,
     without_response_30d,
+    issues_without_maintainer_response: issuesWithoutMaintainerResponse,
     by_label,
     response_time: {
       avg_hours: round(average(sortedResponseTimes)),
@@ -164,6 +197,13 @@ export function calculateIssueMetrics(
       p90_hours: round(percentile(sortedResponseTimes, 90)),
       p95_hours: round(percentile(sortedResponseTimes, 95)),
     },
+    close_time: {
+      avg_days: round(average(closeTimes)),
+      median_days: round(median(closeTimes)),
+      p90_days: round(percentile(closeTimes, 90)),
+    },
+    label_coverage_pct,
+    unlabeled_count,
     stale_30d,
     stale_60d,
     stale_90d,

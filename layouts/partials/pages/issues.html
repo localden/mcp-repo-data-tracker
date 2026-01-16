@@ -72,13 +72,71 @@
 
 <!-- Issues Needing Attention -->
 <section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Issues Needing Attention</h2>
+  <h2 class="text-sm font-semibold mb-1">Issues Needing Maintainer Attention</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">Open issues with no maintainer response</p>
   <div class="grid grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_7d "descriptor" ">7 days" "link" $noResponse7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_30d "descriptor" ">30 days" "link" $noResponse30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "No Maintainer Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict "label" "No Maintainer Response" "value" $m.issues.without_response_7d "descriptor" ">7 days") }}
+    {{ partial "metric-card.html" (dict "label" "No Maintainer Response" "value" $m.issues.without_response_30d "descriptor" ">30 days") }}
   </div>
 </section>
+
+<!-- Issues Without Maintainer Response List -->
+{{ if $m.issues.issues_without_maintainer_response }}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-1">Issues Awaiting Maintainer Response</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">Sorted by longest wait time first</p>
+  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
+    <table class="table table-xs w-full">
+      <thead>
+        <tr class="border-b border-base-300">
+          <th class="bg-base-200/50 text-xs font-medium w-20">Issue</th>
+          <th class="bg-base-200/50 text-xs font-medium">Title</th>
+          <th class="bg-base-200/50 text-xs font-medium w-40">Labels</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Comments</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Waiting</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $m.issues.issues_without_maintainer_response }}
+        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
+          <td class="text-xs font-mono">
+            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
+          </td>
+          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+            {{ .title }}
+          </td>
+          <td class="text-xs">
+            {{ range .labels }}
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 mr-1 mb-0.5">{{ . }}</span>
+            {{ end }}
+            {{ if eq (len .labels) 0 }}
+            <span class="text-base-content/40 italic">unlabeled</span>
+            {{ end }}
+          </td>
+          <td class="text-xs text-right">
+            {{ if gt .commentCount 0 }}
+            <span class="text-warning">{{ .commentCount }}</span>
+            {{ else }}
+            <span class="text-base-content/40">0</span>
+            {{ end }}
+          </td>
+          <td class="text-xs text-right font-medium">
+            {{ if gt .daysWaiting 30 }}
+            <span class="text-error">{{ .daysWaiting }}d</span>
+            {{ else if gt .daysWaiting 7 }}
+            <span class="text-warning">{{ .daysWaiting }}d</span>
+            {{ else }}
+            {{ .daysWaiting }}d
+            {{ end }}
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{ end }}
 
 {{/* Links for stale issues - using updated filter (no activity since date) */}}
 {{ $stale30dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}

@@ -142,6 +142,12 @@ function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): D
         p90_hours: avgFloat((s) => s.issues.response_time?.p90_hours),
         p95_hours: avgFloat((s) => s.issues.response_time?.p95_hours),
       },
+      close_time: {
+        avg_days: avgFloat((s) => s.issues.close_time?.avg_days),
+        median_days: avgFloat((s) => s.issues.close_time?.median_days),
+        p90_days: avgFloat((s) => s.issues.close_time?.p90_days),
+      },
+      label_coverage_pct: avgFloat((s) => s.issues.label_coverage_pct),
     },
     pulls: {
       open: avg((s) => s.pulls.open),
@@ -165,6 +171,9 @@ function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): D
         avg_hours: avgFloat((s) => s.pulls.merge_time?.avg_hours),
         median_hours: avgFloat((s) => s.pulls.merge_time?.median_hours),
       },
+      code_review_rate_pct: avgFloat((s) => s.pulls.code_review_rate_pct),
+      rejection_rate_pct: avgFloat((s) => s.pulls.rejection_rate_pct),
+      avg_reviews_per_pr: avgFloat((s) => s.pulls.avg_reviews_per_pr),
       by_size: {
         small: avg((s) => s.pulls.by_size?.small),
         medium: avg((s) => s.pulls.by_size?.medium),
@@ -179,6 +188,11 @@ function consolidateMonthlyData(monthKey: string, snapshots: DailySnapshot[]): D
       total: maxContributors,
       active_30d: avg((s) => s.contributors.active_30d),
       first_time_30d: lastSnapshot.contributors.first_time_30d, // Use last value
+      retention_rate_pct: avgFloat((s) => s.contributors.retention_rate_pct),
+      churned_30d: avg((s) => s.contributors.churned_30d),
+      commits_per_week_avg: avgFloat((s) => s.contributors.commits_per_week_avg),
+      active_maintainers_30d: avg((s) => s.contributors.active_maintainers_30d),
+      active_community_30d: avg((s) => s.contributors.active_community_30d),
     },
   };
 }

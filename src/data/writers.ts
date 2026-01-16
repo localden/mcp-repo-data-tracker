@@ -123,6 +123,12 @@ export async function writeSnapshot(metrics: Metrics, repoConfig?: RepoConfig): 
         p90_hours: metrics.issues.response_time.p90_hours,
         p95_hours: metrics.issues.response_time.p95_hours,
       },
+      close_time: {
+        avg_days: metrics.issues.close_time.avg_days,
+        median_days: metrics.issues.close_time.median_days,
+        p90_days: metrics.issues.close_time.p90_days,
+      },
+      label_coverage_pct: metrics.issues.label_coverage_pct,
     },
     pulls: {
       open: metrics.pulls.open_count,
@@ -146,6 +152,9 @@ export async function writeSnapshot(metrics: Metrics, repoConfig?: RepoConfig): 
         avg_hours: metrics.pulls.merge_time.avg_hours,
         median_hours: metrics.pulls.merge_time.median_hours,
       },
+      code_review_rate_pct: metrics.pulls.code_review_rate_pct,
+      rejection_rate_pct: metrics.pulls.rejection_rate_pct,
+      avg_reviews_per_pr: metrics.pulls.avg_reviews_per_pr,
       by_size: {
         small: metrics.pulls.by_size.small,
         medium: metrics.pulls.by_size.medium,
@@ -157,6 +166,11 @@ export async function writeSnapshot(metrics: Metrics, repoConfig?: RepoConfig): 
       total: metrics.contributors.total_known,
       active_30d: metrics.contributors.active_30d,
       first_time_30d: metrics.contributors.first_time_30d,
+      retention_rate_pct: metrics.contributors.retention_rate_pct,
+      churned_30d: metrics.contributors.churned_30d,
+      commits_per_week_avg: metrics.contributors.commits_per_week_avg,
+      active_maintainers_30d: metrics.contributors.active_maintainers_30d,
+      active_community_30d: metrics.contributors.active_community_30d,
     },
   };
 
@@ -197,4 +211,36 @@ export async function loadContributors(repoConfig?: RepoConfig): Promise<string[
   } catch {
     return [];
   }
+}
+
+/**
+ * Load previous period contributors (for retention calculation)
+ */
+export async function loadPreviousPeriodContributors(repoConfig?: RepoConfig): Promise<string[]> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'previous-period-contributors.json');
+
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    return data.contributors || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save current active contributors for next period's retention calculation
+ */
+export async function savePreviousPeriodContributors(contributors: string[], repoConfig?: RepoConfig): Promise<void> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'previous-period-contributors.json');
+  await ensureDir(dirname(filePath));
+
+  const data = {
+    lastUpdated: new Date().toISOString(),
+    contributors: contributors.sort(),
+  };
+
+  await writeFile(filePath, JSON.stringify(data, null, 2));
 }

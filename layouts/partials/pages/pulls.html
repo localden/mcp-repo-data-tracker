@@ -82,12 +82,73 @@
 
 <!-- PRs Needing Attention -->
 <section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">PRs Needing Attention</h2>
+  <h2 class="text-sm font-semibold mb-1">PRs Needing Maintainer Review</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">Open PRs with no maintainer review (excludes drafts from counts)</p>
   <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
-    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days" "link" $noReview7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "No Maintainer Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict "label" "No Maintainer Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days") }}
   </div>
 </section>
+
+<!-- PRs Without Maintainer Review List -->
+{{ if $m.pulls.prs_without_maintainer_review }}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-1">PRs Awaiting Maintainer Review</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">Sorted by longest wait time first</p>
+  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
+    <table class="table table-xs w-full">
+      <thead>
+        <tr class="border-b border-base-300">
+          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium">Title</th>
+          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Reviews</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $m.pulls.prs_without_maintainer_review }}
+        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group {{ if .isDraft }}opacity-50{{ end }}" onclick="window.open('{{ .url }}', '_blank')">
+          <td class="text-xs font-mono">
+            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
+            {{ if .isDraft }}<span class="ml-1 text-[9px] text-base-content/40">(draft)</span>{{ end }}
+          </td>
+          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+            {{ .title }}
+          </td>
+          <td class="text-xs text-base-content/70">
+            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
+          </td>
+          <td class="text-xs text-right">
+            <span class="text-success">+{{ .additions }}</span>
+            <span class="text-error">-{{ .deletions }}</span>
+          </td>
+          <td class="text-xs text-right">
+            {{ if gt .reviewCount 0 }}
+            <span class="text-warning">{{ .reviewCount }}</span>
+            {{ else }}
+            <span class="text-base-content/40">0</span>
+            {{ end }}
+          </td>
+          <td class="text-xs text-right font-medium">
+            {{ if .isDraft }}
+            <span class="text-base-content/40">{{ .daysWaiting }}d</span>
+            {{ else if gt .daysWaiting 7 }}
+            <span class="text-error">{{ .daysWaiting }}d</span>
+            {{ else if gt .daysWaiting 1 }}
+            <span class="text-warning">{{ .daysWaiting }}d</span>
+            {{ else }}
+            {{ .daysWaiting }}d
+            {{ end }}
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{ end }}
 
 <!-- Size Distribution -->
 <section class="mb-6">

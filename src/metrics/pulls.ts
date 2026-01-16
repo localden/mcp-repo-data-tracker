@@ -2,8 +2,9 @@
  * Calculate pull request metrics
  */
 
-import type { PullRequestData, PRMetrics, GitHubPullRequest } from '../types/index.js';
+import type { PullRequestData, PRMetrics, GitHubPullRequest, PRNeedingAttention } from '../types/index.js';
 import { average, median, percentile, msToHours, round } from '../utils/stats.js';
+import { isBot } from '../utils/bots.js';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -13,14 +14,6 @@ const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 // Size thresholds (lines changed)
 const SMALL_THRESHOLD = 100;
 const MEDIUM_THRESHOLD = 500;
-
-/**
- * Check if a reviewer is a bot
- */
-function isBot(login: string | undefined): boolean {
-  if (!login) return true;
-  return login.endsWith('[bot]') || login.includes('bot');
-}
 
 /**
  * Calculate time to first maintainer review for a PR
@@ -66,7 +59,9 @@ function getPRSize(pr: GitHubPullRequest): 'small' | 'medium' | 'large' {
  */
 export function calculatePRMetrics(
   pulls: PullRequestData,
-  maintainerSet: Set<string>
+  maintainerSet: Set<string>,
+  owner?: string,
+  repo?: string
 ): PRMetrics {
   const now = Date.now();
 
@@ -108,21 +103,45 @@ export function calculatePRMetrics(
   const reviewTimes: number[] = [];
   let without_review_24h = 0;
   let without_review_7d = 0;
+  const prsWithoutMaintainerReview: PRNeedingAttention[] = [];
 
   // Check open non-draft PRs for review status
   for (const pr of pulls.open) {
-    if (pr.isDraft) continue; // Skip draft PRs
-
     const reviewTime = getTimeToFirstMaintainerReview(pr, maintainerSet);
     if (reviewTime !== null) {
-      reviewTimes.push(reviewTime);
+      if (!pr.isDraft) {
+        reviewTimes.push(reviewTime);
+      }
     } else {
-      // No maintainer review yet
+      // No maintainer review yet - collect this PR
       const age = now - new Date(pr.createdAt).getTime();
-      if (age > TWENTY_FOUR_HOURS_MS) without_review_24h++;
-      if (age > SEVEN_DAYS_MS) without_review_7d++;
+      const daysWaiting = Math.floor(age / (24 * 60 * 60 * 1000));
+
+      prsWithoutMaintainerReview.push({
+        number: pr.number,
+        title: pr.title,
+        url: owner && repo
+          ? `https://github.com/${owner}/${repo}/pull/${pr.number}`
+          : `#${pr.number}`,
+        createdAt: pr.createdAt,
+        daysWaiting,
+        labels: pr.labels.nodes.map(l => l.name),
+        isDraft: pr.isDraft,
+        additions: pr.additions,
+        deletions: pr.deletions,
+        reviewCount: pr.reviews.totalCount,
+        author: pr.author?.login || null,
+      });
+
+      if (!pr.isDraft) {
+        if (age > TWENTY_FOUR_HOURS_MS) without_review_24h++;
+        if (age > SEVEN_DAYS_MS) without_review_7d++;
+      }
     }
   }
+
+  // Sort by oldest first (most days waiting)
+  prsWithoutMaintainerReview.sort((a, b) => b.daysWaiting - a.daysWaiting);
 
   // Also include review times from merged PRs
   for (const pr of mergedPRs) {
@@ -156,6 +175,29 @@ export function calculatePRMetrics(
     by_size[size]++;
   }
 
+  // Code review rate: % of merged PRs (in 90d) that had at least one review
+  const mergedWithReview = mergedPRs.filter(
+    (pr) => pr.mergedAt && now - new Date(pr.mergedAt).getTime() < NINETY_DAYS_MS && pr.reviews.totalCount > 0
+  ).length;
+  const code_review_rate_pct = merged_90d > 0
+    ? round((mergedWithReview / merged_90d) * 100, 1)
+    : 0;
+
+  // PR rejection rate: % of closed PRs (in 90d) that were not merged
+  const totalClosed90d = merged_90d + closed_not_merged_90d;
+  const rejection_rate_pct = totalClosed90d > 0
+    ? round((closed_not_merged_90d / totalClosed90d) * 100, 1)
+    : 0;
+
+  // Average reviews per merged PR (in 90d)
+  const recentMergedPRs = mergedPRs.filter(
+    (pr) => pr.mergedAt && now - new Date(pr.mergedAt).getTime() < NINETY_DAYS_MS
+  );
+  const totalReviews = recentMergedPRs.reduce((sum, pr) => sum + pr.reviews.totalCount, 0);
+  const avg_reviews_per_pr = recentMergedPRs.length > 0
+    ? round(totalReviews / recentMergedPRs.length, 1)
+    : 0;
+
   return {
     open_count,
     merged_7d,
@@ -168,6 +210,7 @@ export function calculatePRMetrics(
     draft_count,
     without_review_24h,
     without_review_7d,
+    prs_without_maintainer_review: prsWithoutMaintainerReview,
     review_time: {
       avg_hours: round(average(sortedReviewTimes)),
       median_hours: round(median(sortedReviewTimes)),
@@ -178,6 +221,9 @@ export function calculatePRMetrics(
       avg_hours: round(average(mergeTimes)),
       median_hours: round(median(mergeTimes)),
     },
+    code_review_rate_pct,
+    rejection_rate_pct,
+    avg_reviews_per_pr,
     by_size,
   };
 }
