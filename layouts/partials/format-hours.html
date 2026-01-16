@@ -6,14 +6,14 @@
   Usage: {{ partial "format-hours.html" 536.1 }}
 
   Output:
-    - 12h (for values < 24)
-    - 2d (for values >= 24)
+    - 12<span class="unit">h</span> (for values < 24)
+    - 2<span class="unit">d</span> (for values >= 24)
 */}}
 
 {{- $hours := . -}}
 {{- if ge $hours 24 -}}
   {{- $days := div $hours 24 -}}
-  {{- printf "%.0fd" $days -}}
+  {{- printf "%.0f" $days -}}<span class="text-base-content/40 font-normal text-lg">d</span>
 {{- else -}}
-  {{- printf "%.0fh" $hours -}}
+  {{- printf "%.0f" $hours -}}<span class="text-base-content/40 font-normal text-lg">h</span>
 {{- end -}}
