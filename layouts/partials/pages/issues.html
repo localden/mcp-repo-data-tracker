@@ -106,12 +106,18 @@
           <td class="text-xs max-w-md truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs">
-            {{ range .labels }}
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 mr-1 mb-0.5">{{ . }}</span>
-            {{ end }}
-            {{ if eq (len .labels) 0 }}
-            <span class="text-base-content/40 italic">unlabeled</span>
+          <td class="text-xs whitespace-nowrap">
+            {{ $labels := .labels }}
+            {{ $labelCount := len $labels }}
+            {{ if eq $labelCount 0 }}
+            <span class="text-[9px] text-base-content/40">(unlabeled)</span>
+            {{ else }}
+              {{ range first 2 $labels }}
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 mr-1">{{ . }}</span>
+              {{ end }}
+              {{ if gt $labelCount 2 }}
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 text-base-content/50">+{{ sub $labelCount 2 }}</span>
+              {{ end }}
             {{ end }}
           </td>
           <td class="text-xs text-right">
