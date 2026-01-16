@@ -99,7 +99,7 @@
     <table class="table table-xs w-full">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
           <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
           <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
@@ -110,7 +110,7 @@
       <tbody>
         {{ range $m.pulls.prs_without_maintainer_review }}
         <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group {{ if .isDraft }}opacity-50{{ end }}" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono">
+          <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
             {{ if .isDraft }}<span class="ml-1 text-[9px] text-base-content/40">(draft)</span>{{ end }}
           </td>
