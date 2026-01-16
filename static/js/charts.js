@@ -65,13 +65,19 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { top: 4, bottom: 0, left: 0, right: 0 }
+          },
           plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
           },
           scales: {
             x: { display: false },
-            y: { display: false },
+            y: {
+              display: false,
+              grace: '10%'
+            },
           },
           interaction: { enabled: false },
           animation: false,

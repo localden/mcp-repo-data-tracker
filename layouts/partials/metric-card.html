@@ -71,10 +71,7 @@
         {{- $pct := .percent -}}
         {{- $pctLabel := .percentLabel | default "of total" -}}
         {{- if gt $total 0 -}}
-          <div class="tooltip tooltip-top" style="transform: translateY(-3px);">
-            <div class="tooltip-content text-xs">{{ $pctLabel }}</div>
-            <span class="text-xs text-base-content/40 font-normal" style="line-height: 1;">/{{ lang.FormatNumber 0 $total }}{{- if gt $pct 0.0 }} ({{ printf "%.0f" $pct }}%){{- end -}}</span>
-          </div>
+          <span class="tooltip tooltip-top" style="margin-bottom: 3px;"><span class="tooltip-content text-xs">{{ $pctLabel }}</span><span class="text-xs text-base-content/40 font-normal">/{{ lang.FormatNumber 0 $total }}{{- if and (gt $pct 0.0) (le $pct 100.0) }} ({{ printf "%.0f" $pct }}%){{- end -}}</span></span>
         {{- end -}}
       {{- end -}}
     </div>
@@ -82,7 +79,7 @@
       {{- if gt (len .) 1 -}}
         {{- $color := $.sparklineColor | default "rgb(0, 102, 204)" -}}
         <div class="h-8 w-16 flex-shrink-0">
-          <canvas class="sparkline" data-sparkline='{{ . | jsonify }}' data-color='{{ $color }}'></canvas>
+          <canvas class="sparkline h-full w-full" data-sparkline='{{ . | jsonify }}' data-color='{{ $color }}'></canvas>
         </div>
       {{- end -}}
     {{- end -}}

@@ -80,16 +80,25 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Historical Trends</h2>
   {{ if $snapshots }}
+    {{/* Collect snapshots into a sortable slice */}}
+    {{ $entries := slice }}
+    {{ range $filename, $data := $snapshots }}
+      {{ $entries = $entries | append (dict "date" $data.date "issues_open" $data.issues.open "pulls_open" $data.pulls.open "stars" $data.repository.stars) }}
+    {{ end }}
+
+    {{/* Sort by date ascending */}}
+    {{ $sorted := sort $entries "date" "asc" }}
+
+    {{/* Extract sorted arrays */}}
     {{ $dates := slice }}
     {{ $issuesOpen := slice }}
     {{ $pullsOpen := slice }}
     {{ $stars := slice }}
-
-    {{ range $filename, $data := $snapshots }}
-      {{ $dates = $dates | append $data.date }}
-      {{ $issuesOpen = $issuesOpen | append $data.issues.open }}
-      {{ $pullsOpen = $pullsOpen | append $data.pulls.open }}
-      {{ $stars = $stars | append $data.repository.stars }}
+    {{ range $sorted }}
+      {{ $dates = $dates | append .date }}
+      {{ $issuesOpen = $issuesOpen | append .issues_open }}
+      {{ $pullsOpen = $pullsOpen | append .pulls_open }}
+      {{ $stars = $stars | append .stars }}
     {{ end }}
 
     {{ if gt (len $dates) 1 }}
