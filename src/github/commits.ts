@@ -3,7 +3,11 @@
  */
 
 import type { createGitHubClient } from './client.js';
+import { sleep } from './client.js';
 import { FETCH_COMMITS_QUERY } from './queries.js';
+
+// Delay between paginated requests to avoid secondary rate limits
+const PAGE_DELAY_MS = 300;
 
 export interface CommitData {
   committedDate: string;
@@ -79,6 +83,11 @@ export async function fetchCommits(
     // Limit to first 500 commits to avoid excessive API calls
     if (commits.length >= 500) {
       break;
+    }
+
+    // Add delay between pages to avoid secondary rate limits
+    if (hasNextPage) {
+      await sleep(PAGE_DELAY_MS);
     }
   }
 

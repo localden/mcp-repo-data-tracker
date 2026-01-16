@@ -3,12 +3,11 @@
  */
 
 import type { GitHubClient } from './client.js';
-import { processBatched } from './client.js';
+import { processSequential } from './client.js';
 import type { GitHubPullRequest, GitHubPRFile, HotspotRawData } from '../types/index.js';
 
-// Reduced batch size and added delay to avoid secondary rate limits
-const BATCH_SIZE = 5;
-const BATCH_DELAY_MS = 1000; // 1 second between batches
+// Delay between sequential requests to avoid secondary rate limits
+const REQUEST_DELAY_MS = 200; // 200ms between each request (~5 requests/second)
 
 /**
  * Fetch files for merged PRs to analyze hotspots
@@ -22,43 +21,33 @@ export async function fetchHotspotData(
 ): Promise<HotspotRawData[]> {
   let processed = 0;
 
-  const results = await processBatched(
+  const results = await processSequential(
     mergedPRs,
-    BATCH_SIZE,
-    BATCH_DELAY_MS,
+    REQUEST_DELAY_MS,
     async (pr) => {
-      try {
-        const response = await client.rest.pulls.listFiles({
-          owner,
-          repo,
-          pull_number: pr.number,
-          per_page: 300,
-        });
+      const response = await client.rest.pulls.listFiles({
+        owner,
+        repo,
+        pull_number: pr.number,
+        per_page: 300,
+      });
 
-        const files: GitHubPRFile[] = response.data.map((file) => ({
-          filename: file.filename,
-          additions: file.additions,
-          deletions: file.deletions,
-          changes: file.changes,
-        }));
+      const files: GitHubPRFile[] = response.data.map((file) => ({
+        filename: file.filename,
+        additions: file.additions,
+        deletions: file.deletions,
+        changes: file.changes,
+      }));
 
-        processed++;
-        if (verbose && processed % 10 === 0) {
-          console.log(`    Processed ${processed}/${mergedPRs.length} PRs...`);
-        }
-
-        return {
-          prNumber: pr.number,
-          files,
-        };
-      } catch (error) {
-        console.warn(`Warning: Failed to fetch files for PR #${pr.number}:`, error);
-        processed++;
-        return {
-          prNumber: pr.number,
-          files: [],
-        };
+      processed++;
+      if (verbose && processed % 20 === 0) {
+        console.log(`    Processed ${processed}/${mergedPRs.length} PRs...`);
       }
+
+      return {
+        prNumber: pr.number,
+        files,
+      };
     }
   );
 

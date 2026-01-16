@@ -57,6 +57,67 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Retry a function with exponential backoff
+ * @param fn - Async function to retry
+ * @param maxRetries - Maximum number of retries
+ * @param baseDelayMs - Base delay in milliseconds (doubles each retry)
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 2000
+): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      const isRateLimit = lastError.message?.includes('rate limit') ||
+                          lastError.message?.includes('secondary rate limit') ||
+                          (lastError as { status?: number }).status === 403;
+
+      if (!isRateLimit || attempt === maxRetries) {
+        throw lastError;
+      }
+
+      const delayMs = baseDelayMs * Math.pow(2, attempt);
+      console.warn(`Rate limit hit, retrying in ${delayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})...`);
+      await sleep(delayMs);
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Process items sequentially with rate limiting (safer for REST API)
+ * @param items - Array of items to process
+ * @param delayMs - Delay in milliseconds between items
+ * @param processor - Async function to process each item
+ */
+export async function processSequential<T, R>(
+  items: T[],
+  delayMs: number,
+  processor: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const result = await withRetry(() => processor(items[i]));
+    results.push(result);
+
+    // Add delay between items (but not after the last item)
+    if (i < items.length - 1) {
+      await sleep(delayMs);
+    }
+  }
+
+  return results;
+}
+
+/**
  * Process items in batches with rate limiting
  * @param items - Array of items to process
  * @param batchSize - Number of items to process in parallel
