@@ -28,16 +28,25 @@
 {{ $pullsReviewTrend := partial "calc-trend.html" (dict "sparkline" $pullsReviewMedianSparkline) }}
 {{ $pullsMergeTrend := partial "calc-trend.html" (dict "sparkline" $pullsMergeMedianSparkline) }}
 
+{{/* Build GitHub filter URLs for PRs */}}
+{{ $repoKey := $data.repoKey }}
+{{ $openPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open" $repoKey }}
+{{ $draftPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+draft:true" $repoKey }}
+{{ $merged7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+{{ $closedUnmerged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days") }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days") }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days") }}
-    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days") }}
+    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
+    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count "link" $draftPRsLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "link" $merged7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "link" $merged30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days" "link" $merged90dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days" "link" $closedUnmerged90dLink) }}
   </div>
 </section>
 
@@ -61,12 +70,16 @@
   </div>
 </section>
 
+{{/* Links for PRs needing review - using review:none filter */}}
+{{ $noReview24hLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
+{{ $noReview7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+
 <!-- PRs Needing Attention -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">PRs Needing Attention</h2>
   <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days") }}
+    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
+    {{ partial "metric-card.html" (dict "label" "No Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days" "link" $noReview7dLink) }}
   </div>
 </section>
 

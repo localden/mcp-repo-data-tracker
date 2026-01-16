@@ -28,14 +28,22 @@
 {{ $issuesResponseTrend := partial "calc-trend.html" (dict "sparkline" $issuesResponseMedianSparkline) }}
 {{ $issuesStale30dTrend := partial "calc-trend.html" (dict "sparkline" $issuesStale30dSparkline) }}
 
+{{/* Build GitHub filter URLs */}}
+{{ $repoKey := $data.repoKey }}
+{{ $ghBase := printf "https://github.com/%s/issues" $repoKey }}
+{{ $openIssuesLink := printf "%s?q=is:issue+is:open" $ghBase }}
+{{ $closed7dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $closed30dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $closed90dLink := printf "https://github.com/%s/issues?q=is:issue+is:closed+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+
 <!-- Volume Metrics -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Volume</h2>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "sparkline" $issuesOpenSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesOpenTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days") }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days") }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_90d "descriptor" "last 90 days") }}
+    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "sparkline" $issuesOpenSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesOpenTrend "trendGoodDirection" "down" "link" $openIssuesLink) }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "link" $closed7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "link" $closed30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_90d "descriptor" "last 90 days" "link" $closed90dLink) }}
   </div>
 </section>
 
@@ -51,24 +59,34 @@
   </div>
 </section>
 
+{{/* Links for no-response issues - using updated filter (issues with no comments, sorted by creation date) */}}
+{{ $noResponse24hLink := printf "https://github.com/%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
+{{ $noResponse7dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $noResponse30dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+
 <!-- Issues Needing Attention -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-3">Issues Needing Attention</h2>
   <div class="grid grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_7d "descriptor" ">7 days") }}
-    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_30d "descriptor" ">30 days") }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_7d "descriptor" ">7 days" "link" $noResponse7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "No Response" "value" $m.issues.without_response_30d "descriptor" ">30 days" "link" $noResponse30dLink) }}
   </div>
 </section>
+
+{{/* Links for stale issues - using updated filter (no activity since date) */}}
+{{ $stale30dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $stale60dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $repoKey (now.AddDate 0 0 -60 | time.Format "2006-01-02") }}
+{{ $stale90dLink := printf "https://github.com/%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 
 <!-- Stale Issues -->
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-1">Stale Issues</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Issues with no activity</p>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_30d "descriptor" ">30 days" "sparkline" $issuesStale30dSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $issuesStale30dTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_60d "descriptor" ">60 days") }}
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_90d "descriptor" ">90 days") }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_30d "descriptor" ">30 days" "sparkline" $issuesStale30dSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $issuesStale30dTrend "trendGoodDirection" "down" "link" $stale30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_60d "descriptor" ">60 days" "link" $stale60dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Stale" "value" $m.issues.stale_90d "descriptor" ">90 days" "link" $stale90dLink) }}
     {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.0f%%" (mul $m.issues.reopen_rate 100))) }}
   </div>
 </section>
@@ -93,9 +111,10 @@
         {{ end }}
         {{/* Sort by count descending */}}
         {{ range sort $labelSlice "count" "desc" }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/30">
+        {{ $labelLink := printf "https://github.com/%s/issues?q=is:issue+is:open+label:\"%s\"" $repoKey .label }}
+        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ $labelLink }}', '_blank')">
           <td class="text-xs">
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border border-base-300 bg-base-200">{{ .label }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border border-base-300 bg-base-200 group-hover:border-base-content/30 transition-colors">{{ .label }}</span>
           </td>
           <td class="text-xs font-medium text-right">{{ .count }}</td>
         </tr>

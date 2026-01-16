@@ -63,12 +63,25 @@
       {{ $pullsAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $pullsAwaitingSparkline) }}
       {{ $pullsReviewTrend := partial "calc-trend.html" (dict "sparkline" $pullsReviewMedianSparkline) }}
 
+      {{/* Build GitHub filter URLs */}}
+      {{ $ghRepoUrl := printf "https://github.com/%s" $repoKey }}
+      {{ $openIssuesLink := printf "%s/issues?q=is:issue+is:open" $ghRepoUrl }}
+      {{ $closed7dIssuesLink := printf "%s/issues?q=is:issue+is:closed+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+      {{ $closed30dIssuesLink := printf "%s/issues?q=is:issue+is:closed+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+      {{ $noResponse24hLink := printf "%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $ghRepoUrl (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
+      {{ $openPRsLink := printf "%s/pulls?q=is:pr+is:open" $ghRepoUrl }}
+      {{ $merged7dPRsLink := printf "%s/pulls?q=is:pr+is:merged+merged:>%s" $ghRepoUrl (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+      {{ $merged30dPRsLink := printf "%s/pulls?q=is:pr+is:merged+merged:>%s" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+      {{ $noReview24hLink := printf "%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $ghRepoUrl (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
+      {{ $starsLink := printf "%s/stargazers" $ghRepoUrl }}
+      {{ $forksLink := printf "%s/forks" $ghRepoUrl }}
+
       <!-- Repository Stats -->
       <section class="mb-6">
         <h2 class="text-sm font-semibold mb-3">Repository</h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars "info" "Total GitHub stars on this repository" "sparkline" $starsSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $starsTrend "trendGoodDirection" "up") }}
-          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks "info" "Total forks of this repository" "sparkline" $forksSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $forksTrend "trendGoodDirection" "up") }}
+          {{ partial "metric-card.html" (dict "label" "Stars" "value" $m.repository.stars "info" "Total GitHub stars on this repository" "sparkline" $starsSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" $starsTrend "trendGoodDirection" "up" "link" $starsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Forks" "value" $m.repository.forks "info" "Total forks of this repository" "sparkline" $forksSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $forksTrend "trendGoodDirection" "up" "link" $forksLink) }}
           {{ partial "metric-card.html" (dict "label" "Total Contributors" "value" $m.contributors.total_known "info" "All known contributors who have ever contributed") }}
           {{ partial "metric-card.html" (dict "label" "Active (30d)" "value" $m.contributors.active_30d "info" "Contributors with activity in the last 30 days" "sparkline" $contributorsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $contributorsTrend "trendGoodDirection" "up") }}
         </div>
@@ -81,10 +94,10 @@
           <a href="{{ "issues/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesTrend "trendGoodDirection" "down") }}
-          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days") }}
-          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days") }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down") }}
+          {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesTrend "trendGoodDirection" "down" "link" $openIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days" "link" $closed7dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days" "link" $closed30dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Response Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -102,10 +115,10 @@
           <a href="{{ "pulls/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsTrend "trendGoodDirection" "down") }}
-          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days") }}
-          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days") }}
-          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
+          {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days" "link" $merged7dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days" "link" $merged30dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Review Time</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -115,6 +128,13 @@
           {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours) "info" "95th percentile review time") }}
         </div>
       </section>
+
+      {{/* Additional links for At a Glance */}}
+      {{ $stale30dLink := printf "%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghRepoUrl (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+      {{ $stale60dLink := printf "%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghRepoUrl (now.AddDate 0 0 -60 | time.Format "2006-01-02") }}
+      {{ $stale90dLink := printf "%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghRepoUrl (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+      {{ $draftPRsLink := printf "%s/pulls?q=is:pr+is:open+draft:true" $ghRepoUrl }}
+      {{ $closedUnmerged90dLink := printf "%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 
       <!-- Quick Stats -->
       <section class="mb-6">
@@ -131,15 +151,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale30dLink }}', '_blank')">
                     <td>Stale (>30d)</td>
                     <td class="text-right font-semibold">{{ $m.issues.stale_30d }}</td>
                   </tr>
-                  <tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale60dLink }}', '_blank')">
                     <td>Stale (>60d)</td>
                     <td class="text-right font-semibold">{{ $m.issues.stale_60d }}</td>
                   </tr>
-                  <tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale90dLink }}', '_blank')">
                     <td>Stale (>90d)</td>
                     <td class="text-right font-semibold">{{ $m.issues.stale_90d }}</td>
                   </tr>
@@ -162,11 +182,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $draftPRsLink }}', '_blank')">
                     <td>Draft PRs</td>
                     <td class="text-right font-semibold">{{ $m.pulls.draft_count }}</td>
                   </tr>
-                  <tr>
+                  <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $closedUnmerged90dLink }}', '_blank')">
                     <td>Closed (not merged, 90d)</td>
                     <td class="text-right font-semibold">{{ $m.pulls.closed_not_merged_90d }}</td>
                   </tr>
