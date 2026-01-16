@@ -80,6 +80,17 @@ export function calculateIssueMetrics(
     (i) => i.closedAt && now - new Date(i.closedAt).getTime() < NINETY_DAYS_MS
   ).length;
 
+  // Issues opened in time windows (for calculating close rate percentages)
+  const opened_7d = allIssues.filter(
+    (i) => now - new Date(i.createdAt).getTime() < SEVEN_DAYS_MS
+  ).length;
+  const opened_30d = allIssues.filter(
+    (i) => now - new Date(i.createdAt).getTime() < THIRTY_DAYS_MS
+  ).length;
+  const opened_90d = allIssues.filter(
+    (i) => now - new Date(i.createdAt).getTime() < NINETY_DAYS_MS
+  ).length;
+
   // Response time metrics
   const responseTimes: number[] = [];
   let without_response_24h = 0;
@@ -140,6 +151,9 @@ export function calculateIssueMetrics(
     closed_7d,
     closed_30d,
     closed_90d,
+    opened_7d,
+    opened_30d,
+    opened_90d,
     without_response_24h,
     without_response_7d,
     without_response_30d,

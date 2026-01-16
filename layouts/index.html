@@ -93,10 +93,13 @@
           <h2 class="text-sm font-semibold">Issues</h2>
           <a href="{{ "issues/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
+        {{/* Calculate close rate percentages */}}
+        {{ $issueCloseRate7d := partial "calc-percent.html" (dict "numerator" $m.issues.closed_7d "denominator" $m.issues.opened_7d) }}
+        {{ $issueCloseRate30d := partial "calc-percent.html" (dict "numerator" $m.issues.closed_30d "denominator" $m.issues.opened_30d) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $m.issues.open_count "info" "Currently open issues" "sparkline" $issuesSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" $issuesTrend "trendGoodDirection" "down" "link" $openIssuesLink) }}
-          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days" "link" $closed7dIssuesLink) }}
-          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days" "link" $closed30dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_7d "descriptor" "last 7 days" "info" "Issues closed in the last 7 days" "total" $m.issues.opened_7d "percent" $issueCloseRate7d "percentLabel" "of issues opened in 7d" "link" $closed7dIssuesLink) }}
+          {{ partial "metric-card.html" (dict "label" "Closed" "value" $m.issues.closed_30d "descriptor" "last 30 days" "info" "Issues closed in the last 30 days" "total" $m.issues.opened_30d "percent" $issueCloseRate30d "percentLabel" "of issues opened in 30d" "link" $closed30dIssuesLink) }}
           {{ partial "metric-card.html" (dict "label" "Awaiting Response" "value" $m.issues.without_response_24h "descriptor" ">24 hours" "info" "Open issues with no maintainer response after 24 hours" "sparkline" $issuesAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $issuesAwaitingTrend "trendGoodDirection" "down" "link" $noResponse24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Response Time</h3>
@@ -114,10 +117,13 @@
           <h2 class="text-sm font-semibold">Pull Requests</h2>
           <a href="{{ "pulls/" | relURL }}" class="text-sm text-base-content/60 hover:text-base-content">View details →</a>
         </div>
+        {{/* Calculate merge rate percentages */}}
+        {{ $prMergeRate7d := partial "calc-percent.html" (dict "numerator" $m.pulls.merged_7d "denominator" $m.pulls.opened_7d) }}
+        {{ $prMergeRate30d := partial "calc-percent.html" (dict "numerator" $m.pulls.merged_30d "denominator" $m.pulls.opened_30d) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "info" "Currently open pull requests" "sparkline" $pullsSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
-          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days" "link" $merged7dPRsLink) }}
-          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days" "link" $merged30dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "info" "PRs merged in the last 7 days" "total" $m.pulls.opened_7d "percent" $prMergeRate7d "percentLabel" "of PRs opened in 7d" "link" $merged7dPRsLink) }}
+          {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "info" "PRs merged in the last 30 days" "total" $m.pulls.opened_30d "percent" $prMergeRate30d "percentLabel" "of PRs opened in 30d" "link" $merged30dPRsLink) }}
           {{ partial "metric-card.html" (dict "label" "Awaiting Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "info" "Open PRs with no review after 24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down" "link" $noReview24hLink) }}
         </div>
         <h3 class="text-xs font-semibold text-base-content/70 mb-3">Review Time</h3>
@@ -135,6 +141,13 @@
       {{ $stale90dLink := printf "%s/issues?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghRepoUrl (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
       {{ $draftPRsLink := printf "%s/pulls?q=is:pr+is:open+draft:true" $ghRepoUrl }}
       {{ $closedUnmerged90dLink := printf "%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $ghRepoUrl (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+      {{/* Calculate stale issue percentages (as % of open issues) */}}
+      {{ $stale30dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_30d "denominator" $m.issues.open_count) }}
+      {{ $stale60dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_60d "denominator" $m.issues.open_count) }}
+      {{ $stale90dPct := partial "calc-percent.html" (dict "numerator" $m.issues.stale_90d "denominator" $m.issues.open_count) }}
+      {{/* Calculate PR rejection rate (closed not merged as % of all closed PRs in 90d) */}}
+      {{ $totalClosed90d := add $m.pulls.merged_90d $m.pulls.closed_not_merged_90d }}
+      {{ $prRejectRate90d := partial "calc-percent.html" (dict "numerator" $m.pulls.closed_not_merged_90d "denominator" $totalClosed90d) }}
 
       <!-- Quick Stats -->
       <section class="mb-6">
@@ -153,15 +166,15 @@
                 <tbody>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale30dLink }}', '_blank')">
                     <td>Stale (>30d)</td>
-                    <td class="text-right font-semibold">{{ $m.issues.stale_30d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_30d }}{{ if gt $stale30dPct 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $stale30dPct }}%)</span>{{ end }}</td>
                   </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale60dLink }}', '_blank')">
                     <td>Stale (>60d)</td>
-                    <td class="text-right font-semibold">{{ $m.issues.stale_60d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_60d }}{{ if gt $stale60dPct 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $stale60dPct }}%)</span>{{ end }}</td>
                   </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $stale90dLink }}', '_blank')">
                     <td>Stale (>90d)</td>
-                    <td class="text-right font-semibold">{{ $m.issues.stale_90d }}</td>
+                    <td class="text-right font-semibold">{{ $m.issues.stale_90d }}{{ if gt $stale90dPct 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $stale90dPct }}%)</span>{{ end }}</td>
                   </tr>
                   <tr>
                     <td>Reopen Rate</td>
@@ -188,7 +201,7 @@
                   </tr>
                   <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ $closedUnmerged90dLink }}', '_blank')">
                     <td>Closed (not merged, 90d)</td>
-                    <td class="text-right font-semibold">{{ $m.pulls.closed_not_merged_90d }}</td>
+                    <td class="text-right font-semibold">{{ $m.pulls.closed_not_merged_90d }}{{ if gt $prRejectRate90d 0.0 }} <span class="text-xs font-normal text-base-content/50">({{ printf "%.0f" $prRejectRate90d }}%)</span>{{ end }}</td>
                   </tr>
                   <tr>
                     <td>Avg Merge Time</td>

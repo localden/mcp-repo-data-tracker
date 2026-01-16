@@ -1,0 +1,15 @@
+{{/*
+  Calculate percentage safely (avoids division by zero)
+
+  Usage: {{ partial "calc-percent.html" (dict "numerator" 10 "denominator" 50) }}
+  Returns: 20.0 (or 0 if denominator is 0)
+*/}}
+{{- $num := .numerator | default 0 -}}
+{{- $den := .denominator | default 0 -}}
+{{- $pct := 0.0 -}}
+
+{{- if gt $den 0 -}}
+  {{- $pct = mul (div (float $num) (float $den)) 100 -}}
+{{- end -}}
+
+{{- return $pct -}}

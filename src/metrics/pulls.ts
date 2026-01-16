@@ -89,6 +89,18 @@ export function calculatePRMetrics(
     (pr) => pr.closedAt && now - new Date(pr.closedAt).getTime() < NINETY_DAYS_MS
   ).length;
 
+  // PRs opened in time windows (for calculating merge rate percentages)
+  const allPRs = [...pulls.open, ...pulls.closed];
+  const opened_7d = allPRs.filter(
+    (pr) => now - new Date(pr.createdAt).getTime() < SEVEN_DAYS_MS
+  ).length;
+  const opened_30d = allPRs.filter(
+    (pr) => now - new Date(pr.createdAt).getTime() < THIRTY_DAYS_MS
+  ).length;
+  const opened_90d = allPRs.filter(
+    (pr) => now - new Date(pr.createdAt).getTime() < NINETY_DAYS_MS
+  ).length;
+
   // Draft count (only for open PRs)
   const draft_count = pulls.open.filter((pr) => pr.isDraft).length;
 
@@ -149,6 +161,9 @@ export function calculatePRMetrics(
     merged_7d,
     merged_30d,
     merged_90d,
+    opened_7d,
+    opened_30d,
+    opened_90d,
     closed_not_merged_90d,
     draft_count,
     without_review_24h,

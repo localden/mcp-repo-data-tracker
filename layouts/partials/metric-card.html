@@ -14,6 +14,9 @@
     - trend: Optional trend percentage (positive = up, negative = down, 0 = no change)
     - trendGoodDirection: Optional "up" or "down" to indicate which direction is good (default: "down" for issues/PRs)
     - link: Optional URL to link to (e.g., GitHub filtered issues/PRs)
+    - total: Optional total to display (e.g., 50) - shown as "/50" after value
+    - percent: Optional percentage to display (e.g., 45.2 for "45.2%") - shown after total
+    - percentLabel: Optional label for the percent tooltip (e.g., "of opened")
 */}}
 
 {{- $hasLink := .link -}}
@@ -49,19 +52,32 @@
     {{- end -}}
   </div>
   <div class="flex items-end justify-between gap-2">
-    <span class="text-2xl font-bold">
-      {{- with .value -}}
-        {{- if (eq (printf "%T" .) "float64") -}}
-          {{ lang.FormatNumber 0 . }}
-        {{- else if (eq (printf "%T" .) "int") -}}
-          {{ lang.FormatNumber 0 . }}
+    <div class="flex items-end">
+      <span class="text-2xl font-bold leading-none">
+        {{- with .value -}}
+          {{- if (eq (printf "%T" .) "float64") -}}
+            {{ lang.FormatNumber 0 . }}
+          {{- else if (eq (printf "%T" .) "int") -}}
+            {{ lang.FormatNumber 0 . }}
+          {{- else -}}
+            {{ . }}
+          {{- end -}}
         {{- else -}}
-          {{ . }}
+          —
         {{- end -}}
-      {{- else -}}
-        —
+      </span>
+      {{- if and (isset . "total") (isset . "percent") -}}
+        {{- $total := .total -}}
+        {{- $pct := .percent -}}
+        {{- $pctLabel := .percentLabel | default "of total" -}}
+        {{- if gt $total 0 -}}
+          <div class="tooltip tooltip-top" style="transform: translateY(-3px);">
+            <div class="tooltip-content text-xs">{{ $pctLabel }}</div>
+            <span class="text-xs text-base-content/40 font-normal" style="line-height: 1;">/{{ lang.FormatNumber 0 $total }}{{- if gt $pct 0.0 }} ({{ printf "%.0f" $pct }}%){{- end -}}</span>
+          </div>
+        {{- end -}}
       {{- end -}}
-    </span>
+    </div>
     {{- with .sparkline -}}
       {{- if gt (len .) 1 -}}
         {{- $color := $.sparklineColor | default "rgb(0, 102, 204)" -}}

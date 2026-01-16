@@ -47,6 +47,9 @@ export interface IssueMetrics {
   closed_7d: number;
   closed_30d: number;
   closed_90d: number;
+  opened_7d: number;
+  opened_30d: number;
+  opened_90d: number;
   without_response_24h: number;
   without_response_7d: number;
   without_response_30d: number;
@@ -72,6 +75,9 @@ export interface PRMetrics {
   merged_7d: number;
   merged_30d: number;
   merged_90d: number;
+  opened_7d: number;
+  opened_30d: number;
+  opened_90d: number;
   closed_not_merged_90d: number;
   draft_count: number;
   without_review_24h: number;
@@ -143,6 +149,9 @@ export interface DailySnapshot {
     closed_7d: number;
     closed_30d: number;
     closed_90d: number;
+    opened_7d: number;
+    opened_30d: number;
+    opened_90d: number;
     without_response_24h: number;
     without_response_7d: number;
     without_response_30d: number;
@@ -162,6 +171,9 @@ export interface DailySnapshot {
     merged_7d: number;
     merged_30d: number;
     merged_90d: number;
+    opened_7d: number;
+    opened_30d: number;
+    opened_90d: number;
     closed_not_merged_90d: number;
     draft_count: number;
     without_review_24h: number;
