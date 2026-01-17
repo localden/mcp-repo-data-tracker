@@ -114,10 +114,10 @@
             {{ $labelCount := len $labels }}
             {{ if gt $labelCount 0 }}
               {{ range first 2 $labels }}
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 mr-1">{{ . }}</span>
+              <span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 mr-1">{{ . }}</span>
               {{ end }}
               {{ if gt $labelCount 2 }}
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] border border-base-300 bg-base-200 text-base-content/50">+{{ sub $labelCount 2 }}</span>
+              <span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 text-base-content/50">+{{ sub $labelCount 2 }}</span>
               {{ end }}
             {{ end }}
           </td>
