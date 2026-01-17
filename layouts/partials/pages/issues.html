@@ -185,7 +185,7 @@
         {{ $labelLink := printf "https://github.com/%s/issues?q=is:issue+is:open+label:\"%s\"" $repoKey .label }}
         <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ $labelLink }}', '_blank')">
           <td class="text-xs">
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border border-base-300 bg-base-200 group-hover:border-base-content/30 transition-colors">{{ .label }}</span>
+            <span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 group-hover:border-base-content/30 transition-colors">{{ .label }}</span>
           </td>
           <td class="text-xs font-medium text-left">{{ .count }}</td>
         </tr>
