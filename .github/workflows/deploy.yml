@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main  # Always fetch latest main (important when called after aggregate pushes)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
