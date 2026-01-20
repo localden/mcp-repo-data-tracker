@@ -57,6 +57,38 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Check if an error is retriable (rate limit, timeout, or transient server error)
+ */
+function isRetriableError(error: Error): { retriable: boolean; reason: string } {
+  const message = error.message?.toLowerCase() || '';
+  const status = (error as Error & { status?: number }).status;
+
+  // Rate limit errors
+  if (message.includes('rate limit') || message.includes('secondary rate limit') || status === 403) {
+    return { retriable: true, reason: 'rate limit' };
+  }
+
+  // Timeout errors
+  if (message.includes('couldn\'t respond') || message.includes('time') ||
+      message.includes('timeout') || message.includes('timed out')) {
+    return { retriable: true, reason: 'timeout' };
+  }
+
+  // Server errors (5xx)
+  if (status && status >= 500 && status < 600) {
+    return { retriable: true, reason: `server error (${status})` };
+  }
+
+  // Network errors
+  if (message.includes('econnreset') || message.includes('enotfound') ||
+      message.includes('socket') || message.includes('network')) {
+    return { retriable: true, reason: 'network error' };
+  }
+
+  return { retriable: false, reason: '' };
+}
+
+/**
  * Retry a function with exponential backoff
  * @param fn - Async function to retry
  * @param maxRetries - Maximum number of retries
@@ -64,8 +96,8 @@ export function sleep(ms: number): Promise<void> {
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelayMs: number = 2000
+  maxRetries: number = 5,
+  baseDelayMs: number = 3000
 ): Promise<T> {
   let lastError: Error | undefined;
 
@@ -74,16 +106,14 @@ export async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      const isRateLimit = lastError.message?.includes('rate limit') ||
-                          lastError.message?.includes('secondary rate limit') ||
-                          (lastError as { status?: number }).status === 403;
+      const { retriable, reason } = isRetriableError(lastError);
 
-      if (!isRateLimit || attempt === maxRetries) {
+      if (!retriable || attempt === maxRetries) {
         throw lastError;
       }
 
       const delayMs = baseDelayMs * Math.pow(2, attempt);
-      console.warn(`Rate limit hit, retrying in ${delayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})...`);
+      console.warn(`${reason}, retrying in ${delayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})...`);
       await sleep(delayMs);
     }
   }
