@@ -102,9 +102,6 @@
         <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-            {{ $labels := .labels }}
-            {{ $labelCount := len $labels }}
-            {{ if eq $labelCount 0 }}<span class="ml-1 text-[9px] text-base-content/40">(unlabeled)</span>{{ end }}
           </td>
           <td class="text-xs max-w-md truncate" title="{{ .title }}">
             {{ .title }}
@@ -112,7 +109,9 @@
           <td class="text-xs whitespace-nowrap">
             {{ $labels := .labels }}
             {{ $labelCount := len $labels }}
-            {{ if gt $labelCount 0 }}
+            {{ if eq $labelCount 0 }}
+            <span class="text-[9px] text-base-content/40">(unlabeled)</span>
+            {{ else }}
               {{ range first 2 $labels }}
               <span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 mr-1">{{ . }}</span>
               {{ end }}
