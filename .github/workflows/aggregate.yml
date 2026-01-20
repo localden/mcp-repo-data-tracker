@@ -8,10 +8,14 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   aggregate:
     runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.commit.outputs.changes }}
 
     steps:
       - name: Checkout repository
@@ -50,8 +54,7 @@ jobs:
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Trigger deploy workflow
-        if: steps.commit.outputs.changes == 'true'
-        run: gh workflow run deploy.yml
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+  deploy:
+    needs: aggregate
+    if: needs.aggregate.outputs.changes == 'true'
+    uses: ./.github/workflows/deploy.yml
