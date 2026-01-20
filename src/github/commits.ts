@@ -55,18 +55,20 @@ export async function fetchCommits(
   }
 
   while (hasNextPage) {
-    const response: CommitHistoryResponse = await withRetry(() =>
-      client.graphql(FETCH_COMMITS_QUERY, {
+    const response = await withRetry(async () => {
+      const result = await client.graphql<CommitHistoryResponse>(FETCH_COMMITS_QUERY, {
         owner,
         repo,
         since: sinceISO,
         after,
-      })
-    );
-
-    if (!response?.repository) {
-      throw new Error(`GraphQL query failed for commits: ${JSON.stringify(response)}`);
-    }
+      });
+      if (!result?.repository) {
+        const error = new Error(`GraphQL query failed for commits: ${JSON.stringify(result)}`);
+        (error as Error & { status: number }).status = 403;
+        throw error;
+      }
+      return result;
+    });
 
     const history = response.repository.defaultBranchRef?.target?.history as {
       pageInfo: { hasNextPage: boolean; endCursor: string | null };

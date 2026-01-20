@@ -70,18 +70,20 @@ async function fetchIssuesByState(
   const cutoffDate = new Date(Date.now() - NINETY_DAYS_MS);
 
   while (hasNextPage) {
-    const response: IssuesQueryResponse = await withRetry(() =>
-      client.graphql(FETCH_ISSUES_QUERY, {
+    const response = await withRetry(async () => {
+      const result = await client.graphql<IssuesQueryResponse>(FETCH_ISSUES_QUERY, {
         owner,
         repo,
         after: cursor,
         states,
-      })
-    );
-
-    if (!response?.repository?.issues) {
-      throw new Error(`GraphQL query failed for issues: ${JSON.stringify(response)}`);
-    }
+      });
+      if (!result?.repository?.issues) {
+        const error = new Error(`GraphQL query failed for issues: ${JSON.stringify(result)}`);
+        (error as Error & { status: number }).status = 403;
+        throw error;
+      }
+      return result;
+    });
 
     const pageInfo = response.repository.issues.pageInfo;
     const nodes = response.repository.issues.nodes;
@@ -138,16 +140,18 @@ async function fetchAdditionalComments(
   let currentCursor = cursor;
 
   while (hasNextPage) {
-    const response = await withRetry(() =>
-      client.graphql<CommentsQueryResponse>(FETCH_ISSUE_COMMENTS_QUERY, {
+    const response = await withRetry(async () => {
+      const result = await client.graphql<CommentsQueryResponse>(FETCH_ISSUE_COMMENTS_QUERY, {
         issueId,
         after: currentCursor,
-      })
-    );
-
-    if (!response?.node?.comments) {
-      throw new Error(`GraphQL query failed for comments: ${JSON.stringify(response)}`);
-    }
+      });
+      if (!result?.node?.comments) {
+        const error = new Error(`GraphQL query failed for comments: ${JSON.stringify(result)}`);
+        (error as Error & { status: number }).status = 403;
+        throw error;
+      }
+      return result;
+    });
 
     const { pageInfo, nodes } = response.node.comments;
     comments.push(...nodes);

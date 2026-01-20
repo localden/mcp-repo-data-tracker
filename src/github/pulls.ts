@@ -58,18 +58,21 @@ async function fetchPRsByState(
   const cutoffDate = new Date(Date.now() - NINETY_DAYS_MS);
 
   while (hasNextPage) {
-    const response: PRsQueryResponse = await withRetry(() =>
-      client.graphql(FETCH_PRS_QUERY, {
+    const response = await withRetry(async () => {
+      const result = await client.graphql<PRsQueryResponse>(FETCH_PRS_QUERY, {
         owner,
         repo,
         after: cursor,
         states,
-      })
-    );
-
-    if (!response?.repository?.pullRequests) {
-      throw new Error(`GraphQL query failed for PRs: ${JSON.stringify(response)}`);
-    }
+      });
+      if (!result?.repository?.pullRequests) {
+        // Throw as rate limit to trigger retry
+        const error = new Error(`GraphQL query failed for PRs: ${JSON.stringify(result)}`);
+        (error as Error & { status: number }).status = 403;
+        throw error;
+      }
+      return result;
+    });
 
     const pageInfo = response.repository.pullRequests.pageInfo;
     const nodes = response.repository.pullRequests.nodes;
