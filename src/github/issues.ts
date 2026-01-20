@@ -3,7 +3,7 @@
  */
 
 import type { GitHubClient } from './client.js';
-import { sleep } from './client.js';
+import { sleep, withRetry } from './client.js';
 import type { GitHubIssue, GitHubComment, IssueData } from '../types/index.js';
 import { FETCH_ISSUES_QUERY, FETCH_ISSUE_COMMENTS_QUERY } from './queries.js';
 
@@ -70,12 +70,18 @@ async function fetchIssuesByState(
   const cutoffDate = new Date(Date.now() - NINETY_DAYS_MS);
 
   while (hasNextPage) {
-    const response: IssuesQueryResponse = await client.graphql(FETCH_ISSUES_QUERY, {
-      owner,
-      repo,
-      after: cursor,
-      states,
-    });
+    const response: IssuesQueryResponse = await withRetry(() =>
+      client.graphql(FETCH_ISSUES_QUERY, {
+        owner,
+        repo,
+        after: cursor,
+        states,
+      })
+    );
+
+    if (!response?.repository?.issues) {
+      throw new Error(`GraphQL query failed for issues: ${JSON.stringify(response)}`);
+    }
 
     const pageInfo = response.repository.issues.pageInfo;
     const nodes = response.repository.issues.nodes;
@@ -132,10 +138,16 @@ async function fetchAdditionalComments(
   let currentCursor = cursor;
 
   while (hasNextPage) {
-    const response = await client.graphql<CommentsQueryResponse>(FETCH_ISSUE_COMMENTS_QUERY, {
-      issueId,
-      after: currentCursor,
-    });
+    const response = await withRetry(() =>
+      client.graphql<CommentsQueryResponse>(FETCH_ISSUE_COMMENTS_QUERY, {
+        issueId,
+        after: currentCursor,
+      })
+    );
+
+    if (!response?.node?.comments) {
+      throw new Error(`GraphQL query failed for comments: ${JSON.stringify(response)}`);
+    }
 
     const { pageInfo, nodes } = response.node.comments;
     comments.push(...nodes);

@@ -3,7 +3,7 @@
  */
 
 import type { createGitHubClient } from './client.js';
-import { sleep } from './client.js';
+import { sleep, withRetry } from './client.js';
 import { FETCH_COMMITS_QUERY } from './queries.js';
 
 // Delay between paginated requests to avoid secondary rate limits
@@ -55,12 +55,18 @@ export async function fetchCommits(
   }
 
   while (hasNextPage) {
-    const response: CommitHistoryResponse = await client.graphql(FETCH_COMMITS_QUERY, {
-      owner,
-      repo,
-      since: sinceISO,
-      after,
-    });
+    const response: CommitHistoryResponse = await withRetry(() =>
+      client.graphql(FETCH_COMMITS_QUERY, {
+        owner,
+        repo,
+        since: sinceISO,
+        after,
+      })
+    );
+
+    if (!response?.repository) {
+      throw new Error(`GraphQL query failed for commits: ${JSON.stringify(response)}`);
+    }
 
     const history = response.repository.defaultBranchRef?.target?.history as {
       pageInfo: { hasNextPage: boolean; endCursor: string | null };

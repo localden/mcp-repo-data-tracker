@@ -3,7 +3,7 @@
  */
 
 import type { GitHubClient } from './client.js';
-import { sleep } from './client.js';
+import { sleep, withRetry } from './client.js';
 import type { GitHubPullRequest, PullRequestData } from '../types/index.js';
 import { FETCH_PRS_QUERY } from './queries.js';
 
@@ -58,12 +58,18 @@ async function fetchPRsByState(
   const cutoffDate = new Date(Date.now() - NINETY_DAYS_MS);
 
   while (hasNextPage) {
-    const response: PRsQueryResponse = await client.graphql(FETCH_PRS_QUERY, {
-      owner,
-      repo,
-      after: cursor,
-      states,
-    });
+    const response: PRsQueryResponse = await withRetry(() =>
+      client.graphql(FETCH_PRS_QUERY, {
+        owner,
+        repo,
+        after: cursor,
+        states,
+      })
+    );
+
+    if (!response?.repository?.pullRequests) {
+      throw new Error(`GraphQL query failed for PRs: ${JSON.stringify(response)}`);
+    }
 
     const pageInfo = response.repository.pullRequests.pageInfo;
     const nodes = response.repository.pullRequests.nodes;
