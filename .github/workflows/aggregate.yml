@@ -34,15 +34,24 @@ jobs:
         run: npm run aggregate
 
       - name: Commit and push data changes
+        id: commit
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data/
           if git diff --staged --quiet; then
             echo "No changes to commit"
+            echo "changes=false" >> $GITHUB_OUTPUT
           else
             git commit -m "Update repository metrics data
 
           Automated data sync at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
+            echo "changes=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Trigger deploy workflow
+        if: steps.commit.outputs.changes == 'true'
+        run: gh workflow run deploy.yml
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
