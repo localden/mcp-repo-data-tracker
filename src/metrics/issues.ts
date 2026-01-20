@@ -98,7 +98,13 @@ export function calculateIssueMetrics(
     if (responseTime !== null) {
       responseTimes.push(responseTime);
     } else {
-      // No maintainer response yet - collect this issue
+      // No maintainer response yet
+      // Skip issues created by maintainers (they usually don't need a response)
+      const issueAuthor = issue.author?.login;
+      if (issueAuthor && maintainerSet.has(issueAuthor)) {
+        continue;
+      }
+
       const age = now - new Date(issue.createdAt).getTime();
       const daysWaiting = Math.floor(age / (24 * 60 * 60 * 1000));
 

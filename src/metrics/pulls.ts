@@ -113,7 +113,13 @@ export function calculatePRMetrics(
         reviewTimes.push(reviewTime);
       }
     } else {
-      // No maintainer review yet - collect this PR
+      // No maintainer review yet
+      // Skip PRs created by maintainers (they usually don't need external review)
+      const prAuthor = pr.author?.login;
+      if (prAuthor && maintainerSet.has(prAuthor)) {
+        continue;
+      }
+
       const age = now - new Date(pr.createdAt).getTime();
       const daysWaiting = Math.floor(age / (24 * 60 * 60 * 1000));
 
