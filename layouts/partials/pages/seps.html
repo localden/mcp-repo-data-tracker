@@ -20,9 +20,22 @@
   {{ end }}
 {{ end }}
 
-{{ if not $seps }}
+{{/* Check if this is a non-MCP repo */}}
+{{ $isMCPRepo := and (eq (index $parts 0) "modelcontextprotocol") (eq (index $parts 1) "modelcontextprotocol") }}
+
+{{ if not $isMCPRepo }}
+<div class="bg-base-100 border border-base-300 rounded-lg p-4">
+  <p class="text-sm text-base-content/70">
+    Spec Enhancement Proposals (SEPs) are only tracked for the MCP Specification repository.
+    <button
+      onclick="window.RepoPicker.setSelectedRepo('modelcontextprotocol', 'modelcontextprotocol')"
+      class="text-primary hover:underline font-medium ml-1"
+    >Switch to MCP Specification &rarr;</button>
+  </p>
+</div>
+{{ else if not $seps }}
 <div class="alert alert-info">
-  <span>No SEP data available. SEPs are only tracked for modelcontextprotocol/modelcontextprotocol.</span>
+  <span>No SEP data available. Run the aggregation script with --sep to populate SEP metrics.</span>
 </div>
 {{ else }}
 
@@ -54,13 +67,14 @@
   <h2 class="text-sm font-semibold mb-1">Proposals Awaiting Sponsor</h2>
   <p class="text-[10px] text-base-content/40 mb-3">SEPs that need a maintainer to sponsor them</p>
   <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
+    <table class="table table-xs w-full table-fixed">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28 text-base-content/30">Sponsor</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
           <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
         </tr>
       </thead>
@@ -70,12 +84,13 @@
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
           </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+          <td class="text-xs truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs text-base-content/70">
+          <td class="text-xs text-base-content/70 truncate">
             {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
           </td>
+          <td class="text-xs text-base-content/30">—</td>
           <td class="text-xs text-right whitespace-nowrap">
             <span class="text-success">+{{ .additions }}</span>
             <span class="text-error">-{{ .deletions }}</span>
@@ -103,14 +118,14 @@
   <h2 class="text-sm font-semibold mb-1">Drafts in Development</h2>
   <p class="text-[10px] text-base-content/40 mb-3">SEPs with a sponsor actively working on them</p>
   <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
+    <table class="table table-xs w-full table-fixed">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
           <th class="bg-base-200/50 text-xs font-medium text-right w-20">Age</th>
         </tr>
       </thead>
@@ -120,14 +135,14 @@
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
           </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+          <td class="text-xs truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs text-base-content/70">
+          <td class="text-xs text-base-content/70 truncate">
             {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
           </td>
-          <td class="text-xs text-base-content/70">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/40">-</span>{{ end }}
+          <td class="text-xs text-base-content/70 truncate">
+            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
           </td>
           <td class="text-xs text-right whitespace-nowrap">
             <span class="text-success">+{{ .additions }}</span>
@@ -156,14 +171,14 @@
   <h2 class="text-sm font-semibold mb-1">SEPs In Review</h2>
   <p class="text-[10px] text-base-content/40 mb-3">SEPs ready for community and maintainer review</p>
   <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
+    <table class="table table-xs w-full table-fixed">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Reviews</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Reviews</th>
           <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
         </tr>
       </thead>
@@ -173,14 +188,14 @@
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
           </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+          <td class="text-xs truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs text-base-content/70">
+          <td class="text-xs text-base-content/70 truncate">
             {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
           </td>
-          <td class="text-xs text-base-content/70">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/40">-</span>{{ end }}
+          <td class="text-xs text-base-content/70 truncate">
+            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
           </td>
           <td class="text-xs text-right">
             {{ if gt .reviewCount 0 }}
@@ -212,14 +227,14 @@
   <h2 class="text-sm font-semibold mb-1">Accepted SEPs</h2>
   <p class="text-[10px] text-base-content/40 mb-3">SEPs approved and awaiting merge</p>
   <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
+    <table class="table table-xs w-full table-fixed">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
           <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
         </tr>
       </thead>
@@ -229,14 +244,14 @@
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
           </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+          <td class="text-xs truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs text-base-content/70">
+          <td class="text-xs text-base-content/70 truncate">
             {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
           </td>
-          <td class="text-xs text-base-content/70">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/40">-</span>{{ end }}
+          <td class="text-xs text-base-content/70 truncate">
+            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
           </td>
           <td class="text-xs text-right whitespace-nowrap">
             <span class="text-success">+{{ .additions }}</span>
@@ -259,15 +274,15 @@
   <h2 class="text-sm font-semibold mb-1">Merged SEPs</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Successfully completed spec enhancements</p>
   <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
+    <table class="table table-xs w-full table-fixed">
       <thead>
         <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-20">PR</th>
+          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Merged</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
+          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Merged</th>
         </tr>
       </thead>
       <tbody>
@@ -276,14 +291,14 @@
           <td class="text-xs font-mono whitespace-nowrap">
             <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
           </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
+          <td class="text-xs truncate" title="{{ .title }}">
             {{ .title }}
           </td>
-          <td class="text-xs text-base-content/70">
+          <td class="text-xs text-base-content/70 truncate">
             {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
           </td>
-          <td class="text-xs text-base-content/70">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/40">-</span>{{ end }}
+          <td class="text-xs text-base-content/70 truncate">
+            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
           </td>
           <td class="text-xs text-right whitespace-nowrap">
             <span class="text-success">+{{ .additions }}</span>

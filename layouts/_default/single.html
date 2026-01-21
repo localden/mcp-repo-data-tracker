@@ -1,9 +1,12 @@
 {{ define "main" }}
 <article>
-  <h1>{{ .Title }}</h1>
-
   {{ $pageName := .File.BaseFileName }}
   {{ $reposIndex := site.Data.repos }}
+
+  {{/* For SEPs page, title is rendered inside repo-content to allow hiding for non-MCP repos */}}
+  {{ if ne $pageName "seps" }}
+  <h1>{{ .Title }}</h1>
+  {{ end }}
 
   {{ if and $reposIndex $reposIndex.repositories (or (eq $pageName "issues") (eq $pageName "pulls") (eq $pageName "contributors") (eq $pageName "health") (eq $pageName "seps")) }}
     {{/* Multi-repo mode - render content for each repository */}}
@@ -11,17 +14,13 @@
       {{ $owner := $repoConfig.owner }}
       {{ $repo := $repoConfig.repo }}
       {{ $repoKey := printf "%s/%s" $owner $repo }}
+      {{ $isMCPRepo := and (eq $owner "modelcontextprotocol") (eq $repo "modelcontextprotocol") }}
 
-      {{/* SEPs page only shows for modelcontextprotocol/modelcontextprotocol */}}
-      {{ $showContent := true }}
-      {{ if eq $pageName "seps" }}
-        {{ if not (and (eq $owner "modelcontextprotocol") (eq $repo "modelcontextprotocol")) }}
-          {{ $showContent = false }}
-        {{ end }}
-      {{ end }}
-
-      {{ if $showContent }}
       <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
+        {{/* Show SEPs title only for MCP repo */}}
+        {{ if and (eq $pageName "seps") $isMCPRepo }}
+        <h1>{{ $.Title }}</h1>
+        {{ end }}
         {{ if eq $pageName "issues" }}
           {{ partial "pages/issues.html" (dict "context" $ "repoKey" $repoKey) }}
         {{ else if eq $pageName "pulls" }}
@@ -34,7 +33,6 @@
           {{ partial "pages/seps.html" (dict "context" $ "repoKey" $repoKey) }}
         {{ end }}
       </div>
-      {{ end }}
     {{ end }}
   {{ else }}
     {{/* Single repo or non-metrics page */}}
@@ -47,6 +45,7 @@
     {{ else if eq $pageName "health" }}
       {{ partial "pages/health.html" . }}
     {{ else if eq $pageName "seps" }}
+      <h1>{{ .Title }}</h1>
       {{ partial "pages/seps.html" (dict "context" . "repoKey" "modelcontextprotocol/modelcontextprotocol") }}
     {{ else }}
       {{ .Content }}
