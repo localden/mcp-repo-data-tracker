@@ -69,6 +69,7 @@ export const FETCH_PRS_QUERY = `
           mergedAt
           closedAt
           author { login }
+          assignees(first: 10) { nodes { login } }
           additions
           deletions
           changedFiles

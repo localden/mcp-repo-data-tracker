@@ -10,6 +10,7 @@ import type {
   ContributorsData,
   DailySnapshot,
   RepoConfig,
+  SEPMetrics,
 } from '../types/index.js';
 
 const DATA_DIR = 'data';
@@ -243,4 +244,14 @@ export async function savePreviousPeriodContributors(contributors: string[], rep
   };
 
   await writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
+/**
+ * Write SEP metrics for a repository (only for modelcontextprotocol/modelcontextprotocol)
+ */
+export async function writeSEPMetrics(sepMetrics: SEPMetrics, repoConfig: RepoConfig): Promise<void> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'seps.json');
+  await ensureDir(dirname(filePath));
+  await writeFile(filePath, JSON.stringify(sepMetrics, null, 2));
 }

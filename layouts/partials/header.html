@@ -34,6 +34,7 @@
       <a href="{{ .Site.BaseURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if .IsHome }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Overview</a>
       <a href="{{ "issues/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Issues" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Issues</a>
       <a href="{{ "pulls/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Pull Requests" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">PRs</a>
+      <a href="{{ "seps/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Spec Enhancement Proposals" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}" id="seps-nav-link" style="display: none;">SEPs</a>
       <a href="{{ "contributors/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Contributors" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Contributors</a>
       <a href="{{ "health/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Health & Trends" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Trends</a>
     </nav>

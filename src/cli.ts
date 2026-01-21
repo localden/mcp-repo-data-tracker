@@ -6,6 +6,8 @@ export interface CliArgs {
   dryRun: boolean;
   verbose: boolean;
   configPath?: string;
+  // SEP-only mode: only aggregate SEP data for modelcontextprotocol/modelcontextprotocol
+  sepOnly: boolean;
   // Legacy single-repo mode (deprecated, use config file instead)
   owner?: string;
   repo?: string;
@@ -17,6 +19,7 @@ export function parseArgs(): CliArgs {
   const result: CliArgs = {
     dryRun: false,
     verbose: false,
+    sepOnly: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -26,6 +29,8 @@ export function parseArgs(): CliArgs {
       result.dryRun = true;
     } else if (arg === '--verbose' || arg === '-v') {
       result.verbose = true;
+    } else if (arg === '--sep') {
+      result.sepOnly = true;
     } else if ((arg === '--config' || arg === '-c') && args[i + 1]) {
       result.configPath = args[++i];
     } else if (arg === '--owner' && args[i + 1]) {
@@ -58,6 +63,7 @@ Options:
   --config, -c <path>  Path to repos.json configuration file (default: ./repos.json)
   --dry-run, -n        Compute metrics but don't write files
   --verbose, -v        Enable verbose logging
+  --sep                Only aggregate SEP data (modelcontextprotocol/modelcontextprotocol only)
   --help, -h           Show this help message
 
 Legacy Options (deprecated, use config file instead):

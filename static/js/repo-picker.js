@@ -81,6 +81,21 @@
         if (anchor) anchor.classList.remove('active');
       }
     });
+
+    // Show/hide SEPs nav link based on selected repo
+    updateSEPsNavVisibility(repoKey);
+  }
+
+  // Show SEPs nav link only for modelcontextprotocol/modelcontextprotocol
+  function updateSEPsNavVisibility(repoKey) {
+    const sepsLink = document.getElementById('seps-nav-link');
+    if (sepsLink) {
+      if (repoKey === 'modelcontextprotocol/modelcontextprotocol') {
+        sepsLink.style.display = '';
+      } else {
+        sepsLink.style.display = 'none';
+      }
+    }
   }
 
   // Close DaisyUI dropdown by blurring the active element

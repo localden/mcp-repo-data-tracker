@@ -14,12 +14,14 @@ import { calculateIssueMetrics } from './metrics/issues.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
 import { calculateContributorMetrics } from './metrics/contributors.js';
 import { calculateHotspots } from './metrics/hotspots.js';
+import { calculateSEPMetrics } from './metrics/seps.js';
 import {
   writeMetrics,
   writeMaintainers,
   updateContributors,
   writeSnapshot,
   writeRepoIndex,
+  writeSEPMetrics,
 } from './data/writers.js';
 import { loadConfig, createDefaultConfig } from './config/loader.js';
 import type { Metrics, RepoConfig, ReposConfig } from './types/index.js';
@@ -39,6 +41,11 @@ import {
 } from './cli/output.js';
 
 export async function aggregate(args: CliArgs): Promise<void> {
+  // Handle SEP-only mode
+  if (args.sepOnly) {
+    return aggregateSEPOnly(args);
+  }
+
   const { dryRun, verbose, configPath } = args;
   const client = createGitHubClient();
   const startTime = Date.now();
@@ -193,4 +200,70 @@ async function aggregateRepository(
     await writeSnapshot(metrics, repoConfig);
     writeSpinner.succeed(`Data written to ${style.dim(repoPath + '/')}`);
   }
+
+  // SEP metrics (only for modelcontextprotocol/modelcontextprotocol)
+  if (owner === 'modelcontextprotocol' && repo === 'modelcontextprotocol') {
+    const sepSpinner = spinner('Computing SEP metrics').start();
+    const sepMetrics = calculateSEPMetrics(pulls, owner, repo);
+    sepSpinner.succeed(`SEPs: ${style.bold(String(sepMetrics.counts.total))} total (${sepMetrics.counts.proposal} proposals, ${sepMetrics.counts.draft} drafts, ${sepMetrics.counts.inReview} in-review, ${sepMetrics.counts.accepted} accepted, ${sepMetrics.counts.merged} merged)`);
+
+    if (dryRun) {
+      keyValue('seps', `${repoPath}/seps.json`);
+    } else {
+      const sepWriteSpinner = spinner('Writing SEP data').start();
+      await writeSEPMetrics(sepMetrics, repoConfig);
+      sepWriteSpinner.succeed(`SEP data written to ${style.dim(repoPath + '/seps.json')}`);
+    }
+  }
+}
+
+/**
+ * SEP-only aggregation mode
+ * Only fetches PRs and computes SEP metrics for modelcontextprotocol/modelcontextprotocol
+ */
+async function aggregateSEPOnly(args: CliArgs): Promise<void> {
+  const { dryRun, verbose } = args;
+  const client = createGitHubClient();
+  const startTime = Date.now();
+
+  const owner = 'modelcontextprotocol';
+  const repo = 'modelcontextprotocol';
+  const repoConfig: RepoConfig = { owner, repo, name: 'MCP Specification' };
+
+  header('SEP-Only Aggregation');
+  info(`${style.dim(`github.com/${owner}/${repo}`)}`);
+
+  if (dryRun) {
+    newline();
+    warning('Dry run mode — no files will be written');
+  }
+
+  // Fetch PRs (only data needed for SEPs)
+  newline();
+  const prSpinner = spinner('Fetching pull requests').start();
+  const pulls = await fetchPullRequests(client, owner, repo, verbose);
+  prSpinner.succeed(`PRs: ${style.bold(String(pulls.open.length))} open, ${style.dim(String(pulls.closed.length) + ' closed/merged')}`);
+
+  // Compute SEP metrics
+  const sepSpinner = spinner('Computing SEP metrics').start();
+  const sepMetrics = calculateSEPMetrics(pulls, owner, repo);
+  sepSpinner.succeed(`SEPs: ${style.bold(String(sepMetrics.counts.total))} total (${sepMetrics.counts.proposal} proposals, ${sepMetrics.counts.draft} drafts, ${sepMetrics.counts.inReview} in-review, ${sepMetrics.counts.accepted} accepted, ${sepMetrics.counts.merged} merged)`);
+
+  // Write SEP data
+  const repoPath = `data/repos/${owner}/${repo}`;
+  if (dryRun) {
+    newline();
+    info('Would write files:');
+    keyValue('seps', `${repoPath}/seps.json`);
+  } else {
+    const writeSpinner = spinner('Writing SEP data').start();
+    await writeSEPMetrics(sepMetrics, repoConfig);
+    writeSpinner.succeed(`SEP data written to ${style.dim(repoPath + '/seps.json')}`);
+  }
+
+  // Summary
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  newline();
+  divider();
+  success(`SEP aggregation complete in ${style.bold(duration + 's')}`);
 }

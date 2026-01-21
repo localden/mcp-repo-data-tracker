@@ -350,6 +350,9 @@ export interface GitHubPullRequest {
   author: {
     login: string;
   } | null;
+  assignees: {
+    nodes: Array<{ login: string }>;
+  };
   additions: number;
   deletions: number;
   changedFiles: number;
@@ -396,6 +399,56 @@ export interface GitHubPRFile {
 export interface HotspotRawData {
   prNumber: number;
   files: GitHubPRFile[];
+}
+
+// =============================================================================
+// SEP (Spec Enhancement Proposal) Types
+// =============================================================================
+
+/** SEP status based on labels */
+export type SEPStatus = 'proposal' | 'draft' | 'in-review' | 'accepted' | 'merged';
+
+/** A single SEP entry */
+export interface SEPEntry {
+  number: number;
+  title: string;
+  url: string;
+  author: string | null;
+  sponsor: string | null;  // From assignee
+  createdAt: string;
+  updatedAt: string;
+  mergedAt: string | null;
+  status: SEPStatus;
+  daysWaiting: number;
+  daysInCurrentStatus: number;
+  additions: number;
+  deletions: number;
+  reviewCount: number;
+  labels: string[];
+}
+
+/** SEP metrics data */
+export interface SEPMetrics {
+  lastUpdated: string;
+  /** SEPs in proposal state (no sponsor) */
+  proposals: SEPEntry[];
+  /** SEPs in draft state (has sponsor working on it) */
+  drafts: SEPEntry[];
+  /** SEPs in review */
+  inReview: SEPEntry[];
+  /** SEPs accepted but not yet merged */
+  accepted: SEPEntry[];
+  /** Merged SEPs */
+  merged: SEPEntry[];
+  /** Summary counts */
+  counts: {
+    proposal: number;
+    draft: number;
+    inReview: number;
+    accepted: number;
+    merged: number;
+    total: number;
+  };
 }
 
 // =============================================================================
