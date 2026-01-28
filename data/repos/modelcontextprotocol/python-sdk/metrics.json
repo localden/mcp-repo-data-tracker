@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-01-28T01:25:09.068Z",
+  "timestamp": "2026-01-28T03:47:39.386Z",
   "repository": {
-    "stars": 21371,
-    "forks": 3031
+    "stars": 21373,
+    "forks": 3033
   },
   "issues": {
     "open_count": 242,
@@ -47,7 +47,7 @@
         "title": "Fast MCP Server Initializes Twice",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/301",
         "createdAt": "2025-03-17T01:48:37Z",
-        "daysWaiting": 316,
+        "daysWaiting": 317,
         "labels": [
           "bug",
           "ready for work",
@@ -479,7 +479,7 @@
         "title": "streamable_http client call_tool hangs when receiving invalid JSONRPCMessage",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1144",
         "createdAt": "2025-07-15T02:32:44Z",
-        "daysWaiting": 196,
+        "daysWaiting": 197,
         "labels": [
           "bug",
           "ready for work",
@@ -880,7 +880,7 @@
         "title": "Client tool call hangs forever if server crashes or connection dies when using streamable-http",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1577",
         "createdAt": "2025-11-05T02:57:42Z",
-        "daysWaiting": 83,
+        "daysWaiting": 84,
         "labels": [
           "bug",
           "ready for work",
@@ -1242,6 +1242,8 @@
       }
     ],
     "by_label": {
+      "auth": 29,
+      "P2": 60,
       "enhancement": 100,
       "ready for work": 147,
       "P1": 58,
@@ -1249,8 +1251,6 @@
       "v2": 38,
       "P0": 11,
       "bug": 96,
-      "auth": 29,
-      "P2": 60,
       "documentation": 14,
       "question": 17,
       "P3": 46,
@@ -1558,6 +1558,22 @@
         "author": "bjoaquinc"
       },
       {
+        "number": 1578,
+        "title": "Fix issue where client tool call hangs forever if server crashes or connection dies when using streamable-http",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1578",
+        "createdAt": "2025-11-05T03:19:20Z",
+        "daysWaiting": 84,
+        "labels": [
+          "bug",
+          "P2"
+        ],
+        "isDraft": false,
+        "additions": 332,
+        "deletions": 44,
+        "reviewCount": 0,
+        "author": "gyang-xai"
+      },
+      {
         "number": 1570,
         "title": "Disable logs reconfigure on startup",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1570",
@@ -1572,22 +1588,6 @@
         "deletions": 7,
         "reviewCount": 0,
         "author": "carlosemart"
-      },
-      {
-        "number": 1578,
-        "title": "Fix issue where client tool call hangs forever if server crashes or connection dies when using streamable-http",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1578",
-        "createdAt": "2025-11-05T03:19:20Z",
-        "daysWaiting": 83,
-        "labels": [
-          "bug",
-          "P2"
-        ],
-        "isDraft": false,
-        "additions": 332,
-        "deletions": 44,
-        "reviewCount": 0,
-        "author": "gyang-xai"
       },
       {
         "number": 1582,
@@ -1739,7 +1739,7 @@
         "title": "fix: Fix logic that determines standard resource vs. resource template to account for context param (#1635)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1666",
         "createdAt": "2025-11-25T03:17:24Z",
-        "daysWaiting": 63,
+        "daysWaiting": 64,
         "labels": [
           "bug",
           "breaking change",
@@ -1876,6 +1876,21 @@
         "author": "dgenio"
       },
       {
+        "number": 1781,
+        "title": "Add agencyHint to ToolAnnotations",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1781",
+        "createdAt": "2025-12-12T02:25:35Z",
+        "daysWaiting": 47,
+        "labels": [
+          "pending SEP approval"
+        ],
+        "isDraft": true,
+        "additions": 12,
+        "deletions": 1,
+        "reviewCount": 0,
+        "author": "thoorp"
+      },
+      {
         "number": 1784,
         "title": "Fix `token_expiry_time` upon context initialization for stored tokens.",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1784",
@@ -1891,21 +1906,6 @@
         "deletions": 0,
         "reviewCount": 0,
         "author": "keurcien"
-      },
-      {
-        "number": 1781,
-        "title": "Add agencyHint to ToolAnnotations",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1781",
-        "createdAt": "2025-12-12T02:25:35Z",
-        "daysWaiting": 46,
-        "labels": [
-          "pending SEP approval"
-        ],
-        "isDraft": true,
-        "additions": 12,
-        "deletions": 1,
-        "reviewCount": 0,
-        "author": "thoorp"
       },
       {
         "number": 1800,
@@ -2004,6 +2004,23 @@
         "author": "challenger71498"
       },
       {
+        "number": 1818,
+        "title": "fix: auto-reinitialize client session on HTTP 404",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1818",
+        "createdAt": "2025-12-31T03:20:15Z",
+        "daysWaiting": 28,
+        "labels": [
+          "bug",
+          "improves spec compliance",
+          "P2"
+        ],
+        "isDraft": false,
+        "additions": 671,
+        "deletions": 9,
+        "reviewCount": 1,
+        "author": "jayhemnani9910"
+      },
+      {
         "number": 1819,
         "title": "Added custom validator for Resource mime type which is less retrictiv…",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1819",
@@ -2020,28 +2037,11 @@
         "author": "sighthon"
       },
       {
-        "number": 1818,
-        "title": "fix: auto-reinitialize client session on HTTP 404",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1818",
-        "createdAt": "2025-12-31T03:20:15Z",
-        "daysWaiting": 27,
-        "labels": [
-          "bug",
-          "improves spec compliance",
-          "P2"
-        ],
-        "isDraft": false,
-        "additions": 671,
-        "deletions": 9,
-        "reviewCount": 1,
-        "author": "jayhemnani9910"
-      },
-      {
         "number": 1824,
         "title": "Add custom content support to ToolError for isError responses",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1824",
         "createdAt": "2026-01-04T02:56:03Z",
-        "daysWaiting": 23,
+        "daysWaiting": 24,
         "labels": [
           "enhancement",
           "P3"
@@ -2211,6 +2211,19 @@
         "author": "github-actions"
       },
       {
+        "number": 1946,
+        "title": "fix:Improve code maintainability: Add a public mcp_server attribute t…",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1946",
+        "createdAt": "2026-01-24T02:23:48Z",
+        "daysWaiting": 4,
+        "labels": [],
+        "isDraft": false,
+        "additions": 43,
+        "deletions": 22,
+        "reviewCount": 0,
+        "author": "xy200303"
+      },
+      {
         "number": 1943,
         "title": "fix(hang): fix streamable_http GET handling to prevent hangs",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1943",
@@ -2261,19 +2274,6 @@
         "deletions": 49,
         "reviewCount": 0,
         "author": "skyvanguard"
-      },
-      {
-        "number": 1946,
-        "title": "fix:Improve code maintainability: Add a public mcp_server attribute t…",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1946",
-        "createdAt": "2026-01-24T02:23:48Z",
-        "daysWaiting": 3,
-        "labels": [],
-        "isDraft": false,
-        "additions": 43,
-        "deletions": 22,
-        "reviewCount": 0,
-        "author": "xy200303"
       },
       {
         "number": 1948,
