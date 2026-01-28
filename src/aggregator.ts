@@ -204,7 +204,7 @@ async function aggregateRepository(
   // SEP metrics (only for modelcontextprotocol/modelcontextprotocol)
   if (owner === 'modelcontextprotocol' && repo === 'modelcontextprotocol') {
     const sepSpinner = spinner('Computing SEP metrics').start();
-    const sepMetrics = calculateSEPMetrics(pulls, owner, repo);
+    const sepMetrics = calculateSEPMetrics(pulls, owner, repo, maintainerSet);
     sepSpinner.succeed(`SEPs: ${style.bold(String(sepMetrics.counts.total))} total (${sepMetrics.counts.proposal} proposals, ${sepMetrics.counts.draft} drafts, ${sepMetrics.counts.inReview} in-review, ${sepMetrics.counts.accepted} accepted, ${sepMetrics.counts.merged} merged)`);
 
     if (dryRun) {
@@ -238,15 +238,21 @@ async function aggregateSEPOnly(args: CliArgs): Promise<void> {
     warning('Dry run mode — no files will be written');
   }
 
-  // Fetch PRs (only data needed for SEPs)
+  // Fetch maintainers (needed to classify "final" SEPs)
   newline();
+  const maintainerSpinner = spinner('Fetching maintainers').start();
+  const maintainers = await fetchMaintainers(client, verbose);
+  maintainerSpinner.succeed(`Found ${style.bold(String(maintainers.maintainers.length))} maintainers`);
+  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github));
+
+  // Fetch PRs (only data needed for SEPs)
   const prSpinner = spinner('Fetching pull requests').start();
   const pulls = await fetchPullRequests(client, owner, repo, verbose);
   prSpinner.succeed(`PRs: ${style.bold(String(pulls.open.length))} open, ${style.dim(String(pulls.closed.length) + ' closed/merged')}`);
 
   // Compute SEP metrics
   const sepSpinner = spinner('Computing SEP metrics').start();
-  const sepMetrics = calculateSEPMetrics(pulls, owner, repo);
+  const sepMetrics = calculateSEPMetrics(pulls, owner, repo, maintainerSet);
   sepSpinner.succeed(`SEPs: ${style.bold(String(sepMetrics.counts.total))} total (${sepMetrics.counts.proposal} proposals, ${sepMetrics.counts.draft} drafts, ${sepMetrics.counts.inReview} in-review, ${sepMetrics.counts.accepted} accepted, ${sepMetrics.counts.merged} merged)`);
 
   // Write SEP data

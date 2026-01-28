@@ -24,9 +24,9 @@ function isSEP(pr: GitHubPullRequest): boolean {
 
 /**
  * Determine SEP status from labels and PR state
- * Priority order: merged > closed (rejected) > accepted > in-review > draft > proposal
+ * Priority order: merged > closed (rejected) > accepted > in-review/final > draft > proposal
  */
-function getSEPStatus(pr: GitHubPullRequest): SEPStatus | 'closed' {
+function getSEPStatus(pr: GitHubPullRequest, maintainerSet: Set<string>): SEPStatus | 'closed' {
   const labels = pr.labels.nodes.map(l => l.name.toLowerCase());
 
   // If merged, it's merged status (highest priority)
@@ -49,6 +49,14 @@ function getSEPStatus(pr: GitHubPullRequest): SEPStatus | 'closed' {
     return 'in-review';
   }
 
+  // "final" label with a maintainer assignee counts as in-review
+  if (labels.some(l => l === 'final')) {
+    const hasMaintainerAssignee = pr.assignees.nodes.some(a => maintainerSet.has(a.login));
+    if (hasMaintainerAssignee) {
+      return 'in-review';
+    }
+  }
+
   // Check for draft label (just "draft", not "SEP: draft")
   if (labels.some(l => l === 'draft')) {
     return 'draft';
@@ -61,7 +69,7 @@ function getSEPStatus(pr: GitHubPullRequest): SEPStatus | 'closed' {
 /**
  * Convert a PR to a SEP entry
  */
-function prToSEPEntry(pr: GitHubPullRequest, owner: string, repo: string): SEPEntry {
+function prToSEPEntry(pr: GitHubPullRequest, owner: string, repo: string, maintainerSet: Set<string>): SEPEntry {
   const now = Date.now();
   const createdAt = new Date(pr.createdAt).getTime();
   const updatedAt = new Date(pr.updatedAt).getTime();
@@ -72,7 +80,7 @@ function prToSEPEntry(pr: GitHubPullRequest, owner: string, repo: string): SEPEn
   // Get sponsor from assignees (first assignee is typically the sponsor)
   const sponsor = pr.assignees.nodes.length > 0 ? pr.assignees.nodes[0].login : null;
 
-  const status = getSEPStatus(pr);
+  const status = getSEPStatus(pr, maintainerSet);
 
   return {
     number: pr.number,
@@ -99,7 +107,8 @@ function prToSEPEntry(pr: GitHubPullRequest, owner: string, repo: string): SEPEn
 export function calculateSEPMetrics(
   pulls: PullRequestData,
   owner: string,
-  repo: string
+  repo: string,
+  maintainerSet: Set<string>
 ): SEPMetrics {
   // Include open PRs and merged PRs only (exclude closed-not-merged/rejected PRs)
   const mergedPRs = pulls.closed.filter(pr => pr.mergedAt !== null);
@@ -109,7 +118,7 @@ export function calculateSEPMetrics(
   const sepPRs = allPRs.filter(isSEP);
 
   // Convert to SEP entries
-  const sepEntries = sepPRs.map(pr => prToSEPEntry(pr, owner, repo));
+  const sepEntries = sepPRs.map(pr => prToSEPEntry(pr, owner, repo, maintainerSet));
 
   // Categorize by status
   const proposals: SEPEntry[] = [];
