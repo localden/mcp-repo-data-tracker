@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-03-07T04:02:55.812Z",
+  "timestamp": "2026-03-07T05:05:12.150Z",
   "repository": {
-    "stars": 22000,
-    "forks": 3150
+    "stars": 21999,
+    "forks": 3151
   },
   "issues": {
     "open_count": 247,
@@ -73,7 +73,7 @@
         "title": "MCP Server: Inconsistent Exception Handling in @app.call_tool and Client Undetected Server Termination via Stdio",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/396",
         "createdAt": "2025-03-31T04:58:36Z",
-        "daysWaiting": 340,
+        "daysWaiting": 341,
         "labels": [
           "bug",
           "ready for work",
@@ -348,7 +348,7 @@
         "title": "MCP Python SDK sessionId not maintained in browser with TypeScript SDK client",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1135",
         "createdAt": "2025-07-14T04:07:20Z",
-        "daysWaiting": 235,
+        "daysWaiting": 236,
         "labels": [
           "bug",
           "needs confirmation"
@@ -899,6 +899,19 @@
         "commentCount": 8
       },
       {
+        "number": 1811,
+        "title": "client's `read_stream_writer` open after SSE disconnection hanging `.receive()`",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1811",
+        "createdAt": "2025-12-21T04:41:07Z",
+        "daysWaiting": 76,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P1"
+        ],
+        "commentCount": 3
+      },
+      {
         "number": 1809,
         "title": "Support for multiple workers in the same process",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1809",
@@ -910,19 +923,6 @@
           "P3"
         ],
         "commentCount": 1
-      },
-      {
-        "number": 1811,
-        "title": "client's `read_stream_writer` open after SSE disconnection hanging `.receive()`",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1811",
-        "createdAt": "2025-12-21T04:41:07Z",
-        "daysWaiting": 75,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P1"
-        ],
-        "commentCount": 3
       },
       {
         "number": 1842,
@@ -1137,7 +1137,7 @@
         "createdAt": "2026-03-06T14:14:50Z",
         "daysWaiting": 0,
         "labels": [],
-        "commentCount": 0
+        "commentCount": 1
       },
       {
         "number": 2232,
@@ -1198,16 +1198,16 @@
     "reopen_rate": 1
   },
   "pulls": {
-    "open_count": 150,
+    "open_count": 151,
     "merged_7d": 9,
     "merged_30d": 49,
     "merged_90d": 150,
-    "opened_7d": 68,
-    "opened_30d": 197,
-    "opened_90d": 377,
+    "opened_7d": 65,
+    "opened_30d": 198,
+    "opened_90d": 378,
     "closed_not_merged_90d": 176,
     "draft_count": 23,
-    "without_review_24h": 94,
+    "without_review_24h": 98,
     "without_review_7d": 74,
     "prs_without_maintainer_review": [
       {
@@ -1772,7 +1772,7 @@
         "title": "fix: `handle_sse_response` causing dangling client's read_stream ",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1812",
         "createdAt": "2025-12-21T04:57:40Z",
-        "daysWaiting": 75,
+        "daysWaiting": 76,
         "labels": [
           "bug",
           "P1"
@@ -1805,7 +1805,7 @@
         "title": "fix: cleanup resources properly on `BaseSession::_receive_loop` cleanup",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1817",
         "createdAt": "2025-12-26T04:44:29Z",
-        "daysWaiting": 70,
+        "daysWaiting": 71,
         "labels": [
           "bug",
           "P1"
@@ -2114,6 +2114,22 @@
         "author": "BabyChrist666"
       },
       {
+        "number": 2032,
+        "title": "fix: skip JSON pre-parsing for str union annotations in pre_parse_json",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2032",
+        "createdAt": "2026-02-11T04:03:00Z",
+        "daysWaiting": 24,
+        "labels": [
+          "bug",
+          "P2"
+        ],
+        "isDraft": false,
+        "additions": 38,
+        "deletions": 1,
+        "reviewCount": 0,
+        "author": "adityuhkapoor"
+      },
+      {
         "number": 2029,
         "title": "fix: use ASGI callable for SSE endpoint to avoid BaseHTTPMiddleware AssertionError (#883)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2029",
@@ -2140,22 +2156,6 @@
         "deletions": 4,
         "reviewCount": 0,
         "author": "Ashutosh0x"
-      },
-      {
-        "number": 2032,
-        "title": "fix: skip JSON pre-parsing for str union annotations in pre_parse_json",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2032",
-        "createdAt": "2026-02-11T04:03:00Z",
-        "daysWaiting": 23,
-        "labels": [
-          "bug",
-          "P2"
-        ],
-        "isDraft": false,
-        "additions": 38,
-        "deletions": 1,
-        "reviewCount": 0,
-        "author": "adityuhkapoor"
       },
       {
         "number": 2039,
@@ -2246,6 +2246,22 @@
         "author": "IT-HONGREAT"
       },
       {
+        "number": 2072,
+        "title": "fix: handle ClosedResourceError in _handle_message error recovery path",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2072",
+        "createdAt": "2026-02-17T04:25:46Z",
+        "daysWaiting": 18,
+        "labels": [
+          "bug",
+          "P3"
+        ],
+        "isDraft": false,
+        "additions": 59,
+        "deletions": 5,
+        "reviewCount": 0,
+        "author": "BabyChrist666"
+      },
+      {
         "number": 2077,
         "title": "fix(auth): forward user-agent to oauth flow requests",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2077",
@@ -2276,22 +2292,6 @@
         "isDraft": false,
         "additions": 303,
         "deletions": 99,
-        "reviewCount": 0,
-        "author": "BabyChrist666"
-      },
-      {
-        "number": 2072,
-        "title": "fix: handle ClosedResourceError in _handle_message error recovery path",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2072",
-        "createdAt": "2026-02-17T04:25:46Z",
-        "daysWaiting": 17,
-        "labels": [
-          "bug",
-          "P3"
-        ],
-        "isDraft": false,
-        "additions": 59,
-        "deletions": 5,
         "reviewCount": 0,
         "author": "BabyChrist666"
       },
@@ -2828,6 +2828,68 @@
         "author": "lavish0000"
       },
       {
+        "number": 2226,
+        "title": "docs: explain FastMCP request IDs for cancellation",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2226",
+        "createdAt": "2026-03-06T04:52:05Z",
+        "daysWaiting": 1,
+        "labels": [
+          "documentation",
+          "P3"
+        ],
+        "isDraft": false,
+        "additions": 21,
+        "deletions": 0,
+        "reviewCount": 0,
+        "author": "lavish0000"
+      },
+      {
+        "number": 2227,
+        "title": "docs: clarify structured output validation timing",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2227",
+        "createdAt": "2026-03-06T04:52:06Z",
+        "daysWaiting": 1,
+        "labels": [
+          "documentation"
+        ],
+        "isDraft": false,
+        "additions": 17,
+        "deletions": 0,
+        "reviewCount": 0,
+        "author": "lavish0000"
+      },
+      {
+        "number": 2228,
+        "title": "fix(types): type converted MCPServer handler results",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2228",
+        "createdAt": "2026-03-06T05:03:01Z",
+        "daysWaiting": 1,
+        "labels": [
+          "needs confirmation",
+          "v2",
+          "enhancement",
+          "P2"
+        ],
+        "isDraft": false,
+        "additions": 84,
+        "deletions": 26,
+        "reviewCount": 0,
+        "author": "lavish0000"
+      },
+      {
+        "number": 2225,
+        "title": "fix(session): return -32601 for unknown request methods",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2225",
+        "createdAt": "2026-03-06T04:48:09Z",
+        "daysWaiting": 1,
+        "labels": [],
+        "isDraft": false,
+        "additions": 159,
+        "deletions": 3,
+        "reviewCount": 0,
+        "author": "lavish0000"
+      },
+      {
         "number": 2215,
         "title": "fix(stdio): allow configurable memory stream buffer size",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2215",
@@ -2839,6 +2901,19 @@
         "deletions": 3,
         "reviewCount": 0,
         "author": "yaowubarbara"
+      },
+      {
+        "number": 2241,
+        "title": "fix: make pywin32 imports soft to support server-only Windows installs",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2241",
+        "createdAt": "2026-03-07T04:35:12Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 12,
+        "deletions": 4,
+        "reviewCount": 0,
+        "author": "herakles-dev"
       },
       {
         "number": 2240,
@@ -2891,68 +2966,6 @@
         "deletions": 0,
         "reviewCount": 0,
         "author": "goingforstudying-ctrl"
-      },
-      {
-        "number": 2226,
-        "title": "docs: explain FastMCP request IDs for cancellation",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2226",
-        "createdAt": "2026-03-06T04:52:05Z",
-        "daysWaiting": 0,
-        "labels": [
-          "documentation",
-          "P3"
-        ],
-        "isDraft": false,
-        "additions": 21,
-        "deletions": 0,
-        "reviewCount": 0,
-        "author": "lavish0000"
-      },
-      {
-        "number": 2227,
-        "title": "docs: clarify structured output validation timing",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2227",
-        "createdAt": "2026-03-06T04:52:06Z",
-        "daysWaiting": 0,
-        "labels": [
-          "documentation"
-        ],
-        "isDraft": false,
-        "additions": 17,
-        "deletions": 0,
-        "reviewCount": 0,
-        "author": "lavish0000"
-      },
-      {
-        "number": 2228,
-        "title": "fix(types): type converted MCPServer handler results",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2228",
-        "createdAt": "2026-03-06T05:03:01Z",
-        "daysWaiting": 0,
-        "labels": [
-          "needs confirmation",
-          "v2",
-          "enhancement",
-          "P2"
-        ],
-        "isDraft": false,
-        "additions": 84,
-        "deletions": 26,
-        "reviewCount": 0,
-        "author": "lavish0000"
-      },
-      {
-        "number": 2225,
-        "title": "fix(session): return -32601 for unknown request methods",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2225",
-        "createdAt": "2026-03-06T04:48:09Z",
-        "daysWaiting": 0,
-        "labels": [],
-        "isDraft": false,
-        "additions": 159,
-        "deletions": 3,
-        "reviewCount": 0,
-        "author": "lavish0000"
       }
     ],
     "review_time": {
@@ -2969,15 +2982,15 @@
     "rejection_rate_pct": 54,
     "avg_reviews_per_pr": 3.2,
     "by_size": {
-      "small": 67,
+      "small": 68,
       "medium": 60,
       "large": 23
     }
   },
   "contributors": {
-    "total_known": 508,
-    "active_30d": 80,
-    "first_time_30d": 70,
+    "total_known": 509,
+    "active_30d": 81,
+    "first_time_30d": 71,
     "retention_rate_pct": 100,
     "churned_30d": 0,
     "commits_per_week_avg": 10.4,
@@ -2996,7 +3009,7 @@
       8
     ],
     "active_maintainers_30d": 7,
-    "active_community_30d": 73,
+    "active_community_30d": 74,
     "allContributors": [
       "0Delta",
       "0x-Professor",
@@ -3268,6 +3281,7 @@
       "harsh543",
       "hashwnath",
       "heath-hunnicutt-ruach-tov",
+      "herakles-dev",
       "herniqeu",
       "herrrX",
       "heyhayes",
@@ -3554,6 +3568,7 @@
       "haroldfabla2-hue",
       "harsh543",
       "hashwnath",
+      "herakles-dev",
       "heyhayes",
       "hubbard-zlee",
       "imran-siddique",
