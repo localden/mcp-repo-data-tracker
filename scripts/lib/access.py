@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ACCESS_DIR = Path.home() / "src" / "mcp" / "access" / "src" / "config"
+ACCESS_DIR = Path("./access-config")  # overridden by --maintainers-json in practice
 
 
 @dataclass

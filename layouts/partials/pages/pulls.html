@@ -458,7 +458,7 @@ function actToggle(scope, open) {
     <span class="text-error">Unclassified <span class="text-base-content/40 font-normal">({{ $n }})</span></span>
     {{ template "act-tier-toggle" }}
   </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">Classifier couldn't decide. Each one is a model bug to fix.</p>
+  <p class="text-[10px] text-base-content/40 mb-2">Classifier couldn't determine a state — needs manual triage.</p>
   {{ range . }}{{ template "act-state-detail" . }}{{ end }}
 </section>
 {{ end }}

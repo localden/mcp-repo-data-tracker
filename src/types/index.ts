@@ -279,17 +279,27 @@ export interface ActionabilityTierRow {
   mins: number;
 }
 
+/** Documentation-only — not imported anywhere, tsc won't catch drift. Keep in sync with _structured() in scripts/pr-actionable. */
 export interface ActionabilitySummary {
   actionable_count: number;
   effort_hours: number;
   auth_count: number;
   maint_count: number;
   not_our_move_count: number;
-  prev_actionable: number | null;
   cluster_count: number;
   cluster_member_count: number;
   by_tier: ActionabilityTierRow[];
   by_state: Record<string, number>;
+  sla: {
+    first_review_7d_breach: number;
+    first_review_eligible: number;
+    re_review_24h_breach: number;
+    re_review_eligible: number;
+    maint_24h_breach: number;
+    maint_eligible: number;
+    actionable_target: number;
+    actionable_over_target: boolean;
+  };
 }
 
 // =============================================================================

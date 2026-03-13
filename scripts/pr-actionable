@@ -3,9 +3,7 @@
 pr-actionable — classify open PRs into actionable/not-actionable states.
 
 Daily metric: how many PRs are waiting on *us* vs. waiting on the author/spec.
-Posts a Slack digest: headline count + breakdown by state + unknown list.
-
-Design doc: ~/src/docs/2026-03-12-pr-actionability-state-machine.md §12
+Writes the tier→state→PR tree to actionability.json for the dashboard's pulls page.
 
 Usage:
   pr-actionable --repo typescript-sdk [--no-llm] [--json F] [--gist-markdown F] [--visr-json F]
@@ -54,7 +52,7 @@ BOT_RELEASE_TITLES = {
     "chore: weekly dependency update",
 }
 
-STATE_DIR = Path.home() / "src" / "mcp" / ".automation" / "pr-actionable"
+LLM_MODEL = "sonnet"
 
 # Labels that directly set state (Tier-2 overrides — human applied once, then deterministic)
 LABEL_OVERRIDES = {
@@ -104,7 +102,7 @@ TIER_DEFS: list[tuple[str, str]] = [
     ("High leverage",          "One decision unblocks or closes multiple things."),
     ("Intake",                 "PRs not yet reviewed by a maintainer. Oldest first."),
     ("Hygiene",                "Batchable procedural ops — pings, rebases, peer reviews."),
-    ("Close candidates",       "Likely to be closed — inactive, stale, or automated-looking. Reviewed before closing."),
+    ("Close candidates",       "Likely to be closed — inactive, stale, or needing more context. Reviewed before closing."),
 ]
 
 STATES: list[StateSpec] = [
@@ -422,7 +420,7 @@ query($owner: String!, $name: String!, $number: Int!) {
     pullRequest(number: $number) {
       mergeable
       reviews(last: 30) {
-        nodes { author { login } state submittedAt }
+        nodes { author { login } state submittedAt body }
       }
       statusCheckRollup: commits(last: 1) {
         nodes {
@@ -453,7 +451,7 @@ def fetch_tier_b(pr: PR, owner: str, name: str) -> None:
     # Reviews — filter self + bots. Track per-reviewer latest state.
     per_reviewer: dict[str, dict] = {}
     for r in p["reviews"]["nodes"]:
-        if not r["author"]:
+        if r is None or not r["author"]:
             continue
         login = r["author"]["login"]
         if login == pr.author or is_bot_reviewer(login):
@@ -463,6 +461,7 @@ def fetch_tier_b(pr: PR, owner: str, name: str) -> None:
             "author": login,
             "state": r["state"],
             "submitted_at": parse_dt(r["submittedAt"]),
+            "body": r.get("body", ""),
         }
     pr.reviews = list(per_reviewer.values())
 
@@ -476,6 +475,8 @@ def fetch_tier_b(pr: PR, owner: str, name: str) -> None:
         # Latest completion time (for ci-red-silent comment-after check)
         times = []
         for ctx in rollup["contexts"]["nodes"]:
+            if ctx is None:
+                continue
             t = ctx.get("completedAt") or ctx.get("createdAt")
             if t:
                 times.append(parse_dt(t))
@@ -529,7 +530,7 @@ def fetch_tier_c(pr: PR, owner: str, name: str) -> None:
         {"author": c["author"]["login"] if c["author"] else "ghost",
          "body": c["body"],
          "created_at": parse_dt(c["createdAt"])}
-        for c in p["comments"]["nodes"]
+        for c in p["comments"]["nodes"] if c is not None
     ]
 
 
@@ -560,7 +561,7 @@ class LLMError(RuntimeError):
 
 
 def _claude_p_once(prompt: str, purpose: str, schema: dict | None = None) -> str | dict:
-    cmd = ["claude", "-p", prompt, "--output-format", "json"]
+    cmd = ["claude", "-p", prompt, "--model", LLM_MODEL, "--output-format", "json"]
     if schema is not None:
         cmd += ["--json-schema", json.dumps(schema)]
     t0 = time.monotonic()
@@ -700,6 +701,9 @@ def detect_clusters(prs: list[PR]) -> None:
             issue_to_prs[issue].append(pr)
 
     for issue, members in issue_to_prs.items():
+        # A PR linking ≥2 clustering issues would get overwritten on the second pass,
+        # orphaning the first cluster. First-wins keeps everyone reachable.
+        members = [m for m in members if m.cluster_id is None]
         if len(members) < 2:
             continue
         members.sort(key=lambda p: p.number)
@@ -819,7 +823,11 @@ def detect_semantic_clusters(prs: list[PR], owner: str, name: str, use_llm: bool
 {chr(10).join(diff_snippets)}
 
 If none are truly duplicates, use an empty clusters array.
-A PR can appear in at most one cluster. \"pick\" is the one to keep; others get closed."""
+A PR can appear in at most one cluster. \"pick\" is the one to keep; others get closed.
+
+Your pick reason is shown on a public dashboard where the authors can see it. Cite concrete
+technical differences (CI status, test coverage, diff size, merge conflicts, which approach
+handles which cases) — not value judgments about quality."""
         try:
             return claude_p(prompt, purpose="semantic-cluster", schema=SEMANTIC_SCHEMA)
         except (subprocess.CalledProcessError, LLMError) as e:
@@ -894,7 +902,11 @@ def pick_cluster_winners(prs: list[PR], owner: str, name: str, use_llm: bool) ->
 
 {chr(10).join(summaries)}
 
-Prefer: passing CI > has tests > smallest focused diff > oldest."""
+Prefer: passing CI > has tests > smallest focused diff > oldest.
+
+Your reason is shown on a public dashboard where both authors can see it. Cite concrete
+technical differences (CI status, test coverage, diff size, merge conflicts, approach
+specifics) — not value judgments about which author did better work."""
         try:
             r = claude_p(prompt, purpose="cluster-pick", schema=PICK_SCHEMA)
             return r["pick"], r["reason"]
@@ -996,8 +1008,12 @@ def llm_low_effort_batch(prs: list[PR]) -> dict[int, tuple[bool, str]]:
         for p in prs
     )
     prompt = f"""These PRs tripped low-effort heuristics (short body, no issue link, first-time author).
-For each, decide: is this a drive-by / auto-generated PR (missing context, generic description,
-no motivation) or a legitimate focused fix that just happens to be terse?
+For each, decide: is this missing the context a reviewer needs (no motivation, generic description,
+unclear what problem it solves) or a legitimate focused fix that just happens to be terse?
+
+Your reason text is shown to the PR author on a public dashboard. Describe what's missing
+("no linked issue, description doesn't explain the failure mode") rather than characterizing
+the PR or author ("looks auto-generated", "drive-by"). Stick to what would help them improve it.
 
 {items}"""
     schema = {
@@ -1023,7 +1039,7 @@ no motivation) or a legitimate focused fix that just happens to be terse?
 
 
 def detect_low_effort(prs: list[PR], owner: str, name: str, use_llm: bool) -> None:
-    """Reassign needs-first-review PRs that look like drive-by spam."""
+    """Reassign needs-first-review PRs that are missing context a reviewer needs."""
     candidates = [p for p in prs if p.state == "needs-first-review" and not p.is_maintainer]
     suspects: list[tuple[PR, list[str]]] = []
     for p in candidates:
@@ -1102,11 +1118,11 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
             return
         # >7d: check if maintainer pinged already (needs Tier C)
         fetch_tier_c(pr, owner, name)
-        maintainer_pinged = any(
-            c["author"] in MAINTAINERS and days_since(c["created_at"]) <= DAYS_COMMUNITY_SLA
+        maintainer_pinged_long_ago = any(
+            c["author"] in MAINTAINERS and days_since(c["created_at"]) > DAYS_COMMUNITY_SLA
             for c in (pr.comments or [])
         )
-        if maintainer_pinged:
+        if maintainer_pinged_long_ago:
             pr.state, pr.reason = "stale-draft-pinged", "pinged, no response >7d"
         else:
             pr.state, pr.reason = "stale-draft", f"draft idle {age:.0f}d"
@@ -1168,6 +1184,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
                 author_pings.append((c, mentioned))
 
         if len(maintainer_comments) >= 2:
+            pr.wait_since = max(c["created_at"] for c in maintainer_comments)
             pr.state = "needs-decision"
             pr.reason = f"{len(maintainer_comments)} maintainer comments, zero reviews"
             return
@@ -1189,6 +1206,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
 
     # Has reviews. Contested?
     if approved_by and changes_requested_by:
+        pr.wait_since = latest_review_at
         pr.state = "approval-contested"
         pr.reason = f"approved by {','.join(approved_by)}; changes req by {','.join(changes_requested_by)}"
         return
@@ -1265,6 +1283,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         return
 
     # COMMENTED only (no approve, no request-changes)
+    pr.wait_since = latest_review_at
     pr.state, pr.reason = "needs-decision", "maintainer COMMENTED but took no stance"
 
 
@@ -1332,7 +1351,6 @@ def route(pr: PR) -> str:
 class RepoResult:
     repo: str
     prs: list[PR]
-    prev_actionable: int | None
 
     @property
     def actionable(self) -> list[PR]:
@@ -1358,13 +1376,6 @@ class RepoResult:
     def effort_hours(self) -> float:
         mins = sum(EFFORT_MINUTES.get(p.state, 15) for p in self.actionable)
         return mins / 60
-
-    def delta_str(self) -> str:
-        if self.prev_actionable is None:
-            return ""
-        d = len(self.actionable) - self.prev_actionable
-        arrow = "▼" if d < 0 else "▲" if d > 0 else "="
-        return f" (was {self.prev_actionable} {arrow}{abs(d)})"
 
 
 def _pr_url(repo: str, n: int) -> str:
@@ -1621,7 +1632,6 @@ def _structured(r: RepoResult) -> dict:
             "auth_count": len(r.auth),
             "maint_count": r.maintainer_count,
             "effort_hours": round(r.effort_hours, 1),
-            "prev_actionable": r.prev_actionable,
             "cluster_count": r.cluster_count,
             "cluster_member_count": r.cluster_member_count,
             "not_our_move_count": len(not_counted),
@@ -1650,12 +1660,12 @@ def _structured(r: RepoResult) -> dict:
 
 
 def format_headline(results: list[RepoResult], cost: dict, gist_url: str | None) -> str:
-    lines = [f"📊 mcp-oss-digest — {now().date()}", ""]
+    lines = [f"📊 PR actionability — {now().date()}", ""]
     for r in results:
         short = r.repo.replace("typescript-sdk", "ts").replace("python-sdk", "py")
         lines.append(
             f"*{short}*: {len(r.actionable)} actionable · {len(r.auth)} auth · "
-            f"~{r.effort_hours:.0f}h{r.delta_str()}"
+            f"~{r.effort_hours:.0f}h"
         )
         # Tier table as a Slack code block — markdown tables don't render there.
         rows = _tier_summary(r)
@@ -1685,9 +1695,7 @@ def format_gist_markdown(r: RepoResult, cost: dict) -> str:
     n_act = sm["actionable_count"]
     out = [f"# {s['repo']} · {n_act} PRs actionable · {date}", ""]
 
-    delta = r.delta_str().strip()
-    delta_tail = f" · {delta.lstrip('(').rstrip(')')}" if delta else ""
-    out.append(f"> **{n_act} actionable** · ~{sm['effort_hours']}h{delta_tail}  ")
+    out.append(f"> **{n_act} actionable** · ~{sm['effort_hours']}h  ")
     out.append(f"> _Ctrl-F `[auth]` to jump between the {sm['auth_count']} auth PRs._")
     out.append("")
 
@@ -1804,7 +1812,6 @@ def format_gist_markdown(r: RepoResult, cost: dict) -> str:
 
 def classify_repo(repo: str, use_llm: bool, maintainers_json: str | None = None) -> RepoResult:
     owner, name = "modelcontextprotocol", repo
-    state_file = STATE_DIR / f"{repo}.json"
 
     if maintainers_json:
         print(f"[{repo}] loading maintainers from {maintainers_json}...", file=sys.stderr)
@@ -1856,29 +1863,7 @@ def classify_repo(repo: str, use_llm: bool, maintainers_json: str | None = None)
                 except LLMError as e:
                     pr.reason = f"llm fallback failed after retry: {str(e)[:100]}"
 
-    # Load previous for delta
-    prev_actionable = None
-    if state_file.exists():
-        try:
-            prev_actionable = json.loads(state_file.read_text()).get("actionable_count")
-        except Exception:
-            pass
-
-    return RepoResult(repo=repo, prs=prs, prev_actionable=prev_actionable)
-
-
-def persist_state(r: RepoResult, cost: dict) -> None:
-    state_file = STATE_DIR / f"{r.repo}.json"
-    state_file.write_text(json.dumps({
-        "date": now().isoformat(),
-        "actionable_count": len(r.actionable),
-        "effort_hours": round(r.effort_hours, 1),
-        "llm_cost_usd": cost["total_usd"],
-        "by_state": {
-            s: [p.number for p in r.prs if p.state == s]
-            for s in sorted(set(p.state for p in r.prs))
-        },
-    }, indent=2))
+    return RepoResult(repo=repo, prs=prs)
 
 
 def main() -> None:
@@ -1893,14 +1878,7 @@ def main() -> None:
                     help="write per-repo structured JSON for VISR dashboard (use {repo} placeholder for multi-repo)")
     ap.add_argument("--maintainers-json", metavar="PATH",
                     help="load maintainers from pre-parsed JSON ({github, roles} entries) instead of the access repo checkout")
-    ap.add_argument("--state-dir", metavar="PATH",
-                    help="override state file directory (default: ~/src/mcp/.automation/pr-actionable)")
     args = ap.parse_args()
-
-    global STATE_DIR
-    if args.state_dir:
-        STATE_DIR = Path(args.state_dir)
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
 
     repos = [r.strip() for r in args.repo.split(",") if r.strip()]
     if not repos:
@@ -1955,7 +1933,7 @@ def main() -> None:
             _emit(json.dumps(s, indent=2), target)
 
     if args.json is not None:
-        # Envelope: top-level scalars for the Slack skill's jq extracts; full _structured per repo.
+        # Envelope: top-level scalars for jq extraction; full _structured per repo.
         out = {
             "date": now().isoformat(),
             "llm_cost": cost,
@@ -1967,7 +1945,6 @@ def main() -> None:
                     "actionable_count": len(r.actionable),
                     "auth_count": len(r.auth),
                     "effort_hours": round(r.effort_hours, 1),
-                    "prev_actionable": r.prev_actionable,
                     "llm_cost": llm_cost_summary(repo=r.repo),
                     # Full structured tree — the actual data model
                     "structured": _structured(r),
@@ -1980,9 +1957,6 @@ def main() -> None:
     if args.json is None and args.gist_markdown is None and args.visr_json is None:
         # No output target specified — print headline only
         print(format_headline(results, cost, gist_url=None))
-
-    for r in results:
-        persist_state(r, llm_cost_summary(repo=r.repo))
 
 
 if __name__ == "__main__":
