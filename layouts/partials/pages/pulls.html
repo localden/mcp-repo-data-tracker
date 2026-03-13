@@ -6,10 +6,13 @@
 
 {{/* Auth badge — #92ad2d matches the GitHub area:auth label. Inline style because
      tailwind doesn't ship an arbitrary-hex class and the purge would drop it. */}}
-{{ define "act-auth-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white inline-block align-middle" style="background-color:#92ad2d">{{ . }}</span>{{ end }}
+{{ define "act-auth-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle" style="background-color:#92ad2d;color:#fff">{{ . }}</span>{{ end }}
+{{ define "act-sla-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle" style="background-color:#dc3545;color:#fff">{{ . }}</span>{{ end }}
 
 {{ define "act-pr-row" }}
-<tr class="border-t border-base-300 hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ .url }}', '_blank')">
+<tr class="border-t border-base-300 hover:bg-base-200/50 cursor-pointer transition-colors"
+    data-author="{{ .author | lower }}" data-badges="{{ if .is_auth }}auth {{ end }}{{ with .sla_kind }}sla {{ . }}{{ end }}"
+    onclick="window.open('{{ .url }}', '_blank')">
   <td class="text-xs font-mono whitespace-nowrap pl-3">
     <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
   </td>
@@ -17,7 +20,7 @@
     {{ if .is_maintainer }}<span class="font-semibold">{{ .author }}</span>{{ else }}{{ .author }}{{ end }}
   </td>
   <td class="text-xs truncate" title="{{ .title }}">
-    {{ if .is_auth }}<span style="float:right">{{ template "act-auth-badge" "auth" }}</span>{{ end }}{{ .title }}
+    {{ with .sla_kind }}<span style="float:right">{{ template "act-sla-badge" . }}</span>{{ end }}{{ if .is_auth }}<span style="float:right">{{ template "act-auth-badge" "auth" }}</span>{{ end }}{{ .title }}
   </td>
   <td class="text-xs text-base-content/50 truncate" title="{{ .reason }}">{{ .short_reason }}</td>
   <td class="text-xs text-right whitespace-nowrap">
@@ -30,16 +33,16 @@
 {{/* Per-section ⊕/⊖ toggle — low-contrast until hover so it doesn't compete
      with the tier name. Paired with actToggle() defined inline below. */}}
 {{ define "act-tier-toggle" }}
-<span class="ml-auto text-base-content/30 hover:text-base-content/70 font-normal text-sm select-none">
+<span class="text-base-content/30 hover:text-base-content/70 font-normal text-sm select-none" style="margin-left:auto">
   <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),true)" title="expand all in section">⊕</span>
   <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),false)" title="collapse all in section">⊖</span>
 </span>
 {{ end }}
 
 {{ define "act-state-detail" }}
-<details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden">
+<details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}">
   <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-    {{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
+    {{ with (len (where .prs "sla_breach" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" .) }}</span>{{ end }}{{ end }}{{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
     <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
   </summary>
   <table class="table table-xs table-fixed w-full">
@@ -107,112 +110,89 @@
 {{ $actAuthSpark  := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.auth_count") }}
 {{ $actCountTrend := partial "calc-trend.html" (dict "sparkline" $actCountSpark) }}
 {{ $actHoursTrend := partial "calc-trend.html" (dict "sparkline" $actHoursSpark) }}
-{{ $reviewP90Spark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.p90_hours") }}
-{{ $reviewP90Trend := partial "calc-trend.html" (dict "sparkline" $reviewP90Spark) }}
-
-<section class="mb-4">
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Actionable PRs" "value" $a.summary.actionable_count "sparkline" $actCountSpark "sparklineColor" "rgb(220, 53, 69)" "trend" $actCountTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "Auth surface" "value" $a.summary.auth_count "descriptor" "of actionable" "sparkline" $actAuthSpark "sparklineColor" "rgb(255, 193, 7)") }}
-    {{ partial "metric-card.html" (dict "label" "Hours to clear" "value" (printf "~%s" ($a.summary.effort_hours | lang.FormatNumber 1)) "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)" "trend" $actHoursTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "Review P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours) "sparkline" $reviewP90Spark "sparklineColor" "rgb(108, 117, 125)" "trend" $reviewP90Trend "trendGoodDirection" "down" "info" "Time from PR open to first maintainer review — 90th percentile across all merged PRs. Computed by the main collector, not the classifier.") }}
-  </div>
-</section>
 
 {{/* ──────────────────────────────────────────────────────────────────────────
-     SLA COMPLIANCE — second card row, targets from go/mcp-codereview.
-     Each value is "PRs currently breaching the target". Tracked over time.
+     HEADLINE + SLA — two card rows. Row 1 = queue health, row 2 = SLA breaches.
+     Scoped inside `with .sla` so repos pre-dating the classifier fall through.
      ────────────────────────────────────────────────────────────────────────── */}}
 {{ with $a.summary.sla }}
 {{ $s := . }}
+{{ $act := $a.summary.actionable_count }}
+{{ $auth := $a.summary.auth_count }}
+{{ $hrs := $a.summary.effort_hours }}
+{{/* Actionable: ≤10 green / ≤20 yellow / >20 red. Hours: <2 green / <8 yellow / ≥8 red. */}}
+{{ $actClr  := cond (le $act 10) "text-success" (cond (le $act 20) "text-warning" "text-error") }}
+{{ $hrsClr  := cond (lt $hrs 2.0) "text-success" (cond (lt $hrs 8.0) "text-warning" "text-error") }}
+{{ $actPct  := div (mul 100.0 $act) $s.actionable_target }}
+{{ $authPct := cond (gt $act 0) (div (mul 100.0 $auth) $act) 0.0 }}
+{{/* SLA breach counts — directly actionable: review one old PR → number drops by one.
+     0 green / 1-2 yellow / 3+ red. Compliance % is also snapshotted for history. */}}
+{{ $slaClr := slice "text-success" "text-warning" "text-warning" "text-error" }}
+{{ $firstClr := index $slaClr (int (math.Min $s.first_review_7d_breach 3)) }}
+{{ $reClr    := index $slaClr (int (math.Min $s.re_review_24h_breach 3)) }}
+{{ $maintClr := index $slaClr (int (math.Min $s.maint_24h_breach 3)) }}
 {{ $firstSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.first_review_7d_breach") }}
 {{ $reSpark    := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.re_review_24h_breach") }}
 {{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
-{{ $firstPct := cond (gt $s.first_review_total 0) (div (mul 100.0 $s.first_review_7d_breach) $s.first_review_total) 0.0 }}
-{{ $rePct    := cond (gt $s.re_review_total 0)    (div (mul 100.0 $s.re_review_24h_breach)   $s.re_review_total)    0.0 }}
-{{ $maintPct := cond (gt $s.maint_total 0)        (div (mul 100.0 $s.maint_24h_breach)       $s.maint_total)        0.0 }}
-{{ $actPct   := div (mul 100.0 $a.summary.actionable_count) $s.actionable_target }}
+
 <section class="mb-4">
-  <h2 class="text-xs font-semibold text-base-content/60 mb-2">SLA compliance — PRs currently breaching target</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict
-      "label" "First review > 7d"
-      "value" $s.first_review_7d_breach
-      "total" $s.first_review_total "percent" $firstPct "percentLabel" "breach rate"
-      "descriptor" "community SLA"
-      "sparkline" $firstSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict
-      "label" "Re-review > 24h"
-      "value" $s.re_review_24h_breach
-      "total" $s.re_review_total "percent" $rePct "percentLabel" "breach rate"
-      "sparkline" $reSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down"
-      "info" "Approximate — counts from PR open, not from author push. Over-counts breaches.") }}
-    {{ partial "metric-card.html" (dict
-      "label" "Maintainer > 24h"
-      "value" $s.maint_24h_breach
-      "total" $s.maint_total "percent" $maintPct "percentLabel" "breach rate"
-      "descriptor" "team SLA"
-      "sparkline" $maintSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down") }}
+  <div class="grid grid-cols-3 gap-3">
     {{ partial "metric-card.html" (dict
       "label" "Actionable vs target"
-      "value" $a.summary.actionable_count
+      "value" $act "valueClass" $actClr
       "total" $s.actionable_target "percent" $actPct "percentLabel" "of target"
-      "descriptor" (cond $s.actionable_over_target "over target" "within target")
       "sparkline" $actCountSpark "sparklineColor" (cond $s.actionable_over_target "rgb(220, 53, 69)" "rgb(40, 167, 69)")
-      "trendGoodDirection" "down") }}
+      "trend" $actCountTrend "trendGoodDirection" "down"
+      "info" (printf "PRs where the ball is in our court.\n\nGreen: ≤ 10\nYellow: 11–20\nRed: > 20")) }}
+    <div onclick="actFilterToggle('label:auth')" style="cursor:pointer">
+    {{ partial "metric-card.html" (dict
+      "label" "Auth"
+      "value" $auth
+      "total" $act "percent" $authPct "percentLabel" "of actionable"
+      "sparkline" $actAuthSpark "sparklineColor" "rgb(255, 193, 7)"
+      "info" (printf "Actionable PRs touching auth code.\nClick to filter to these PRs.\n\nNo target — informational.")) }}
+    </div>
+    {{ partial "metric-card.html" (dict
+      "label" "Hours to clear"
+      "value" (printf "~%s" ($hrs | lang.FormatNumber 1)) "valueClass" $hrsClr
+      "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)"
+      "trend" $actHoursTrend "trendGoodDirection" "down"
+      "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 2h\nYellow: 2–8h\nRed: > 8h")) }}
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="grid grid-cols-3 gap-3">
+    <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer">
+    {{ partial "metric-card.html" (dict
+      "label" "1st review > 7d"
+      "value" $s.first_review_7d_breach "valueClass" $firstClr
+      "descriptor" (printf "of %d eligible" (int ($s.first_review_eligible | default 0)))
+      "sparkline" $firstSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down"
+      "info" (printf "Community PRs past 7 days with no maintainer review — across all pressing states, not just the first-review bucket.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+    </div>
+    <div onclick="actFilterToggle('label:re-review')" style="cursor:pointer">
+    {{ partial "metric-card.html" (dict
+      "label" "Re-review > 24h"
+      "value" $s.re_review_24h_breach "valueClass" $reClr
+      "descriptor" (printf "of %d eligible" (int ($s.re_review_eligible | default 0)))
+      "sparkline" $reSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down"
+      "info" (printf "PRs where the author acted (pushed/commented) after our review, past 24h — across all pressing states.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+    </div>
+    <div onclick="actFilterToggle('label:maintainer')" style="cursor:pointer">
+    {{ partial "metric-card.html" (dict
+      "label" "Maintainer > 24h"
+      "value" $s.maint_24h_breach "valueClass" $maintClr
+      "descriptor" (printf "of %d eligible" (int ($s.maint_eligible | default 0)))
+      "sparkline" $maintSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down"
+      "info" (printf "PRs from maintainers past 24 hours — across all pressing states. A maintainer PR in a cluster still counts.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+    </div>
   </div>
 </section>
 {{ end }}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     TIER BREAKDOWN — its own collapse, above the tier sections.
-     ────────────────────────────────────────────────────────────────────────── */}}
-<details class="mb-4 border border-base-300 rounded-lg bg-base-100">
-  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
-    Breakdown by tier
-  </summary>
-  <div class="px-4 pb-4">
-    <table class="table table-xs w-full">
-      <thead><tr>
-        <th class="text-xs">Tier</th><th class="text-xs text-right">Count</th>
-        <th class="text-xs text-right">Auth</th><th class="text-xs text-right">Maint.</th>
-        <th class="text-xs text-right">~Time</th>
-      </tr></thead>
-      <tbody>
-        {{ range $a.summary.by_tier }}
-        <tr class="border-b border-base-300 last:border-b-0">
-          <td class="text-xs">{{ if and (ge .idx 0) (lt .idx 99) }}{{ .idx }} — {{ end }}{{ .name }}</td>
-          <td class="text-xs text-right font-medium">{{ .count }}</td>
-          <td class="text-xs text-right text-base-content/70">{{ .auth }}</td>
-          <td class="text-xs text-right text-base-content/70">{{ .maint }}</td>
-          <td class="text-xs text-right text-base-content/70">
-            {{ if ge .mins 60.0 }}{{ div .mins 60.0 | lang.FormatNumber 1 }}h{{ else if gt .mins 0.0 }}{{ .mins | lang.FormatNumber 0 }}m{{ else }}—{{ end }}
-          </td>
-        </tr>
-        {{ end }}
-        {{ $totN := 0 }}{{ $totA := 0 }}{{ $totM := 0 }}{{ $totMins := 0.0 }}
-        {{ range $a.summary.by_tier }}{{ $totN = add $totN .count }}{{ $totA = add $totA .auth }}{{ $totM = add $totM .maint }}{{ $totMins = add $totMins .mins }}{{ end }}
-        <tr class="border-t-2 border-base-content/20 font-semibold">
-          <td class="text-xs">total actionable</td>
-          <td class="text-xs text-right">{{ $totN }}</td>
-          <td class="text-xs text-right">{{ $totA }}</td>
-          <td class="text-xs text-right">{{ $totM }}</td>
-          <td class="text-xs text-right">{{ if ge $totMins 60.0 }}{{ div $totMins 60.0 | lang.FormatNumber 1 }}h{{ else }}{{ $totMins | lang.FormatNumber 0 }}m{{ end }}</td>
-        </tr>
-        <tr class="text-base-content/50">
-          <td class="text-xs">not our move</td>
-          <td class="text-xs text-right">{{ $a.summary.not_our_move_count }}</td>
-          <td class="text-xs text-right">—</td>
-          <td class="text-xs text-right">—</td>
-          <td class="text-xs text-right">—</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</details>
 
 {{/* ──────────────────────────────────────────────────────────────────────────
      ALL STATS — collapsed by default. Volume, Review/Merge time, Size dist.
@@ -274,15 +254,70 @@
 </details>{{/* end Stats */}}
 
 {{/* ──────────────────────────────────────────────────────────────────────────
+     TIER BREAKDOWN — its own collapse, above the tier sections.
+     ────────────────────────────────────────────────────────────────────────── */}}
+<details class="mb-4 border border-base-300 rounded-lg bg-base-100">
+  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
+    Breakdown by tier
+  </summary>
+  <div class="px-4 pb-4">
+    <table class="table table-xs w-full">
+      <thead><tr>
+        <th class="text-xs">Tier</th><th class="text-xs text-right">Count</th>
+        <th class="text-xs text-right">Auth</th><th class="text-xs text-right">Maint.</th>
+        <th class="text-xs text-right">~Time</th>
+      </tr></thead>
+      <tbody>
+        {{ range $a.summary.by_tier }}
+        <tr class="border-b border-base-300 last:border-b-0">
+          <td class="text-xs">{{ if and (ge .idx 0) (lt .idx 99) }}{{ .idx }} — {{ end }}{{ .name }}</td>
+          <td class="text-xs text-right font-medium">{{ .count }}</td>
+          <td class="text-xs text-right text-base-content/70">{{ .auth }}</td>
+          <td class="text-xs text-right text-base-content/70">{{ .maint }}</td>
+          <td class="text-xs text-right text-base-content/70">
+            {{ if ge .mins 60.0 }}{{ div .mins 60.0 | lang.FormatNumber 1 }}h{{ else if gt .mins 0.0 }}{{ .mins | lang.FormatNumber 0 }}m{{ else }}—{{ end }}
+          </td>
+        </tr>
+        {{ end }}
+        {{ $totN := 0 }}{{ $totA := 0 }}{{ $totM := 0 }}{{ $totMins := 0.0 }}
+        {{ range $a.summary.by_tier }}{{ $totN = add $totN .count }}{{ $totA = add $totA .auth }}{{ $totM = add $totM .maint }}{{ $totMins = add $totMins .mins }}{{ end }}
+        <tr class="border-t-2 border-base-content/20 font-semibold">
+          <td class="text-xs">total actionable</td>
+          <td class="text-xs text-right">{{ $totN }}</td>
+          <td class="text-xs text-right">{{ $totA }}</td>
+          <td class="text-xs text-right">{{ $totM }}</td>
+          <td class="text-xs text-right">{{ if ge $totMins 60.0 }}{{ div $totMins 60.0 | lang.FormatNumber 1 }}h{{ else }}{{ $totMins | lang.FormatNumber 0 }}m{{ end }}</td>
+        </tr>
+        <tr class="text-base-content/50">
+          <td class="text-xs">not our move</td>
+          <td class="text-xs text-right">{{ $a.summary.not_our_move_count }}</td>
+          <td class="text-xs text-right">—</td>
+          <td class="text-xs text-right">—</td>
+          <td class="text-xs text-right">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+{{/* ──────────────────────────────────────────────────────────────────────────
      LIVE FILTER — type to filter rows; cascades to hide empty states/tiers.
      ────────────────────────────────────────────────────────────────────────── */}}
 <input type="text"
-       placeholder="Filter by title, author, state, label…"
+       placeholder="Filter — free text, author:name, label:auth, label:sla"
        class="input input-bordered input-sm w-full mb-4"
        oninput="actFilter(this.value)">
 <script>
 function actFilter(q) {
   q = q.toLowerCase().trim();
+  var tokens = q ? q.split(/\s+/) : [];
+  // author:foo / label:auth / label:sla check data attributes; bare tokens check full text.
+  var checks = tokens.map(function(tok) {
+    var m = tok.match(/^(author|label):(.+)$/);
+    if (!m) return function(tr, summary) { return tr.textContent.toLowerCase().indexOf(tok) !== -1 || summary.indexOf(tok) !== -1; };
+    var field = m[1] === 'label' ? 'badges' : m[1], val = m[2];
+    return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
+  });
   var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
   root.querySelectorAll('.act-tier').forEach(function(tier) {
     var tierHasVisible = false;
@@ -291,11 +326,10 @@ function actFilter(q) {
     dets.forEach(function(det) {
       var rows = det.querySelectorAll(':scope > table > tbody > tr');
       var summaryText = det.querySelector('summary').textContent.toLowerCase();
-      var summaryMatches = q && summaryText.indexOf(q) !== -1;
       var detHasVisible = false;
       if (rows.length) {
         rows.forEach(function(tr) {
-          var show = !q || summaryMatches || tr.textContent.toLowerCase().indexOf(q) !== -1;
+          var show = checks.every(function(fn) { return fn(tr, summaryText); });
           tr.style.display = show ? '' : 'none';
           if (show) detHasVisible = true;
         });
@@ -304,7 +338,6 @@ function actFilter(q) {
         det.querySelectorAll(':scope details').forEach(function(inner) {
           if (inner.style.display !== 'none') detHasVisible = true;
         });
-        if (summaryMatches) detHasVisible = true;
       }
       det.style.display = detHasVisible ? '' : 'none';
       if (q && detHasVisible) det.open = true;
@@ -313,6 +346,14 @@ function actFilter(q) {
     });
     tier.style.display = tierHasVisible ? '' : 'none';
   });
+}
+function actFilterToggle(q) {
+  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  var input = root.querySelector('input[oninput*="actFilter"]');
+  if (!input) return;
+  input.value = (input.value === q) ? '' : q;
+  actFilter(input.value);
+  if (input.value) input.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 </script>
 
@@ -340,9 +381,11 @@ function actToggle(scope, open) {
   {{ if eq .name "duplicate-cluster" }}
   {{/* Clusters: nested <details> per cluster (gist-style). Summary shows issue link,
        member count, ⭐ pick. Members use the same row template so columns align. */}}
-  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
+  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
     <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .clusters }} clusters)</span> — <span class="text-base-content/60">{{ .desc }}</span>
+      {{- $cSla := 0 }}{{ $cAuth := 0 }}{{ $cN := 0 }}{{ range .clusters }}{{ range .members }}{{ $cN = add $cN 1 }}{{ $cSla = add $cSla (cond .sla_breach 1 0) }}{{ $cAuth = add $cAuth (cond .is_auth 1 0) }}{{ end }}{{ end -}}
+      {{ if gt $cSla 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" $cSla) }}</span>{{ end }}{{ if gt $cAuth 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" $cAuth) }}</span>{{ end }}
+      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .clusters }} clusters, {{ $cN }} PRs)</span> — <span class="text-base-content/60">{{ .desc }}</span>
     </summary>
     <div class="px-3 pb-2 pt-1">
       {{ range .clusters }}
@@ -371,9 +414,9 @@ function actToggle(scope, open) {
     </div>
   </details>
   {{ else }}
-  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
+  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
     <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-      {{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
+      {{ with (len (where .prs "sla_breach" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" .) }}</span>{{ end }}{{ end }}{{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
       <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
     </summary>
     <table class="table table-xs table-fixed w-full">

@@ -172,9 +172,6 @@ STATES: list[StateSpec] = [
     StateSpec("ci-red-silent", "actionable",
               "CI failing, not yet flagged to the author.",
               effort_min=1, tier="Hygiene"),
-    StateSpec("needs-peer-approval", "actionable",
-              "Maintainer-authored PR where another maintainer pushed. Need a third pair of eyes.",
-              effort_min=5, tier="Hygiene"),
 
     # --- Tier 5: Close candidates ---
     StateSpec("stale-ci-abandoned", "actionable",
@@ -299,6 +296,7 @@ class PR:
     # Derived
     state: str = "unknown"
     reason: str = ""
+    wait_since: datetime | None = None  # ball-moved-to-us timestamp — SLA clock start for this state
     is_maintainer: bool = False
     is_auth: bool = False
     cluster_id: int | str | None = None  # issue number, or "sem:<hash>" for semantic clusters
@@ -512,6 +510,8 @@ def fetch_tier_c(pr: PR, owner: str, name: str) -> None:
     pushes = []
     commit_authors = []
     for item in p["timelineItems"]["nodes"]:
+        if item is None:
+            continue  # deleted timeline events come back as null
         t = item["__typename"]
         if t == "PullRequestCommit":
             pushes.append(parse_dt(item["commit"]["committedDate"]))
@@ -1173,8 +1173,9 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         if author_pings and days_since(author_pings[-1][0]["created_at"]) > DAYS_AUTHOR_PING_WAIT:
             _, mentioned = author_pings[-1]
             who = ", ".join(f"@{m}" for m in mentioned)
+            pr.wait_since = author_pings[-1][0]['created_at']
             pr.state = "author-pinged-after-procedural"
-            pr.reason = f"author pinged {who} {days_since(author_pings[-1][0]['created_at']):.0f}d ago, no response"
+            pr.reason = f"author pinged {who} {days_since(pr.wait_since):.0f}d ago, no response"
             return
 
         if pr.is_maintainer:
@@ -1196,19 +1197,9 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         fetch_tier_c(pr, owner, name)
         pushes_after = [p for p in (pr.pushes or []) if latest_review_at and p > latest_review_at]
         if pushes_after:
-            pr.state, pr.reason = "needs-re-review", f"push after approval ({len(pushes_after)} commits)"
+            pr.wait_since = max(pushes_after)
+            pr.state, pr.reason = "needs-re-review", f"push after approval ({len(pushes_after)} commits, {days_since(pr.wait_since):.0f}d waiting)"
             return
-
-        # Maintainer pushed commits to this approved PR?
-        maintainer_committers = set(pr.commit_authors or []) & MAINTAINERS
-        maintainer_committers.discard(pr.author)
-        if maintainer_committers and not (approved_by - maintainer_committers):
-            if pr.is_maintainer:
-                # Maintainer's own PR, another maintainer pushed → still want a third pair of eyes
-                pr.state = "needs-peer-approval"
-                pr.reason = f"maintainer {','.join(maintainer_committers)} pushed; needs approval from someone else"
-                return
-            # Community PR: maintainer push-fix IS the review. Fall through to needs-merge.
 
         if pr.mergeable == "CONFLICTING":
             pr.state, pr.reason = "approved-rotted", f"approved {days_since(latest_review_at):.0f}d ago, now conflicting"
@@ -1237,7 +1228,8 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         pushes_after = [p for p in (pr.pushes or []) if latest_review_at and p > latest_review_at]
 
         if pushes_after:
-            pr.state, pr.reason = "needs-re-review", f"author pushed after CHANGES_REQUESTED"
+            pr.wait_since = max(pushes_after)
+            pr.state, pr.reason = "needs-re-review", f"author pushed after CHANGES_REQUESTED ({days_since(pr.wait_since):.0f}d waiting)"
             return
 
         # Author commented after review? P0-2: needs LLM intent classification.
@@ -1256,7 +1248,8 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
             )
             intent = llm_author_comment_intent(review_body, author_comments_after[-1]["body"])
             if intent in ("question", "disagreement"):
-                pr.state, pr.reason = "needs-re-review", f"author {intent} after CHANGES_REQUESTED [llm]"
+                pr.wait_since = author_comments_after[-1]["created_at"]
+                pr.state, pr.reason = "needs-re-review", f"author {intent} after CHANGES_REQUESTED ({days_since(pr.wait_since):.0f}d waiting) [llm]"
                 return
             clock_start = author_comments_after[-1]["created_at"]
         else:
@@ -1468,8 +1461,35 @@ def _tier_summary(r: RepoResult) -> list[TierRow]:
     return rows
 
 
+# SLA kind is PR-property-based, not state-based: a maintainer PR in a duplicate cluster
+# still gets the 24h team SLA. Tier only gates whether SLA applies at all — Hygiene/Close/
+# Bot/Not-our-move aren't pressing work.
+_SLA_TIERS = {"Press a button", "We're blocking someone", "High leverage", "Intake"}
+_SLA_EXEMPT = {"awaiting-ci"}  # CI is running, not our move
+
+
+def _sla_kind(p: PR) -> tuple[str, bool] | None:
+    """(kind, is_breaching) when eligible, None when SLA doesn't apply.
+
+    kind is 'maintainer' / 're-review' / '1st-review' — PR-property-based.
+    is_breaching is whether the PR is past its threshold.
+    """
+    spec = _by_name.get(p.state)
+    if spec is None or spec.tier not in _SLA_TIERS or p.state in _SLA_EXEMPT:
+        return None
+    if p.is_maintainer:
+        kind, days = "maintainer", 1
+    elif p.wait_since is not None:
+        kind, days = "re-review", 1
+    else:
+        kind, days = "1st-review", 7
+    return kind, days_since(p.wait_since or p.created_at) > days
+
+
 def _pr_dict(p: PR, repo: str) -> dict:
     """JSON-safe PR representation. Consumed by VISR JSON, --json, and format_gist_markdown."""
+    sla = _sla_kind(p)
+    breach = sla is not None and sla[1]
     return {
         "number": p.number, "title": p.title, "author": p.author,
         "url": _pr_url(repo, p.number),
@@ -1477,6 +1497,7 @@ def _pr_dict(p: PR, repo: str) -> dict:
         "age_days": round(days_since(p.created_at), 1),
         "additions": p.additions, "deletions": p.deletions,
         "is_auth": p.is_auth, "is_maintainer": p.is_maintainer,
+        "sla_breach": breach, "sla_kind": sla[0] if breach else None,
         "cluster_id": str(p.cluster_id) if p.cluster_id is not None else None,
         "cluster_pick": p.cluster_pick, "cluster_pick_reason": p.cluster_pick_reason,
     }
@@ -1604,18 +1625,19 @@ def _structured(r: RepoResult) -> dict:
             "not_our_move_count": len(not_counted),
             "by_tier": [t.__dict__ for t in _tier_summary(r)],
             "by_state": dict(sorted(all_by_state.items())),
-            # SLA targets from go/mcp-codereview. re_review uses age_days as a proxy —
-            # true clock starts at author push, not PR open, so it over-counts breaches.
-            "sla": {
-                "first_review_7d_breach": sum(1 for p in r.prs if p.state == "needs-first-review" and days_since(p.created_at) > 7),
-                "first_review_total":     sum(1 for p in r.prs if p.state == "needs-first-review"),
-                "re_review_24h_breach":   sum(1 for p in r.prs if p.state == "needs-re-review" and days_since(p.created_at) > 1),
-                "re_review_total":        sum(1 for p in r.prs if p.state == "needs-re-review"),
-                "maint_24h_breach":       sum(1 for p in r.prs if p.state == "maintainer-intake" and days_since(p.created_at) > 1),
-                "maint_total":            sum(1 for p in r.prs if p.state == "maintainer-intake"),
-                "actionable_target":      10,
-                "actionable_over_target": len(r.actionable) > 10,
-            },
+            # SLA by kind — same computation as per-PR badges, so card headline ==
+            # len(filter label:<kind>). eligible = in a pressing tier with this kind's
+            # PR properties, regardless of threshold.
+            "sla": (lambda ks: {
+                "first_review_7d_breach":   sum(1 for k, b in ks if k == "1st-review" and b),
+                "first_review_eligible":    sum(1 for k, b in ks if k == "1st-review"),
+                "re_review_24h_breach":     sum(1 for k, b in ks if k == "re-review" and b),
+                "re_review_eligible":       sum(1 for k, b in ks if k == "re-review"),
+                "maint_24h_breach":         sum(1 for k, b in ks if k == "maintainer" and b),
+                "maint_eligible":           sum(1 for k, b in ks if k == "maintainer"),
+                "actionable_target":        10,
+                "actionable_over_target":   len(r.actionable) > 10,
+            })([s for p in r.prs if (s := _sla_kind(p)) is not None]),
         },
         "tiers": tier_blocks,
         "bot_corner": bot_blocks,
