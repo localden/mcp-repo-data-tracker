@@ -171,9 +171,6 @@ STATES: list[StateSpec] = [
     StateSpec("pre-ci-ghost", "actionable",
               "Over 90 days old and CI never ran.",
               effort_min=1, tier="Close candidates"),
-    StateSpec("suspected-low-effort", "actionable",
-              "Flagged for manual review — may not meet contribution guidelines.",
-              effort_min=3, tier="Close candidates"),
 
     # --- Bot corner (actionable, rendered separately, no tier) ---
     StateSpec("bot-broke-ci", "actionable",
@@ -956,124 +953,6 @@ def _title_similar(a: str, b: str) -> bool:
     return len(at & bt) / len(at | bt) > 0.7
 
 
-# --- Low-effort / spam detection (post-classify pass) ---
-
-_AUTHOR_MERGED_CACHE: dict[tuple[str, str], bool] = {}
-
-
-def _author_has_prior_merged(author: str, owner: str, name: str) -> bool:
-    key = (author, f"{owner}/{name}")
-    if key not in _AUTHOR_MERGED_CACHE:
-        q = f"repo:{owner}/{name} is:merged is:pr author:{author}"
-        try:
-            data = gh_graphql(
-                'query($q: String!) { search(query: $q, type: ISSUE, first: 1) { issueCount } }',
-                q=q,
-            )
-            _AUTHOR_MERGED_CACHE[key] = data["search"]["issueCount"] > 0
-        except Exception:
-            _AUTHOR_MERGED_CACHE[key] = True  # fail open: don't flag on API error
-    return _AUTHOR_MERGED_CACHE[key]
-
-
-def _low_effort_signals(pr: PR, owner: str, name: str) -> list[str]:
-    signals = []
-    body = (pr.body or "").strip()
-    if len(body) < 100:
-        signals.append(f"body {len(body)} chars")
-    body_lower = body.lower()
-    if not pr.linked_issues and not any(kw in body_lower for kw in ("fixes #", "closes #", "resolves #", "ref #")):
-        signals.append("no linked issue")
-    if not pr.author.startswith("app/") and not _author_has_prior_merged(pr.author, owner, name):
-        signals.append("first-time author")
-    return signals
-
-
-def llm_low_effort_batch(prs: list[PR]) -> dict[int, tuple[bool, str]]:
-    """Batch-classify suspects. Returns {pr_number: (is_spam, reason)}."""
-    items = "\n".join(
-        f"#{p.number} [{p.author}] {p.title}\nBody: {(p.body or '')[:300]!r}\n"
-        for p in prs
-    )
-    prompt = f"""These PRs tripped low-effort heuristics (short body, no issue link, first-time author).
-For each, decide: is this missing the context a reviewer needs (no motivation, generic description,
-unclear what problem it solves) or a legitimate focused fix that just happens to be terse?
-
-Your reason text is shown to the PR author on a public dashboard. Describe what's missing
-("no linked issue, description doesn't explain the failure mode") rather than characterizing
-the PR or author ("looks auto-generated", "drive-by"). Stick to what would help them improve it.
-
-{items}"""
-    schema = {
-        "type": "object",
-        "properties": {
-            "verdicts": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "number": {"type": "integer"},
-                        "spam": {"type": "boolean"},
-                        "reason": {"type": "string"},
-                    },
-                    "required": ["number", "spam", "reason"],
-                },
-            },
-        },
-        "required": ["verdicts"],
-    }
-    out = claude_p(prompt, purpose="low-effort", schema=schema)
-    return {v["number"]: (v["spam"], v["reason"]) for v in out["verdicts"]}
-
-
-def detect_low_effort(prs: list[PR], owner: str, name: str, use_llm: bool) -> None:
-    """Reassign needs-first-review PRs that are missing context a reviewer needs."""
-    candidates = [p for p in prs if p.state == "needs-first-review" and not p.is_maintainer]
-    suspects: list[tuple[PR, list[str]]] = []
-    for p in candidates:
-        signals = _low_effort_signals(p, owner, name)
-        if len(signals) >= 2:
-            suspects.append((p, signals))
-
-    if not suspects:
-        return
-
-    if not use_llm:
-        for p, signals in suspects:
-            p.state = "suspected-low-effort"
-            p.reason = "; ".join(signals)
-        return
-
-    # LLM batch verification (10 suspects per call). Batches are disjoint slices, so
-    # verdict application is safe regardless of completion order.
-    batches = [suspects[i:i+10] for i in range(0, len(suspects), 10)]
-    print(f"  [low-effort] {len(suspects)} suspects, {len(batches)} LLM batches", file=sys.stderr, flush=True)
-
-    def _judge_batch(batch: list[tuple[PR, list[str]]]) -> dict[int, tuple[bool, str]] | None:
-        try:
-            return llm_low_effort_batch([p for p, _ in batch])
-        except LLMError:
-            return None
-
-    done = 0
-    with ThreadPoolExecutor(max_workers=LLM_POOL_WIDTH) as pool:
-        futs = {pool.submit(_judge_batch, b): b for b in batches}
-        for fut in as_completed(futs):
-            batch = futs[fut]
-            done += 1
-            verdicts = fut.result()
-            status = "ok" if verdicts is not None else "skipped (LLM error)"
-            print(f"  [low-effort] {done}/{len(batches)} done ({status})", file=sys.stderr, flush=True)
-            if verdicts is None:
-                continue
-            for p, signals in batch:
-                is_spam, llm_reason = verdicts.get(p.number, (True, "llm no-verdict"))
-                if is_spam:
-                    p.state = "suspected-low-effort"
-                    p.reason = f"{'; '.join(signals)} — {llm_reason}" if llm_reason else "; ".join(signals)
-                # else: stays needs-first-review (LLM cleared it)
-
-
 # --- The classifier ---
 
 def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
@@ -1839,9 +1718,6 @@ def classify_repo(repo: str, use_llm: bool, maintainers_json: str | None = None)
     print(f"[{repo}] semantic cluster detection...", file=sys.stderr)
     detect_semantic_clusters(prs, owner, name, use_llm=use_llm)
     pick_cluster_winners(prs, owner, name, use_llm=use_llm)
-
-    print(f"[{repo}] low-effort detection...", file=sys.stderr)
-    detect_low_effort(prs, owner, name, use_llm=use_llm)
 
     # LLM fallback for remaining unknowns
     if use_llm:
