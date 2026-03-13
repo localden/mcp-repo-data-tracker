@@ -278,7 +278,7 @@ function issFilter(q) {
       return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
     });
   });
-  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   root.querySelectorAll('.iss-group').forEach(function(group) {
     var groupHasVisible = false;
     var groupText = group.querySelector('h2').textContent.toLowerCase();
@@ -300,7 +300,7 @@ function issFilter(q) {
   });
 }
 function issFilterToggle(q) {
-  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   var input = root.querySelector('input[oninput*="issFilter"]');
   if (!input) return;
   input.value = (input.value === q) ? '' : q;
