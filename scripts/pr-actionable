@@ -17,6 +17,8 @@ Data model: _structured(r) is the single source of truth. Gist/Slack/VISR all re
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -1904,9 +1906,18 @@ def main() -> None:
     if not repos:
         ap.error("--repo resolved to empty (shell var not expanded? try --repo typescript-sdk literally)")
 
+    use_llm = not args.no_llm
+    if use_llm and not os.environ.get("ANTHROPIC_API_KEY"):
+        print("WARNING: ANTHROPIC_API_KEY not set — falling back to --no-llm mode. "
+              "Semantic clusters won't resolve, intent-ambiguous PRs stay in 'unknown'.", file=sys.stderr)
+        use_llm = False
+    if use_llm and shutil.which("claude") is None:
+        print("WARNING: 'claude' CLI not on PATH — falling back to --no-llm mode.", file=sys.stderr)
+        use_llm = False
+
     results: list[RepoResult] = []
     for repo in repos:
-        results.append(classify_repo(repo, use_llm=not args.no_llm, maintainers_json=args.maintainers_json))
+        results.append(classify_repo(repo, use_llm=use_llm, maintainers_json=args.maintainers_json))
 
     cost = llm_cost_summary()
     if cost["total_calls"]:
