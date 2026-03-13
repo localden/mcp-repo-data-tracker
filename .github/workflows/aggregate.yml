@@ -37,6 +37,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: npm run aggregate
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run PR actionability classifier
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 scripts/pr-actionable \
+            --repo typescript-sdk,python-sdk \
+            --maintainers-json data/maintainers.json \
+            --state-dir data/.actionable-state \
+            --visr-json 'data/repos/modelcontextprotocol/{repo}/actionability.json'
+          # Patch today's snapshot with .summary so sparklines see it
+          for repo in typescript-sdk python-sdk; do
+            snap="data/repos/modelcontextprotocol/$repo/snapshots/$(date -u +%Y-%m-%d).json"
+            act="data/repos/modelcontextprotocol/$repo/actionability.json"
+            if [ -f "$snap" ] && [ -f "$act" ]; then
+              jq --slurpfile a "$act" '.actionability = $a[0].summary' "$snap" > "$snap.tmp" && mv "$snap.tmp" "$snap"
+            fi
+          done
+
       - name: Commit and push data changes
         id: commit
         run: |

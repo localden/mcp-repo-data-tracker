@@ -1,4 +1,59 @@
 {{/* Pull Requests Page Content */}}
+
+{{/* Named templates for the actionability PR tables. Defined at top level because
+     Hugo requires {{ define }} outside control structures. Called via {{ template }}
+     below. Column layout kept identical across all call sites so rows align. */}}
+
+{{/* Auth badge — #92ad2d matches the GitHub area:auth label. Inline style because
+     tailwind doesn't ship an arbitrary-hex class and the purge would drop it. */}}
+{{ define "act-auth-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white inline-block align-middle" style="background-color:#92ad2d">{{ . }}</span>{{ end }}
+
+{{ define "act-pr-row" }}
+<tr class="border-t border-base-300 hover:bg-base-200/50 cursor-pointer transition-colors" onclick="window.open('{{ .url }}', '_blank')">
+  <td class="text-xs font-mono whitespace-nowrap pl-3">
+    <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
+  </td>
+  <td class="text-xs text-base-content/70 truncate">
+    {{ if .is_maintainer }}<span class="font-semibold">{{ .author }}</span>{{ else }}{{ .author }}{{ end }}
+  </td>
+  <td class="text-xs truncate" title="{{ .title }}">
+    {{ if .is_auth }}<span style="float:right">{{ template "act-auth-badge" "auth" }}</span>{{ end }}{{ .title }}
+  </td>
+  <td class="text-xs text-base-content/50 truncate" title="{{ .reason }}">{{ .short_reason }}</td>
+  <td class="text-xs text-right whitespace-nowrap">
+    <span class="text-success">+{{ .additions }}</span><span class="text-error">-{{ .deletions }}</span>
+  </td>
+  <td class="text-xs text-right text-base-content/60 pr-3">{{ .age_days | lang.FormatNumber 0 }}d</td>
+</tr>
+{{ end }}
+
+{{/* Per-section ⊕/⊖ toggle — low-contrast until hover so it doesn't compete
+     with the tier name. Paired with actToggle() defined inline below. */}}
+{{ define "act-tier-toggle" }}
+<span class="ml-auto text-base-content/30 hover:text-base-content/70 font-normal text-sm select-none">
+  <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),true)" title="expand all in section">⊕</span>
+  <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),false)" title="collapse all in section">⊖</span>
+</span>
+{{ end }}
+
+{{ define "act-state-detail" }}
+<details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden">
+  <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
+    {{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
+    <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
+  </summary>
+  <table class="table table-xs table-fixed w-full">
+    <colgroup>
+      <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
+      <col><col style="width:6rem"><col style="width:3rem">
+    </colgroup>
+    <tbody>
+      {{ range .prs }}{{ template "act-pr-row" . }}{{ end }}
+    </tbody>
+  </table>
+</details>
+{{ end }}
+
 {{/* Support both direct context and dict with context/repoKey */}}
 {{ $context := . }}
 {{ $repoKey := "" }}
@@ -39,6 +94,344 @@
 {{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
 {{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 {{ $closedUnmerged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+{{/* Actionability — from scripts/pr-actionable classifier. Only exists for typescript-sdk/python-sdk. */}}
+{{ $a := $data.actionability }}
+{{ if $a }}
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     HEADLINE — 4 cards, always visible. Sparklines show trend once snapshots
+     accumulate (actionability.* paths in snapshots/YYYY-MM-DD.json).
+     ────────────────────────────────────────────────────────────────────────── */}}
+{{ $actCountSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.actionable_count") }}
+{{ $actHoursSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.effort_hours") }}
+{{ $actAuthSpark  := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.auth_count") }}
+{{ $actCountTrend := partial "calc-trend.html" (dict "sparkline" $actCountSpark) }}
+{{ $actHoursTrend := partial "calc-trend.html" (dict "sparkline" $actHoursSpark) }}
+{{ $reviewP90Spark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.p90_hours") }}
+{{ $reviewP90Trend := partial "calc-trend.html" (dict "sparkline" $reviewP90Spark) }}
+
+<section class="mb-4">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Actionable PRs" "value" $a.summary.actionable_count "sparkline" $actCountSpark "sparklineColor" "rgb(220, 53, 69)" "trend" $actCountTrend "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict "label" "Auth surface" "value" $a.summary.auth_count "descriptor" "of actionable" "sparkline" $actAuthSpark "sparklineColor" "rgb(255, 193, 7)") }}
+    {{ partial "metric-card.html" (dict "label" "Hours to clear" "value" (printf "~%s" ($a.summary.effort_hours | lang.FormatNumber 1)) "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)" "trend" $actHoursTrend "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict "label" "Review P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours) "sparkline" $reviewP90Spark "sparklineColor" "rgb(108, 117, 125)" "trend" $reviewP90Trend "trendGoodDirection" "down" "info" "Time from PR open to first maintainer review — 90th percentile across all merged PRs. Computed by the main collector, not the classifier.") }}
+  </div>
+</section>
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     SLA COMPLIANCE — second card row, targets from go/mcp-codereview.
+     Each value is "PRs currently breaching the target". Tracked over time.
+     ────────────────────────────────────────────────────────────────────────── */}}
+{{ with $a.summary.sla }}
+{{ $s := . }}
+{{ $firstSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.first_review_7d_breach") }}
+{{ $reSpark    := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.re_review_24h_breach") }}
+{{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
+{{ $firstPct := cond (gt $s.first_review_total 0) (div (mul 100.0 $s.first_review_7d_breach) $s.first_review_total) 0.0 }}
+{{ $rePct    := cond (gt $s.re_review_total 0)    (div (mul 100.0 $s.re_review_24h_breach)   $s.re_review_total)    0.0 }}
+{{ $maintPct := cond (gt $s.maint_total 0)        (div (mul 100.0 $s.maint_24h_breach)       $s.maint_total)        0.0 }}
+{{ $actPct   := div (mul 100.0 $a.summary.actionable_count) $s.actionable_target }}
+<section class="mb-4">
+  <h2 class="text-xs font-semibold text-base-content/60 mb-2">SLA compliance — PRs currently breaching target</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    {{ partial "metric-card.html" (dict
+      "label" "First review > 7d"
+      "value" $s.first_review_7d_breach
+      "total" $s.first_review_total "percent" $firstPct "percentLabel" "breach rate"
+      "descriptor" "community SLA"
+      "sparkline" $firstSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict
+      "label" "Re-review > 24h"
+      "value" $s.re_review_24h_breach
+      "total" $s.re_review_total "percent" $rePct "percentLabel" "breach rate"
+      "sparkline" $reSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down"
+      "info" "Approximate — counts from PR open, not from author push. Over-counts breaches.") }}
+    {{ partial "metric-card.html" (dict
+      "label" "Maintainer > 24h"
+      "value" $s.maint_24h_breach
+      "total" $s.maint_total "percent" $maintPct "percentLabel" "breach rate"
+      "descriptor" "team SLA"
+      "sparkline" $maintSpark "sparklineColor" "rgb(220, 53, 69)"
+      "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict
+      "label" "Actionable vs target"
+      "value" $a.summary.actionable_count
+      "total" $s.actionable_target "percent" $actPct "percentLabel" "of target"
+      "descriptor" (cond $s.actionable_over_target "over target" "within target")
+      "sparkline" $actCountSpark "sparklineColor" (cond $s.actionable_over_target "rgb(220, 53, 69)" "rgb(40, 167, 69)")
+      "trendGoodDirection" "down") }}
+  </div>
+</section>
+{{ end }}
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     TIER BREAKDOWN — its own collapse, above the tier sections.
+     ────────────────────────────────────────────────────────────────────────── */}}
+<details class="mb-4 border border-base-300 rounded-lg bg-base-100">
+  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
+    Breakdown by tier
+  </summary>
+  <div class="px-4 pb-4">
+    <table class="table table-xs w-full">
+      <thead><tr>
+        <th class="text-xs">Tier</th><th class="text-xs text-right">Count</th>
+        <th class="text-xs text-right">Auth</th><th class="text-xs text-right">Maint.</th>
+        <th class="text-xs text-right">~Time</th>
+      </tr></thead>
+      <tbody>
+        {{ range $a.summary.by_tier }}
+        <tr class="border-b border-base-300 last:border-b-0">
+          <td class="text-xs">{{ if and (ge .idx 0) (lt .idx 99) }}{{ .idx }} — {{ end }}{{ .name }}</td>
+          <td class="text-xs text-right font-medium">{{ .count }}</td>
+          <td class="text-xs text-right text-base-content/70">{{ .auth }}</td>
+          <td class="text-xs text-right text-base-content/70">{{ .maint }}</td>
+          <td class="text-xs text-right text-base-content/70">
+            {{ if ge .mins 60.0 }}{{ div .mins 60.0 | lang.FormatNumber 1 }}h{{ else if gt .mins 0.0 }}{{ .mins | lang.FormatNumber 0 }}m{{ else }}—{{ end }}
+          </td>
+        </tr>
+        {{ end }}
+        {{ $totN := 0 }}{{ $totA := 0 }}{{ $totM := 0 }}{{ $totMins := 0.0 }}
+        {{ range $a.summary.by_tier }}{{ $totN = add $totN .count }}{{ $totA = add $totA .auth }}{{ $totM = add $totM .maint }}{{ $totMins = add $totMins .mins }}{{ end }}
+        <tr class="border-t-2 border-base-content/20 font-semibold">
+          <td class="text-xs">total actionable</td>
+          <td class="text-xs text-right">{{ $totN }}</td>
+          <td class="text-xs text-right">{{ $totA }}</td>
+          <td class="text-xs text-right">{{ $totM }}</td>
+          <td class="text-xs text-right">{{ if ge $totMins 60.0 }}{{ div $totMins 60.0 | lang.FormatNumber 1 }}h{{ else }}{{ $totMins | lang.FormatNumber 0 }}m{{ end }}</td>
+        </tr>
+        <tr class="text-base-content/50">
+          <td class="text-xs">not our move</td>
+          <td class="text-xs text-right">{{ $a.summary.not_our_move_count }}</td>
+          <td class="text-xs text-right">—</td>
+          <td class="text-xs text-right">—</td>
+          <td class="text-xs text-right">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     ALL STATS — collapsed by default. Volume, Review/Merge time, Size dist.
+     ────────────────────────────────────────────────────────────────────────── */}}
+<details class="mb-6 border border-base-300 rounded-lg bg-base-100">
+  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
+    Stats <span class="font-normal text-base-content/50">— volume, timing, size distribution</span>
+  </summary>
+  <div class="px-4 pb-4">
+
+<!-- Volume Metrics -->
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-3">Volume</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
+    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count "link" $draftPRsLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_7d "descriptor" "last 7 days" "link" $opened7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_30d "descriptor" "last 30 days" "link" $opened30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_90d "descriptor" "last 90 days" "link" $opened90dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "link" $merged7dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "link" $merged30dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days" "link" $merged90dLink) }}
+    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days" "link" $closedUnmerged90dLink) }}
+  </div>
+</section>
+
+<!-- Review Time -->
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-3">Time to First Review</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsReviewTrend "trendGoodDirection" "down") }}
+    {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours)) }}
+  </div>
+</section>
+
+<!-- Merge Time -->
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-3">Merge Time</h2>
+  <div class="grid grid-cols-2 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.merge_time.avg_hours)) }}
+    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours) "sparkline" $pullsMergeMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsMergeTrend "trendGoodDirection" "down") }}
+  </div>
+</section>
+
+<!-- Size Distribution -->
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
+  <div class="grid grid-cols-3 gap-3">
+    {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
+    {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
+    {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
+  </div>
+</section>
+
+  </div>
+</details>{{/* end Stats */}}
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     LIVE FILTER — type to filter rows; cascades to hide empty states/tiers.
+     ────────────────────────────────────────────────────────────────────────── */}}
+<input type="text"
+       placeholder="Filter by title, author, state, label…"
+       class="input input-bordered input-sm w-full mb-4"
+       oninput="actFilter(this.value)">
+<script>
+function actFilter(q) {
+  q = q.toLowerCase().trim();
+  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  root.querySelectorAll('.act-tier').forEach(function(tier) {
+    var tierHasVisible = false;
+    // Reverse doc order → inner cluster <details> settle before the outer wrapper reads them.
+    var dets = Array.from(tier.querySelectorAll('details')).reverse();
+    dets.forEach(function(det) {
+      var rows = det.querySelectorAll(':scope > table > tbody > tr');
+      var summaryText = det.querySelector('summary').textContent.toLowerCase();
+      var summaryMatches = q && summaryText.indexOf(q) !== -1;
+      var detHasVisible = false;
+      if (rows.length) {
+        rows.forEach(function(tr) {
+          var show = !q || summaryMatches || tr.textContent.toLowerCase().indexOf(q) !== -1;
+          tr.style.display = show ? '' : 'none';
+          if (show) detHasVisible = true;
+        });
+      } else {
+        // Wrapper (e.g. cluster outer) — visible if any nested details survived.
+        det.querySelectorAll(':scope details').forEach(function(inner) {
+          if (inner.style.display !== 'none') detHasVisible = true;
+        });
+        if (summaryMatches) detHasVisible = true;
+      }
+      det.style.display = detHasVisible ? '' : 'none';
+      if (q && detHasVisible) det.open = true;
+      if (!q) det.open = det.hasAttribute('data-default-open');
+      if (detHasVisible) tierHasVisible = true;
+    });
+    tier.style.display = tierHasVisible ? '' : 'none';
+  });
+}
+</script>
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     TIER SECTIONS — per-state <details> like the gist. No State column; the
+     state IS the <summary>. Tier 0 opens by default (fastest wins).
+     ────────────────────────────────────────────────────────────────────────── */}}
+
+<script>
+function actToggle(scope, open) {
+  scope.querySelectorAll('details').forEach(function(d) { d.open = open; });
+}
+</script>
+
+{{ range $a.tiers }}
+<section class="mb-6 act-tier">
+  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
+    <span>{{ .name }} <span class="text-base-content/40 font-normal">({{ .count }})</span></span>
+    {{ template "act-tier-toggle" }}
+  </h2>
+  <p class="text-[10px] text-base-content/40 mb-2">{{ .blurb }}</p>
+
+  {{ $tierIdx := .idx }}
+  {{ range .states }}
+  {{ if eq .name "duplicate-cluster" }}
+  {{/* Clusters: nested <details> per cluster (gist-style). Summary shows issue link,
+       member count, ⭐ pick. Members use the same row template so columns align. */}}
+  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
+    <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
+      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .clusters }} clusters)</span> — <span class="text-base-content/60">{{ .desc }}</span>
+    </summary>
+    <div class="px-3 pb-2 pt-1">
+      {{ range .clusters }}
+      <details class="mb-2 border border-base-300 rounded bg-base-200/30 overflow-hidden">
+        <summary class="text-xs cursor-pointer px-3 py-1.5 hover:bg-base-200/50 select-none">
+          {{ if eq .kind "issue" }}
+            Issue <a href="{{ .issue_url }}" target="_blank" class="text-primary hover:underline font-mono" onclick="event.stopPropagation()">#{{ .id }}</a>
+          {{ else }}
+            Semantic: <span class="text-base-content/70">{{ .desc }}</span>
+          {{ end }}
+          <span class="text-base-content/50">— {{ len .members }} PRs</span>
+          {{ with .pick }}<span class="text-warning ml-1">⭐ #{{ . }}</span>{{ end }}
+          {{ with .pick_reason }}<span class="text-base-content/50 text-[10px]">({{ . }})</span>{{ end }}
+        </summary>
+        <table class="table table-xs table-fixed w-full">
+          <colgroup>
+            <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
+            <col><col style="width:6rem"><col style="width:3rem">
+          </colgroup>
+          <tbody>
+            {{ range .members }}{{ template "act-pr-row" . }}{{ end }}
+          </tbody>
+        </table>
+      </details>
+      {{ end }}
+    </div>
+  </details>
+  {{ else }}
+  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
+    <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
+      {{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
+      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
+    </summary>
+    <table class="table table-xs table-fixed w-full">
+      <colgroup>
+        <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
+        <col><col style="width:6rem"><col style="width:3rem">
+      </colgroup>
+      <tbody>
+        {{ range .prs }}{{ template "act-pr-row" . }}{{ end }}
+      </tbody>
+    </table>
+  </details>
+  {{ end }}
+  {{ end }}
+</section>
+{{ end }}
+
+{{/* ──────────────────────────────────────────────────────────────────────────
+     BOT CORNER / UNTRIAGED / NOT OUR MOVE — rendered identically to tiers:
+     <section> + <h2> + <p blurb> + per-state <details>.
+     ────────────────────────────────────────────────────────────────────────── */}}
+
+{{ with $a.bot_corner }}
+{{ $n := 0 }}{{ range . }}{{ $n = add $n (len .prs) }}{{ end }}
+<section class="mb-6 act-tier">
+  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
+    <span>Bot corner <span class="text-base-content/40 font-normal">({{ $n }})</span></span>
+    {{ template "act-tier-toggle" }}
+  </h2>
+  <p class="text-[10px] text-base-content/40 mb-2">Dependabot/renovate PRs that need human attention.</p>
+  {{ range . }}{{ template "act-state-detail" . }}{{ end }}
+</section>
+{{ end }}
+
+{{ with $a.untriaged }}
+{{ $n := 0 }}{{ range . }}{{ $n = add $n (len .prs) }}{{ end }}
+<section class="mb-6 act-tier">
+  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
+    <span class="text-error">Unclassified <span class="text-base-content/40 font-normal">({{ $n }})</span></span>
+    {{ template "act-tier-toggle" }}
+  </h2>
+  <p class="text-[10px] text-base-content/40 mb-2">Classifier couldn't decide. Each one is a model bug to fix.</p>
+  {{ range . }}{{ template "act-state-detail" . }}{{ end }}
+</section>
+{{ end }}
+
+{{ if $a.not_our_move }}
+<section class="mb-6 act-tier">
+  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
+    <span>Not our move <span class="text-base-content/40 font-normal">({{ $a.summary.not_our_move_count }})</span></span>
+    {{ template "act-tier-toggle" }}
+  </h2>
+  <p class="text-[10px] text-base-content/40 mb-2">Clock is on the author or blocked externally. No action owed today.</p>
+  {{ range $a.not_our_move }}{{ template "act-state-detail" . }}{{ end }}
+</section>
+{{ end }}
+
+{{ else }}{{/* No actionability.json — csharp-sdk/spec keep the original layout unchanged */}}
 
 <!-- Volume Metrics -->
 <section class="mb-6">
@@ -160,5 +553,7 @@
     {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
   </div>
 </section>
+
+{{ end }}{{/* end: if $a / else */}}
 
 {{ end }}

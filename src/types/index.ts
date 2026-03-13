@@ -266,6 +266,30 @@ export interface DailySnapshot {
     active_maintainers_30d: number;
     active_community_30d: number;
   };
+  /** Written post-hoc by the pr-actionable classifier step (jq patch in aggregate.yml), not by writeSnapshot(). */
+  actionability?: ActionabilitySummary;
+}
+
+export interface ActionabilityTierRow {
+  idx: number;
+  name: string;
+  count: number;
+  auth: number;
+  maint: number;
+  mins: number;
+}
+
+export interface ActionabilitySummary {
+  actionable_count: number;
+  effort_hours: number;
+  auth_count: number;
+  maint_count: number;
+  not_our_move_count: number;
+  prev_actionable: number | null;
+  cluster_count: number;
+  cluster_member_count: number;
+  by_tier: ActionabilityTierRow[];
+  by_state: Record<string, number>;
 }
 
 // =============================================================================
