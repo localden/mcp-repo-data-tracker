@@ -11,6 +11,7 @@ import type {
   DailySnapshot,
   RepoConfig,
   SEPMetrics,
+  IssueTiersJson,
 } from '../types/index.js';
 
 const DATA_DIR = 'data';
@@ -52,6 +53,13 @@ export async function writeMetrics(metrics: Metrics, repoConfig?: RepoConfig): P
   const filePath = join(process.cwd(), dataDir, 'metrics.json');
   await ensureDir(dirname(filePath));
   await writeFile(filePath, JSON.stringify(metrics, null, 2));
+}
+
+export async function writeIssueTiers(tiers: IssueTiersJson, repoConfig?: RepoConfig): Promise<void> {
+  const dataDir = getRepoDataDir(repoConfig);
+  const filePath = join(process.cwd(), dataDir, 'issues.json');
+  await ensureDir(dirname(filePath));
+  await writeFile(filePath, JSON.stringify(tiers, null, 2));
 }
 
 /**

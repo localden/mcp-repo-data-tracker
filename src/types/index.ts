@@ -324,7 +324,14 @@ export interface GitHubComment {
 
 export interface GitHubTimelineEvent {
   __typename?: string;
-  createdAt: string;
+  createdAt?: string;
+  // CROSS_REFERENCED_EVENT — source is the referencing PR/issue
+  isCrossRepository?: boolean;
+  source?: {
+    __typename?: 'PullRequest' | 'Issue';
+    number?: number;
+    state?: 'OPEN' | 'CLOSED' | 'MERGED';
+  };
 }
 
 export interface GitHubIssue {
@@ -357,6 +364,63 @@ export interface GitHubIssue {
 export interface IssueData {
   open: GitHubIssue[];
   closed: GitHubIssue[];
+}
+
+// Issue tier dashboard — per-issue rows bucketed by next action (issues.json)
+
+export type IssueType = 'bug' | 'enhancement' | 'question' | 'documentation';
+export type IssuePriority = 'P0' | 'P1' | 'P2' | 'P3';
+
+export interface IssueRow {
+  number: number;
+  title: string;
+  author: string;
+  url: string;
+  labels: string[];
+  age_days: number;
+  age_business_days: number;
+  comment_count: number;
+  type: IssueType | null;
+  priority: IssuePriority | null;
+  linked_prs: number[];
+  tier: string;
+  is_maintainer: boolean;
+  has_maintainer_response: boolean;
+  reporter_replied: boolean;
+  reply_wait_days: number | null;
+  bot_triaged: boolean;
+  sla_breach: boolean;
+}
+
+export interface IssueTier {
+  name: string;
+  blurb: string;
+  issues: IssueRow[];
+}
+
+export interface IssueTierGroup {
+  name: string;
+  blurb: string;
+  tiers: IssueTier[];
+}
+
+export interface IssueTiersSummary {
+  open_count: number;
+  by_type: Record<IssueType, number>;
+  untriaged_count: number;
+  partially_triaged_count: number;
+  sla: {
+    triage_2bd_breach: number;
+    reply_2bd_breach: number;
+    p0_7d_breach: number;
+    p1_90d_breach: number;
+  };
+}
+
+export interface IssueTiersJson {
+  lastUpdated: string;
+  summary: IssueTiersSummary;
+  groups: IssueTierGroup[];
 }
 
 // =============================================================================

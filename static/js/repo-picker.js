@@ -158,7 +158,7 @@
 
   // Preserve repo param when clicking navigation links
   function initNavLinkPreservation() {
-    const navLinks = document.querySelectorAll('.tabs a, .navbar-start > a');
+    const navLinks = document.querySelectorAll('nav a[href]');
     navLinks.forEach(link => {
       link.addEventListener('click', function(e) {
         const repoParam = new URLSearchParams(window.location.search).get(REPO_PARAM);
