@@ -11,6 +11,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: aggregate-data
+  cancel-in-progress: false
+
 jobs:
   aggregate:
     runs-on: ubuntu-latest
@@ -77,6 +81,7 @@ jobs:
             git commit -m "Update repository metrics data
 
           Automated data sync at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
             git push
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
