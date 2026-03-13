@@ -136,7 +136,7 @@
 {{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
 
 <section class="mb-4">
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
     {{ partial "metric-card.html" (dict
       "label" "Actionable vs target"
       "value" $act "valueClass" $actClr
@@ -158,11 +158,6 @@
       "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)"
       "trend" $actHoursTrend "trendGoodDirection" "down"
       "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 2h\nYellow: 2–8h\nRed: > 8h")) }}
-  </div>
-</section>
-
-<section class="mb-4">
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
       "label" "1st review > 7d"
@@ -243,7 +238,7 @@
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
     {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
     {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
     {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
@@ -590,7 +585,7 @@ function actToggle(scope, open) {
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
   <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
     {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
     {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
     {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
