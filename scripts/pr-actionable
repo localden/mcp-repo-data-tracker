@@ -113,15 +113,9 @@ STATES: list[StateSpec] = [
     StateSpec("awaiting-ci", "actionable",
               "Approved — waiting for CI to finish.",
               effort_min=1, tier="Press a button"),
-    StateSpec("author-requested-close", "actionable",
-              "Author has asked for this to be closed.",
-              effort_min=1, tier="Press a button"),
-    StateSpec("close-announced-not-executed", "actionable",
-              "A maintainer announced closure but the PR is still open.",
-              effort_min=1, tier="Press a button"),
     StateSpec("stale-draft-pinged", "actionable",
               "Draft; maintainer pinged for status over a week ago with no response.",
-              effort_min=1, tier="Press a button"),
+              effort_min=3, tier="Hygiene"),
     StateSpec("approved-ci-red", "actionable",
               "Approved but CI is failing — needs a fix or retry before merge.",
               effort_min=5, tier="Press a button"),
@@ -155,9 +149,6 @@ STATES: list[StateSpec] = [
     StateSpec("needs-first-review", "actionable",
               "Not yet reviewed by a maintainer.",
               effort_min=30, tier="Intake", sort_by="age"),
-    StateSpec("community-revived", "actionable",
-              "Old dormant PR with fresh external comment. Re-evaluate.",
-              effort_min=20, tier="Intake", sort_by="age"),
 
     # --- Tier 4: Hygiene ---
     StateSpec("stale-awaiting-author", "actionable",
@@ -199,24 +190,21 @@ STATES: list[StateSpec] = [
               "Changes requested; waiting for author response."),
     StateSpec("awaiting-author-ci", "not-actionable",
               "CI failure flagged to author; waiting for fix."),
-    StateSpec("awaiting-author-rebase", "not-actionable",
-              "Rebase requested; waiting for author."),
     StateSpec("draft-active", "not-actionable",
               "Author is still working. Fresh draft."),
     StateSpec("blocked-on-sep", "not-actionable",
               "Waiting on a spec proposal (SEP) to land."),
     StateSpec("blocked-on-dependent", "not-actionable",
               "Waiting on a dependent PR to merge."),
-    StateSpec("on-hold", "not-actionable",
-              "Maintainer-internal decision pending. Author can't unblock."),
+    StateSpec("on-hold", "actionable",
+              "Maintainer-internal decision pending. Author can't unblock.",
+              effort_min=30, tier="We're blocking someone"),
     StateSpec("maintainer-drafted-deferred", "not-actionable",
               "Converted to draft by maintainers pending a larger decision."),
     StateSpec("duplicate-cluster-member", "not-actionable",
               "Part of a duplicate cluster — see the primary PR."),
 
     # --- Excluded (not in the pipeline) ---
-    StateSpec("maintainer-owned", "excluded",
-              "Maintainer's own in-progress work."),
     StateSpec("parked", "excluded",
               "Maintainer draft >30d, intentionally shelved."),
     StateSpec("bot-release", "excluded",
@@ -1116,14 +1104,17 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         if age <= DAYS_COMMUNITY_SLA:
             pr.state, pr.reason = "draft-active", f"{age:.0f}d old"
             return
-        # >7d: check if maintainer pinged already (needs Tier C)
+        # >7d: check if maintainer pinged AND author didn't reply after. A reply followed
+        # by silence is stale-draft (re-ping), not stale-draft-pinged (close).
         fetch_tier_c(pr, owner, name)
-        maintainer_pinged_long_ago = any(
-            c["author"] in MAINTAINERS and days_since(c["created_at"]) > DAYS_COMMUNITY_SLA
+        maint_comments = [c for c in (pr.comments or []) if c["author"] in MAINTAINERS]
+        latest_ping = max((c["created_at"] for c in maint_comments), default=None)
+        author_replied_after = latest_ping and any(
+            c["author"] == pr.author and c["created_at"] > latest_ping
             for c in (pr.comments or [])
         )
-        if maintainer_pinged_long_ago:
-            pr.state, pr.reason = "stale-draft-pinged", "pinged, no response >7d"
+        if latest_ping and days_since(latest_ping) > DAYS_COMMUNITY_SLA and not author_replied_after:
+            pr.state, pr.reason = "stale-draft-pinged", f"pinged {days_since(latest_ping):.0f}d ago, no response"
         else:
             pr.state, pr.reason = "stale-draft", f"draft idle {age:.0f}d"
         return
