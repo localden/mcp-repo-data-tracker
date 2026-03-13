@@ -11,12 +11,14 @@ import { fetchHotspotData } from './github/hotspots.js';
 import { fetchRepoStats } from './github/repo.js';
 import { fetchCommits } from './github/commits.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
+import { buildIssueTiers } from './metrics/issueTiers.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
 import { calculateContributorMetrics } from './metrics/contributors.js';
 import { calculateHotspots } from './metrics/hotspots.js';
 import { calculateSEPMetrics } from './metrics/seps.js';
 import {
   writeMetrics,
+  writeIssueTiers,
   writeMaintainers,
   updateContributors,
   writeSnapshot,
@@ -157,6 +159,9 @@ async function aggregateRepository(
   // Compute metrics
   const metricsSpinner = spinner('Computing metrics').start();
   const issueMetrics = calculateIssueMetrics(issues, maintainerSet, owner, repo);
+  // Tier dashboard is SDK-only — spec repo uses labels differently, csharp isn't actively triaged yet.
+  const TIER_REPOS = new Set(['typescript-sdk', 'python-sdk']);
+  const issueTiers = TIER_REPOS.has(repo) ? buildIssueTiers(issues.open, maintainerSet, owner, repo) : null;
   const prMetrics = calculatePRMetrics(pulls, maintainerSet, owner, repo);
   const contributorMetrics = await calculateContributorMetrics(issues, pulls, commitsResult.commits, maintainerSet, repoConfig);
   const hotspots = calculateHotspots(hotspotData);
@@ -196,6 +201,7 @@ async function aggregateRepository(
   } else {
     const writeSpinner = spinner('Writing data files').start();
     await writeMetrics(metrics, repoConfig);
+    if (issueTiers) await writeIssueTiers(issueTiers, repoConfig);
     await updateContributors(contributorMetrics.allContributors, repoConfig);
     await writeSnapshot(metrics, repoConfig);
     writeSpinner.succeed(`Data written to ${style.dim(repoPath + '/')}`);

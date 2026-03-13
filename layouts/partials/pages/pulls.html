@@ -318,7 +318,7 @@ function actFilter(q) {
     var field = m[1] === 'label' ? 'badges' : m[1], val = m[2];
     return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
   });
-  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   root.querySelectorAll('.act-tier').forEach(function(tier) {
     var tierHasVisible = false;
     // Reverse doc order → inner cluster <details> settle before the outer wrapper reads them.
@@ -348,7 +348,7 @@ function actFilter(q) {
   });
 }
 function actFilterToggle(q) {
-  var root = document.querySelector('.repo-content:not([style*="display: none"])') || document;
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   var input = root.querySelector('input[oninput*="actFilter"]');
   if (!input) return;
   input.value = (input.value === q) ? '' : q;

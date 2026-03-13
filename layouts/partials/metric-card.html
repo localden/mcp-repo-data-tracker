@@ -54,13 +54,14 @@
   <div class="flex items-end justify-between gap-2 h-8">
     <div class="flex items-end h-full">
       <span class="text-2xl font-bold leading-none{{ with .valueClass }} {{ . }}{{ end }}">
-        {{- with .value -}}
-          {{- if (eq (printf "%T" .) "float64") -}}
-            {{ lang.FormatNumber 0 . }}
-          {{- else if (eq (printf "%T" .) "int") -}}
-            {{ lang.FormatNumber 0 . }}
+        {{- if isset . "value" -}}
+          {{- $v := .value -}}
+          {{- if (eq (printf "%T" $v) "float64") -}}
+            {{ lang.FormatNumber 0 $v }}
+          {{- else if (eq (printf "%T" $v) "int") -}}
+            {{ lang.FormatNumber 0 $v }}
           {{- else -}}
-            {{ . }}
+            {{ $v }}
           {{- end -}}
         {{- else -}}
           —

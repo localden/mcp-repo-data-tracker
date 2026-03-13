@@ -25,10 +25,15 @@ export const FETCH_ISSUES_QUERY = `
             }
             totalCount
           }
-          timelineItems(first: 50, itemTypes: [REOPENED_EVENT, CLOSED_EVENT]) {
+          timelineItems(first: 50, itemTypes: [REOPENED_EVENT, CLOSED_EVENT, CROSS_REFERENCED_EVENT]) {
             nodes {
+              __typename
               ... on ReopenedEvent { createdAt }
               ... on ClosedEvent { createdAt }
+              ... on CrossReferencedEvent {
+                isCrossRepository
+                source { __typename ... on PullRequest { number state } }
+              }
             }
           }
         }
