@@ -1,22 +1,22 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-03-13T20:23:10.493800+00:00",
+  "lastUpdated": "2026-03-13T20:47:09.617510+00:00",
   "summary": {
-    "actionable_count": 127,
+    "actionable_count": 126,
     "auth_count": 30,
     "maint_count": 12,
-    "effort_hours": 37.6,
-    "cluster_count": 10,
-    "cluster_member_count": 12,
+    "effort_hours": 37.7,
+    "cluster_count": 11,
+    "cluster_member_count": 13,
     "not_our_move_count": 6,
     "by_tier": [
       {
         "idx": 0,
         "name": "Press a button",
-        "count": 4,
+        "count": 3,
         "auth": 2,
         "maint": 2,
-        "mins": 4
+        "mins": 3
       },
       {
         "idx": 1,
@@ -29,10 +29,10 @@
       {
         "idx": 2,
         "name": "High leverage",
-        "count": 20,
+        "count": 21,
         "auth": 5,
         "maint": 2,
-        "mins": 235
+        "mins": 243
       },
       {
         "idx": 3,
@@ -45,10 +45,10 @@
       {
         "idx": 4,
         "name": "Hygiene",
-        "count": 26,
+        "count": 25,
         "auth": 8,
         "maint": 6,
-        "mins": 87
+        "mins": 86
       },
       {
         "idx": 5,
@@ -65,14 +65,14 @@
       "awaiting-ci": 1,
       "backport-follows-primary": 3,
       "bot-release": 1,
-      "ci-red-silent": 6,
+      "ci-red-silent": 5,
       "draft-active": 1,
-      "duplicate-cluster": 10,
-      "duplicate-cluster-member": 12,
+      "duplicate-cluster": 11,
+      "duplicate-cluster-member": 13,
       "maintainer-intake": 1,
       "needs-decision": 7,
       "needs-first-review": 59,
-      "needs-merge": 3,
+      "needs-merge": 2,
       "needs-re-review": 4,
       "parked": 4,
       "pre-ci-ghost": 5,
@@ -82,7 +82,7 @@
       "stale-draft-pinged": 1
     },
     "sla": {
-      "first_review_7d_breach": 52,
+      "first_review_7d_breach": 53,
       "first_review_eligible": 73,
       "re_review_24h_breach": 12,
       "re_review_eligible": 13,
@@ -97,8 +97,8 @@
       "idx": 0,
       "name": "Press a button",
       "blurb": "Already approved or already decided \u2014 ready for action.",
-      "count": 4,
-      "mins": 4,
+      "count": 3,
+      "mins": 3,
       "states": [
         {
           "name": "needs-merge",
@@ -139,25 +139,6 @@
               "is_maintainer": true,
               "sla_breach": true,
               "sla_kind": "maintainer",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 1596,
-              "title": "fix: reject plain JSON Schema objects passed as inputSchema",
-              "author": "tiluckdave",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1596",
-              "state": "needs-merge",
-              "reason": "approved 11d ago, green",
-              "short_reason": "approved 11d ago, green",
-              "age_days": 15.0,
-              "additions": 40,
-              "deletions": 4,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
               "cluster_id": null,
               "cluster_pick": false,
               "cluster_pick_reason": ""
@@ -210,8 +191,8 @@
               "author": "aabedraba",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/939",
               "state": "author-pinged-after-procedural",
-              "reason": "author pinged @ihrpr, @jspahrsummers 170d ago, no response",
-              "short_reason": "author pinged @ihrpr, @jspahrsummers 170d ago",
+              "reason": "author pinged @jspahrsummers, @ihrpr 170d ago, no response",
+              "short_reason": "author pinged @jspahrsummers, @ihrpr 170d ago",
               "age_days": 182.4,
               "additions": 89,
               "deletions": 7,
@@ -333,7 +314,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (95d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (95d waiting)",
-              "age_days": 100.2,
+              "age_days": 100.3,
               "additions": 143,
               "deletions": 15,
               "is_auth": false,
@@ -416,8 +397,8 @@
       "idx": 2,
       "name": "High leverage",
       "blurb": "One decision unblocks or closes multiple things.",
-      "count": 20,
-      "mins": 235,
+      "count": 21,
+      "mins": 243,
       "states": [
         {
           "name": "duplicate-cluster",
@@ -441,7 +422,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "149",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs target the same fix with identical file counts (2) and unknown CI status, making a direct technical comparison on those axes impossible. The remaining tiebreaker in the stated preference order is age: #1083 is the older PR. Note that #1083 targets the v1.x branch while #1396 targets v2 \u2014 if the project needs this fix on the active development branch (v2), #1396 may need to be reconsidered separately."
+              "cluster_pick_reason": "Both PRs apply the same UriTemplate fix to 2 files with unknown CI status, making them equal on CI, test coverage, and diff size. The sole remaining tiebreaker is age: #1083 (targeting v1.x) has a lower PR number and was therefore opened earlier than #1396 (targeting v2). No technical data distinguishes them otherwise."
             },
             {
               "number": 1440,
@@ -460,7 +441,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1385",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (2), so the deciding criterion is age \u2014 #1440 was opened earlier than #1664. With all other concrete metrics equal, the preference order falls through to oldest, which is #1440."
+              "cluster_pick_reason": "Both PRs have unknown CI status and touch 2 files, so the tiebreaker is age \u2014 #1440 is older. Beyond the tiebreaker, #1440's title (\"prevent task-augmented tool errors from being masked\") matches the scope of issue #1385 exactly, which describes all tool call errors being wrapped incorrectly and masked. #1664 (\"surface input validation errors for task-augmented tool calls\") appears to address only the input-validation subset of that problem, making it a narrower fix for a broader issue. If both diffs are otherwise equivalent in quality, the broader, earlier fix is the better candidate to close #1385 completely."
             },
             {
               "number": 1507,
@@ -479,7 +460,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1314",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. With CI status, test coverage, and diff size equal or unknown across both, the tiebreaker is age \u2014 #1507 was submitted first. #1661 provides no additional technical advantage (passing CI, added tests, or a smaller diff) to displace the earlier submission."
+              "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. #1507 (+16/-10, 26 lines total) is roughly half the size of #1661 (+48/-5, 53 lines total), making it the more focused, minimal fix. #1507 was also submitted 30 days earlier (2026-02-09 vs 2026-03-11). With CI and test coverage equal across both, the smaller diff and earlier submission date favor #1507."
             },
             {
               "number": 1560,
@@ -487,8 +468,8 @@
               "author": "corvid-agent",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1560",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
-              "short_reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
+              "reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
+              "short_reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
               "age_days": 21.2,
               "additions": 21,
               "deletions": 21,
@@ -498,7 +479,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "389",
               "cluster_pick": true,
-              "cluster_pick_reason": "All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata."
+              "cluster_pick_reason": "CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope."
             },
             {
               "number": 1561,
@@ -506,9 +487,9 @@
               "author": "corvid-agent",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-              "short_reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-              "age_days": 21.1,
+              "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+              "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+              "age_days": 21.2,
               "additions": 12,
               "deletions": 5,
               "is_auth": false,
@@ -517,7 +498,45 @@
               "sla_kind": "1st-review",
               "cluster_id": "1362",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes."
+              "cluster_pick_reason": "CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix."
+            },
+            {
+              "number": 1568,
+              "title": "fix: handle EPIPE errors in StdioServerTransport to prevent process crash",
+              "author": "stakeswky",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1568",
+              "state": "duplicate-cluster",
+              "reason": "cluster primary for issue #1564 (2 PRs)",
+              "short_reason": "cluster primary for issue #1564 (2 PRs)",
+              "age_days": 19.5,
+              "additions": 124,
+              "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": "1564",
+              "cluster_pick": true,
+              "cluster_pick_reason": "Both PRs have unknown CI status and touch 3 files, so the tiebreakers are diff focus and age. #1568 (older) targets specifically the EPIPE error \u2014 the exact error named in issue #1564 \u2014 keeping the fix narrow and reviewable. #1679 expands scope to also handle ERR_STREAM_DESTROYED, which may be correct but makes it a larger, less focused change than the minimum needed to close the reported issue. With CI unknown on both and no test-coverage signal to distinguish them, the \"smallest focused diff \u2192 oldest\" tiebreaker favors #1568."
+            },
+            {
+              "number": 1617,
+              "title": "fix(server): preserve plain JSON Schema in deprecated server.tool() overload",
+              "author": "stakeswky",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1617",
+              "state": "duplicate-cluster",
+              "reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+              "age_days": 10.9,
+              "additions": 126,
+              "deletions": 5,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": "sem:1596",
+              "cluster_pick": true,
+              "cluster_pick_reason": "PR #1617 is the broader fix: it widens the inputSchema type (ZodRawShapeCompat | AnySchema), adds the isLikelyJsonSchema guard in the schema-normalization path (line ~146), and preserves the plain schema on the wire \u2014 supporting the deprecated overload without breaking callers. PR #1596 only adds a throw in the annotations-detection branch (line ~1024), which would reject valid existing usage that #1617 explicitly aims to preserve."
             },
             {
               "number": 1636,
@@ -525,8 +544,8 @@
               "author": "dpdanpittman",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
-              "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
+              "reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
+              "short_reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
               "age_days": 7.9,
               "additions": 278,
               "deletions": 5,
@@ -536,7 +555,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1395",
               "cluster_pick": true,
-              "cluster_pick_reason": "CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope."
+              "cluster_pick_reason": "All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix."
             },
             {
               "number": 1648,
@@ -544,9 +563,9 @@
               "author": "Rootlogger",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-              "age_days": 4.1,
+              "reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+              "age_days": 4.2,
               "additions": 15,
               "deletions": 6,
               "is_auth": false,
@@ -555,7 +574,7 @@
               "sla_kind": null,
               "cluster_id": "sem:1648",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1648 was opened first. Both diffs are byte-for-byte identical, so there is no technical difference between them; closing #1649 avoids a duplicate changeset file conflict on merge."
+              "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual change. PR #1649's title references 'Hono package namespace to @hono/mcp', which does not correspond to anything in its diff, indicating a mislabeled or incorrectly rebased branch."
             },
             {
               "number": 1670,
@@ -563,9 +582,9 @@
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-              "age_days": 1.5,
+              "reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+              "age_days": 1.6,
               "additions": 103,
               "deletions": 0,
               "is_auth": true,
@@ -574,7 +593,7 @@
               "sla_kind": null,
               "cluster_id": "sem:1443",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1670 includes both the interface field addition and the corresponding implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates coverage extends to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider as well. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+              "cluster_pick_reason": "PR #1670 is a strict superset of #1443: it includes the same interface addition plus the actual implementation (`this._clientMetadata.scope = options.scope` in the constructor), and per its title also extends scope support to `PrivateKeyJwtProvider` and `StaticPrivateKeyJwtProvider`. PR #1443 only adds the interface field with no wiring, leaving the feature non-functional."
             },
             {
               "number": 1671,
@@ -582,8 +601,8 @@
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
-              "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
+              "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
+              "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
               "age_days": 1.5,
               "additions": 118,
               "deletions": 1,
@@ -593,26 +612,7 @@
               "sla_kind": null,
               "cluster_id": "1562",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk."
-            },
-            {
-              "number": 1679,
-              "title": "fix: handle EPIPE and ERR_STREAM_DESTROYED in StdioServerTransport",
-              "author": "kai-agent-free",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
-              "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
-              "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
-              "age_days": 0.4,
-              "additions": 118,
-              "deletions": 5,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": "1564",
-              "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope."
+              "cluster_pick_reason": "Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited."
             }
           ],
           "clusters": [
@@ -620,7 +620,7 @@
               "id": "1314",
               "kind": "issue",
               "pick": 1507,
-              "pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. With CI status, test coverage, and diff size equal or unknown across both, the tiebreaker is age \u2014 #1507 was submitted first. #1661 provides no additional technical advantage (passing CI, added tests, or a smaller diff) to displace the earlier submission.",
+              "pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. #1507 (+16/-10, 26 lines total) is roughly half the size of #1661 (+48/-5, 53 lines total), making it the more focused, minimal fix. #1507 was also submitted 30 days earlier (2026-02-09 vs 2026-03-11). With CI and test coverage equal across both, the smaller diff and earlier submission date favor #1507.",
               "members": [
                 {
                   "number": 1507,
@@ -639,7 +639,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1314",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. With CI status, test coverage, and diff size equal or unknown across both, the tiebreaker is age \u2014 #1507 was submitted first. #1661 provides no additional technical advantage (passing CI, added tests, or a smaller diff) to displace the earlier submission."
+                  "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. #1507 (+16/-10, 26 lines total) is roughly half the size of #1661 (+48/-5, 53 lines total), making it the more focused, minimal fix. #1507 was also submitted 30 days earlier (2026-02-09 vs 2026-03-11). With CI and test coverage equal across both, the smaller diff and earlier submission date favor #1507."
                 },
                 {
                   "number": 1661,
@@ -667,7 +667,7 @@
               "id": "1362",
               "kind": "issue",
               "pick": 1561,
-              "pick_reason": "Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
+              "pick_reason": "CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
               "members": [
                 {
                   "number": 1511,
@@ -694,9 +694,9 @@
                   "author": "corvid-agent",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-                  "short_reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-                  "age_days": 21.1,
+                  "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+                  "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+                  "age_days": 21.2,
                   "additions": 12,
                   "deletions": 5,
                   "is_auth": false,
@@ -705,7 +705,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1362",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes."
+                  "cluster_pick_reason": "CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1362"
@@ -714,7 +714,7 @@
               "id": "1385",
               "kind": "issue",
               "pick": 1440,
-              "pick_reason": "Both PRs have unknown CI status and touch the same number of files (2), so the deciding criterion is age \u2014 #1440 was opened earlier than #1664. With all other concrete metrics equal, the preference order falls through to oldest, which is #1440.",
+              "pick_reason": "Both PRs have unknown CI status and touch 2 files, so the tiebreaker is age \u2014 #1440 is older. Beyond the tiebreaker, #1440's title (\"prevent task-augmented tool errors from being masked\") matches the scope of issue #1385 exactly, which describes all tool call errors being wrapped incorrectly and masked. #1664 (\"surface input validation errors for task-augmented tool calls\") appears to address only the input-validation subset of that problem, making it a narrower fix for a broader issue. If both diffs are otherwise equivalent in quality, the broader, earlier fix is the better candidate to close #1385 completely.",
               "members": [
                 {
                   "number": 1440,
@@ -733,7 +733,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1385",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (2), so the deciding criterion is age \u2014 #1440 was opened earlier than #1664. With all other concrete metrics equal, the preference order falls through to oldest, which is #1440."
+                  "cluster_pick_reason": "Both PRs have unknown CI status and touch 2 files, so the tiebreaker is age \u2014 #1440 is older. Beyond the tiebreaker, #1440's title (\"prevent task-augmented tool errors from being masked\") matches the scope of issue #1385 exactly, which describes all tool call errors being wrapped incorrectly and masked. #1664 (\"surface input validation errors for task-augmented tool calls\") appears to address only the input-validation subset of that problem, making it a narrower fix for a broader issue. If both diffs are otherwise equivalent in quality, the broader, earlier fix is the better candidate to close #1385 completely."
                 },
                 {
                   "number": 1664,
@@ -761,7 +761,7 @@
               "id": "1395",
               "kind": "issue",
               "pick": 1636,
-              "pick_reason": "CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
+              "pick_reason": "All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
               "members": [
                 {
                   "number": 1433,
@@ -788,8 +788,8 @@
                   "author": "dpdanpittman",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
-                  "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
+                  "reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
+                  "short_reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
                   "age_days": 7.9,
                   "additions": 278,
                   "deletions": 5,
@@ -799,7 +799,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1395",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope."
+                  "cluster_pick_reason": "All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix."
                 },
                 {
                   "number": 1677,
@@ -827,7 +827,7 @@
               "id": "149",
               "kind": "issue",
               "pick": 1083,
-              "pick_reason": "Both PRs target the same fix with identical file counts (2) and unknown CI status, making a direct technical comparison on those axes impossible. The remaining tiebreaker in the stated preference order is age: #1083 is the older PR. Note that #1083 targets the v1.x branch while #1396 targets v2 \u2014 if the project needs this fix on the active development branch (v2), #1396 may need to be reconsidered separately.",
+              "pick_reason": "Both PRs apply the same UriTemplate fix to 2 files with unknown CI status, making them equal on CI, test coverage, and diff size. The sole remaining tiebreaker is age: #1083 (targeting v1.x) has a lower PR number and was therefore opened earlier than #1396 (targeting v2). No technical data distinguishes them otherwise.",
               "members": [
                 {
                   "number": 1083,
@@ -846,7 +846,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "149",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs target the same fix with identical file counts (2) and unknown CI status, making a direct technical comparison on those axes impossible. The remaining tiebreaker in the stated preference order is age: #1083 is the older PR. Note that #1083 targets the v1.x branch while #1396 targets v2 \u2014 if the project needs this fix on the active development branch (v2), #1396 may need to be reconsidered separately."
+                  "cluster_pick_reason": "Both PRs apply the same UriTemplate fix to 2 files with unknown CI status, making them equal on CI, test coverage, and diff size. The sole remaining tiebreaker is age: #1083 (targeting v1.x) has a lower PR number and was therefore opened earlier than #1396 (targeting v2). No technical data distinguishes them otherwise."
                 },
                 {
                   "number": 1396,
@@ -874,7 +874,7 @@
               "id": "1562",
               "kind": "issue",
               "pick": 1671,
-              "pick_reason": "Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
+              "pick_reason": "Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
               "members": [
                 {
                   "number": 1563,
@@ -901,8 +901,8 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
-                  "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
+                  "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
+                  "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
                   "age_days": 1.5,
                   "additions": 118,
                   "deletions": 1,
@@ -912,7 +912,7 @@
                   "sla_kind": null,
                   "cluster_id": "1562",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk."
+                  "cluster_pick_reason": "Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -920,36 +920,36 @@
             {
               "id": "1564",
               "kind": "issue",
-              "pick": 1679,
-              "pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
+              "pick": 1568,
+              "pick_reason": "Both PRs have unknown CI status and touch 3 files, so the tiebreakers are diff focus and age. #1568 (older) targets specifically the EPIPE error \u2014 the exact error named in issue #1564 \u2014 keeping the fix narrow and reviewable. #1679 expands scope to also handle ERR_STREAM_DESTROYED, which may be correct but makes it a larger, less focused change than the minimum needed to close the reported issue. With CI unknown on both and no test-coverage signal to distinguish them, the \"smallest focused diff \u2192 oldest\" tiebreaker favors #1568.",
               "members": [
                 {
                   "number": 1568,
                   "title": "fix: handle EPIPE errors in StdioServerTransport to prevent process crash",
                   "author": "stakeswky",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1568",
-                  "state": "duplicate-cluster-member",
-                  "reason": "shares issue #1564; #1679 is the pick",
-                  "short_reason": "shares issue #1564; #1679 is the pick",
+                  "state": "duplicate-cluster",
+                  "reason": "cluster primary for issue #1564 (2 PRs)",
+                  "short_reason": "cluster primary for issue #1564 (2 PRs)",
                   "age_days": 19.5,
                   "additions": 124,
                   "deletions": 3,
                   "is_auth": false,
                   "is_maintainer": false,
-                  "sla_breach": false,
-                  "sla_kind": null,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
                   "cluster_id": "1564",
-                  "cluster_pick": false,
-                  "cluster_pick_reason": ""
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "Both PRs have unknown CI status and touch 3 files, so the tiebreakers are diff focus and age. #1568 (older) targets specifically the EPIPE error \u2014 the exact error named in issue #1564 \u2014 keeping the fix narrow and reviewable. #1679 expands scope to also handle ERR_STREAM_DESTROYED, which may be correct but makes it a larger, less focused change than the minimum needed to close the reported issue. With CI unknown on both and no test-coverage signal to distinguish them, the \"smallest focused diff \u2192 oldest\" tiebreaker favors #1568."
                 },
                 {
                   "number": 1679,
                   "title": "fix: handle EPIPE and ERR_STREAM_DESTROYED in StdioServerTransport",
                   "author": "kai-agent-free",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
-                  "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
+                  "state": "duplicate-cluster-member",
+                  "reason": "shares linked issue #1564 with #1568",
+                  "short_reason": "shares linked issue #1564 with #1568",
                   "age_days": 0.4,
                   "additions": 118,
                   "deletions": 5,
@@ -958,8 +958,8 @@
                   "sla_breach": false,
                   "sla_kind": null,
                   "cluster_id": "1564",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope."
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1564"
@@ -968,7 +968,7 @@
               "id": "389",
               "kind": "issue",
               "pick": 1560,
-              "pick_reason": "All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
+              "pick_reason": "CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
               "members": [
                 {
                   "number": 1331,
@@ -995,8 +995,8 @@
                   "author": "corvid-agent",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1560",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
-                  "short_reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
+                  "reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
+                  "short_reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
                   "age_days": 21.2,
                   "additions": 21,
                   "deletions": 21,
@@ -1006,7 +1006,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "389",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata."
+                  "cluster_pick_reason": "CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope."
                 },
                 {
                   "number": 1678,
@@ -1034,7 +1034,7 @@
               "id": "sem:1443",
               "kind": "semantic",
               "pick": 1670,
-              "pick_reason": "PR #1670 includes both the interface field addition and the corresponding implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates coverage extends to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider as well. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional.",
+              "pick_reason": "PR #1670 is a strict superset of #1443: it includes the same interface addition plus the actual implementation (`this._clientMetadata.scope = options.scope` in the constructor), and per its title also extends scope support to `PrivateKeyJwtProvider` and `StaticPrivateKeyJwtProvider`. PR #1443 only adds the interface field with no wiring, leaving the feature non-functional.",
               "members": [
                 {
                   "number": 1443,
@@ -1042,8 +1042,8 @@
                   "author": "NSeydoux",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1670: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests.",
-                  "short_reason": "[llm] duplicates #1670: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests.",
+                  "reason": "[llm] duplicates #1670: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests.",
+                  "short_reason": "[llm] duplicates #1670: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests.",
                   "age_days": 39.2,
                   "additions": 120,
                   "deletions": 3,
@@ -1061,9 +1061,9 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-                  "age_days": 1.5,
+                  "reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+                  "age_days": 1.6,
                   "additions": 103,
                   "deletions": 0,
                   "is_auth": true,
@@ -1072,16 +1072,63 @@
                   "sla_kind": null,
                   "cluster_id": "sem:1443",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1670 includes both the interface field addition and the corresponding implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates coverage extends to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider as well. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+                  "cluster_pick_reason": "PR #1670 is a strict superset of #1443: it includes the same interface addition plus the actual implementation (`this._clientMetadata.scope = options.scope` in the constructor), and per its title also extends scope support to `PrivateKeyJwtProvider` and `StaticPrivateKeyJwtProvider`. PR #1443 only adds the interface field with no wiring, leaving the feature non-functional."
                 }
               ],
-              "desc": "Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)"
+              "desc": "Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)"
+            },
+            {
+              "id": "sem:1596",
+              "kind": "semantic",
+              "pick": 1617,
+              "pick_reason": "PR #1617 is the broader fix: it widens the inputSchema type (ZodRawShapeCompat | AnySchema), adds the isLikelyJsonSchema guard in the schema-normalization path (line ~146), and preserves the plain schema on the wire \u2014 supporting the deprecated overload without breaking callers. PR #1596 only adds a throw in the annotations-detection branch (line ~1024), which would reject valid existing usage that #1617 explicitly aims to preserve.",
+              "members": [
+                {
+                  "number": 1596,
+                  "title": "fix: reject plain JSON Schema objects passed as inputSchema",
+                  "author": "tiluckdave",
+                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1596",
+                  "state": "duplicate-cluster-member",
+                  "reason": "[llm] duplicates #1617: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged.",
+                  "short_reason": "[llm] duplicates #1617: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged.",
+                  "age_days": 15.0,
+                  "additions": 40,
+                  "deletions": 4,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:1596",
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
+                },
+                {
+                  "number": 1617,
+                  "title": "fix(server): preserve plain JSON Schema in deprecated server.tool() overload",
+                  "author": "stakeswky",
+                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1617",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+                  "age_days": 10.9,
+                  "additions": 126,
+                  "deletions": 5,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
+                  "cluster_id": "sem:1596",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "PR #1617 is the broader fix: it widens the inputSchema type (ZodRawShapeCompat | AnySchema), adds the isLikelyJsonSchema guard in the schema-normalization path (line ~146), and preserves the plain schema on the wire \u2014 supporting the deprecated overload without breaking callers. PR #1596 only adds a throw in the annotations-detection branch (line ~1024), which would reject valid existing usage that #1617 explicitly aims to preserve."
+                }
+              ],
+              "desc": "Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)"
             },
             {
               "id": "sem:1648",
               "kind": "semantic",
               "pick": 1648,
-              "pick_reason": "PR #1648 was opened first. Both diffs are byte-for-byte identical, so there is no technical difference between them; closing #1649 avoids a duplicate changeset file conflict on merge.",
+              "pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual change. PR #1649's title references 'Hono package namespace to @hono/mcp', which does not correspond to anything in its diff, indicating a mislabeled or incorrectly rebased branch.",
               "members": [
                 {
                   "number": 1648,
@@ -1089,9 +1136,9 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-                  "age_days": 4.1,
+                  "reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+                  "age_days": 4.2,
                   "additions": 15,
                   "deletions": 6,
                   "is_auth": false,
@@ -1100,7 +1147,7 @@
                   "sla_kind": null,
                   "cluster_id": "sem:1648",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1648 was opened first. Both diffs are byte-for-byte identical, so there is no technical difference between them; closing #1649 avoids a duplicate changeset file conflict on merge."
+                  "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual change. PR #1649's title references 'Hono package namespace to @hono/mcp', which does not correspond to anything in its diff, indicating a mislabeled or incorrectly rebased branch."
                 },
                 {
                   "number": 1649,
@@ -1108,9 +1155,9 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both.",
-                  "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both.",
-                  "age_days": 4.1,
+                  "reason": "[llm] duplicates #1648: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`).",
+                  "short_reason": "[llm] duplicates #1648: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`).",
+                  "age_days": 4.2,
                   "additions": 19,
                   "deletions": 10,
                   "is_auth": false,
@@ -1122,7 +1169,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)"
+              "desc": "Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)"
             }
           ]
         },
@@ -1352,7 +1399,7 @@
               "state": "needs-first-review",
               "reason": "204d since open (SLA breach)",
               "short_reason": "204d",
-              "age_days": 203.7,
+              "age_days": 203.8,
               "additions": 28,
               "deletions": 3,
               "is_auth": false,
@@ -1371,7 +1418,7 @@
               "state": "needs-first-review",
               "reason": "162d since open (SLA breach)",
               "short_reason": "162d",
-              "age_days": 162.1,
+              "age_days": 162.2,
               "additions": 134,
               "deletions": 11,
               "is_auth": false,
@@ -1409,7 +1456,7 @@
               "state": "needs-first-review",
               "reason": "148d since open (SLA breach)",
               "short_reason": "148d",
-              "age_days": 148.1,
+              "age_days": 148.2,
               "additions": 118,
               "deletions": 1,
               "is_auth": false,
@@ -1428,7 +1475,7 @@
               "state": "needs-first-review",
               "reason": "123d since open (SLA breach)",
               "short_reason": "123d",
-              "age_days": 122.8,
+              "age_days": 122.9,
               "additions": 37,
               "deletions": 10,
               "is_auth": true,
@@ -1903,7 +1950,7 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 31.9,
+              "age_days": 32.0,
               "additions": 8,
               "deletions": 3,
               "is_auth": false,
@@ -2245,7 +2292,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 3.1,
+              "age_days": 3.2,
               "additions": 16,
               "deletions": 2,
               "is_auth": false,
@@ -2264,7 +2311,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 3.1,
+              "age_days": 3.2,
               "additions": 480,
               "deletions": 4,
               "is_auth": true,
@@ -2397,7 +2444,7 @@
               "state": "needs-first-review",
               "reason": "2d since open",
               "short_reason": "2d",
-              "age_days": 1.5,
+              "age_days": 1.6,
               "additions": 122,
               "deletions": 6,
               "is_auth": true,
@@ -2473,8 +2520,8 @@
       "idx": 4,
       "name": "Hygiene",
       "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 26,
-      "mins": 87,
+      "count": 25,
+      "mins": 86,
       "states": [
         {
           "name": "stale-draft-pinged",
@@ -2674,7 +2721,7 @@
               "state": "stale-draft",
               "reason": "draft idle 28d",
               "short_reason": "draft idle 28d",
-              "age_days": 28.3,
+              "age_days": 28.4,
               "additions": 441,
               "deletions": 140,
               "is_auth": true,
@@ -2769,7 +2816,7 @@
               "state": "stale-draft",
               "reason": "draft idle 108d",
               "short_reason": "draft idle 108d",
-              "age_days": 108.0,
+              "age_days": 108.1,
               "additions": 6,
               "deletions": 17,
               "is_auth": false,
@@ -2852,7 +2899,7 @@
               "state": "approved-rotted",
               "reason": "approved 46d ago, now conflicting",
               "short_reason": "approved 46d ago, now conflicting",
-              "age_days": 58.3,
+              "age_days": 58.4,
               "additions": 457,
               "deletions": 0,
               "is_auth": true,
@@ -2928,25 +2975,6 @@
               "cluster_pick_reason": ""
             },
             {
-              "number": 1617,
-              "title": "fix(server): preserve plain JSON Schema in deprecated server.tool() overload",
-              "author": "stakeswky",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1617",
-              "state": "ci-red-silent",
-              "reason": "red CI 11d, nobody's mentioned it",
-              "short_reason": "red CI 11d",
-              "age_days": 10.9,
-              "additions": 126,
-              "deletions": 5,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
               "number": 1647,
               "title": "fix: allow transport restart after close()",
               "author": "matantsach",
@@ -2973,7 +3001,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 4d, nobody's mentioned it",
               "short_reason": "red CI 4d",
-              "age_days": 3.5,
+              "age_days": 3.6,
               "additions": 72,
               "deletions": 2,
               "is_auth": false,
@@ -2992,7 +3020,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 1d, nobody's mentioned it",
               "short_reason": "red CI 1d",
-              "age_days": 0.9,
+              "age_days": 1.0,
               "additions": 79,
               "deletions": 4,
               "is_auth": false,
@@ -3065,7 +3093,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 39d, no activity",
               "short_reason": "red CI 39d, no activity",
-              "age_days": 39.2,
+              "age_days": 39.3,
               "additions": 21,
               "deletions": 6,
               "is_auth": false,
@@ -3110,7 +3138,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 276d old",
               "short_reason": "CI never ran, 276d old",
-              "age_days": 276.2,
+              "age_days": 276.3,
               "additions": 83,
               "deletions": 0,
               "is_auth": false,
@@ -3255,7 +3283,7 @@
           "state": "parked",
           "reason": "maintainer draft, 35d",
           "short_reason": "maintainer draft, 35d",
-          "age_days": 35.0,
+          "age_days": 35.1,
           "additions": 1253,
           "deletions": 10,
           "is_auth": false,
@@ -3324,7 +3352,7 @@
       "id": "1314",
       "kind": "issue",
       "pick": 1507,
-      "pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. With CI status, test coverage, and diff size equal or unknown across both, the tiebreaker is age \u2014 #1507 was submitted first. #1661 provides no additional technical advantage (passing CI, added tests, or a smaller diff) to displace the earlier submission.",
+      "pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. #1507 (+16/-10, 26 lines total) is roughly half the size of #1661 (+48/-5, 53 lines total), making it the more focused, minimal fix. #1507 was also submitted 30 days earlier (2026-02-09 vs 2026-03-11). With CI and test coverage equal across both, the smaller diff and earlier submission date favor #1507.",
       "members": [
         {
           "number": 1507,
@@ -3343,7 +3371,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1314",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. With CI status, test coverage, and diff size equal or unknown across both, the tiebreaker is age \u2014 #1507 was submitted first. #1661 provides no additional technical advantage (passing CI, added tests, or a smaller diff) to displace the earlier submission."
+          "cluster_pick_reason": "Both PRs have unknown CI status, touch the same 3 files, and neither adds tests. #1507 (+16/-10, 26 lines total) is roughly half the size of #1661 (+48/-5, 53 lines total), making it the more focused, minimal fix. #1507 was also submitted 30 days earlier (2026-02-09 vs 2026-03-11). With CI and test coverage equal across both, the smaller diff and earlier submission date favor #1507."
         },
         {
           "number": 1661,
@@ -3371,7 +3399,7 @@
       "id": "1362",
       "kind": "issue",
       "pick": 1561,
-      "pick_reason": "Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
+      "pick_reason": "CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
       "members": [
         {
           "number": 1511,
@@ -3398,9 +3426,9 @@
           "author": "corvid-agent",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-          "short_reason": "[llm pick] cluster primary for issue #1362: Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes.",
-          "age_days": 21.1,
+          "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+          "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix.",
+          "age_days": 21.2,
           "additions": 12,
           "deletions": 5,
           "is_auth": false,
@@ -3409,7 +3437,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1362",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. #1561 changes 2 files vs. #1511's 3 files, making it the smaller, more focused diff for this targeted type-widening fix. With CI unknown for both and no test coverage data distinguishing them, diff size is the deciding tiebreaker. #1511's additional file change goes beyond the minimal scope needed to resolve #1362. #1561 is also more recent, suggesting it may have been informed by #1511's approach while trimming unnecessary changes."
+          "cluster_pick_reason": "CI is unknown for both PRs. With no CI or test coverage signal available, the tiebreaker is diff size: #1561 touches 2 files vs #1511's 3 files, making it the smaller, more focused change. A tighter diff reduces review surface and merge-conflict risk for the same fix."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1362"
@@ -3418,7 +3446,7 @@
       "id": "1385",
       "kind": "issue",
       "pick": 1440,
-      "pick_reason": "Both PRs have unknown CI status and touch the same number of files (2), so the deciding criterion is age \u2014 #1440 was opened earlier than #1664. With all other concrete metrics equal, the preference order falls through to oldest, which is #1440.",
+      "pick_reason": "Both PRs have unknown CI status and touch 2 files, so the tiebreaker is age \u2014 #1440 is older. Beyond the tiebreaker, #1440's title (\"prevent task-augmented tool errors from being masked\") matches the scope of issue #1385 exactly, which describes all tool call errors being wrapped incorrectly and masked. #1664 (\"surface input validation errors for task-augmented tool calls\") appears to address only the input-validation subset of that problem, making it a narrower fix for a broader issue. If both diffs are otherwise equivalent in quality, the broader, earlier fix is the better candidate to close #1385 completely.",
       "members": [
         {
           "number": 1440,
@@ -3437,7 +3465,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1385",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (2), so the deciding criterion is age \u2014 #1440 was opened earlier than #1664. With all other concrete metrics equal, the preference order falls through to oldest, which is #1440."
+          "cluster_pick_reason": "Both PRs have unknown CI status and touch 2 files, so the tiebreaker is age \u2014 #1440 is older. Beyond the tiebreaker, #1440's title (\"prevent task-augmented tool errors from being masked\") matches the scope of issue #1385 exactly, which describes all tool call errors being wrapped incorrectly and masked. #1664 (\"surface input validation errors for task-augmented tool calls\") appears to address only the input-validation subset of that problem, making it a narrower fix for a broader issue. If both diffs are otherwise equivalent in quality, the broader, earlier fix is the better candidate to close #1385 completely."
         },
         {
           "number": 1664,
@@ -3465,7 +3493,7 @@
       "id": "1395",
       "kind": "issue",
       "pick": 1636,
-      "pick_reason": "CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
+      "pick_reason": "All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
       "members": [
         {
           "number": 1433,
@@ -3492,8 +3520,8 @@
           "author": "dpdanpittman",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
-          "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope.",
+          "reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
+          "short_reason": "[llm pick] cluster primary for issue #1395: All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix.",
           "age_days": 7.9,
           "additions": 278,
           "deletions": 5,
@@ -3503,7 +3531,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1395",
           "cluster_pick": true,
-          "cluster_pick_reason": "CI is unknown for all three PRs, so that criterion doesn't differentiate them. Moving to diff size: #1636 touches 2 files vs. 3 files for both #1433 and #1677, making it the smallest focused diff. On scope: #1677's title (\"fix: call onerror for nested catch blocks in handlePostRequest\") is narrowly scoped to one handler, suggesting it may only partially address the issue rather than covering all transport error paths. Both #1433 and #1636 claim broader coverage (\"all transport errors\" / \"all transport error responses\"), making them more complete fixes. Between those two, #1636's 2-file diff is more targeted than #1433's 3-file diff, reducing the risk of unrelated changes. #1636 is preferred on smallest focused diff with equivalent stated scope."
+          "cluster_pick_reason": "All three PRs have unknown CI status. #1677 is narrowed to only handlePostRequest nested catch blocks per its title, which likely provides incomplete coverage compared to the broader \"all transport error responses\" fix. Between #1433 and #1636, both claim to cover all transport errors, but #1636 achieves this in 2 files vs #1433's 3 files \u2014 a smaller, more focused diff that is easier to review and less likely to introduce unrelated changes. On the tiebreaker of oldest, #1433 would normally win, but the smaller diff of #1636 is a stronger signal of a cleaner, more targeted fix."
         },
         {
           "number": 1677,
@@ -3531,7 +3559,7 @@
       "id": "149",
       "kind": "issue",
       "pick": 1083,
-      "pick_reason": "Both PRs target the same fix with identical file counts (2) and unknown CI status, making a direct technical comparison on those axes impossible. The remaining tiebreaker in the stated preference order is age: #1083 is the older PR. Note that #1083 targets the v1.x branch while #1396 targets v2 \u2014 if the project needs this fix on the active development branch (v2), #1396 may need to be reconsidered separately.",
+      "pick_reason": "Both PRs apply the same UriTemplate fix to 2 files with unknown CI status, making them equal on CI, test coverage, and diff size. The sole remaining tiebreaker is age: #1083 (targeting v1.x) has a lower PR number and was therefore opened earlier than #1396 (targeting v2). No technical data distinguishes them otherwise.",
       "members": [
         {
           "number": 1083,
@@ -3550,7 +3578,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "149",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs target the same fix with identical file counts (2) and unknown CI status, making a direct technical comparison on those axes impossible. The remaining tiebreaker in the stated preference order is age: #1083 is the older PR. Note that #1083 targets the v1.x branch while #1396 targets v2 \u2014 if the project needs this fix on the active development branch (v2), #1396 may need to be reconsidered separately."
+          "cluster_pick_reason": "Both PRs apply the same UriTemplate fix to 2 files with unknown CI status, making them equal on CI, test coverage, and diff size. The sole remaining tiebreaker is age: #1083 (targeting v1.x) has a lower PR number and was therefore opened earlier than #1396 (targeting v2). No technical data distinguishes them otherwise."
         },
         {
           "number": 1396,
@@ -3578,7 +3606,7 @@
       "id": "1562",
       "kind": "issue",
       "pick": 1671,
-      "pick_reason": "Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
+      "pick_reason": "Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
       "members": [
         {
           "number": 1563,
@@ -3605,8 +3633,8 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
-          "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk.",
+          "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
+          "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited.",
           "age_days": 1.5,
           "additions": 118,
           "deletions": 1,
@@ -3616,7 +3644,7 @@
           "sla_kind": null,
           "cluster_id": "1562",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and neither has confirmed test coverage based on available metadata. Falling back to diff size as the tiebreaker: #1671 touches 2 files vs #1563's 4 files, making it the smaller, more focused change. The title of #1671 (\"inline $ref pointers in schemaToJson\") also indicates the fix is scoped to a single conversion function, whereas #1563's broader file count suggests it touches more of the codebase to achieve the same result. A smaller diff reduces review surface and merge risk."
+          "cluster_pick_reason": "Both PRs have unknown CI status. Without diff access, the deciding factor is diff size: #1671 changes 2 files vs #1563's 4 files, making it the smaller and more focused fix. A smaller diff reduces review surface, lowers the chance of unintended side effects, and is easier to reason about correctness. #1563's broader 4-file change may address more cases but also carries more risk. If CI results or test coverage data become available and favor #1563, this recommendation should be revisited."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -3624,36 +3652,36 @@
     {
       "id": "1564",
       "kind": "issue",
-      "pick": 1679,
-      "pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
+      "pick": 1568,
+      "pick_reason": "Both PRs have unknown CI status and touch 3 files, so the tiebreakers are diff focus and age. #1568 (older) targets specifically the EPIPE error \u2014 the exact error named in issue #1564 \u2014 keeping the fix narrow and reviewable. #1679 expands scope to also handle ERR_STREAM_DESTROYED, which may be correct but makes it a larger, less focused change than the minimum needed to close the reported issue. With CI unknown on both and no test-coverage signal to distinguish them, the \"smallest focused diff \u2192 oldest\" tiebreaker favors #1568.",
       "members": [
         {
           "number": 1568,
           "title": "fix: handle EPIPE errors in StdioServerTransport to prevent process crash",
           "author": "stakeswky",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1568",
-          "state": "duplicate-cluster-member",
-          "reason": "shares issue #1564; #1679 is the pick",
-          "short_reason": "shares issue #1564; #1679 is the pick",
+          "state": "duplicate-cluster",
+          "reason": "cluster primary for issue #1564 (2 PRs)",
+          "short_reason": "cluster primary for issue #1564 (2 PRs)",
           "age_days": 19.5,
           "additions": 124,
           "deletions": 3,
           "is_auth": false,
           "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
           "cluster_id": "1564",
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
+          "cluster_pick": true,
+          "cluster_pick_reason": "Both PRs have unknown CI status and touch 3 files, so the tiebreakers are diff focus and age. #1568 (older) targets specifically the EPIPE error \u2014 the exact error named in issue #1564 \u2014 keeping the fix narrow and reviewable. #1679 expands scope to also handle ERR_STREAM_DESTROYED, which may be correct but makes it a larger, less focused change than the minimum needed to close the reported issue. With CI unknown on both and no test-coverage signal to distinguish them, the \"smallest focused diff \u2192 oldest\" tiebreaker favors #1568."
         },
         {
           "number": 1679,
           "title": "fix: handle EPIPE and ERR_STREAM_DESTROYED in StdioServerTransport",
           "author": "kai-agent-free",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
-          "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
-          "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope.",
+          "state": "duplicate-cluster-member",
+          "reason": "shares linked issue #1564 with #1568",
+          "short_reason": "shares linked issue #1564 with #1568",
           "age_days": 0.4,
           "additions": 118,
           "deletions": 5,
@@ -3662,8 +3690,8 @@
           "sla_breach": false,
           "sla_kind": null,
           "cluster_id": "1564",
-          "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding factor is technical completeness: #1568 catches only EPIPE, while #1679 also catches ERR_STREAM_DESTROYED. In Node.js, when a client disconnects and the underlying stream is destroyed, subsequent writes raise ERR_STREAM_DESTROYED (not EPIPE), so #1568 leaves that crash path open. #1679 closes both failure modes in the same 3-file diff. With CI, test coverage, and file count equal, #1679 is the more complete fix at equivalent scope."
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1564"
@@ -3672,7 +3700,7 @@
       "id": "389",
       "kind": "issue",
       "pick": 1560,
-      "pick_reason": "All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
+      "pick_reason": "CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
       "members": [
         {
           "number": 1331,
@@ -3699,8 +3727,8 @@
           "author": "corvid-agent",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1560",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
-          "short_reason": "[llm pick] cluster primary for issue #389: All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata.",
+          "reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
+          "short_reason": "[llm pick] cluster primary for issue #389: CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope.",
           "age_days": 21.2,
           "additions": 21,
           "deletions": 21,
@@ -3710,7 +3738,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "389",
           "cluster_pick": true,
-          "cluster_pick_reason": "All three PRs have unknown CI status. #1331 touches 7 files vs. 6 for #1560 and #1678, making it the larger, less focused change. Between the two 6-file PRs, #1560 predates #1678 by the oldest-first tiebreaker. No test coverage information distinguishes any of the three from the available metadata."
+          "cluster_pick_reason": "CI is unknown for all three PRs. #1331 touches 7 files vs. 6 for both #1560 and #1678, making it the less focused diff and eliminating it. Between the two 6-file PRs, #1560 was opened before #1678 (lower PR number), giving it priority on the oldest tiebreaker. #1560 and #1678 appear otherwise equivalent in scope."
         },
         {
           "number": 1678,
@@ -3738,7 +3766,7 @@
       "id": "sem:1443",
       "kind": "semantic",
       "pick": 1670,
-      "pick_reason": "PR #1670 includes both the interface field addition and the corresponding implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates coverage extends to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider as well. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional.",
+      "pick_reason": "PR #1670 is a strict superset of #1443: it includes the same interface addition plus the actual implementation (`this._clientMetadata.scope = options.scope` in the constructor), and per its title also extends scope support to `PrivateKeyJwtProvider` and `StaticPrivateKeyJwtProvider`. PR #1443 only adds the interface field with no wiring, leaving the feature non-functional.",
       "members": [
         {
           "number": 1443,
@@ -3746,8 +3774,8 @@
           "author": "NSeydoux",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1670: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests.",
-          "short_reason": "[llm] duplicates #1670: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests.",
+          "reason": "[llm] duplicates #1670: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests.",
+          "short_reason": "[llm] duplicates #1670: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests.",
           "age_days": 39.2,
           "additions": 120,
           "deletions": 3,
@@ -3765,9 +3793,9 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)",
-          "age_days": 1.5,
+          "reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)",
+          "age_days": 1.6,
           "additions": 103,
           "deletions": 0,
           "is_auth": true,
@@ -3776,16 +3804,63 @@
           "sla_kind": null,
           "cluster_id": "sem:1443",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1670 includes both the interface field addition and the corresponding implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates coverage extends to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider as well. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+          "cluster_pick_reason": "PR #1670 is a strict superset of #1443: it includes the same interface addition plus the actual implementation (`this._clientMetadata.scope = options.scope` in the constructor), and per its title also extends scope support to `PrivateKeyJwtProvider` and `StaticPrivateKeyJwtProvider`. PR #1443 only adds the interface field with no wiring, leaving the feature non-functional."
         }
       ],
-      "desc": "Add `scope` field to `ClientCredentialsProviderOptions` in `authExtensions.ts` so callers can request specific OAuth scopes during client credentials token requests. (2 PRs)"
+      "desc": "Both PRs add a `scope?: string` field to `ClientCredentialsProviderOptions` in `packages/client/src/client/authExtensions.ts` to allow callers to pass OAuth scopes in token requests. (2 PRs)"
+    },
+    {
+      "id": "sem:1596",
+      "kind": "semantic",
+      "pick": 1617,
+      "pick_reason": "PR #1617 is the broader fix: it widens the inputSchema type (ZodRawShapeCompat | AnySchema), adds the isLikelyJsonSchema guard in the schema-normalization path (line ~146), and preserves the plain schema on the wire \u2014 supporting the deprecated overload without breaking callers. PR #1596 only adds a throw in the annotations-detection branch (line ~1024), which would reject valid existing usage that #1617 explicitly aims to preserve.",
+      "members": [
+        {
+          "number": 1596,
+          "title": "fix: reject plain JSON Schema objects passed as inputSchema",
+          "author": "tiluckdave",
+          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1596",
+          "state": "duplicate-cluster-member",
+          "reason": "[llm] duplicates #1617: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged.",
+          "short_reason": "[llm] duplicates #1617: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged.",
+          "age_days": 15.0,
+          "additions": 40,
+          "deletions": 4,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:1596",
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        },
+        {
+          "number": 1617,
+          "title": "fix(server): preserve plain JSON Schema in deprecated server.tool() overload",
+          "author": "stakeswky",
+          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1617",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)",
+          "age_days": 10.9,
+          "additions": 126,
+          "deletions": 5,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
+          "cluster_id": "sem:1596",
+          "cluster_pick": true,
+          "cluster_pick_reason": "PR #1617 is the broader fix: it widens the inputSchema type (ZodRawShapeCompat | AnySchema), adds the isLikelyJsonSchema guard in the schema-normalization path (line ~146), and preserves the plain schema on the wire \u2014 supporting the deprecated overload without breaking callers. PR #1596 only adds a throw in the annotations-detection branch (line ~1024), which would reject valid existing usage that #1617 explicitly aims to preserve."
+        }
+      ],
+      "desc": "Handling plain JSON Schema objects passed as inputSchema in server.tool() \u2014 both PRs modify the same argument-parsing and schema-normalization code in src/server/mcp.ts but take opposite stances: #1596 rejects such objects with a thrown error, while #1617 detects them via isLikelyJsonSchema() and passes them through unchanged. (2 PRs)"
     },
     {
       "id": "sem:1648",
       "kind": "semantic",
       "pick": 1648,
-      "pick_reason": "PR #1648 was opened first. Both diffs are byte-for-byte identical, so there is no technical difference between them; closing #1649 avoids a duplicate changeset file conflict on merge.",
+      "pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual change. PR #1649's title references 'Hono package namespace to @hono/mcp', which does not correspond to anything in its diff, indicating a mislabeled or incorrectly rebased branch.",
       "members": [
         {
           "number": 1648,
@@ -3793,9 +3868,9 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)",
-          "age_days": 4.1,
+          "reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)",
+          "age_days": 4.2,
           "additions": 15,
           "deletions": 6,
           "is_auth": false,
@@ -3804,7 +3879,7 @@
           "sla_kind": null,
           "cluster_id": "sem:1648",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1648 was opened first. Both diffs are byte-for-byte identical, so there is no technical difference between them; closing #1649 avoids a duplicate changeset file conflict on merge."
+          "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual change. PR #1649's title references 'Hono package namespace to @hono/mcp', which does not correspond to anything in its diff, indicating a mislabeled or incorrectly rebased branch."
         },
         {
           "number": 1649,
@@ -3812,9 +3887,9 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both.",
-          "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both.",
-          "age_days": 4.1,
+          "reason": "[llm] duplicates #1648: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`).",
+          "short_reason": "[llm] duplicates #1648: Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`).",
+          "age_days": 4.2,
           "additions": 19,
           "deletions": 10,
           "is_auth": false,
@@ -3826,20 +3901,20 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs produce identical diffs: they change `npm install @modelcontextprotocol/server zod` to `npm install @modelcontextprotocol/sdk zod` in `docs/server-quickstart.md` and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. Despite the different PR titles (one claims a package-name fix, the other a Hono namespace fix), the actual patch applied is the same in both. (2 PRs)"
+      "desc": "Both PRs produce byte-for-byte identical diffs: the same `.changeset/mcp-limit-fix.md` addition and the same single-line change in `docs/server-quickstart.md` (`@modelcontextprotocol/server` \u2192 `@modelcontextprotocol/sdk`). (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 1.5211,
+    "total_usd": 1.6792,
     "total_calls": 17,
     "by_purpose": {
       "semantic-cluster": {
         "count": 9,
-        "cost": 0.5846
+        "cost": 0.5537
       },
       "cluster-pick": {
         "count": 8,
-        "cost": 0.9365
+        "cost": 1.1256
       }
     }
   }
