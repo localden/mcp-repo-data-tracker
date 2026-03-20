@@ -1,5 +1,5 @@
-<header class="navbar bg-base-100 border-b border-base-300 px-4 overflow-visible flex-wrap min-h-fit">
-  <div class="navbar-start gap-2 overflow-visible">
+<header class="navbar w-full bg-base-100 border-b border-base-300 px-4 overflow-visible flex-wrap min-h-fit">
+  <div class="navbar-start w-auto flex-none gap-2 overflow-visible">
     <a href="{{ .Site.BaseURL }}" class="text-sm font-semibold hover:opacity-80">{{ .Site.Title }}</a>
     <span class="relative inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
       <span class="absolute inset-[1px] rounded-full bg-base-100"></span>
@@ -7,7 +7,7 @@
       <span class="relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent">Experimental</span>
     </span>
   </div>
-  <div class="navbar-end gap-2 overflow-visible flex-wrap justify-end w-full sm:w-auto">
+  <div class="navbar-end flex-1 gap-2 overflow-visible flex-wrap justify-end">
     {{/* Repo Picker */}}
     {{ $reposIndex := site.Data.repos }}
     {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
