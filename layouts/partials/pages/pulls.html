@@ -298,13 +298,24 @@
 {{/* ──────────────────────────────────────────────────────────────────────────
      LIVE FILTER — type to filter rows; cascades to hide empty states/tiers.
      ────────────────────────────────────────────────────────────────────────── */}}
-<input type="text"
-       placeholder="Filter — free text, author:name, label:auth, label:sla"
-       class="input input-bordered input-sm w-full mb-4"
-       oninput="actFilter(this.value)">
+<div class="flex items-center gap-2 bg-base-100 border border-base-300 rounded-lg px-3 py-2 mb-4 transition-colors focus-within:border-primary">
+  <i class="fa-solid fa-filter text-xs opacity-40"></i>
+  <input type="text"
+         placeholder="author:name label:auth label:sla — or free text"
+         class="flex-1 min-w-0 bg-transparent border-0 outline-none text-xs"
+         oninput="actFilter(this.value)">
+  <button type="button" class="act-filter-clear hidden opacity-40 hover:opacity-100"
+          onclick="var i=this.previousElementSibling;i.value='';actFilter('');i.focus()"
+          aria-label="Clear filter">
+    <i class="fa-solid fa-xmark text-xs"></i>
+  </button>
+</div>
 <script>
 function actFilter(q) {
   q = q.toLowerCase().trim();
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
+  var clr = root.querySelector('.act-filter-clear');
+  if (clr) clr.classList.toggle('hidden', !q);
   var tokens = q ? q.split(/\s+/) : [];
   // author:foo / label:auth / label:sla check data attributes; bare tokens check full text.
   var checks = tokens.map(function(tok) {
@@ -313,7 +324,6 @@ function actFilter(q) {
     var field = m[1] === 'label' ? 'badges' : m[1], val = m[2];
     return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
   });
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   root.querySelectorAll('.act-tier').forEach(function(tier) {
     var tierHasVisible = false;
     // Reverse doc order → inner cluster <details> settle before the outer wrapper reads them.
@@ -348,7 +358,7 @@ function actFilterToggle(q) {
   if (!input) return;
   input.value = (input.value === q) ? '' : q;
   actFilter(input.value);
-  if (input.value) input.scrollIntoView({behavior: 'smooth', block: 'start'});
+  if (input.value) input.parentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 </script>
 

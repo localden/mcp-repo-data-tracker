@@ -260,14 +260,25 @@
 </details>
 
 {{/* ───────── Filter + tier sections ───────── */}}
-<input type="text"
-       placeholder="Filter — label:bug,P1 tier:needs-reply sla:breach author:name, or free text"
-       class="input input-bordered input-sm w-full mb-4"
-       oninput="issFilter(this.value)">
+<div class="flex items-center gap-2 bg-base-100 border border-base-300 rounded-lg px-3 py-2 mb-4 transition-colors focus-within:border-primary">
+  <i class="fa-solid fa-filter text-xs opacity-40"></i>
+  <input type="text"
+         placeholder="label:bug,P1 tier:needs-reply sla:breach author:name — or free text"
+         class="flex-1 min-w-0 bg-transparent border-0 outline-none text-xs"
+         oninput="issFilter(this.value)">
+  <button type="button" class="iss-filter-clear hidden opacity-40 hover:opacity-100"
+          onclick="var i=this.previousElementSibling;i.value='';issFilter('');i.focus()"
+          aria-label="Clear filter">
+    <i class="fa-solid fa-xmark text-xs"></i>
+  </button>
+</div>
 
 <script>
 function issFilter(q) {
   q = q.toLowerCase().trim();
+  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
+  var clr = root.querySelector('.iss-filter-clear');
+  if (clr) clr.classList.toggle('hidden', !q);
   var tokens = q ? q.split(/\s+/) : [];
   // label:bug,P1 expands to label:bug AND label:P1
   var checks = tokens.flatMap(function(tok) {
@@ -278,7 +289,6 @@ function issFilter(q) {
       return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
     });
   });
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
   root.querySelectorAll('.iss-group').forEach(function(group) {
     var groupHasVisible = false;
     var groupText = group.querySelector('h2').textContent.toLowerCase();
@@ -305,7 +315,7 @@ function issFilterToggle(q) {
   if (!input) return;
   input.value = (input.value === q) ? '' : q;
   issFilter(input.value);
-  if (input.value) input.scrollIntoView({behavior: 'smooth', block: 'start'});
+  if (input.value) input.parentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 </script>
 
