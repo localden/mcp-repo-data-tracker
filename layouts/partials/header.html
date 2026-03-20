@@ -38,5 +38,9 @@
       <a href="{{ "contributors/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Contributors" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Contributors</a>
       <a href="{{ "health/" | relURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Health & Trends" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Trends</a>
     </nav>
+    <button id="theme-toggle" type="button" class="px-2.5 py-1.5 rounded-md hover:bg-base-200" aria-label="Toggle theme">
+      <i class="fa-solid fa-moon theme-icon-dark"></i>
+      <i class="fa-solid fa-sun theme-icon-light hidden"></i>
+    </button>
   </div>
 </header>
