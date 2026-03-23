@@ -56,11 +56,11 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python3 scripts/pr-actionable \
-            --repo typescript-sdk,python-sdk \
+            --repo typescript-sdk,python-sdk,conformance \
             --maintainers-json data/maintainers.json \
             --visr-json 'data/repos/modelcontextprotocol/{repo}/actionability.json'
           # Patch today's snapshot with .summary so sparklines see it
-          for repo in typescript-sdk python-sdk; do
+          for repo in typescript-sdk python-sdk conformance; do
             snap="data/repos/modelcontextprotocol/$repo/snapshots/$(date -u +%Y-%m-%d).json"
             act="data/repos/modelcontextprotocol/$repo/actionability.json"
             if [ -f "$snap" ] && [ -f "$act" ]; then

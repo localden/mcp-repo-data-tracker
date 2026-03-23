@@ -114,6 +114,10 @@ _VISR_REPO_ROLES = {
     "typescript-sdk": {"ROLE_IDS.TYPESCRIPT_SDK", "ROLE_IDS.CORE_MAINTAINERS", "ROLE_IDS.LEAD_MAINTAINERS"},
     "python-sdk":     {"ROLE_IDS.PYTHON_SDK",     "ROLE_IDS.CORE_MAINTAINERS", "ROLE_IDS.LEAD_MAINTAINERS"},
 }
+# Repos without a dedicated ROLE_IDS entry — hardcode logins until the access repo catches up.
+_VISR_REPO_DIRECT = {
+    "conformance": {"pcarleton", "felixweinberger"},
+}
 _VISR_AUTH_ROLE = "ROLE_IDS.AUTH_MAINTAINERS"
 
 
@@ -121,7 +125,8 @@ def load_from_visr_json(repo: str, path: str) -> RepoMaintainers:
     import json
     data = json.loads(Path(path).read_text())
     repo_roles = _VISR_REPO_ROLES.get(repo, {"ROLE_IDS.CORE_MAINTAINERS"})
-    all_m, auth_m = set(), set()
+    all_m = set(_VISR_REPO_DIRECT.get(repo, ()))
+    auth_m = set()
     for entry in data["maintainers"]:
         roles = set(entry.get("roles", []))
         if roles & repo_roles:
