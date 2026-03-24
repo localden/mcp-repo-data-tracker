@@ -1,11 +1,11 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-24T11:09:00.623630+00:00",
+  "lastUpdated": "2026-03-24T13:23:36.394553+00:00",
   "summary": {
     "actionable_count": 26,
     "auth_count": 5,
     "maint_count": 2,
-    "effort_hours": 9.9,
+    "effort_hours": 10.3,
     "cluster_count": 3,
     "cluster_member_count": 3,
     "not_our_move_count": 4,
@@ -29,10 +29,10 @@
       {
         "idx": 3,
         "name": "Intake",
-        "count": 16,
+        "count": 17,
         "auth": 1,
         "maint": 0,
-        "mins": 480
+        "mins": 510
       },
       {
         "idx": 4,
@@ -49,32 +49,23 @@
         "auth": 1,
         "maint": 0,
         "mins": 1
-      },
-      {
-        "idx": 99,
-        "name": "bot corner",
-        "count": 1,
-        "auth": 0,
-        "maint": 0,
-        "mins": 0
       }
     ],
     "by_state": {
-      "bot-broke-ci": 1,
       "draft-active": 1,
       "duplicate-cluster": 3,
       "duplicate-cluster-member": 3,
       "maintainer-intake": 2,
       "needs-decision": 1,
-      "needs-first-review": 16,
+      "needs-first-review": 17,
       "needs-re-review": 1,
       "parked": 3,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
-      "first_review_7d_breach": 15,
-      "first_review_eligible": 19,
+      "first_review_7d_breach": 16,
+      "first_review_eligible": 20,
       "re_review_24h_breach": 2,
       "re_review_eligible": 2,
       "maint_24h_breach": 2,
@@ -104,7 +95,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 12d waiting)",
               "short_reason": "push after approval (1 commits, 12d waiting)",
-              "age_days": 22.7,
+              "age_days": 22.8,
               "additions": 2,
               "deletions": 4,
               "is_auth": false,
@@ -130,7 +121,7 @@
               "state": "maintainer-intake",
               "reason": "112d, no maintainer has looked yet",
               "short_reason": "112d, no maintainer has looked yet",
-              "age_days": 111.9,
+              "age_days": 112.0,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -182,9 +173,9 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-              "age_days": 50.8,
+              "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+              "age_days": 50.9,
               "additions": 179,
               "deletions": 135,
               "is_auth": false,
@@ -193,7 +184,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:130",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
+              "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk further (to ^1.27.1 vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild transitive dependencies in the same pass, making it a strict superset of #132's changes."
             },
             {
               "number": 173,
@@ -201,9 +192,9 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-              "age_days": 22.8,
+              "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+              "age_days": 22.9,
               "additions": 746,
               "deletions": 757,
               "is_auth": false,
@@ -212,26 +203,26 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:173",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
+              "cluster_pick_reason": "PR #173 is a broader update covering 11 dependencies (including undici \u2192 ^7.22.0, zod, eslint, prettier, tsdown, etc.), while PR #187 updates only undici (to ^7.24.0). Merging #173 subsumes the intent of #187; the undici range in #173 can be bumped to ^7.24.0 before merging to capture the newer resolved version without needing a separate PR."
             },
             {
-              "number": 178,
-              "title": "feat: add test coverage reporting with vitest",
-              "author": "schlpbch",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
+              "number": 189,
+              "title": "chore(deps): bump hono from 4.11.9 to 4.12.8",
+              "author": "app/dependabot",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/189",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-              "age_days": 20.5,
-              "additions": 4029,
+              "reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+              "age_days": 2.9,
+              "additions": 3,
               "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "sem:178",
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": "sem:183",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
+              "cluster_pick_reason": "PR #189 updates the primary hono core package (4.11.9\u21924.12.8, spanning multiple minor versions with likely API changes), which is the package that drives the compatibility requirement. @hono/node-server from PR #183 (1.19.9\u21921.19.11) should be folded into this PR so both Hono packages advance together in a single lockfile change."
             }
           ],
           "clusters": [
@@ -239,7 +230,7 @@
               "id": "sem:130",
               "kind": "semantic",
               "pick": 130,
-              "pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant.",
+              "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk further (to ^1.27.1 vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild transitive dependencies in the same pass, making it a strict superset of #132's changes.",
               "members": [
                 {
                   "number": 130,
@@ -247,9 +238,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-                  "age_days": 50.8,
+                  "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+                  "age_days": 50.9,
                   "additions": 179,
                   "deletions": 135,
                   "is_auth": false,
@@ -258,7 +249,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:130",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
+                  "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk further (to ^1.27.1 vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild transitive dependencies in the same pass, making it a strict superset of #132's changes."
                 },
                 {
                   "number": 132,
@@ -266,9 +257,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
-                  "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
-                  "age_days": 47.6,
+                  "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0",
+                  "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0",
+                  "age_days": 47.7,
                   "additions": 57,
                   "deletions": 17,
                   "is_auth": false,
@@ -280,13 +271,13 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)"
+              "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)"
             },
             {
               "id": "sem:173",
               "kind": "semantic",
               "pick": 173,
-              "pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs.",
+              "pick_reason": "PR #173 is a broader update covering 11 dependencies (including undici \u2192 ^7.22.0, zod, eslint, prettier, tsdown, etc.), while PR #187 updates only undici (to ^7.24.0). Merging #173 subsumes the intent of #187; the undici range in #173 can be bumped to ^7.24.0 before merging to capture the newer resolved version without needing a separate PR.",
               "members": [
                 {
                   "number": 173,
@@ -294,9 +285,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-                  "age_days": 22.8,
+                  "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+                  "age_days": 22.9,
                   "additions": 746,
                   "deletions": 757,
                   "is_auth": false,
@@ -305,7 +296,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:173",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
+                  "cluster_pick_reason": "PR #173 is a broader update covering 11 dependencies (including undici \u2192 ^7.22.0, zod, eslint, prettier, tsdown, etc.), while PR #187 updates only undici (to ^7.24.0). Merging #173 subsumes the intent of #187; the undici range in #173 can be bumped to ^7.24.0 before merging to capture the newer resolved version without needing a separate PR."
                 },
                 {
                   "number": 187,
@@ -313,9 +304,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/187",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
-                  "short_reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
-                  "age_days": 10.5,
+                  "reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry.",
+                  "short_reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry.",
+                  "age_days": 10.6,
                   "additions": 5,
                   "deletions": 5,
                   "is_auth": false,
@@ -327,54 +318,54 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)"
+              "desc": "Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)"
             },
             {
-              "id": "sem:178",
+              "id": "sem:183",
               "kind": "semantic",
-              "pick": 178,
-              "pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions.",
+              "pick": 189,
+              "pick_reason": "PR #189 updates the primary hono core package (4.11.9\u21924.12.8, spanning multiple minor versions with likely API changes), which is the package that drives the compatibility requirement. @hono/node-server from PR #183 (1.19.9\u21921.19.11) should be folded into this PR so both Hono packages advance together in a single lockfile change.",
               "members": [
                 {
-                  "number": 178,
-                  "title": "feat: add test coverage reporting with vitest",
-                  "author": "schlpbch",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-                  "age_days": 20.5,
-                  "additions": 4029,
-                  "deletions": 3,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "sem:178",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
-                },
-                {
-                  "number": 179,
-                  "title": "test: improve test coverage for server scenarios",
-                  "author": "schlpbch",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+                  "number": 183,
+                  "title": "chore(deps): bump @hono/node-server from 1.19.9 to 1.19.11",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/183",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
-                  "short_reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
-                  "age_days": 20.5,
-                  "additions": 3904,
+                  "reason": "[llm] duplicates #189: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility.",
+                  "short_reason": "[llm] duplicates #189: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility.",
+                  "age_days": 17.8,
+                  "additions": 3,
                   "deletions": 3,
                   "is_auth": false,
                   "is_maintainer": false,
                   "sla_breach": false,
                   "sla_kind": null,
-                  "cluster_id": "sem:178",
+                  "cluster_id": "sem:183",
                   "cluster_pick": false,
                   "cluster_pick_reason": ""
+                },
+                {
+                  "number": 189,
+                  "title": "chore(deps): bump hono from 4.11.9 to 4.12.8",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/189",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+                  "age_days": 2.9,
+                  "additions": 3,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:183",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "PR #189 updates the primary hono core package (4.11.9\u21924.12.8, spanning multiple minor versions with likely API changes), which is the package that drives the compatibility requirement. @hono/node-server from PR #183 (1.19.9\u21921.19.11) should be folded into this PR so both Hono packages advance together in a single lockfile change."
                 }
               ],
-              "desc": "Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)"
+              "desc": "Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)"
             }
           ]
         },
@@ -391,7 +382,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 27.0,
+              "age_days": 27.1,
               "additions": 481,
               "deletions": 10,
               "is_auth": true,
@@ -410,8 +401,8 @@
       "idx": 3,
       "name": "Intake",
       "blurb": "PRs not yet reviewed by a maintainer. Oldest first.",
-      "count": 16,
-      "mins": 480,
+      "count": 17,
+      "mins": 510,
       "states": [
         {
           "name": "needs-first-review",
@@ -426,7 +417,7 @@
               "state": "needs-first-review",
               "reason": "51d since open (SLA breach)",
               "short_reason": "51d",
-              "age_days": 50.8,
+              "age_days": 50.9,
               "additions": 1,
               "deletions": 1,
               "is_auth": false,
@@ -445,7 +436,7 @@
               "state": "needs-first-review",
               "reason": "33d since open (SLA breach)",
               "short_reason": "33d",
-              "age_days": 32.5,
+              "age_days": 32.6,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -521,7 +512,7 @@
               "state": "needs-first-review",
               "reason": "30d since open (SLA breach)",
               "short_reason": "30d",
-              "age_days": 29.9,
+              "age_days": 30.0,
               "additions": 9,
               "deletions": 9,
               "is_auth": false,
@@ -538,9 +529,9 @@
               "author": "lux999",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/165",
               "state": "needs-first-review",
-              "reason": "28d since open (SLA breach)",
-              "short_reason": "28d",
-              "age_days": 28.4,
+              "reason": "29d since open (SLA breach)",
+              "short_reason": "29d",
+              "age_days": 28.5,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -559,7 +550,7 @@
               "state": "needs-first-review",
               "reason": "27d since open (SLA breach)",
               "short_reason": "27d",
-              "age_days": 27.4,
+              "age_days": 27.5,
               "additions": 17,
               "deletions": 6,
               "is_auth": false,
@@ -578,7 +569,7 @@
               "state": "needs-first-review",
               "reason": "23d since open (SLA breach)",
               "short_reason": "23d",
-              "age_days": 22.7,
+              "age_days": 22.8,
               "additions": 7,
               "deletions": 7,
               "is_auth": false,
@@ -597,7 +588,7 @@
               "state": "needs-first-review",
               "reason": "23d since open (SLA breach)",
               "short_reason": "23d",
-              "age_days": 22.7,
+              "age_days": 22.8,
               "additions": 45,
               "deletions": 6,
               "is_auth": false,
@@ -614,11 +605,49 @@
               "author": "lux999",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/177",
               "state": "needs-first-review",
-              "reason": "21d since open (SLA breach)",
-              "short_reason": "21d",
-              "age_days": 21.4,
+              "reason": "22d since open (SLA breach)",
+              "short_reason": "22d",
+              "age_days": 21.5,
               "additions": 4,
               "deletions": 4,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
+              "number": 178,
+              "title": "feat: add test coverage reporting with vitest",
+              "author": "schlpbch",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
+              "state": "needs-first-review",
+              "reason": "21d since open (SLA breach)",
+              "short_reason": "21d",
+              "age_days": 20.6,
+              "additions": 4029,
+              "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
+              "number": 179,
+              "title": "test: improve test coverage for server scenarios",
+              "author": "schlpbch",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+              "state": "needs-first-review",
+              "reason": "21d since open (SLA breach)",
+              "short_reason": "21d",
+              "age_days": 20.6,
+              "additions": 3904,
+              "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": true,
@@ -635,7 +664,7 @@
               "state": "needs-first-review",
               "reason": "13d since open (SLA breach)",
               "short_reason": "13d",
-              "age_days": 13.4,
+              "age_days": 13.5,
               "additions": 7,
               "deletions": 7,
               "is_auth": false,
@@ -652,30 +681,11 @@
               "author": "CaitieM20",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/188",
               "state": "needs-first-review",
-              "reason": "6d since open",
-              "short_reason": "6d",
-              "age_days": 6.5,
+              "reason": "7d since open",
+              "short_reason": "7d",
+              "age_days": 6.6,
               "additions": 2095,
               "deletions": 5,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 189,
-              "title": "chore(deps): bump hono from 4.11.9 to 4.12.8",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/189",
-              "state": "needs-first-review",
-              "reason": "3d since open",
-              "short_reason": "3d",
-              "age_days": 2.8,
-              "additions": 3,
-              "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": false,
@@ -692,7 +702,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.8,
+              "age_days": 2.9,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -711,7 +721,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.8,
+              "age_days": 2.9,
               "additions": 103,
               "deletions": 103,
               "is_auth": false,
@@ -746,7 +756,7 @@
               "state": "stale-awaiting-author",
               "reason": "39d since feedback, no response",
               "short_reason": "39d since feedback",
-              "age_days": 43.2,
+              "age_days": 43.3,
               "additions": 612,
               "deletions": 47,
               "is_auth": true,
@@ -781,7 +791,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 118d old",
               "short_reason": "CI never ran, 118d old",
-              "age_days": 117.7,
+              "age_days": 117.8,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -797,33 +807,7 @@
       ]
     }
   ],
-  "bot_corner": [
-    {
-      "name": "bot-broke-ci",
-      "desc": "Automated dependency update with failing CI.",
-      "prs": [
-        {
-          "number": 183,
-          "title": "chore(deps): bump @hono/node-server from 1.19.9 to 1.19.11",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/183",
-          "state": "bot-broke-ci",
-          "reason": "bot PR, red CI",
-          "short_reason": "bot PR, red CI",
-          "age_days": 17.7,
-          "additions": 3,
-          "deletions": 3,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        }
-      ]
-    }
-  ],
+  "bot_corner": [],
   "untriaged": [],
   "not_our_move": [
     {
@@ -838,7 +822,7 @@
           "state": "parked",
           "reason": "maintainer draft, 69d",
           "short_reason": "maintainer draft, 69d",
-          "age_days": 69.0,
+          "age_days": 69.1,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -857,7 +841,7 @@
           "state": "parked",
           "reason": "maintainer draft, 47d",
           "short_reason": "maintainer draft, 47d",
-          "age_days": 46.8,
+          "age_days": 46.9,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -876,7 +860,7 @@
           "state": "parked",
           "reason": "maintainer draft, 35d",
           "short_reason": "maintainer draft, 35d",
-          "age_days": 34.7,
+          "age_days": 34.8,
           "additions": 4,
           "deletions": 4,
           "is_auth": true,
@@ -901,7 +885,7 @@
           "state": "draft-active",
           "reason": "1d old",
           "short_reason": "1d old",
-          "age_days": 0.8,
+          "age_days": 0.9,
           "additions": 1667,
           "deletions": 1408,
           "is_auth": false,
@@ -920,7 +904,7 @@
       "id": "sem:130",
       "kind": "semantic",
       "pick": 130,
-      "pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant.",
+      "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk further (to ^1.27.1 vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild transitive dependencies in the same pass, making it a strict superset of #132's changes.",
       "members": [
         {
           "number": 130,
@@ -928,9 +912,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
-          "age_days": 50.8,
+          "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)",
+          "age_days": 50.9,
           "additions": 179,
           "deletions": 135,
           "is_auth": false,
@@ -939,7 +923,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:130",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
+          "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk further (to ^1.27.1 vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild transitive dependencies in the same pass, making it a strict superset of #132's changes."
         },
         {
           "number": 132,
@@ -947,9 +931,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
-          "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
-          "age_days": 47.6,
+          "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0",
+          "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0",
+          "age_days": 47.7,
           "additions": 57,
           "deletions": 17,
           "is_auth": false,
@@ -961,13 +945,13 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)"
+      "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0 (2 PRs)"
     },
     {
       "id": "sem:173",
       "kind": "semantic",
       "pick": 173,
-      "pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs.",
+      "pick_reason": "PR #173 is a broader update covering 11 dependencies (including undici \u2192 ^7.22.0, zod, eslint, prettier, tsdown, etc.), while PR #187 updates only undici (to ^7.24.0). Merging #173 subsumes the intent of #187; the undici range in #173 can be bumped to ^7.24.0 before merging to capture the newer resolved version without needing a separate PR.",
       "members": [
         {
           "number": 173,
@@ -975,9 +959,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
-          "age_days": 22.8,
+          "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)",
+          "age_days": 22.9,
           "additions": 746,
           "deletions": 757,
           "is_auth": false,
@@ -986,7 +970,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:173",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
+          "cluster_pick_reason": "PR #173 is a broader update covering 11 dependencies (including undici \u2192 ^7.22.0, zod, eslint, prettier, tsdown, etc.), while PR #187 updates only undici (to ^7.24.0). Merging #173 subsumes the intent of #187; the undici range in #173 can be bumped to ^7.24.0 before merging to capture the newer resolved version without needing a separate PR."
         },
         {
           "number": 187,
@@ -994,9 +978,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/187",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
-          "short_reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
-          "age_days": 10.5,
+          "reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry.",
+          "short_reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry.",
+          "age_days": 10.6,
           "additions": 5,
           "deletions": 5,
           "is_auth": false,
@@ -1008,67 +992,67 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)"
+      "desc": "Both PRs update the `undici` dependency in `package-lock.json` from the same base version (`^7.19.0`), creating a direct merge conflict on that entry. (2 PRs)"
     },
     {
-      "id": "sem:178",
+      "id": "sem:183",
       "kind": "semantic",
-      "pick": 178,
-      "pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions.",
+      "pick": 189,
+      "pick_reason": "PR #189 updates the primary hono core package (4.11.9\u21924.12.8, spanning multiple minor versions with likely API changes), which is the package that drives the compatibility requirement. @hono/node-server from PR #183 (1.19.9\u21921.19.11) should be folded into this PR so both Hono packages advance together in a single lockfile change.",
       "members": [
         {
-          "number": 178,
-          "title": "feat: add test coverage reporting with vitest",
-          "author": "schlpbch",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
-          "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
-          "age_days": 20.5,
-          "additions": 4029,
-          "deletions": 3,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "sem:178",
-          "cluster_pick": true,
-          "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
-        },
-        {
-          "number": 179,
-          "title": "test: improve test coverage for server scenarios",
-          "author": "schlpbch",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+          "number": 183,
+          "title": "chore(deps): bump @hono/node-server from 1.19.9 to 1.19.11",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/183",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
-          "short_reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
-          "age_days": 20.5,
-          "additions": 3904,
+          "reason": "[llm] duplicates #189: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility.",
+          "short_reason": "[llm] duplicates #189: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility.",
+          "age_days": 17.8,
+          "additions": 3,
           "deletions": 3,
           "is_auth": false,
           "is_maintainer": false,
           "sla_breach": false,
           "sla_kind": null,
-          "cluster_id": "sem:178",
+          "cluster_id": "sem:183",
           "cluster_pick": false,
           "cluster_pick_reason": ""
+        },
+        {
+          "number": 189,
+          "title": "chore(deps): bump hono from 4.11.9 to 4.12.8",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/189",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)",
+          "age_days": 2.9,
+          "additions": 3,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:183",
+          "cluster_pick": true,
+          "cluster_pick_reason": "PR #189 updates the primary hono core package (4.11.9\u21924.12.8, spanning multiple minor versions with likely API changes), which is the package that drives the compatibility requirement. @hono/node-server from PR #183 (1.19.9\u21921.19.11) should be folded into this PR so both Hono packages advance together in a single lockfile change."
         }
       ],
-      "desc": "Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)"
+      "desc": "Hono framework ecosystem upgrade: both PRs update tightly-coupled Hono packages (@hono/node-server and hono core) that are conventionally bumped together to ensure adapter/framework version compatibility. (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.2764,
+    "total_usd": 0.3065,
     "total_calls": 8,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0398
+        "cost": 0.0399
       },
       "semantic-cluster": {
         "count": 7,
-        "cost": 0.2366
+        "cost": 0.2666
       }
     }
   }
