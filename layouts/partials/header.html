@@ -1,4 +1,4 @@
-<header class="navbar w-full bg-base-100 border-b border-base-300 px-4 overflow-visible flex-wrap min-h-fit">
+<header class="navbar sticky top-0 z-50 w-full bg-base-100 border-b border-base-300 px-4 overflow-visible flex-wrap min-h-fit">
   <div class="navbar-start w-auto flex-none gap-2 overflow-visible">
     <a href="{{ .Site.BaseURL }}" class="text-sm font-semibold hover:opacity-80">{{ .Site.Title }}</a>
     <span class="relative inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
@@ -19,6 +19,13 @@
         </svg>
       </button>
       <div tabindex="0" class="dropdown-content bg-base-100 rounded-lg z-[100] w-80 max-w-[calc(100vw-2rem)] p-1.5 shadow-xl border border-base-300" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
+        <div class="repo-picker-item" role="option" data-owner="" data-repo="" data-name="All Repositories">
+          <a class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
+            <span class="text-xs font-medium">All Repositories</span>
+            <span class="text-[10px] text-base-content/50">Summary across all tracked repos</span>
+          </a>
+        </div>
+        <div class="border-t border-base-300 my-1"></div>
         {{ range $index, $repo := $reposIndex.repositories }}
         <div class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
           <a class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">

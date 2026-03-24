@@ -8,6 +8,7 @@
   'use strict';
 
   const REPO_PARAM = 'repo';
+  const ALL_REPOS_KEY = '__all__';
 
   // Get repo from URL query parameter
   function getSelectedRepo() {
@@ -15,8 +16,12 @@
     return params.get(REPO_PARAM);
   }
 
-  // Get the first available repo key from the page
+  // Get the default repo key. Prefers the all-repos summary if present on the page,
+  // otherwise falls back to the first per-repo content block.
   function getDefaultRepo() {
+    if (document.querySelector(`.repo-content[data-repo="${ALL_REPOS_KEY}"]`)) {
+      return ALL_REPOS_KEY;
+    }
     const firstContent = document.querySelector('.repo-content[data-repo]');
     return firstContent ? firstContent.dataset.repo : null;
   }
@@ -41,11 +46,16 @@
 
   // Set repo in URL and switch content (or reload if content not pre-rendered)
   function setSelectedRepo(owner, repo) {
-    const repoKey = `${owner}/${repo}`;
+    const isAll = !owner && !repo;
+    const repoKey = isAll ? ALL_REPOS_KEY : `${owner}/${repo}`;
 
     // Update URL without reload
     const url = new URL(window.location.href);
-    url.searchParams.set(REPO_PARAM, repoKey);
+    if (isAll) {
+      url.searchParams.delete(REPO_PARAM);
+    } else {
+      url.searchParams.set(REPO_PARAM, repoKey);
+    }
     window.history.pushState({ repo: repoKey }, '', url.toString());
 
     // Try to show pre-rendered content
@@ -54,9 +64,15 @@
     // Update picker UI
     updatePickerUI(repoKey);
 
-    // If content wasn't found, reload the page
+    // If content wasn't found, navigate appropriately
     if (!contentShown) {
-      window.location.reload();
+      if (isAll) {
+        // All-repos summary only exists on home page
+        const homeLink = document.querySelector('.navbar-start a[href]');
+        window.location.href = homeLink ? homeLink.href : '/';
+      } else {
+        window.location.reload();
+      }
     }
   }
 
@@ -68,7 +84,9 @@
 
     const items = menu.querySelectorAll('.repo-picker-item');
     items.forEach(item => {
-      const itemKey = `${item.dataset.owner}/${item.dataset.repo}`;
+      const owner = item.dataset.owner;
+      const repo = item.dataset.repo;
+      const itemKey = (!owner && !repo) ? ALL_REPOS_KEY : `${owner}/${repo}`;
       const anchor = item.querySelector('a');
       if (itemKey === repoKey) {
         item.classList.add('selected');

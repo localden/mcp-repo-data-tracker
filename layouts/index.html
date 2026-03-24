@@ -6,6 +6,175 @@
 {{ $reposIndex := site.Data.repos }}
 
 {{ if and $reposIndex $reposIndex.repositories }}
+  {{/* ===== All-Repositories Summary View ===== */}}
+  {{ $chartColors := slice "rgb(0, 102, 204)" "rgb(40, 167, 69)" "rgb(255, 193, 7)" "rgb(220, 53, 69)" "rgb(108, 117, 125)" "rgb(153, 102, 255)" "rgb(255, 159, 64)" }}
+
+  {{/* Gather per-repo data once for totals, table rows, and chart series */}}
+  {{ $totalStars := 0 }}
+  {{ $totalForks := 0 }}
+  {{ $totalOpenIssues := 0 }}
+  {{ $totalOpenPRs := 0 }}
+  {{ $totalActive := 0 }}
+  {{ $totalAwaitingIssues := 0 }}
+  {{ $totalAwaitingPRs := 0 }}
+  {{ $rows := slice }}
+  {{ $issuesSeries := slice }}
+  {{ $pullsSeries := slice }}
+  {{ $starsSeries := slice }}
+  {{ $allDates := slice }}
+
+  {{ range $i, $rc := $reposIndex.repositories }}
+    {{ $rm := false }}
+    {{ $rsnaps := false }}
+    {{ with index site.Data.repos $rc.owner }}{{ with index . $rc.repo }}
+      {{ $rm = .metrics }}
+      {{ $rsnaps = .snapshots }}
+    {{ end }}{{ end }}
+    {{ if $rm }}
+      {{ $totalStars = add $totalStars ($rm.repository.stars | default 0) }}
+      {{ $totalForks = add $totalForks ($rm.repository.forks | default 0) }}
+      {{ $totalOpenIssues = add $totalOpenIssues ($rm.issues.open_count | default 0) }}
+      {{ $totalOpenPRs = add $totalOpenPRs ($rm.pulls.open_count | default 0) }}
+      {{ $totalActive = add $totalActive ($rm.contributors.active_30d | default 0) }}
+      {{ $totalAwaitingIssues = add $totalAwaitingIssues ($rm.issues.without_response_24h | default 0) }}
+      {{ $totalAwaitingPRs = add $totalAwaitingPRs ($rm.pulls.without_review_24h | default 0) }}
+
+      {{ $starsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "repository.stars") }}
+      {{ $issuesSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "issues.open") }}
+      {{ $pullsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "pulls.open") }}
+
+      {{ $rows = $rows | append (dict
+        "owner" $rc.owner
+        "repo" $rc.repo
+        "name" ($rc.name | default (printf "%s/%s" $rc.owner $rc.repo))
+        "stars" $rm.repository.stars
+        "starsTrend" (partial "calc-trend.html" (dict "sparkline" $starsSpark))
+        "issues" $rm.issues.open_count
+        "issuesTrend" (partial "calc-trend.html" (dict "sparkline" $issuesSpark))
+        "pulls" $rm.pulls.open_count
+        "pullsTrend" (partial "calc-trend.html" (dict "sparkline" $pullsSpark))
+        "awaitingIssues" $rm.issues.without_response_24h
+        "awaitingPRs" $rm.pulls.without_review_24h
+        "active" $rm.contributors.active_30d
+      ) }}
+
+      {{/* Build chart series from snapshots - use {x,y} points so repos with fewer snapshots align correctly */}}
+      {{ if $rsnaps }}
+        {{ $entries := slice }}
+        {{ range $fn, $d := $rsnaps }}
+          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars) }}
+        {{ end }}
+        {{ $sorted := sort $entries "date" "asc" }}
+        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}
+        {{ range $sorted }}
+          {{ $dates = $dates | append .date }}
+          {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
+          {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
+          {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
+        {{ end }}
+        {{ $allDates = $allDates | union $dates }}
+        {{ $color := index $chartColors (mod $i (len $chartColors)) }}
+        {{ $label := $rc.name | default (printf "%s/%s" $rc.owner $rc.repo) }}
+        {{ $issuesSeries = $issuesSeries | append (dict "label" $label "data" $iv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
+        {{ $pullsSeries = $pullsSeries | append (dict "label" $label "data" $pv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
+        {{ $starsSeries = $starsSeries | append (dict "label" $label "data" $sv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+  {{ $allDates = sort $allDates }}
+
+  <div class="repo-content" data-repo="__all__">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold">All Repositories</h1>
+      <p class="text-xs text-base-content/50 mt-1">Summary across {{ len $reposIndex.repositories }} tracked repositories</p>
+    </div>
+
+    <!-- Aggregate Totals -->
+    <section class="mb-6">
+      <h2 class="text-sm font-semibold mb-3">Totals</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {{ partial "metric-card.html" (dict "label" "Stars" "value" $totalStars "info" "Combined GitHub stars across all repositories") }}
+        {{ partial "metric-card.html" (dict "label" "Forks" "value" $totalForks "info" "Combined forks across all repositories") }}
+        {{ partial "metric-card.html" (dict "label" "Open Issues" "value" $totalOpenIssues "info" "Combined open issues across all repositories") }}
+        {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $totalOpenPRs "info" "Combined open pull requests across all repositories") }}
+        {{ partial "metric-card.html" (dict "label" "Awaiting" "value" (add $totalAwaitingIssues $totalAwaitingPRs) "descriptor" ">24h" "info" "Issues awaiting response + PRs awaiting review for over 24 hours") }}
+        {{ partial "metric-card.html" (dict "label" "Active Contributors" "value" $totalActive "descriptor" "30d" "info" "Combined active contributors in the last 30 days") }}
+      </div>
+    </section>
+
+    <!-- Per-Repo Comparison -->
+    <section class="mb-6">
+      <h2 class="text-sm font-semibold mb-3">By Repository</h2>
+      <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr>
+              <th class="bg-base-200">Repository</th>
+              <th class="bg-base-200 text-right">Stars</th>
+              <th class="bg-base-200 text-right">Open Issues</th>
+              <th class="bg-base-200 text-right">Open PRs</th>
+              <th class="bg-base-200 text-right">Awaiting Response</th>
+              <th class="bg-base-200 text-right">Awaiting Review</th>
+              <th class="bg-base-200 text-right">Active (30d)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range $rows }}
+            <tr class="hover:bg-base-200/50 cursor-pointer transition-colors" onclick="RepoPicker.setSelectedRepo('{{ .owner }}','{{ .repo }}')">
+              <td>
+                <div class="font-medium text-sm">{{ .name }}</div>
+                <code class="font-mono text-[10px] text-base-content/50">{{ .owner }}/{{ .repo }}</code>
+              </td>
+              <td class="text-right">
+                <span class="font-semibold">{{ lang.FormatNumber 0 .stars }}</span>
+                {{ if ne .starsTrend 0.0 }}{{ $up := gt .starsTrend 0.0 }}{{ $abs := cond $up .starsTrend (mul .starsTrend -1) }}
+                <span class="block text-[10px] {{ cond $up "text-success" "text-error" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                {{ end }}
+              </td>
+              <td class="text-right">
+                <span class="font-semibold">{{ .issues }}</span>
+                {{ if ne .issuesTrend 0.0 }}{{ $up := gt .issuesTrend 0.0 }}{{ $abs := cond $up .issuesTrend (mul .issuesTrend -1) }}
+                <span class="block text-[10px] {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                {{ end }}
+              </td>
+              <td class="text-right">
+                <span class="font-semibold">{{ .pulls }}</span>
+                {{ if ne .pullsTrend 0.0 }}{{ $up := gt .pullsTrend 0.0 }}{{ $abs := cond $up .pullsTrend (mul .pullsTrend -1) }}
+                <span class="block text-[10px] {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                {{ end }}
+              </td>
+              <td class="text-right font-semibold">{{ .awaitingIssues }}</td>
+              <td class="text-right font-semibold">{{ .awaitingPRs }}</td>
+              <td class="text-right font-semibold">{{ .active }}</td>
+            </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Combined Trend Charts -->
+    {{ if gt (len $allDates) 1 }}
+    <section class="mb-6">
+      <h2 class="text-sm font-semibold mb-3">Trends</h2>
+      <div class="space-y-4">
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium text-base-content/70 mb-3">Open Issues Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $issuesSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium text-base-content/70 mb-3">Open PRs Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $pullsSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium text-base-content/70 mb-3">Stars Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $starsSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+      </div>
+    </section>
+    {{ end }}
+  </div>
+
   {{/* Multi-repo mode - render content for each repository */}}
   {{ range $index, $repoConfig := $reposIndex.repositories }}
     {{ $owner := $repoConfig.owner }}
@@ -33,7 +202,7 @@
     {{ $pullsAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.without_review_24h") }}
     {{ $pullsReviewMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.median_hours") }}
 
-    <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
+    <div class="repo-content" data-repo="{{ $repoKey }}" style="display: none;">
       {{ if not $m }}
       <div class="alert alert-warning">
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
