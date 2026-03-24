@@ -1,6 +1,6 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-24T09:08:46.201637+00:00",
+  "lastUpdated": "2026-03-24T11:09:00.623630+00:00",
   "summary": {
     "actionable_count": 26,
     "auth_count": 5,
@@ -104,7 +104,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 12d waiting)",
               "short_reason": "push after approval (1 commits, 12d waiting)",
-              "age_days": 22.6,
+              "age_days": 22.7,
               "additions": 2,
               "deletions": 4,
               "is_auth": false,
@@ -130,7 +130,7 @@
               "state": "maintainer-intake",
               "reason": "112d, no maintainer has looked yet",
               "short_reason": "112d, no maintainer has looked yet",
-              "age_days": 111.8,
+              "age_days": 111.9,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -149,7 +149,7 @@
               "state": "maintainer-intake",
               "reason": "69d, no maintainer has looked yet",
               "short_reason": "69d, no maintainer has looked yet",
-              "age_days": 68.9,
+              "age_days": 69.0,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -182,9 +182,9 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-              "age_days": 50.7,
+              "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+              "age_days": 50.8,
               "additions": 179,
               "deletions": 135,
               "is_auth": false,
@@ -193,7 +193,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:130",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to the newer 1.27.1 (vs 1.26.0 in #132) and subsumes the sdk bump entirely, making #132 redundant upon merge. #130 also covers the cors, tsx, and esbuild updates in one consolidated lockfile change."
+              "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
             },
             {
               "number": 173,
@@ -201,9 +201,9 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-              "age_days": 22.7,
+              "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+              "age_days": 22.8,
               "additions": 746,
               "deletions": 757,
               "is_auth": false,
@@ -212,18 +212,18 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:173",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #173 covers 11 dependency updates in a single coordinated bump (including undici to ^7.22.0), while PR #187 only updates undici (to ^7.24.0). Merging #173 delivers broader dependency hygiene in one commit; if undici 7.24.0 is specifically required over 7.22.0, the version range in #173 can be adjusted before merge rather than landing two conflicting PRs."
+              "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
             },
             {
-              "number": 179,
-              "title": "test: improve test coverage for server scenarios",
+              "number": 178,
+              "title": "feat: add test coverage reporting with vitest",
               "author": "schlpbch",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
+              "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
               "age_days": 20.5,
-              "additions": 3904,
+              "additions": 4029,
               "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
@@ -231,7 +231,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:178",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #179 is a superset \u2014 it includes the same coverage infrastructure changes as #178 plus additional test improvements for server scenarios. Merging #179 delivers both the tooling setup and the expanded test coverage, making #178 redundant."
+              "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
             }
           ],
           "clusters": [
@@ -239,7 +239,7 @@
               "id": "sem:130",
               "kind": "semantic",
               "pick": 130,
-              "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to the newer 1.27.1 (vs 1.26.0 in #132) and subsumes the sdk bump entirely, making #132 redundant upon merge. #130 also covers the cors, tsx, and esbuild updates in one consolidated lockfile change.",
+              "pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant.",
               "members": [
                 {
                   "number": 130,
@@ -247,9 +247,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-                  "age_days": 50.7,
+                  "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+                  "age_days": 50.8,
                   "additions": 179,
                   "deletions": 135,
                   "is_auth": false,
@@ -258,7 +258,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:130",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to the newer 1.27.1 (vs 1.26.0 in #132) and subsumes the sdk bump entirely, making #132 redundant upon merge. #130 also covers the cors, tsx, and esbuild updates in one consolidated lockfile change."
+                  "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
                 },
                 {
                   "number": 132,
@@ -266,9 +266,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update.",
-                  "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update.",
-                  "age_days": 47.5,
+                  "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
+                  "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
+                  "age_days": 47.6,
                   "additions": 57,
                   "deletions": 17,
                   "is_auth": false,
@@ -280,13 +280,13 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)"
+              "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)"
             },
             {
               "id": "sem:173",
               "kind": "semantic",
               "pick": 173,
-              "pick_reason": "PR #173 covers 11 dependency updates in a single coordinated bump (including undici to ^7.22.0), while PR #187 only updates undici (to ^7.24.0). Merging #173 delivers broader dependency hygiene in one commit; if undici 7.24.0 is specifically required over 7.22.0, the version range in #173 can be adjusted before merge rather than landing two conflicting PRs.",
+              "pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs.",
               "members": [
                 {
                   "number": 173,
@@ -294,9 +294,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-                  "age_days": 22.7,
+                  "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+                  "age_days": 22.8,
                   "additions": 746,
                   "deletions": 757,
                   "is_auth": false,
@@ -305,7 +305,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:173",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #173 covers 11 dependency updates in a single coordinated bump (including undici to ^7.22.0), while PR #187 only updates undici (to ^7.24.0). Merging #173 delivers broader dependency hygiene in one commit; if undici 7.24.0 is specifically required over 7.22.0, the version range in #173 can be adjusted before merge rather than landing two conflicting PRs."
+                  "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
                 },
                 {
                   "number": 187,
@@ -313,9 +313,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/187",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution.",
-                  "short_reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution.",
-                  "age_days": 10.4,
+                  "reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
+                  "short_reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
+                  "age_days": 10.5,
                   "additions": 5,
                   "deletions": 5,
                   "is_auth": false,
@@ -327,24 +327,43 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)"
+              "desc": "Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)"
             },
             {
               "id": "sem:178",
               "kind": "semantic",
-              "pick": 179,
-              "pick_reason": "PR #179 is a superset \u2014 it includes the same coverage infrastructure changes as #178 plus additional test improvements for server scenarios. Merging #179 delivers both the tooling setup and the expanded test coverage, making #178 redundant.",
+              "pick": 178,
+              "pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions.",
               "members": [
                 {
                   "number": 178,
                   "title": "feat: add test coverage reporting with vitest",
                   "author": "schlpbch",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
-                  "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #179: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical.",
-                  "short_reason": "[llm] duplicates #179: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical.",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
                   "age_days": 20.5,
                   "additions": 4029,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
+                  "cluster_id": "sem:178",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
+                },
+                {
+                  "number": 179,
+                  "title": "test: improve test coverage for server scenarios",
+                  "author": "schlpbch",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+                  "state": "duplicate-cluster-member",
+                  "reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
+                  "short_reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
+                  "age_days": 20.5,
+                  "additions": 3904,
                   "deletions": 3,
                   "is_auth": false,
                   "is_maintainer": false,
@@ -353,28 +372,9 @@
                   "cluster_id": "sem:178",
                   "cluster_pick": false,
                   "cluster_pick_reason": ""
-                },
-                {
-                  "number": 179,
-                  "title": "test: improve test coverage for server scenarios",
-                  "author": "schlpbch",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
-                  "age_days": 20.5,
-                  "additions": 3904,
-                  "deletions": 3,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "sem:178",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "PR #179 is a superset \u2014 it includes the same coverage infrastructure changes as #178 plus additional test improvements for server scenarios. Merging #179 delivers both the tooling setup and the expanded test coverage, making #178 redundant."
                 }
               ],
-              "desc": "Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)"
+              "desc": "Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)"
             }
           ]
         },
@@ -391,7 +391,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 26.9,
+              "age_days": 27.0,
               "additions": 481,
               "deletions": 10,
               "is_auth": true,
@@ -426,7 +426,7 @@
               "state": "needs-first-review",
               "reason": "51d since open (SLA breach)",
               "short_reason": "51d",
-              "age_days": 50.7,
+              "age_days": 50.8,
               "additions": 1,
               "deletions": 1,
               "is_auth": false,
@@ -443,9 +443,9 @@
               "author": "wdawson",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/155",
               "state": "needs-first-review",
-              "reason": "32d since open (SLA breach)",
-              "short_reason": "32d",
-              "age_days": 32.4,
+              "reason": "33d since open (SLA breach)",
+              "short_reason": "33d",
+              "age_days": 32.5,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -464,7 +464,7 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 31.8,
+              "age_days": 31.9,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -483,7 +483,7 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 31.8,
+              "age_days": 31.9,
               "additions": 59,
               "deletions": 19,
               "is_auth": false,
@@ -502,7 +502,7 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 31.8,
+              "age_days": 31.9,
               "additions": 59,
               "deletions": 19,
               "is_auth": false,
@@ -521,7 +521,7 @@
               "state": "needs-first-review",
               "reason": "30d since open (SLA breach)",
               "short_reason": "30d",
-              "age_days": 29.8,
+              "age_days": 29.9,
               "additions": 9,
               "deletions": 9,
               "is_auth": false,
@@ -540,7 +540,7 @@
               "state": "needs-first-review",
               "reason": "28d since open (SLA breach)",
               "short_reason": "28d",
-              "age_days": 28.3,
+              "age_days": 28.4,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -559,7 +559,7 @@
               "state": "needs-first-review",
               "reason": "27d since open (SLA breach)",
               "short_reason": "27d",
-              "age_days": 27.3,
+              "age_days": 27.4,
               "additions": 17,
               "deletions": 6,
               "is_auth": false,
@@ -597,7 +597,7 @@
               "state": "needs-first-review",
               "reason": "23d since open (SLA breach)",
               "short_reason": "23d",
-              "age_days": 22.6,
+              "age_days": 22.7,
               "additions": 45,
               "deletions": 6,
               "is_auth": false,
@@ -635,7 +635,7 @@
               "state": "needs-first-review",
               "reason": "13d since open (SLA breach)",
               "short_reason": "13d",
-              "age_days": 13.3,
+              "age_days": 13.4,
               "additions": 7,
               "deletions": 7,
               "is_auth": false,
@@ -654,7 +654,7 @@
               "state": "needs-first-review",
               "reason": "6d since open",
               "short_reason": "6d",
-              "age_days": 6.4,
+              "age_days": 6.5,
               "additions": 2095,
               "deletions": 5,
               "is_auth": false,
@@ -673,7 +673,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.7,
+              "age_days": 2.8,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -692,7 +692,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.7,
+              "age_days": 2.8,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -711,7 +711,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.7,
+              "age_days": 2.8,
               "additions": 103,
               "deletions": 103,
               "is_auth": false,
@@ -746,7 +746,7 @@
               "state": "stale-awaiting-author",
               "reason": "39d since feedback, no response",
               "short_reason": "39d since feedback",
-              "age_days": 43.1,
+              "age_days": 43.2,
               "additions": 612,
               "deletions": 47,
               "is_auth": true,
@@ -810,7 +810,7 @@
           "state": "bot-broke-ci",
           "reason": "bot PR, red CI",
           "short_reason": "bot PR, red CI",
-          "age_days": 17.6,
+          "age_days": 17.7,
           "additions": 3,
           "deletions": 3,
           "is_auth": false,
@@ -838,7 +838,7 @@
           "state": "parked",
           "reason": "maintainer draft, 69d",
           "short_reason": "maintainer draft, 69d",
-          "age_days": 68.9,
+          "age_days": 69.0,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -857,7 +857,7 @@
           "state": "parked",
           "reason": "maintainer draft, 47d",
           "short_reason": "maintainer draft, 47d",
-          "age_days": 46.7,
+          "age_days": 46.8,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -876,7 +876,7 @@
           "state": "parked",
           "reason": "maintainer draft, 35d",
           "short_reason": "maintainer draft, 35d",
-          "age_days": 34.6,
+          "age_days": 34.7,
           "additions": 4,
           "deletions": 4,
           "is_auth": true,
@@ -901,7 +901,7 @@
           "state": "draft-active",
           "reason": "1d old",
           "short_reason": "1d old",
-          "age_days": 0.7,
+          "age_days": 0.8,
           "additions": 1667,
           "deletions": 1408,
           "is_auth": false,
@@ -920,7 +920,7 @@
       "id": "sem:130",
       "kind": "semantic",
       "pick": 130,
-      "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to the newer 1.27.1 (vs 1.26.0 in #132) and subsumes the sdk bump entirely, making #132 redundant upon merge. #130 also covers the cors, tsx, and esbuild updates in one consolidated lockfile change.",
+      "pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant.",
       "members": [
         {
           "number": 130,
@@ -928,9 +928,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)",
-          "age_days": 50.7,
+          "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)",
+          "age_days": 50.8,
           "additions": 179,
           "deletions": 135,
           "is_auth": false,
@@ -939,7 +939,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:130",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to the newer 1.27.1 (vs 1.26.0 in #132) and subsumes the sdk bump entirely, making #132 redundant upon merge. #130 also covers the cors, tsx, and esbuild updates in one consolidated lockfile change."
+          "cluster_pick_reason": "PR #130 targets sdk 1.27.1 vs PR #132's 1.26.0, and also covers cors, tsx, and @esbuild/* updates in the same lockfile. It is a strict superset of #132's changes at a newer version, so merging #130 makes #132 redundant."
         },
         {
           "number": 132,
@@ -947,9 +947,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update.",
-          "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update.",
-          "age_days": 47.5,
+          "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
+          "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file.",
+          "age_days": 47.6,
           "additions": 57,
           "deletions": 17,
           "is_auth": false,
@@ -961,13 +961,13 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally bumps cors, tsx, and esbuild in the same group update. (2 PRs)"
+      "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, making them mutually exclusive on the same file. (2 PRs)"
     },
     {
       "id": "sem:173",
       "kind": "semantic",
       "pick": 173,
-      "pick_reason": "PR #173 covers 11 dependency updates in a single coordinated bump (including undici to ^7.22.0), while PR #187 only updates undici (to ^7.24.0). Merging #173 delivers broader dependency hygiene in one commit; if undici 7.24.0 is specifically required over 7.22.0, the version range in #173 can be adjusted before merge rather than landing two conflicting PRs.",
+      "pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs.",
       "members": [
         {
           "number": 173,
@@ -975,9 +975,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/173",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)",
-          "age_days": 22.7,
+          "reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)",
+          "age_days": 22.8,
           "additions": 746,
           "deletions": 757,
           "is_auth": false,
@@ -986,7 +986,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:173",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #173 covers 11 dependency updates in a single coordinated bump (including undici to ^7.22.0), while PR #187 only updates undici (to ^7.24.0). Merging #173 delivers broader dependency hygiene in one commit; if undici 7.24.0 is specifically required over 7.22.0, the version range in #173 can be adjusted before merge rather than landing two conflicting PRs."
+          "cluster_pick_reason": "PR #173 is a superset \u2014 it updates 11 dependencies (including undici to 7.22.0) whereas PR #187 only touches undici (to 7.24.0). Merging the broader update first eliminates the need for the narrower one; if 7.24.0 is required, the single-line version difference can be folded into PR #173 before merge rather than maintaining two separate PRs."
         },
         {
           "number": 187,
@@ -994,9 +994,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/187",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution.",
-          "short_reason": "[llm] duplicates #173: Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution.",
-          "age_days": 10.4,
+          "reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
+          "short_reason": "[llm] duplicates #173: Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase.",
+          "age_days": 10.5,
           "additions": 5,
           "deletions": 5,
           "is_auth": false,
@@ -1008,24 +1008,43 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs update the `undici` dependency in `package-lock.json`, modifying the same lines and creating a direct merge conflict. PR #173 bumps undici to ^7.22.0 as part of an 11-package bulk update; PR #187 bumps undici to ^7.24.0 as a standalone targeted update. Only one can land without conflict resolution. (2 PRs)"
+      "desc": "Both PRs bump `undici` in `package-lock.json` from the same base (`^7.19.0`), creating a merge conflict on that line. PR #173 bumps undici to `^7.22.0` as part of an 11-package bulk update; PR #187 bumps undici alone to `^7.24.0`. Only one can land without a rebase. (2 PRs)"
     },
     {
       "id": "sem:178",
       "kind": "semantic",
-      "pick": 179,
-      "pick_reason": "PR #179 is a superset \u2014 it includes the same coverage infrastructure changes as #178 plus additional test improvements for server scenarios. Merging #179 delivers both the tooling setup and the expanded test coverage, making #178 redundant.",
+      "pick": 178,
+      "pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions.",
       "members": [
         {
           "number": 178,
           "title": "feat: add test coverage reporting with vitest",
           "author": "schlpbch",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/178",
-          "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #179: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical.",
-          "short_reason": "[llm] duplicates #179: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical.",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)",
           "age_days": 20.5,
           "additions": 4029,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
+          "cluster_id": "sem:178",
+          "cluster_pick": true,
+          "cluster_pick_reason": "PR #178 is the dedicated coverage infrastructure PR \u2014 its entire diff is the coverage setup, so it is the canonical home for these changes. PR #179 (server scenario tests) bundled the same infrastructure changes as a side-effect; once #178 lands, #179 can be rebased to drop the duplicate hunks and merged independently for its test additions."
+        },
+        {
+          "number": 179,
+          "title": "test: improve test coverage for server scenarios",
+          "author": "schlpbch",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
+          "state": "duplicate-cluster-member",
+          "reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
+          "short_reason": "[llm] duplicates #178: Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge.",
+          "age_days": 20.5,
+          "additions": 3904,
           "deletions": 3,
           "is_auth": false,
           "is_maintainer": false,
@@ -1034,41 +1053,22 @@
           "cluster_id": "sem:178",
           "cluster_pick": false,
           "cluster_pick_reason": ""
-        },
-        {
-          "number": 179,
-          "title": "test: improve test coverage for server scenarios",
-          "author": "schlpbch",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/179",
-          "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)",
-          "age_days": 20.5,
-          "additions": 3904,
-          "deletions": 3,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "sem:178",
-          "cluster_pick": true,
-          "cluster_pick_reason": "PR #179 is a superset \u2014 it includes the same coverage infrastructure changes as #178 plus additional test improvements for server scenarios. Merging #179 delivers both the tooling setup and the expanded test coverage, making #178 redundant."
         }
       ],
-      "desc": "Both PRs add identical changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. The diffs for these two files are byte-for-byte identical. (2 PRs)"
+      "desc": "Both PRs independently added the identical coverage infrastructure changes: `coverage/` to `.gitignore` and the `test:coverage` script to `package.json`. These overlapping hunks are byte-for-byte identical and will conflict on merge. (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.2803,
+    "total_usd": 0.2764,
     "total_calls": 8,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0399
+        "cost": 0.0398
       },
       "semantic-cluster": {
         "count": 7,
-        "cost": 0.2404
+        "cost": 0.2366
       }
     }
   }
