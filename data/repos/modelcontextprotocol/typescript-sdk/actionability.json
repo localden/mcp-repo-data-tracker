@@ -1,6 +1,6 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-03-24T01:11:33.684969+00:00",
+  "lastUpdated": "2026-03-24T01:50:41.832753+00:00",
   "summary": {
     "actionable_count": 113,
     "auth_count": 23,
@@ -80,8 +80,8 @@
               "author": "aabedraba",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/939",
               "state": "author-pinged-after-procedural",
-              "reason": "author pinged @jspahrsummers, @ihrpr 180d ago, no response",
-              "short_reason": "author pinged @jspahrsummers, @ihrpr 180d ago",
+              "reason": "author pinged @ihrpr, @jspahrsummers 180d ago, no response",
+              "short_reason": "author pinged @ihrpr, @jspahrsummers 180d ago",
               "age_days": 192.6,
               "additions": 89,
               "deletions": 7,
@@ -139,7 +139,7 @@
               "state": "author-pinged-after-procedural",
               "reason": "author pinged @KKonstantinov 87d ago, no response",
               "short_reason": "author pinged @KKonstantinov 87d ago",
-              "age_days": 96.0,
+              "age_days": 96.1,
               "additions": 242,
               "deletions": 202,
               "is_auth": false,
@@ -222,7 +222,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (2d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (2d waiting)",
-              "age_days": 9.7,
+              "age_days": 9.8,
               "additions": 3056,
               "deletions": 2545,
               "is_auth": false,
@@ -241,7 +241,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (105d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (105d waiting)",
-              "age_days": 110.4,
+              "age_days": 110.5,
               "additions": 143,
               "deletions": 15,
               "is_auth": false,
@@ -323,7 +323,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "740",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (9). With no differentiating data on CI, tests, or diff size available, the tiebreaker falls to age: #1348 was opened earlier than #1691, so it gets priority under the stated criteria (oldest wins when all else is equal)."
+              "cluster_pick_reason": "Both PRs have the same file count (9) and unknown CI status, so no technical differentiator favors either on those axes. Applying the tiebreaker rule \"oldest wins\": #1348 was opened earlier than #1691, giving it priority. No other concrete technical signal (CI results, test coverage, diff size) is available to distinguish them."
             },
             {
               "number": 1396,
@@ -331,8 +331,8 @@
               "author": "mgyarmathy",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
-              "short_reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
+              "reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
+              "short_reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
               "age_days": 66.3,
               "additions": 119,
               "deletions": 15,
@@ -342,7 +342,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "149",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue."
+              "cluster_pick_reason": "Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress."
             },
             {
               "number": 1440,
@@ -352,7 +352,7 @@
               "state": "duplicate-cluster",
               "reason": "cluster primary for issue #1385 (2 PRs)",
               "short_reason": "cluster primary for issue #1385 (2 PRs)",
-              "age_days": 49.4,
+              "age_days": 49.5,
               "additions": 17,
               "deletions": 1,
               "is_auth": false,
@@ -361,7 +361,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1385",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs fix the same issue with the same number of changed files (2) and both have unknown CI status, so no differentiation is possible on CI or diff size alone. Falling back to the stated tiebreaker \u2014 oldest PR \u2014 #1440 predates #1664 by a lower PR number, indicating it was submitted first."
+              "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (2). Unable to fetch diff content to compare test coverage or implementation approach. Falling back to the tiebreaker: #1440 is older, meaning it was submitted first and has had more time for review and iteration."
             },
             {
               "number": 1507,
@@ -380,7 +380,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1314",
               "cluster_pick": true,
-              "cluster_pick_reason": "All three PRs have unknown CI. #1736 is eliminated by the \"smallest focused diff\" criterion \u2014 10 changed files vs. 3 for the other two is a much larger scope for this single-interface fix. Between #1507 and #1661, both change exactly 3 files with the same technical approach (adding | undefined to Transport optional callbacks). #1507 is the older submission (154 PR numbers earlier), which is the final tiebreaker per the stated preference."
+              "cluster_pick_reason": "All three PRs have unknown CI status. #1507 and #1661 both touch 3 files (smallest/most focused diff), while #1736 touches 10 files \u2014 indicating a broader scope than needed for this targeted fix. Between #1507 and #1661, #1507 was opened first (lower PR number), giving it priority on the oldest-first tiebreaker with otherwise equal metadata."
             },
             {
               "number": 1561,
@@ -388,9 +388,9 @@
               "author": "corvid-agent",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-              "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-              "age_days": 31.3,
+              "reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+              "short_reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+              "age_days": 31.4,
               "additions": 12,
               "deletions": 5,
               "is_auth": false,
@@ -399,7 +399,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1362",
               "cluster_pick": true,
-              "cluster_pick_reason": "CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix."
+              "cluster_pick_reason": "All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change."
             },
             {
               "number": 1636,
@@ -407,8 +407,8 @@
               "author": "dpdanpittman",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
-              "short_reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
+              "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
+              "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
               "age_days": 18.1,
               "additions": 278,
               "deletions": 5,
@@ -418,7 +418,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1395",
               "cluster_pick": true,
-              "cluster_pick_reason": "All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size."
+              "cluster_pick_reason": "CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach."
             },
             {
               "number": 1645,
@@ -437,7 +437,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1000",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and no test coverage information available. With CI equal, #1645 is preferred on two concrete criteria: it touches 2 files vs. #1717's 5 files (smaller, more focused diff reduces review surface and merge-conflict risk), and it is the older PR (lower number), meaning it was submitted earlier. #1717's larger 5-file diff likely reflects a broader or more opinionated restructuring, which increases the chance of conflicts with concurrent changes. #1645's narrower scope makes it the lower-risk merge."
+              "cluster_pick_reason": "Both PRs have unknown CI status. Without verified test coverage data, the tiebreakers apply: #1645 has a smaller, more focused diff (2 files vs. 5 files) and was opened earlier (lower PR number). Its `client`-scoped change is narrower in blast radius than #1717's `core`-scoped change. If test coverage can be confirmed for #1717 and CI passes, that decision should be revisited."
             },
             {
               "number": 1648,
@@ -445,9 +445,9 @@
               "author": "Rootlogger",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-              "age_days": 14.3,
+              "reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+              "age_days": 14.4,
               "additions": 15,
               "deletions": 6,
               "is_auth": false,
@@ -456,7 +456,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:1648",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1648 has the lower number (submitted first) and its title accurately describes the change made. The diffs are identical, so there is no technical difference between the two."
+              "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual diff. PR #1649's title claims a Hono namespace fix but its diff is byte-for-byte identical to #1648, with no Hono-related changes present."
             },
             {
               "number": 1655,
@@ -466,7 +466,7 @@
               "state": "duplicate-cluster",
               "reason": "cluster primary for issue #1646 (2 PRs)",
               "short_reason": "cluster primary for issue #1646 (2 PRs)",
-              "age_days": 13.7,
+              "age_days": 13.8,
               "additions": 72,
               "deletions": 2,
               "is_auth": false,
@@ -475,7 +475,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1646",
               "cluster_pick": true,
-              "cluster_pick_reason": "CI status is unknown for both PRs and test coverage cannot be confirmed from available data, so the decision falls to diff size and age. #1655 touches 2 files vs #1697's 3 files, making it the smaller, more focused change. #1655 is also the older PR. Both factors favor #1655 under the stated tiebreaker criteria."
+              "cluster_pick_reason": "CI is unknown for both. Neither PR's test coverage can be confirmed from metadata alone, but #1655 changes 2 files versus #1697's 3 files, making it the smaller, more focused diff \u2014 all else being equal, a tighter change carries less risk of unintended side effects. #1655 is also the older PR (lower number), so it gets the tiebreaker on age. #1697's extra file could mean a test, but it could equally mean a broader scope change; without CI data confirming correctness, the smaller diff is preferable."
             },
             {
               "number": 1667,
@@ -494,7 +494,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1659",
               "cluster_pick": true,
-              "cluster_pick_reason": "CI is unknown for all three PRs. #1696 touches 4 files vs. 3 for #1667 and #1702, making it the largest diff and least focused. Between the two 3-file PRs, #1667 is the oldest (submitted earliest), satisfying the tiebreaker criteria of smallest focused diff then oldest. Without CI results or visible test coverage differences to distinguish #1667 from #1702, seniority is the deciding factor."
+              "cluster_pick_reason": "All three PRs have unknown CI status and no verifiable test coverage information, so the tiebreakers are diff size and age. #1667 and #1702 both change 3 files (vs. #1696's 4), and #1667 is the oldest of the three, making it the first attempt at the fix. #1702 is a near-duplicate of #1667 (same file count, nearly identical title) submitted later. #1696 touches one additional file, indicating a slightly broader scope. Per the stated preference order, #1667 wins on smallest-focused-diff (tied with #1702) then oldest."
             },
             {
               "number": 1670,
@@ -502,9 +502,9 @@
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-              "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-              "age_days": 11.7,
+              "reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+              "short_reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+              "age_days": 11.8,
               "additions": 103,
               "deletions": 0,
               "is_auth": true,
@@ -513,7 +513,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:1443",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1670 includes both the interface field and the implementation (`this._clientMetadata.scope = options.scope`) that makes the scope actually take effect, and extends coverage to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 adds only the interface field with no corresponding implementation, making it incomplete on its own."
+              "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that sets `_clientMetadata.scope`, and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no wiring \u2014 making it incomplete without #1670's implementation."
             },
             {
               "number": 1671,
@@ -521,8 +521,8 @@
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
-              "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
+              "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
+              "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
               "age_days": 11.7,
               "additions": 118,
               "deletions": 1,
@@ -532,7 +532,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1562",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671."
+              "cluster_pick_reason": "Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here."
             },
             {
               "number": 1679,
@@ -540,8 +540,8 @@
               "author": "kai-agent-free",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
-              "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+              "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+              "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
               "age_days": 10.6,
               "additions": 177,
               "deletions": 5,
@@ -551,7 +551,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1564",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
+              "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
             },
             {
               "number": 1703,
@@ -559,9 +559,9 @@
               "author": "ctonneslan",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1703",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-              "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-              "age_days": 5.0,
+              "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+              "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+              "age_days": 5.1,
               "additions": 5,
               "deletions": 5,
               "is_auth": true,
@@ -570,7 +570,7 @@
               "sla_kind": null,
               "cluster_id": "389",
               "cluster_pick": true,
-              "cluster_pick_reason": "All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's."
+              "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here."
             }
           ],
           "clusters": [
@@ -578,7 +578,7 @@
               "id": "1000",
               "kind": "issue",
               "pick": 1645,
-              "pick_reason": "Both PRs have unknown CI status and no test coverage information available. With CI equal, #1645 is preferred on two concrete criteria: it touches 2 files vs. #1717's 5 files (smaller, more focused diff reduces review surface and merge-conflict risk), and it is the older PR (lower number), meaning it was submitted earlier. #1717's larger 5-file diff likely reflects a broader or more opinionated restructuring, which increases the chance of conflicts with concurrent changes. #1645's narrower scope makes it the lower-risk merge.",
+              "pick_reason": "Both PRs have unknown CI status. Without verified test coverage data, the tiebreakers apply: #1645 has a smaller, more focused diff (2 files vs. 5 files) and was opened earlier (lower PR number). Its `client`-scoped change is narrower in blast radius than #1717's `core`-scoped change. If test coverage can be confirmed for #1717 and CI passes, that decision should be revisited.",
               "members": [
                 {
                   "number": 1645,
@@ -597,7 +597,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1000",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and no test coverage information available. With CI equal, #1645 is preferred on two concrete criteria: it touches 2 files vs. #1717's 5 files (smaller, more focused diff reduces review surface and merge-conflict risk), and it is the older PR (lower number), meaning it was submitted earlier. #1717's larger 5-file diff likely reflects a broader or more opinionated restructuring, which increases the chance of conflicts with concurrent changes. #1645's narrower scope makes it the lower-risk merge."
+                  "cluster_pick_reason": "Both PRs have unknown CI status. Without verified test coverage data, the tiebreakers apply: #1645 has a smaller, more focused diff (2 files vs. 5 files) and was opened earlier (lower PR number). Its `client`-scoped change is narrower in blast radius than #1717's `core`-scoped change. If test coverage can be confirmed for #1717 and CI passes, that decision should be revisited."
                 },
                 {
                   "number": 1717,
@@ -625,7 +625,7 @@
               "id": "1314",
               "kind": "issue",
               "pick": 1507,
-              "pick_reason": "All three PRs have unknown CI. #1736 is eliminated by the \"smallest focused diff\" criterion \u2014 10 changed files vs. 3 for the other two is a much larger scope for this single-interface fix. Between #1507 and #1661, both change exactly 3 files with the same technical approach (adding | undefined to Transport optional callbacks). #1507 is the older submission (154 PR numbers earlier), which is the final tiebreaker per the stated preference.",
+              "pick_reason": "All three PRs have unknown CI status. #1507 and #1661 both touch 3 files (smallest/most focused diff), while #1736 touches 10 files \u2014 indicating a broader scope than needed for this targeted fix. Between #1507 and #1661, #1507 was opened first (lower PR number), giving it priority on the oldest-first tiebreaker with otherwise equal metadata.",
               "members": [
                 {
                   "number": 1507,
@@ -644,7 +644,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1314",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All three PRs have unknown CI. #1736 is eliminated by the \"smallest focused diff\" criterion \u2014 10 changed files vs. 3 for the other two is a much larger scope for this single-interface fix. Between #1507 and #1661, both change exactly 3 files with the same technical approach (adding | undefined to Transport optional callbacks). #1507 is the older submission (154 PR numbers earlier), which is the final tiebreaker per the stated preference."
+                  "cluster_pick_reason": "All three PRs have unknown CI status. #1507 and #1661 both touch 3 files (smallest/most focused diff), while #1736 touches 10 files \u2014 indicating a broader scope than needed for this targeted fix. Between #1507 and #1661, #1507 was opened first (lower PR number), giving it priority on the oldest-first tiebreaker with otherwise equal metadata."
                 },
                 {
                   "number": 1661,
@@ -673,7 +673,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1314 with #1507",
                   "short_reason": "shares linked issue #1314 with #1507",
-                  "age_days": 0.1,
+                  "age_days": 0.2,
                   "additions": 35,
                   "deletions": 35,
                   "is_auth": false,
@@ -691,7 +691,7 @@
               "id": "1362",
               "kind": "issue",
               "pick": 1561,
-              "pick_reason": "CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
+              "pick_reason": "All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
               "members": [
                 {
                   "number": 1511,
@@ -718,9 +718,9 @@
                   "author": "corvid-agent",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-                  "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-                  "age_days": 31.3,
+                  "reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+                  "short_reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+                  "age_days": 31.4,
                   "additions": 12,
                   "deletions": 5,
                   "is_auth": false,
@@ -729,7 +729,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1362",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix."
+                  "cluster_pick_reason": "All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change."
                 },
                 {
                   "number": 1688,
@@ -776,7 +776,7 @@
               "id": "1385",
               "kind": "issue",
               "pick": 1440,
-              "pick_reason": "Both PRs fix the same issue with the same number of changed files (2) and both have unknown CI status, so no differentiation is possible on CI or diff size alone. Falling back to the stated tiebreaker \u2014 oldest PR \u2014 #1440 predates #1664 by a lower PR number, indicating it was submitted first.",
+              "pick_reason": "Both PRs have unknown CI status and the same file count (2). Unable to fetch diff content to compare test coverage or implementation approach. Falling back to the tiebreaker: #1440 is older, meaning it was submitted first and has had more time for review and iteration.",
               "members": [
                 {
                   "number": 1440,
@@ -786,7 +786,7 @@
                   "state": "duplicate-cluster",
                   "reason": "cluster primary for issue #1385 (2 PRs)",
                   "short_reason": "cluster primary for issue #1385 (2 PRs)",
-                  "age_days": 49.4,
+                  "age_days": 49.5,
                   "additions": 17,
                   "deletions": 1,
                   "is_auth": false,
@@ -795,7 +795,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1385",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs fix the same issue with the same number of changed files (2) and both have unknown CI status, so no differentiation is possible on CI or diff size alone. Falling back to the stated tiebreaker \u2014 oldest PR \u2014 #1440 predates #1664 by a lower PR number, indicating it was submitted first."
+                  "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (2). Unable to fetch diff content to compare test coverage or implementation approach. Falling back to the tiebreaker: #1440 is older, meaning it was submitted first and has had more time for review and iteration."
                 },
                 {
                   "number": 1664,
@@ -823,7 +823,7 @@
               "id": "1395",
               "kind": "issue",
               "pick": 1636,
-              "pick_reason": "All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
+              "pick_reason": "CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
               "members": [
                 {
                   "number": 1433,
@@ -850,8 +850,8 @@
                   "author": "dpdanpittman",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
-                  "short_reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
+                  "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
+                  "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
                   "age_days": 18.1,
                   "additions": 278,
                   "deletions": 5,
@@ -861,7 +861,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1395",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size."
+                  "cluster_pick_reason": "CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach."
                 },
                 {
                   "number": 1677,
@@ -890,7 +890,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1395 with #1433",
                   "short_reason": "shares linked issue #1395 with #1433",
-                  "age_days": 7.5,
+                  "age_days": 7.6,
                   "additions": 118,
                   "deletions": 24,
                   "is_auth": false,
@@ -909,7 +909,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1395 with #1433",
                   "short_reason": "shares linked issue #1395 with #1433",
-                  "age_days": 5.0,
+                  "age_days": 5.1,
                   "additions": 96,
                   "deletions": 34,
                   "is_auth": false,
@@ -946,7 +946,7 @@
               "id": "149",
               "kind": "issue",
               "pick": 1396,
-              "pick_reason": "Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
+              "pick_reason": "Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
               "members": [
                 {
                   "number": 1083,
@@ -973,8 +973,8 @@
                   "author": "mgyarmathy",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
-                  "short_reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
+                  "reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
+                  "short_reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
                   "age_days": 66.3,
                   "additions": 119,
                   "deletions": 15,
@@ -984,7 +984,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "149",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue."
+                  "cluster_pick_reason": "Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/149"
@@ -993,7 +993,7 @@
               "id": "1562",
               "kind": "issue",
               "pick": 1671,
-              "pick_reason": "Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
+              "pick_reason": "Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
               "members": [
                 {
                   "number": 1563,
@@ -1020,8 +1020,8 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
-                  "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
+                  "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
+                  "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
                   "age_days": 11.7,
                   "additions": 118,
                   "deletions": 1,
@@ -1031,7 +1031,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1562",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671."
+                  "cluster_pick_reason": "Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -1040,7 +1040,7 @@
               "id": "1564",
               "kind": "issue",
               "pick": 1679,
-              "pick_reason": "Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+              "pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
               "members": [
                 {
                   "number": 1568,
@@ -1067,8 +1067,8 @@
                   "author": "kai-agent-free",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
-                  "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+                  "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+                  "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
                   "age_days": 10.6,
                   "additions": 177,
                   "deletions": 5,
@@ -1078,7 +1078,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1564",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
+                  "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1564"
@@ -1087,7 +1087,7 @@
               "id": "1646",
               "kind": "issue",
               "pick": 1655,
-              "pick_reason": "CI status is unknown for both PRs and test coverage cannot be confirmed from available data, so the decision falls to diff size and age. #1655 touches 2 files vs #1697's 3 files, making it the smaller, more focused change. #1655 is also the older PR. Both factors favor #1655 under the stated tiebreaker criteria.",
+              "pick_reason": "CI is unknown for both. Neither PR's test coverage can be confirmed from metadata alone, but #1655 changes 2 files versus #1697's 3 files, making it the smaller, more focused diff \u2014 all else being equal, a tighter change carries less risk of unintended side effects. #1655 is also the older PR (lower number), so it gets the tiebreaker on age. #1697's extra file could mean a test, but it could equally mean a broader scope change; without CI data confirming correctness, the smaller diff is preferable.",
               "members": [
                 {
                   "number": 1655,
@@ -1097,7 +1097,7 @@
                   "state": "duplicate-cluster",
                   "reason": "cluster primary for issue #1646 (2 PRs)",
                   "short_reason": "cluster primary for issue #1646 (2 PRs)",
-                  "age_days": 13.7,
+                  "age_days": 13.8,
                   "additions": 72,
                   "deletions": 2,
                   "is_auth": false,
@@ -1106,7 +1106,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1646",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "CI status is unknown for both PRs and test coverage cannot be confirmed from available data, so the decision falls to diff size and age. #1655 touches 2 files vs #1697's 3 files, making it the smaller, more focused change. #1655 is also the older PR. Both factors favor #1655 under the stated tiebreaker criteria."
+                  "cluster_pick_reason": "CI is unknown for both. Neither PR's test coverage can be confirmed from metadata alone, but #1655 changes 2 files versus #1697's 3 files, making it the smaller, more focused diff \u2014 all else being equal, a tighter change carries less risk of unintended side effects. #1655 is also the older PR (lower number), so it gets the tiebreaker on age. #1697's extra file could mean a test, but it could equally mean a broader scope change; without CI data confirming correctness, the smaller diff is preferable."
                 },
                 {
                   "number": 1697,
@@ -1116,7 +1116,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1646 with #1655",
                   "short_reason": "shares linked issue #1646 with #1655",
-                  "age_days": 6.2,
+                  "age_days": 6.3,
                   "additions": 14,
                   "deletions": 3,
                   "is_auth": false,
@@ -1134,7 +1134,7 @@
               "id": "1659",
               "kind": "issue",
               "pick": 1667,
-              "pick_reason": "CI is unknown for all three PRs. #1696 touches 4 files vs. 3 for #1667 and #1702, making it the largest diff and least focused. Between the two 3-file PRs, #1667 is the oldest (submitted earliest), satisfying the tiebreaker criteria of smallest focused diff then oldest. Without CI results or visible test coverage differences to distinguish #1667 from #1702, seniority is the deciding factor.",
+              "pick_reason": "All three PRs have unknown CI status and no verifiable test coverage information, so the tiebreakers are diff size and age. #1667 and #1702 both change 3 files (vs. #1696's 4), and #1667 is the oldest of the three, making it the first attempt at the fix. #1702 is a near-duplicate of #1667 (same file count, nearly identical title) submitted later. #1696 touches one additional file, indicating a slightly broader scope. Per the stated preference order, #1667 wins on smallest-focused-diff (tied with #1702) then oldest.",
               "members": [
                 {
                   "number": 1667,
@@ -1153,7 +1153,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1659",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "CI is unknown for all three PRs. #1696 touches 4 files vs. 3 for #1667 and #1702, making it the largest diff and least focused. Between the two 3-file PRs, #1667 is the oldest (submitted earliest), satisfying the tiebreaker criteria of smallest focused diff then oldest. Without CI results or visible test coverage differences to distinguish #1667 from #1702, seniority is the deciding factor."
+                  "cluster_pick_reason": "All three PRs have unknown CI status and no verifiable test coverage information, so the tiebreakers are diff size and age. #1667 and #1702 both change 3 files (vs. #1696's 4), and #1667 is the oldest of the three, making it the first attempt at the fix. #1702 is a near-duplicate of #1667 (same file count, nearly identical title) submitted later. #1696 touches one additional file, indicating a slightly broader scope. Per the stated preference order, #1667 wins on smallest-focused-diff (tied with #1702) then oldest."
                 },
                 {
                   "number": 1696,
@@ -1182,7 +1182,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1659 with #1667",
                   "short_reason": "shares linked issue #1659 with #1667",
-                  "age_days": 5.1,
+                  "age_days": 5.2,
                   "additions": 210,
                   "deletions": 1,
                   "is_auth": false,
@@ -1200,7 +1200,7 @@
               "id": "389",
               "kind": "issue",
               "pick": 1703,
-              "pick_reason": "All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
+              "pick_reason": "All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
               "members": [
                 {
                   "number": 1331,
@@ -1265,9 +1265,9 @@
                   "author": "ctonneslan",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1703",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-                  "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-                  "age_days": 5.0,
+                  "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+                  "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+                  "age_days": 5.1,
                   "additions": 5,
                   "deletions": 5,
                   "is_auth": true,
@@ -1276,7 +1276,7 @@
                   "sla_kind": null,
                   "cluster_id": "389",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's."
+                  "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here."
                 },
                 {
                   "number": 1707,
@@ -1304,7 +1304,7 @@
               "id": "740",
               "kind": "issue",
               "pick": 1348,
-              "pick_reason": "Both PRs have unknown CI status and the same file count (9). With no differentiating data on CI, tests, or diff size available, the tiebreaker falls to age: #1348 was opened earlier than #1691, so it gets priority under the stated criteria (oldest wins when all else is equal).",
+              "pick_reason": "Both PRs have the same file count (9) and unknown CI status, so no technical differentiator favors either on those axes. Applying the tiebreaker rule \"oldest wins\": #1348 was opened earlier than #1691, giving it priority. No other concrete technical signal (CI results, test coverage, diff size) is available to distinguish them.",
               "members": [
                 {
                   "number": 1348,
@@ -1323,7 +1323,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "740",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (9). With no differentiating data on CI, tests, or diff size available, the tiebreaker falls to age: #1348 was opened earlier than #1691, so it gets priority under the stated criteria (oldest wins when all else is equal)."
+                  "cluster_pick_reason": "Both PRs have the same file count (9) and unknown CI status, so no technical differentiator favors either on those axes. Applying the tiebreaker rule \"oldest wins\": #1348 was opened earlier than #1691, giving it priority. No other concrete technical signal (CI results, test coverage, diff size) is available to distinguish them."
                 },
                 {
                   "number": 1691,
@@ -1351,7 +1351,7 @@
               "id": "sem:1443",
               "kind": "semantic",
               "pick": 1670,
-              "pick_reason": "PR #1670 includes both the interface field and the implementation (`this._clientMetadata.scope = options.scope`) that makes the scope actually take effect, and extends coverage to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 adds only the interface field with no corresponding implementation, making it incomplete on its own.",
+              "pick_reason": "PR #1670 includes both the interface field and the constructor implementation that sets `_clientMetadata.scope`, and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no wiring \u2014 making it incomplete without #1670's implementation.",
               "members": [
                 {
                   "number": 1443,
@@ -1359,8 +1359,8 @@
                   "author": "NSeydoux",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-                  "short_reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+                  "reason": "[llm] duplicates #1670: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts",
+                  "short_reason": "[llm] duplicates #1670: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts",
                   "age_days": 49.4,
                   "additions": 120,
                   "deletions": 3,
@@ -1378,9 +1378,9 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-                  "age_days": 11.7,
+                  "reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+                  "age_days": 11.8,
                   "additions": 103,
                   "deletions": 0,
                   "is_auth": true,
@@ -1389,16 +1389,16 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:1443",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1670 includes both the interface field and the implementation (`this._clientMetadata.scope = options.scope`) that makes the scope actually take effect, and extends coverage to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 adds only the interface field with no corresponding implementation, making it incomplete on its own."
+                  "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that sets `_clientMetadata.scope`, and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no wiring \u2014 making it incomplete without #1670's implementation."
                 }
               ],
-              "desc": "Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+              "desc": "Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)"
             },
             {
               "id": "sem:1648",
               "kind": "semantic",
               "pick": 1648,
-              "pick_reason": "PR #1648 has the lower number (submitted first) and its title accurately describes the change made. The diffs are identical, so there is no technical difference between the two.",
+              "pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual diff. PR #1649's title claims a Hono namespace fix but its diff is byte-for-byte identical to #1648, with no Hono-related changes present.",
               "members": [
                 {
                   "number": 1648,
@@ -1406,9 +1406,9 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-                  "age_days": 14.3,
+                  "reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+                  "age_days": 14.4,
                   "additions": 15,
                   "deletions": 6,
                   "is_auth": false,
@@ -1417,7 +1417,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:1648",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1648 has the lower number (submitted first) and its title accurately describes the change made. The diffs are identical, so there is no technical difference between the two."
+                  "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual diff. PR #1649's title claims a Hono namespace fix but its diff is byte-for-byte identical to #1648, with no Hono-related changes present."
                 },
                 {
                   "number": 1649,
@@ -1425,9 +1425,9 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte.",
-                  "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte.",
-                  "age_days": 14.3,
+                  "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff).",
+                  "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff).",
+                  "age_days": 14.4,
                   "additions": 19,
                   "deletions": 10,
                   "is_auth": false,
@@ -1439,7 +1439,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)"
+              "desc": "Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)"
             }
           ]
         },
@@ -1513,7 +1513,7 @@
               "state": "needs-decision",
               "reason": "2 maintainer comments, zero reviews",
               "short_reason": "2 maintainer comments, zero reviews",
-              "age_days": 237.6,
+              "age_days": 237.7,
               "additions": 1502,
               "deletions": 19,
               "is_auth": false,
@@ -1532,7 +1532,7 @@
               "state": "needs-decision",
               "reason": "2 maintainer comments, zero reviews",
               "short_reason": "2 maintainer comments, zero reviews",
-              "age_days": 221.9,
+              "age_days": 222.0,
               "additions": 2269,
               "deletions": 52,
               "is_auth": true,
@@ -1570,7 +1570,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 18.2,
+              "age_days": 18.3,
               "additions": 21,
               "deletions": 6,
               "is_auth": false,
@@ -1627,7 +1627,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 11.1,
+              "age_days": 11.2,
               "additions": 79,
               "deletions": 4,
               "is_auth": false,
@@ -1703,7 +1703,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 5.0,
+              "age_days": 5.1,
               "additions": 22,
               "deletions": 8,
               "is_auth": false,
@@ -1840,7 +1840,7 @@
               "state": "needs-first-review",
               "reason": "214d since open (SLA breach)",
               "short_reason": "214d",
-              "age_days": 213.9,
+              "age_days": 214.0,
               "additions": 28,
               "deletions": 3,
               "is_auth": false,
@@ -1859,7 +1859,7 @@
               "state": "needs-first-review",
               "reason": "172d since open (SLA breach)",
               "short_reason": "172d",
-              "age_days": 172.3,
+              "age_days": 172.4,
               "additions": 134,
               "deletions": 11,
               "is_auth": false,
@@ -1897,7 +1897,7 @@
               "state": "needs-first-review",
               "reason": "158d since open (SLA breach)",
               "short_reason": "158d",
-              "age_days": 158.3,
+              "age_days": 158.4,
               "additions": 118,
               "deletions": 1,
               "is_auth": false,
@@ -1916,7 +1916,7 @@
               "state": "needs-first-review",
               "reason": "133d since open (SLA breach)",
               "short_reason": "133d",
-              "age_days": 133.0,
+              "age_days": 133.1,
               "additions": 37,
               "deletions": 10,
               "is_auth": true,
@@ -1954,7 +1954,7 @@
               "state": "needs-first-review",
               "reason": "131d since open (SLA breach)",
               "short_reason": "131d",
-              "age_days": 131.2,
+              "age_days": 131.3,
               "additions": 170,
               "deletions": 2,
               "is_auth": false,
@@ -2087,7 +2087,7 @@
               "state": "needs-first-review",
               "reason": "85d since open (SLA breach)",
               "short_reason": "85d",
-              "age_days": 85.4,
+              "age_days": 85.5,
               "additions": 1120,
               "deletions": 278,
               "is_auth": false,
@@ -2144,7 +2144,7 @@
               "state": "needs-first-review",
               "reason": "67d since open (SLA breach)",
               "short_reason": "67d",
-              "age_days": 67.1,
+              "age_days": 67.2,
               "additions": 80,
               "deletions": 1,
               "is_auth": false,
@@ -2201,7 +2201,7 @@
               "state": "needs-first-review",
               "reason": "49d since open (SLA breach)",
               "short_reason": "49d",
-              "age_days": 49.4,
+              "age_days": 49.5,
               "additions": 21,
               "deletions": 6,
               "is_auth": false,
@@ -2275,8 +2275,8 @@
               "author": "TheodorNEngoy",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1493",
               "state": "needs-first-review",
-              "reason": "44d since open (SLA breach)",
-              "short_reason": "44d",
+              "reason": "45d since open (SLA breach)",
+              "short_reason": "45d",
               "age_days": 44.5,
               "additions": 88,
               "deletions": 3,
@@ -2294,8 +2294,8 @@
               "author": "TheodorNEngoy",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1494",
               "state": "needs-first-review",
-              "reason": "44d since open (SLA breach)",
-              "short_reason": "44d",
+              "reason": "45d since open (SLA breach)",
+              "short_reason": "45d",
               "age_days": 44.5,
               "additions": 284,
               "deletions": 115,
@@ -2334,7 +2334,7 @@
               "state": "needs-first-review",
               "reason": "44d since open (SLA breach)",
               "short_reason": "44d",
-              "age_days": 43.9,
+              "age_days": 44.0,
               "additions": 30,
               "deletions": 3,
               "is_auth": false,
@@ -2391,7 +2391,7 @@
               "state": "needs-first-review",
               "reason": "42d since open (SLA breach)",
               "short_reason": "42d",
-              "age_days": 42.1,
+              "age_days": 42.2,
               "additions": 8,
               "deletions": 3,
               "is_auth": false,
@@ -2562,7 +2562,7 @@
               "state": "needs-first-review",
               "reason": "19d since open (SLA breach)",
               "short_reason": "19d",
-              "age_days": 19.1,
+              "age_days": 19.2,
               "additions": 74,
               "deletions": 0,
               "is_auth": false,
@@ -2619,7 +2619,7 @@
               "state": "needs-first-review",
               "reason": "18d since open (SLA breach)",
               "short_reason": "18d",
-              "age_days": 17.9,
+              "age_days": 18.0,
               "additions": 72,
               "deletions": 2,
               "is_auth": false,
@@ -2714,7 +2714,7 @@
               "state": "needs-first-review",
               "reason": "13d since open (SLA breach)",
               "short_reason": "13d",
-              "age_days": 13.3,
+              "age_days": 13.4,
               "additions": 16,
               "deletions": 2,
               "is_auth": false,
@@ -2733,7 +2733,7 @@
               "state": "needs-first-review",
               "reason": "13d since open (SLA breach)",
               "short_reason": "13d",
-              "age_days": 13.3,
+              "age_days": 13.4,
               "additions": 490,
               "deletions": 4,
               "is_auth": true,
@@ -2847,7 +2847,7 @@
               "state": "needs-first-review",
               "reason": "12d since open (SLA breach)",
               "short_reason": "12d",
-              "age_days": 11.7,
+              "age_days": 11.8,
               "additions": 122,
               "deletions": 6,
               "is_auth": true,
@@ -2961,7 +2961,7 @@
               "state": "needs-first-review",
               "reason": "5d since open",
               "short_reason": "5d",
-              "age_days": 5.0,
+              "age_days": 5.1,
               "additions": 1,
               "deletions": 5,
               "is_auth": false,
@@ -3201,7 +3201,7 @@
           "state": "stale-draft",
           "reason": "draft idle 118d",
           "short_reason": "draft idle 118d",
-          "age_days": 118.2,
+          "age_days": 118.3,
           "additions": 6,
           "deletions": 17,
           "is_auth": false,
@@ -3256,8 +3256,8 @@
           "author": "pcarleton",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1597",
           "state": "stale-draft",
-          "reason": "draft idle 24d",
-          "short_reason": "draft idle 24d",
+          "reason": "draft idle 25d",
+          "short_reason": "draft idle 25d",
           "age_days": 24.5,
           "additions": 1185,
           "deletions": 0,
@@ -3275,8 +3275,8 @@
           "author": "SamMorrowDrums",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1624",
           "state": "stale-draft",
-          "reason": "draft idle 19d",
-          "short_reason": "draft idle 19d",
+          "reason": "draft idle 20d",
+          "short_reason": "draft idle 20d",
           "age_days": 19.5,
           "additions": 1243,
           "deletions": 3,
@@ -3296,7 +3296,7 @@
           "state": "stale-draft",
           "reason": "draft idle 18d",
           "short_reason": "draft idle 18d",
-          "age_days": 18.3,
+          "age_days": 18.4,
           "additions": 306,
           "deletions": 8,
           "is_auth": false,
@@ -3378,7 +3378,7 @@
           "state": "parked",
           "reason": "maintainer draft, 39d",
           "short_reason": "maintainer draft, 39d",
-          "age_days": 38.5,
+          "age_days": 38.6,
           "additions": 441,
           "deletions": 140,
           "is_auth": true,
@@ -3422,7 +3422,7 @@
           "state": "draft-active",
           "reason": "4d old",
           "short_reason": "4d old",
-          "age_days": 3.5,
+          "age_days": 3.6,
           "additions": 55,
           "deletions": 153,
           "is_auth": true,
@@ -3439,8 +3439,8 @@
           "author": "pcarleton",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1722",
           "state": "draft-active",
-          "reason": "3d old",
-          "short_reason": "3d old",
+          "reason": "4d old",
+          "short_reason": "4d old",
           "age_days": 3.5,
           "additions": 874,
           "deletions": 3,
@@ -3485,7 +3485,7 @@
           "state": "awaiting-author",
           "reason": "0d since feedback",
           "short_reason": "0d since feedback",
-          "age_days": 3.7,
+          "age_days": 3.8,
           "additions": 21,
           "deletions": 1,
           "is_auth": false,
@@ -3554,7 +3554,7 @@
       "id": "1000",
       "kind": "issue",
       "pick": 1645,
-      "pick_reason": "Both PRs have unknown CI status and no test coverage information available. With CI equal, #1645 is preferred on two concrete criteria: it touches 2 files vs. #1717's 5 files (smaller, more focused diff reduces review surface and merge-conflict risk), and it is the older PR (lower number), meaning it was submitted earlier. #1717's larger 5-file diff likely reflects a broader or more opinionated restructuring, which increases the chance of conflicts with concurrent changes. #1645's narrower scope makes it the lower-risk merge.",
+      "pick_reason": "Both PRs have unknown CI status. Without verified test coverage data, the tiebreakers apply: #1645 has a smaller, more focused diff (2 files vs. 5 files) and was opened earlier (lower PR number). Its `client`-scoped change is narrower in blast radius than #1717's `core`-scoped change. If test coverage can be confirmed for #1717 and CI passes, that decision should be revisited.",
       "members": [
         {
           "number": 1645,
@@ -3573,7 +3573,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1000",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and no test coverage information available. With CI equal, #1645 is preferred on two concrete criteria: it touches 2 files vs. #1717's 5 files (smaller, more focused diff reduces review surface and merge-conflict risk), and it is the older PR (lower number), meaning it was submitted earlier. #1717's larger 5-file diff likely reflects a broader or more opinionated restructuring, which increases the chance of conflicts with concurrent changes. #1645's narrower scope makes it the lower-risk merge."
+          "cluster_pick_reason": "Both PRs have unknown CI status. Without verified test coverage data, the tiebreakers apply: #1645 has a smaller, more focused diff (2 files vs. 5 files) and was opened earlier (lower PR number). Its `client`-scoped change is narrower in blast radius than #1717's `core`-scoped change. If test coverage can be confirmed for #1717 and CI passes, that decision should be revisited."
         },
         {
           "number": 1717,
@@ -3601,7 +3601,7 @@
       "id": "1314",
       "kind": "issue",
       "pick": 1507,
-      "pick_reason": "All three PRs have unknown CI. #1736 is eliminated by the \"smallest focused diff\" criterion \u2014 10 changed files vs. 3 for the other two is a much larger scope for this single-interface fix. Between #1507 and #1661, both change exactly 3 files with the same technical approach (adding | undefined to Transport optional callbacks). #1507 is the older submission (154 PR numbers earlier), which is the final tiebreaker per the stated preference.",
+      "pick_reason": "All three PRs have unknown CI status. #1507 and #1661 both touch 3 files (smallest/most focused diff), while #1736 touches 10 files \u2014 indicating a broader scope than needed for this targeted fix. Between #1507 and #1661, #1507 was opened first (lower PR number), giving it priority on the oldest-first tiebreaker with otherwise equal metadata.",
       "members": [
         {
           "number": 1507,
@@ -3620,7 +3620,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1314",
           "cluster_pick": true,
-          "cluster_pick_reason": "All three PRs have unknown CI. #1736 is eliminated by the \"smallest focused diff\" criterion \u2014 10 changed files vs. 3 for the other two is a much larger scope for this single-interface fix. Between #1507 and #1661, both change exactly 3 files with the same technical approach (adding | undefined to Transport optional callbacks). #1507 is the older submission (154 PR numbers earlier), which is the final tiebreaker per the stated preference."
+          "cluster_pick_reason": "All three PRs have unknown CI status. #1507 and #1661 both touch 3 files (smallest/most focused diff), while #1736 touches 10 files \u2014 indicating a broader scope than needed for this targeted fix. Between #1507 and #1661, #1507 was opened first (lower PR number), giving it priority on the oldest-first tiebreaker with otherwise equal metadata."
         },
         {
           "number": 1661,
@@ -3649,7 +3649,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1314 with #1507",
           "short_reason": "shares linked issue #1314 with #1507",
-          "age_days": 0.1,
+          "age_days": 0.2,
           "additions": 35,
           "deletions": 35,
           "is_auth": false,
@@ -3667,7 +3667,7 @@
       "id": "1362",
       "kind": "issue",
       "pick": 1561,
-      "pick_reason": "CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
+      "pick_reason": "All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
       "members": [
         {
           "number": 1511,
@@ -3694,9 +3694,9 @@
           "author": "corvid-agent",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1561",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-          "short_reason": "[llm pick] cluster primary for issue #1362: CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix.",
-          "age_days": 31.3,
+          "reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+          "short_reason": "[llm pick] cluster primary for issue #1362: All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change.",
+          "age_days": 31.4,
           "additions": 12,
           "deletions": 5,
           "is_auth": false,
@@ -3705,7 +3705,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1362",
           "cluster_pick": true,
-          "cluster_pick_reason": "CI is unknown for all four PRs, so the deciding criterion is diff size. #1561 modifies 2 files versus 3 files for #1511, #1688, and #1694, making it the smallest focused diff. #1694 is additionally scoped only to Zod's toJSONSchema output, which is a narrower fix than the underlying issue (accepting any valid additional JSON Schema properties) warrants. #1511 and #1688 cover similar ground to #1561 but with one extra file each. #1561's 2-file change is the most minimal, targeted approach to the type-widening fix."
+          "cluster_pick_reason": "All four PRs have unknown CI status, so the tiebreaker falls to diff size and approach specificity. #1561 changes 2 files vs. 3 for the other three \u2014 the smallest, most focused diff. Its approach (allowing additional JSON Schema properties generally on elicitInput requestedSchema) is a superset of what #1694 fixes (Zod-specific) and equivalent in scope to #1688, but with less code surface area. #1511 is older but has the same 3-file footprint as the newer PRs, giving it no advantage over #1561's smaller change."
         },
         {
           "number": 1688,
@@ -3752,7 +3752,7 @@
       "id": "1385",
       "kind": "issue",
       "pick": 1440,
-      "pick_reason": "Both PRs fix the same issue with the same number of changed files (2) and both have unknown CI status, so no differentiation is possible on CI or diff size alone. Falling back to the stated tiebreaker \u2014 oldest PR \u2014 #1440 predates #1664 by a lower PR number, indicating it was submitted first.",
+      "pick_reason": "Both PRs have unknown CI status and the same file count (2). Unable to fetch diff content to compare test coverage or implementation approach. Falling back to the tiebreaker: #1440 is older, meaning it was submitted first and has had more time for review and iteration.",
       "members": [
         {
           "number": 1440,
@@ -3762,7 +3762,7 @@
           "state": "duplicate-cluster",
           "reason": "cluster primary for issue #1385 (2 PRs)",
           "short_reason": "cluster primary for issue #1385 (2 PRs)",
-          "age_days": 49.4,
+          "age_days": 49.5,
           "additions": 17,
           "deletions": 1,
           "is_auth": false,
@@ -3771,7 +3771,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1385",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs fix the same issue with the same number of changed files (2) and both have unknown CI status, so no differentiation is possible on CI or diff size alone. Falling back to the stated tiebreaker \u2014 oldest PR \u2014 #1440 predates #1664 by a lower PR number, indicating it was submitted first."
+          "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (2). Unable to fetch diff content to compare test coverage or implementation approach. Falling back to the tiebreaker: #1440 is older, meaning it was submitted first and has had more time for review and iteration."
         },
         {
           "number": 1664,
@@ -3799,7 +3799,7 @@
       "id": "1395",
       "kind": "issue",
       "pick": 1636,
-      "pick_reason": "All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
+      "pick_reason": "CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
       "members": [
         {
           "number": 1433,
@@ -3826,8 +3826,8 @@
           "author": "dpdanpittman",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1636",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
-          "short_reason": "[llm pick] cluster primary for issue #1395: All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size.",
+          "reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
+          "short_reason": "[llm pick] cluster primary for issue #1395: CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach.",
           "age_days": 18.1,
           "additions": 278,
           "deletions": 5,
@@ -3837,7 +3837,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1395",
           "cluster_pick": true,
-          "cluster_pick_reason": "All six PRs have unknown CI. Among those with comprehensive titles covering all transport error responses (ruling out the partial-scope #1677 and #1687), #1636 and #1725 are tied on smallest diff at 2 files each. Applying the final tiebreaker \u2014 oldest \u2014 #1636 wins over #1725. The 3-file and 4-file PRs (#1433, #1677, #1687, #1704) are larger diffs without confirmed test coverage to justify the extra size."
+          "cluster_pick_reason": "CI is unknown for all six PRs. Without test coverage data (diffs unavailable), the tiebreaker falls to diff size and age. #1636 and #1725 are the only two-file PRs (smallest focused change), while #1433/#1677/#1687 each touch 3 files and #1704 touches 4. Between the two two-file PRs, #1636 is older (lower PR number, submitted ~89 PRs before #1725), satisfying the \"oldest\" tiebreaker. Its title scope (\"all transport error responses\") also aligns well with the breadth of issue #1395 without over-specifying the approach."
         },
         {
           "number": 1677,
@@ -3866,7 +3866,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1395 with #1433",
           "short_reason": "shares linked issue #1395 with #1433",
-          "age_days": 7.5,
+          "age_days": 7.6,
           "additions": 118,
           "deletions": 24,
           "is_auth": false,
@@ -3885,7 +3885,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1395 with #1433",
           "short_reason": "shares linked issue #1395 with #1433",
-          "age_days": 5.0,
+          "age_days": 5.1,
           "additions": 96,
           "deletions": 34,
           "is_auth": false,
@@ -3922,7 +3922,7 @@
       "id": "149",
       "kind": "issue",
       "pick": 1396,
-      "pick_reason": "Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
+      "pick_reason": "Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
       "members": [
         {
           "number": 1083,
@@ -3949,8 +3949,8 @@
           "author": "mgyarmathy",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
-          "short_reason": "[llm pick] cluster primary for issue #149: Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue.",
+          "reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
+          "short_reason": "[llm pick] cluster primary for issue #149: Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress.",
           "age_days": 66.3,
           "additions": 119,
           "deletions": 15,
@@ -3960,7 +3960,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "149",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and identical file counts (2), so no winner on the top criteria. The deciding concrete difference is target branch: #1083 targets the v1.x maintenance branch while #1396 targets v2, the current active development line. Closing issue #149 with the v2 fix is the correct primary resolution; #1083 would be a separate backport concern and should not be the canonical fix for the issue."
+          "cluster_pick_reason": "Both PRs fix the same issue with identical titles and the same 2-file diff scope. PR #1396 targets the v2 branch, which is the current/main line of development, making it the more relevant fix to keep. PR #1083 targets v1.x, a legacy branch. The fix on the active development line (#1396) takes priority; the v1.x backport (#1083) is secondary and can be deferred or closed without blocking forward progress."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/149"
@@ -3969,7 +3969,7 @@
       "id": "1562",
       "kind": "issue",
       "pick": 1671,
-      "pick_reason": "Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
+      "pick_reason": "Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
       "members": [
         {
           "number": 1563,
@@ -3996,8 +3996,8 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
-          "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671.",
+          "reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
+          "short_reason": "[llm pick] cluster primary for issue #1562: Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here.",
           "age_days": 11.7,
           "additions": 118,
           "deletions": 1,
@@ -4007,7 +4007,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1562",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. #1671 changes 2 files vs #1563's 4 files, making it the smaller, more focused diff. With CI and test coverage unknown for both, the smallest-diff tiebreaker favors #1671."
+          "cluster_pick_reason": "Both PRs have unknown CI status and fix the same issue (#1562), so CI does not differentiate them. Falling to the next criterion \u2014 smallest focused diff \u2014 #1671 changes 2 files vs. #1563's 4 files. The narrower scope targeting `schemaToJson` directly indicates a more surgical fix with less surface area for regressions. Per the stated preference order, smallest focused diff takes precedence over oldest, so #1563's earlier submission date does not override #1671's advantage here."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -4016,7 +4016,7 @@
       "id": "1564",
       "kind": "issue",
       "pick": 1679,
-      "pick_reason": "Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+      "pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
       "members": [
         {
           "number": 1568,
@@ -4043,8 +4043,8 @@
           "author": "kai-agent-free",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1679",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
-          "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+          "reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
+          "short_reason": "[llm pick] cluster primary for issue #1564: Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope.",
           "age_days": 10.6,
           "additions": 177,
           "deletions": 5,
@@ -4054,7 +4054,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1564",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and touch the same number of files (3). The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two errors are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes in the same file footprint makes #1679 the more complete fix for issue #1564. #1568 is older, but the tiebreaker of \"smallest focused diff\" and \"oldest\" only applies when the fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
+          "cluster_pick_reason": "Both PRs have unknown CI status and touch the same 3 files. The deciding technical difference is error coverage: #1568 handles only EPIPE, while #1679 also handles ERR_STREAM_DESTROYED. In Node.js stream internals these two error codes are closely related \u2014 once a stream is destroyed, subsequent writes throw ERR_STREAM_DESTROYED rather than EPIPE, so a fix limited to EPIPE leaves the same crash scenario partially unresolved. Covering both error codes within the same 3-file footprint makes #1679 the more complete fix for issue #1564. The \"oldest\" tiebreaker would favor #1568, but that tiebreaker only applies when fixes are otherwise equivalent; here #1679's broader error handling is a concrete technical improvement over #1568's narrower scope."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1564"
@@ -4063,7 +4063,7 @@
       "id": "1646",
       "kind": "issue",
       "pick": 1655,
-      "pick_reason": "CI status is unknown for both PRs and test coverage cannot be confirmed from available data, so the decision falls to diff size and age. #1655 touches 2 files vs #1697's 3 files, making it the smaller, more focused change. #1655 is also the older PR. Both factors favor #1655 under the stated tiebreaker criteria.",
+      "pick_reason": "CI is unknown for both. Neither PR's test coverage can be confirmed from metadata alone, but #1655 changes 2 files versus #1697's 3 files, making it the smaller, more focused diff \u2014 all else being equal, a tighter change carries less risk of unintended side effects. #1655 is also the older PR (lower number), so it gets the tiebreaker on age. #1697's extra file could mean a test, but it could equally mean a broader scope change; without CI data confirming correctness, the smaller diff is preferable.",
       "members": [
         {
           "number": 1655,
@@ -4073,7 +4073,7 @@
           "state": "duplicate-cluster",
           "reason": "cluster primary for issue #1646 (2 PRs)",
           "short_reason": "cluster primary for issue #1646 (2 PRs)",
-          "age_days": 13.7,
+          "age_days": 13.8,
           "additions": 72,
           "deletions": 2,
           "is_auth": false,
@@ -4082,7 +4082,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1646",
           "cluster_pick": true,
-          "cluster_pick_reason": "CI status is unknown for both PRs and test coverage cannot be confirmed from available data, so the decision falls to diff size and age. #1655 touches 2 files vs #1697's 3 files, making it the smaller, more focused change. #1655 is also the older PR. Both factors favor #1655 under the stated tiebreaker criteria."
+          "cluster_pick_reason": "CI is unknown for both. Neither PR's test coverage can be confirmed from metadata alone, but #1655 changes 2 files versus #1697's 3 files, making it the smaller, more focused diff \u2014 all else being equal, a tighter change carries less risk of unintended side effects. #1655 is also the older PR (lower number), so it gets the tiebreaker on age. #1697's extra file could mean a test, but it could equally mean a broader scope change; without CI data confirming correctness, the smaller diff is preferable."
         },
         {
           "number": 1697,
@@ -4092,7 +4092,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1646 with #1655",
           "short_reason": "shares linked issue #1646 with #1655",
-          "age_days": 6.2,
+          "age_days": 6.3,
           "additions": 14,
           "deletions": 3,
           "is_auth": false,
@@ -4110,7 +4110,7 @@
       "id": "1659",
       "kind": "issue",
       "pick": 1667,
-      "pick_reason": "CI is unknown for all three PRs. #1696 touches 4 files vs. 3 for #1667 and #1702, making it the largest diff and least focused. Between the two 3-file PRs, #1667 is the oldest (submitted earliest), satisfying the tiebreaker criteria of smallest focused diff then oldest. Without CI results or visible test coverage differences to distinguish #1667 from #1702, seniority is the deciding factor.",
+      "pick_reason": "All three PRs have unknown CI status and no verifiable test coverage information, so the tiebreakers are diff size and age. #1667 and #1702 both change 3 files (vs. #1696's 4), and #1667 is the oldest of the three, making it the first attempt at the fix. #1702 is a near-duplicate of #1667 (same file count, nearly identical title) submitted later. #1696 touches one additional file, indicating a slightly broader scope. Per the stated preference order, #1667 wins on smallest-focused-diff (tied with #1702) then oldest.",
       "members": [
         {
           "number": 1667,
@@ -4129,7 +4129,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1659",
           "cluster_pick": true,
-          "cluster_pick_reason": "CI is unknown for all three PRs. #1696 touches 4 files vs. 3 for #1667 and #1702, making it the largest diff and least focused. Between the two 3-file PRs, #1667 is the oldest (submitted earliest), satisfying the tiebreaker criteria of smallest focused diff then oldest. Without CI results or visible test coverage differences to distinguish #1667 from #1702, seniority is the deciding factor."
+          "cluster_pick_reason": "All three PRs have unknown CI status and no verifiable test coverage information, so the tiebreakers are diff size and age. #1667 and #1702 both change 3 files (vs. #1696's 4), and #1667 is the oldest of the three, making it the first attempt at the fix. #1702 is a near-duplicate of #1667 (same file count, nearly identical title) submitted later. #1696 touches one additional file, indicating a slightly broader scope. Per the stated preference order, #1667 wins on smallest-focused-diff (tied with #1702) then oldest."
         },
         {
           "number": 1696,
@@ -4158,7 +4158,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1659 with #1667",
           "short_reason": "shares linked issue #1659 with #1667",
-          "age_days": 5.1,
+          "age_days": 5.2,
           "additions": 210,
           "deletions": 1,
           "is_auth": false,
@@ -4176,7 +4176,7 @@
       "id": "389",
       "kind": "issue",
       "pick": 1703,
-      "pick_reason": "All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
+      "pick_reason": "All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
       "members": [
         {
           "number": 1331,
@@ -4241,9 +4241,9 @@
           "author": "ctonneslan",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1703",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-          "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's.",
-          "age_days": 5.0,
+          "reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+          "short_reason": "[llm pick] cluster primary for issue #389: All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here.",
+          "age_days": 5.1,
           "additions": 5,
           "deletions": 5,
           "is_auth": true,
@@ -4252,7 +4252,7 @@
           "sla_kind": null,
           "cluster_id": "389",
           "cluster_pick": true,
-          "cluster_pick_reason": "All five PRs have unknown CI status. Without test coverage data to differentiate, the tiebreaker is diff size: #1703 touches only 3 files compared to 6\u20137 for the others. A smaller, more focused diff reduces the risk of unintended side effects and merge conflicts when addressing a targeted status-code correction (400\u2192404). #1331 is oldest but its 7-file diff is larger than #1703's."
+          "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker is diff size. #1703 changes only 3 files \u2014 roughly half the footprint of #1331 and #1707 (7 files each) and meaningfully smaller than #1560 and #1678 (6 files each). A 3-file diff targeting exactly the files that needed the status-code change indicates the most focused, minimal fix with the least risk of unintended side effects. Smallest focused diff is the deciding criterion here."
         },
         {
           "number": 1707,
@@ -4280,7 +4280,7 @@
       "id": "740",
       "kind": "issue",
       "pick": 1348,
-      "pick_reason": "Both PRs have unknown CI status and the same file count (9). With no differentiating data on CI, tests, or diff size available, the tiebreaker falls to age: #1348 was opened earlier than #1691, so it gets priority under the stated criteria (oldest wins when all else is equal).",
+      "pick_reason": "Both PRs have the same file count (9) and unknown CI status, so no technical differentiator favors either on those axes. Applying the tiebreaker rule \"oldest wins\": #1348 was opened earlier than #1691, giving it priority. No other concrete technical signal (CI results, test coverage, diff size) is available to distinguish them.",
       "members": [
         {
           "number": 1348,
@@ -4299,7 +4299,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "740",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and the same file count (9). With no differentiating data on CI, tests, or diff size available, the tiebreaker falls to age: #1348 was opened earlier than #1691, so it gets priority under the stated criteria (oldest wins when all else is equal)."
+          "cluster_pick_reason": "Both PRs have the same file count (9) and unknown CI status, so no technical differentiator favors either on those axes. Applying the tiebreaker rule \"oldest wins\": #1348 was opened earlier than #1691, giving it priority. No other concrete technical signal (CI results, test coverage, diff size) is available to distinguish them."
         },
         {
           "number": 1691,
@@ -4327,7 +4327,7 @@
       "id": "sem:1443",
       "kind": "semantic",
       "pick": 1670,
-      "pick_reason": "PR #1670 includes both the interface field and the implementation (`this._clientMetadata.scope = options.scope`) that makes the scope actually take effect, and extends coverage to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 adds only the interface field with no corresponding implementation, making it incomplete on its own.",
+      "pick_reason": "PR #1670 includes both the interface field and the constructor implementation that sets `_clientMetadata.scope`, and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no wiring \u2014 making it incomplete without #1670's implementation.",
       "members": [
         {
           "number": 1443,
@@ -4335,8 +4335,8 @@
           "author": "NSeydoux",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-          "short_reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+          "reason": "[llm] duplicates #1670: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts",
+          "short_reason": "[llm] duplicates #1670: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts",
           "age_days": 49.4,
           "additions": 120,
           "deletions": 3,
@@ -4354,9 +4354,9 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-          "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-          "age_days": 11.7,
+          "reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+          "short_reason": "[llm] cluster primary: Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)",
+          "age_days": 11.8,
           "additions": 103,
           "deletions": 0,
           "is_auth": true,
@@ -4365,16 +4365,16 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:1443",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1670 includes both the interface field and the implementation (`this._clientMetadata.scope = options.scope`) that makes the scope actually take effect, and extends coverage to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 adds only the interface field with no corresponding implementation, making it incomplete on its own."
+          "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that sets `_clientMetadata.scope`, and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no wiring \u2014 making it incomplete without #1670's implementation."
         }
       ],
-      "desc": "Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+      "desc": "Adding `scope` support to `ClientCredentialsProviderOptions` in authExtensions.ts (2 PRs)"
     },
     {
       "id": "sem:1648",
       "kind": "semantic",
       "pick": 1648,
-      "pick_reason": "PR #1648 has the lower number (submitted first) and its title accurately describes the change made. The diffs are identical, so there is no technical difference between the two.",
+      "pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual diff. PR #1649's title claims a Hono namespace fix but its diff is byte-for-byte identical to #1648, with no Hono-related changes present.",
       "members": [
         {
           "number": 1648,
@@ -4382,9 +4382,9 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)",
-          "age_days": 14.3,
+          "reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)",
+          "age_days": 14.4,
           "additions": 15,
           "deletions": 6,
           "is_auth": false,
@@ -4393,7 +4393,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:1648",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1648 has the lower number (submitted first) and its title accurately describes the change made. The diffs are identical, so there is no technical difference between the two."
+          "cluster_pick_reason": "PR #1648's title ('update package name to @modelcontextprotocol/sdk') accurately describes the actual diff. PR #1649's title claims a Hono namespace fix but its diff is byte-for-byte identical to #1648, with no Hono-related changes present."
         },
         {
           "number": 1649,
@@ -4401,9 +4401,9 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte.",
-          "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte.",
-          "age_days": 14.3,
+          "reason": "[llm] duplicates #1648: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff).",
+          "short_reason": "[llm] duplicates #1648: Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff).",
+          "age_days": 14.4,
           "additions": 19,
           "deletions": 10,
           "is_auth": false,
@@ -4415,24 +4415,24 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs produce identical diffs: they update `docs/server-quickstart.md` to replace `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the install command, and add the same `.changeset/mcp-limit-fix.md` file byte-for-byte. (2 PRs)"
+      "desc": "Both PRs produce identical diffs: the same `.changeset/mcp-limit-fix.md` file and the same one-line change in `docs/server-quickstart.md` replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command. Despite different titles, neither PR introduces any additional change (e.g., no Hono namespace update appears in #1649's diff). (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 2.7051,
+    "total_usd": 2.788,
     "total_calls": 23,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0306
+        "cost": 0.0305
       },
       "semantic-cluster": {
         "count": 10,
-        "cost": 0.5917
+        "cost": 0.4971
       },
       "cluster-pick": {
         "count": 12,
-        "cost": 2.0829
+        "cost": 2.2604
       }
     }
   }
