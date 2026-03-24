@@ -1,11 +1,28 @@
-# MCP Open Source Repository Health Tracker
+<p align="center">
+  <img src="static/favicon.svg" alt="VISR" width="96" height="96">
+</p>
 
-[![Aggregate Repository Data](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml/badge.svg)](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml)
-[![Deploy to GitHub Pages](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml)
+<h1 align="center">VISR — MCP Repository Health Tracker</h1>
 
-Project designed to monitor the health of Model Context Protocol open source repositories. **Only public repositories are tracked**.
+<p align="center">
+  Dashboard for monitoring the health of Model Context Protocol open source repositories.<br>
+  <strong>Only public repositories are tracked.</strong>
+</p>
 
-## Prerequisites
+<p align="center">
+  <a href="https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml"><img src="https://github.com/localden/mcp-repo-data-tracker/actions/workflows/aggregate.yml/badge.svg" alt="Aggregate Repository Data"></a>
+  <a href="https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml"><img src="https://github.com/localden/mcp-repo-data-tracker/actions/workflows/deploy.yml/badge.svg" alt="Deploy to GitHub Pages"></a>
+  <br>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/localden/mcp-repo-data-tracker?color=blue" alt="License"></a>
+  <img src="https://img.shields.io/badge/Hugo-0.139+-FF4088?logo=hugo&logoColor=white" alt="Hugo">
+  <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/github/last-commit/localden/mcp-repo-data-tracker" alt="Last commit">
+</p>
+
+---
+
+<h2 align="center">Prerequisites</h2>
 
 ### Node.js
 
@@ -56,7 +73,7 @@ hugo version
 # Should output something like: hugo v0.139.0+extended ...
 ```
 
-## Quick Start
+<h2 align="center">Quick Start</h2>
 
 ### 1. Install Dependencies
 
@@ -117,7 +134,7 @@ hugo --minify
 # Output is in public/
 ```
 
-## CLI Options
+<h2 align="center">CLI Options</h2>
 
 ```bash
 npm run aggregate -- [options]
@@ -130,7 +147,7 @@ Options:
   --help, -h       Show help message
 ```
 
-## GitHub Actions Setup
+<h2 align="center">GitHub Actions Setup</h2>
 
 The repository includes a GitHub Actions workflow that automatically:
 1. Runs data aggregation every 6 hours
@@ -188,7 +205,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 - `pages: write` - To deploy to GitHub Pages
 - `id-token: write` - For GitHub Pages deployment authentication
 
-## Project Structure
+<h2 align="center">Project Structure</h2>
 
 ```
 ├── hugo.toml              # Hugo configuration
@@ -224,7 +241,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 └── public/                # Generated site (gitignored)
 ```
 
-## Data Flow
+<h2 align="center">Data Flow</h2>
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -272,7 +289,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Troubleshooting
+<h2 align="center">Troubleshooting</h2>
 
 ### "GITHUB_TOKEN or GH_PAT environment variable is required"
 
@@ -304,10 +321,10 @@ Make sure you're running Hugo from the repository root directory where `hugo.tom
 2. Check that `data/metrics.json` exists and has content
 3. Rebuild the site: `hugo`
 
-## Documentation
+<h2 align="center">Documentation</h2>
 
 See [specs/001-first-design/](specs/001-first-design/) for the full specification and implementation tasks.
 
-## License
+<h2 align="center">License</h2>
 
 MIT
