@@ -100,20 +100,21 @@
       }
     });
 
-    // Show/hide SEPs nav link based on selected repo
-    updateSEPsNavVisibility(repoKey);
+    // Show/hide per-repo nav links based on selection
+    updateNavVisibility(repoKey);
   }
 
-  // Show SEPs nav link only for modelcontextprotocol/modelcontextprotocol
-  function updateSEPsNavVisibility(repoKey) {
-    const sepsLink = document.getElementById('seps-nav-link');
-    if (sepsLink) {
-      if (repoKey === 'modelcontextprotocol/modelcontextprotocol') {
-        sepsLink.style.display = '';
+  // Per-repo nav links (Issues, PRs, Contributors, Trends) are hidden in
+  // all-repos mode. SEPs additionally only shows for the spec repo.
+  function updateNavVisibility(repoKey) {
+    const isAll = repoKey === ALL_REPOS_KEY;
+    document.querySelectorAll('.repo-nav-link').forEach(link => {
+      if (link.id === 'seps-nav-link') {
+        link.style.display = (repoKey === 'modelcontextprotocol/modelcontextprotocol') ? '' : 'none';
       } else {
-        sepsLink.style.display = 'none';
+        link.style.display = isAll ? 'none' : '';
       }
-    }
+    });
   }
 
   // Close DaisyUI dropdown by blurring the active element
