@@ -86,7 +86,6 @@
   <div class="repo-content" data-repo="__all__">
     <div class="mb-6">
       <h1 class="text-2xl font-bold">All Repositories</h1>
-      <p class="text-xs text-base-content/50 mt-1">Summary across {{ len $reposIndex.repositories }} tracked repositories</p>
     </div>
 
     <!-- Aggregate Totals -->
@@ -128,19 +127,19 @@
               <td class="text-right">
                 <span class="font-semibold">{{ lang.FormatNumber 0 .stars }}</span>
                 {{ if ne .starsTrend 0.0 }}{{ $up := gt .starsTrend 0.0 }}{{ $abs := cond $up .starsTrend (mul .starsTrend -1) }}
-                <span class="block text-[10px] {{ cond $up "text-success" "text-error" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                <span class="block text-[10px] opacity-60 {{ cond $up "text-success" "text-error" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
                 {{ end }}
               </td>
               <td class="text-right">
                 <span class="font-semibold">{{ .issues }}</span>
                 {{ if ne .issuesTrend 0.0 }}{{ $up := gt .issuesTrend 0.0 }}{{ $abs := cond $up .issuesTrend (mul .issuesTrend -1) }}
-                <span class="block text-[10px] {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                <span class="block text-[10px] opacity-60 {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
                 {{ end }}
               </td>
               <td class="text-right">
                 <span class="font-semibold">{{ .pulls }}</span>
                 {{ if ne .pullsTrend 0.0 }}{{ $up := gt .pullsTrend 0.0 }}{{ $abs := cond $up .pullsTrend (mul .pullsTrend -1) }}
-                <span class="block text-[10px] {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                <span class="block text-[10px] opacity-60 {{ cond $up "text-error" "text-success" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
                 {{ end }}
               </td>
               <td class="text-right font-semibold">{{ .awaitingIssues }}</td>
