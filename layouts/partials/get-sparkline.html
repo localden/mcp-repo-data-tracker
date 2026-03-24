@@ -9,6 +9,7 @@
   Parameters:
     - snapshots: The snapshots map from load-metrics
     - path: Dot-notation path to the value (e.g., "issues.open", "repository.stars")
+    - limit: Optional max number of most-recent points to return (default 10)
 
   Returns: Array of numeric values sorted by date (oldest to newest)
 */}}
@@ -16,6 +17,7 @@
 {{ $result := slice }}
 {{ $snapshots := .snapshots }}
 {{ $path := .path }}
+{{ $limit := .limit | default 10 }}
 
 {{ if $snapshots }}
   {{/* Collect all snapshot data with dates */}}
@@ -37,12 +39,12 @@
     {{ end }}
   {{ end }}
 
-  {{/* Sort by date and take last 10 */}}
+  {{/* Sort by date and take last N */}}
   {{ $sorted := sort $entries "date" }}
   {{ $count := len $sorted }}
   {{ $start := 0 }}
-  {{ if gt $count 10 }}
-    {{ $start = sub $count 10 }}
+  {{ if gt $count $limit }}
+    {{ $start = sub $count $limit }}
   {{ end }}
 
   {{ range $i, $entry := $sorted }}

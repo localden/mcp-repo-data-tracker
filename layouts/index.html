@@ -39,9 +39,9 @@
       {{ $totalAwaitingIssues = add $totalAwaitingIssues ($rm.issues.without_response_24h | default 0) }}
       {{ $totalAwaitingPRs = add $totalAwaitingPRs ($rm.pulls.without_review_24h | default 0) }}
 
-      {{ $starsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "repository.stars") }}
-      {{ $issuesSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "issues.open") }}
-      {{ $pullsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "pulls.open") }}
+      {{ $starsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "repository.stars" "limit" 8) }}
+      {{ $issuesSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "issues.open" "limit" 8) }}
+      {{ $pullsSpark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "pulls.open" "limit" 8) }}
 
       {{ $rows = $rows | append (dict
         "owner" $rc.owner
@@ -110,13 +110,13 @@
             <tr>
               <th class="bg-base-200">Repository</th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Stars<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Total GitHub stars. Delta shows change over the last 10 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Stars<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Total GitHub stars. Delta shows change over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Open Issues<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Currently open issues. Delta shows change over the last 10 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Open Issues<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Currently open issues. Delta shows change over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Open PRs<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Currently open pull requests. Delta shows change over the last 10 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Open PRs<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Currently open pull requests. Delta shows change over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
                 <span class="inline-flex items-center gap-1">Awaiting Response<span class="tooltip tooltip-left font-normal normal-case"><span class="tooltip-content text-xs">Open issues with no maintainer response after 24 hours</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
