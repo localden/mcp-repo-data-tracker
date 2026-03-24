@@ -1,13 +1,13 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-24T17:22:15.878062+00:00",
+  "lastUpdated": "2026-03-24T19:19:01.777071+00:00",
   "summary": {
-    "actionable_count": 18,
+    "actionable_count": 19,
     "auth_count": 5,
     "maint_count": 2,
-    "effort_hours": 6.2,
-    "cluster_count": 2,
-    "cluster_member_count": 2,
+    "effort_hours": 7.1,
+    "cluster_count": 1,
+    "cluster_member_count": 1,
     "not_our_move_count": 3,
     "by_tier": [
       {
@@ -21,18 +21,18 @@
       {
         "idx": 2,
         "name": "High leverage",
-        "count": 3,
+        "count": 2,
         "auth": 1,
         "maint": 0,
-        "mins": 36
+        "mins": 28
       },
       {
         "idx": 3,
         "name": "Intake",
-        "count": 9,
+        "count": 11,
         "auth": 1,
         "maint": 0,
-        "mins": 270
+        "mins": 330
       },
       {
         "idx": 4,
@@ -61,19 +61,19 @@
     ],
     "by_state": {
       "bot-broke-ci": 1,
-      "duplicate-cluster": 2,
-      "duplicate-cluster-member": 2,
+      "duplicate-cluster": 1,
+      "duplicate-cluster-member": 1,
       "maintainer-intake": 2,
       "needs-decision": 1,
-      "needs-first-review": 9,
+      "needs-first-review": 11,
       "needs-re-review": 1,
       "parked": 3,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
-      "first_review_7d_breach": 10,
-      "first_review_eligible": 11,
+      "first_review_7d_breach": 11,
+      "first_review_eligible": 12,
       "re_review_24h_breach": 2,
       "re_review_eligible": 2,
       "maint_24h_breach": 2,
@@ -103,7 +103,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 12d waiting)",
               "short_reason": "push after approval (1 commits, 12d waiting)",
-              "age_days": 22.9,
+              "age_days": 23.0,
               "additions": 2,
               "deletions": 4,
               "is_auth": false,
@@ -129,7 +129,7 @@
               "state": "maintainer-intake",
               "reason": "112d, no maintainer has looked yet",
               "short_reason": "112d, no maintainer has looked yet",
-              "age_days": 112.2,
+              "age_days": 112.3,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -148,7 +148,7 @@
               "state": "maintainer-intake",
               "reason": "69d, no maintainer has looked yet",
               "short_reason": "69d, no maintainer has looked yet",
-              "age_days": 69.2,
+              "age_days": 69.3,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -167,8 +167,8 @@
       "idx": 2,
       "name": "High leverage",
       "blurb": "One decision unblocks or closes multiple things.",
-      "count": 3,
-      "mins": 36,
+      "count": 2,
+      "mins": 28,
       "states": [
         {
           "name": "duplicate-cluster",
@@ -181,8 +181,8 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
+              "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
               "age_days": 51.1,
               "additions": 179,
               "deletions": 135,
@@ -192,26 +192,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:130",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to 1.27.1 vs 1.26.0 in PR #132, making it a strict superset: it resolves the same SDK bump to a newer version and also updates cors, tsx, and esbuild in a single lockfile change. Merging #130 makes #132 redundant."
-            },
-            {
-              "number": 159,
-              "title": "chore(deps): bump ajv from 8.17.1 to 8.18.0 in /examples/servers/typescript",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/159",
-              "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-              "age_days": 32.1,
-              "additions": 59,
-              "deletions": 19,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "sem:159",
-              "cluster_pick": true,
-              "cluster_pick_reason": "PR #159 appears first numerically; both show identical lockfile diffs in all provided sections, so there is no technical basis to prefer #160. Whichever is kept should be updated to incorporate the qs bump from #160 before merging."
+              "cluster_pick_reason": "PR #130 is a strict superset: it targets sdk ^1.27.1 (vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild in the same pass, whereas #132 only touches the SDK. Merging #130 renders #132 both redundant and conflicted."
             }
           ],
           "clusters": [
@@ -219,7 +200,7 @@
               "id": "sem:130",
               "kind": "semantic",
               "pick": 130,
-              "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to 1.27.1 vs 1.26.0 in PR #132, making it a strict superset: it resolves the same SDK bump to a newer version and also updates cors, tsx, and esbuild in a single lockfile change. Merging #130 makes #132 redundant.",
+              "pick_reason": "PR #130 is a strict superset: it targets sdk ^1.27.1 (vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild in the same pass, whereas #132 only touches the SDK. Merging #130 renders #132 both redundant and conflicted.",
               "members": [
                 {
                   "number": 130,
@@ -227,8 +208,8 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
+                  "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
                   "age_days": 51.1,
                   "additions": 179,
                   "deletions": 135,
@@ -238,7 +219,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:130",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to 1.27.1 vs 1.26.0 in PR #132, making it a strict superset: it resolves the same SDK bump to a newer version and also updates cors, tsx, and esbuild in a single lockfile change. Merging #130 makes #132 redundant."
+                  "cluster_pick_reason": "PR #130 is a strict superset: it targets sdk ^1.27.1 (vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild in the same pass, whereas #132 only touches the SDK. Merging #130 renders #132 both redundant and conflicted."
                 },
                 {
                   "number": 132,
@@ -246,8 +227,8 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3).",
-                  "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3).",
+                  "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file.",
+                  "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file.",
                   "age_days": 47.9,
                   "additions": 57,
                   "deletions": 17,
@@ -260,54 +241,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)"
-            },
-            {
-              "id": "sem:159",
-              "kind": "semantic",
-              "pick": 159,
-              "pick_reason": "PR #159 appears first numerically; both show identical lockfile diffs in all provided sections, so there is no technical basis to prefer #160. Whichever is kept should be updated to incorporate the qs bump from #160 before merging.",
-              "members": [
-                {
-                  "number": 159,
-                  "title": "chore(deps): bump ajv from 8.17.1 to 8.18.0 in /examples/servers/typescript",
-                  "author": "app/dependabot",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/159",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-                  "age_days": 32.1,
-                  "additions": 59,
-                  "deletions": 19,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "sem:159",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "PR #159 appears first numerically; both show identical lockfile diffs in all provided sections, so there is no technical basis to prefer #160. Whichever is kept should be updated to incorporate the qs bump from #160 before merging."
-                },
-                {
-                  "number": 160,
-                  "title": "chore(deps): bump qs from 6.14.1 to 6.15.0 in /examples/servers/typescript",
-                  "author": "app/dependabot",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/160",
-                  "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #159: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict.",
-                  "short_reason": "[llm] duplicates #159: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict.",
-                  "age_days": 32.1,
-                  "additions": 59,
-                  "deletions": 19,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": false,
-                  "sla_kind": null,
-                  "cluster_id": "sem:159",
-                  "cluster_pick": false,
-                  "cluster_pick_reason": ""
-                }
-              ],
-              "desc": "Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)"
+              "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)"
             }
           ]
         },
@@ -324,7 +258,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 27.2,
+              "age_days": 27.3,
               "additions": 481,
               "deletions": 10,
               "is_auth": true,
@@ -343,8 +277,8 @@
       "idx": 3,
       "name": "Intake",
       "blurb": "PRs not yet reviewed by a maintainer. Oldest first.",
-      "count": 9,
-      "mins": 270,
+      "count": 11,
+      "mins": 330,
       "states": [
         {
           "name": "needs-first-review",
@@ -378,7 +312,7 @@
               "state": "needs-first-review",
               "reason": "33d since open (SLA breach)",
               "short_reason": "33d",
-              "age_days": 32.8,
+              "age_days": 32.9,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -397,9 +331,47 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 32.1,
+              "age_days": 32.2,
               "additions": 3,
               "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
+              "number": 159,
+              "title": "chore(deps): bump ajv from 8.17.1 to 8.18.0 in /examples/servers/typescript",
+              "author": "app/dependabot",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/159",
+              "state": "needs-first-review",
+              "reason": "32d since open (SLA breach)",
+              "short_reason": "32d",
+              "age_days": 32.2,
+              "additions": 59,
+              "deletions": 19,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
+              "number": 160,
+              "title": "chore(deps): bump qs from 6.14.1 to 6.15.0 in /examples/servers/typescript",
+              "author": "app/dependabot",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/160",
+              "state": "needs-first-review",
+              "reason": "32d since open (SLA breach)",
+              "short_reason": "32d",
+              "age_days": 32.2,
+              "additions": 59,
+              "deletions": 19,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": true,
@@ -416,7 +388,7 @@
               "state": "needs-first-review",
               "reason": "30d since open (SLA breach)",
               "short_reason": "30d",
-              "age_days": 30.1,
+              "age_days": 30.2,
               "additions": 9,
               "deletions": 9,
               "is_auth": false,
@@ -435,7 +407,7 @@
               "state": "needs-first-review",
               "reason": "29d since open (SLA breach)",
               "short_reason": "29d",
-              "age_days": 28.7,
+              "age_days": 28.8,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -454,7 +426,7 @@
               "state": "needs-first-review",
               "reason": "28d since open (SLA breach)",
               "short_reason": "28d",
-              "age_days": 27.6,
+              "age_days": 27.7,
               "additions": 17,
               "deletions": 6,
               "is_auth": false,
@@ -473,7 +445,7 @@
               "state": "needs-first-review",
               "reason": "23d since open (SLA breach)",
               "short_reason": "23d",
-              "age_days": 22.9,
+              "age_days": 23.0,
               "additions": 45,
               "deletions": 6,
               "is_auth": false,
@@ -492,7 +464,7 @@
               "state": "needs-first-review",
               "reason": "22d since open (SLA breach)",
               "short_reason": "22d",
-              "age_days": 21.7,
+              "age_days": 21.8,
               "additions": 4,
               "deletions": 4,
               "is_auth": false,
@@ -581,7 +553,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 118d old",
               "short_reason": "CI never ran, 118d old",
-              "age_days": 118.0,
+              "age_days": 118.1,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -610,7 +582,7 @@
           "state": "bot-broke-ci",
           "reason": "bot PR, red CI",
           "short_reason": "bot PR, red CI",
-          "age_days": 0.0,
+          "age_days": 0.1,
           "additions": 318,
           "deletions": 583,
           "is_auth": false,
@@ -638,7 +610,7 @@
           "state": "parked",
           "reason": "maintainer draft, 69d",
           "short_reason": "maintainer draft, 69d",
-          "age_days": 69.2,
+          "age_days": 69.3,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -657,7 +629,7 @@
           "state": "parked",
           "reason": "maintainer draft, 47d",
           "short_reason": "maintainer draft, 47d",
-          "age_days": 47.0,
+          "age_days": 47.1,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -676,7 +648,7 @@
           "state": "parked",
           "reason": "maintainer draft, 35d",
           "short_reason": "maintainer draft, 35d",
-          "age_days": 34.9,
+          "age_days": 35.0,
           "additions": 4,
           "deletions": 4,
           "is_auth": true,
@@ -695,7 +667,7 @@
       "id": "sem:130",
       "kind": "semantic",
       "pick": 130,
-      "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to 1.27.1 vs 1.26.0 in PR #132, making it a strict superset: it resolves the same SDK bump to a newer version and also updates cors, tsx, and esbuild in a single lockfile change. Merging #130 makes #132 redundant.",
+      "pick_reason": "PR #130 is a strict superset: it targets sdk ^1.27.1 (vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild in the same pass, whereas #132 only touches the SDK. Merging #130 renders #132 both redundant and conflicted.",
       "members": [
         {
           "number": 130,
@@ -703,8 +675,8 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)",
+          "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)",
           "age_days": 51.1,
           "additions": 179,
           "deletions": 135,
@@ -714,7 +686,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:130",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to 1.27.1 vs 1.26.0 in PR #132, making it a strict superset: it resolves the same SDK bump to a newer version and also updates cors, tsx, and esbuild in a single lockfile change. Merging #130 makes #132 redundant."
+          "cluster_pick_reason": "PR #130 is a strict superset: it targets sdk ^1.27.1 (vs ^1.26.0 in #132) and also updates cors, tsx, and esbuild in the same pass, whereas #132 only touches the SDK. Merging #130 renders #132 both redundant and conflicted."
         },
         {
           "number": 132,
@@ -722,8 +694,8 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3).",
-          "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3).",
+          "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file.",
+          "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file.",
           "age_days": 47.9,
           "additions": 57,
           "deletions": 17,
@@ -736,58 +708,11 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0. PR #132 targets 1.26.0; PR #130 targets 1.27.1 (a newer version) and additionally updates cors (2.8.5\u21922.8.6), tsx (4.7.0\u21924.21.0), and esbuild platform binaries (0.25.12\u21920.27.3). (2 PRs)"
-    },
-    {
-      "id": "sem:159",
-      "kind": "semantic",
-      "pick": 159,
-      "pick_reason": "PR #159 appears first numerically; both show identical lockfile diffs in all provided sections, so there is no technical basis to prefer #160. Whichever is kept should be updated to incorporate the qs bump from #160 before merging.",
-      "members": [
-        {
-          "number": 159,
-          "title": "chore(deps): bump ajv from 8.17.1 to 8.18.0 in /examples/servers/typescript",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/159",
-          "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)",
-          "age_days": 32.1,
-          "additions": 59,
-          "deletions": 19,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "sem:159",
-          "cluster_pick": true,
-          "cluster_pick_reason": "PR #159 appears first numerically; both show identical lockfile diffs in all provided sections, so there is no technical basis to prefer #160. Whichever is kept should be updated to incorporate the qs bump from #160 before merging."
-        },
-        {
-          "number": 160,
-          "title": "chore(deps): bump qs from 6.14.1 to 6.15.0 in /examples/servers/typescript",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/160",
-          "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #159: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict.",
-          "short_reason": "[llm] duplicates #159: Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict.",
-          "age_days": 32.1,
-          "additions": 59,
-          "deletions": 19,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": "sem:159",
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        }
-      ],
-      "desc": "Both PRs regenerate examples/servers/typescript/package-lock.json from the same base state, producing identical shown changes (MCP SDK ^1.24.0\u2192^1.25.2, addition of @hono/node-server@1.19.9). They cannot both merge without a rebase conflict. (2 PRs)"
+      "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json from 1.24.0, causing a direct merge conflict on that file. (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.1782,
+    "total_usd": 0.1741,
     "total_calls": 6,
     "by_purpose": {
       "author-intent": {
@@ -796,7 +721,7 @@
       },
       "semantic-cluster": {
         "count": 5,
-        "cost": 0.1383
+        "cost": 0.1342
       }
     }
   }
