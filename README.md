@@ -22,7 +22,7 @@
 
 ---
 
-<h2 align="center">Prerequisites</h2>
+## Prerequisites
 
 ### Node.js
 
@@ -73,7 +73,7 @@ hugo version
 # Should output something like: hugo v0.139.0+extended ...
 ```
 
-<h2 align="center">Quick Start</h2>
+## Quick Start
 
 ### 1. Install Dependencies
 
@@ -134,7 +134,7 @@ hugo --minify
 # Output is in public/
 ```
 
-<h2 align="center">CLI Options</h2>
+## CLI Options
 
 ```bash
 npm run aggregate -- [options]
@@ -147,7 +147,7 @@ Options:
   --help, -h       Show help message
 ```
 
-<h2 align="center">GitHub Actions Setup</h2>
+## GitHub Actions Setup
 
 The repository includes a GitHub Actions workflow that automatically:
 1. Runs data aggregation every 6 hours
@@ -205,7 +205,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 - `pages: write` - To deploy to GitHub Pages
 - `id-token: write` - For GitHub Pages deployment authentication
 
-<h2 align="center">Project Structure</h2>
+## Project Structure
 
 ```
 ├── hugo.toml              # Hugo configuration
@@ -241,7 +241,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 └── public/                # Generated site (gitignored)
 ```
 
-<h2 align="center">Data Flow</h2>
+## Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -289,7 +289,7 @@ The workflow requires these permissions (already configured in `aggregate.yml`):
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-<h2 align="center">Troubleshooting</h2>
+## Troubleshooting
 
 ### "GITHUB_TOKEN or GH_PAT environment variable is required"
 
@@ -321,10 +321,10 @@ Make sure you're running Hugo from the repository root directory where `hugo.tom
 2. Check that `data/metrics.json` exists and has content
 3. Rebuild the site: `hugo`
 
-<h2 align="center">Documentation</h2>
+## Documentation
 
 See [specs/001-first-design/](specs/001-first-design/) for the full specification and implementation tasks.
 
-<h2 align="center">License</h2>
+## License
 
 MIT
