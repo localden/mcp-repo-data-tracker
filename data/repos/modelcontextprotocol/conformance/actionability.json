@@ -1,11 +1,11 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-25T09:05:21.867094+00:00",
+  "lastUpdated": "2026-03-25T11:04:37.258944+00:00",
   "summary": {
     "actionable_count": 19,
     "auth_count": 5,
     "maint_count": 2,
-    "effort_hours": 7.1,
+    "effort_hours": 7.0,
     "cluster_count": 1,
     "cluster_member_count": 1,
     "not_our_move_count": 3,
@@ -21,10 +21,10 @@
       {
         "idx": 2,
         "name": "High leverage",
-        "count": 2,
-        "auth": 1,
+        "count": 1,
+        "auth": 0,
         "maint": 0,
-        "mins": 28
+        "mins": 8
       },
       {
         "idx": 3,
@@ -37,10 +37,10 @@
       {
         "idx": 4,
         "name": "Hygiene",
-        "count": 1,
-        "auth": 1,
+        "count": 2,
+        "auth": 2,
         "maint": 0,
-        "mins": 5
+        "mins": 15
       },
       {
         "idx": 5,
@@ -60,11 +60,11 @@
       }
     ],
     "by_state": {
+      "approved-rotted": 1,
       "bot-broke-ci": 1,
       "duplicate-cluster": 1,
       "duplicate-cluster-member": 1,
       "maintainer-intake": 2,
-      "needs-decision": 1,
       "needs-first-review": 11,
       "needs-re-review": 1,
       "parked": 3,
@@ -74,8 +74,8 @@
     "sla": {
       "first_review_7d_breach": 12,
       "first_review_eligible": 12,
-      "re_review_24h_breach": 2,
-      "re_review_eligible": 2,
+      "re_review_24h_breach": 1,
+      "re_review_eligible": 1,
       "maint_24h_breach": 2,
       "maint_eligible": 2,
       "actionable_target": 10,
@@ -103,7 +103,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 13d waiting)",
               "short_reason": "push after approval (1 commits, 13d waiting)",
-              "age_days": 23.6,
+              "age_days": 23.7,
               "additions": 2,
               "deletions": 4,
               "is_auth": false,
@@ -129,7 +129,7 @@
               "state": "maintainer-intake",
               "reason": "113d, no maintainer has looked yet",
               "short_reason": "113d, no maintainer has looked yet",
-              "age_days": 112.8,
+              "age_days": 112.9,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -167,8 +167,8 @@
       "idx": 2,
       "name": "High leverage",
       "blurb": "One decision unblocks or closes multiple things.",
-      "count": 2,
-      "mins": 28,
+      "count": 1,
+      "mins": 8,
       "states": [
         {
           "name": "duplicate-cluster",
@@ -181,9 +181,9 @@
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-              "age_days": 51.7,
+              "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+              "age_days": 51.8,
               "additions": 179,
               "deletions": 135,
               "is_auth": false,
@@ -192,7 +192,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:130",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so it lands a newer version. It also updates cors (^2.8.6), tsx (^4.21.0), and esbuild (0.27.3) in the same pass, keeping all deps in sync. PR #132 only moves the sdk and would immediately be superseded."
+              "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
             }
           ],
           "clusters": [
@@ -200,7 +200,7 @@
               "id": "sem:130",
               "kind": "semantic",
               "pick": 130,
-              "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so it lands a newer version. It also updates cors (^2.8.6), tsx (^4.21.0), and esbuild (0.27.3) in the same pass, keeping all deps in sync. PR #132 only moves the sdk and would immediately be superseded.",
+              "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes.",
               "members": [
                 {
                   "number": 130,
@@ -208,9 +208,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-                  "age_days": 51.7,
+                  "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+                  "age_days": 51.8,
                   "additions": 179,
                   "deletions": 135,
                   "is_auth": false,
@@ -219,7 +219,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:130",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so it lands a newer version. It also updates cors (^2.8.6), tsx (^4.21.0), and esbuild (0.27.3) in the same pass, keeping all deps in sync. PR #132 only moves the sdk and would immediately be superseded."
+                  "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
                 },
                 {
                   "number": 132,
@@ -227,9 +227,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged.",
-                  "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged.",
-                  "age_days": 48.5,
+                  "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
+                  "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
+                  "age_days": 48.6,
                   "additions": 57,
                   "deletions": 17,
                   "is_auth": false,
@@ -241,33 +241,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)"
-            }
-          ]
-        },
-        {
-          "name": "needs-decision",
-          "desc": "Maintainer discussed but hasn't approved or requested changes yet.",
-          "effort_min": 20,
-          "prs": [
-            {
-              "number": 170,
-              "title": "feat: add conformance test for authorization server metadata",
-              "author": "Michito-Okai",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/170",
-              "state": "needs-decision",
-              "reason": "maintainer COMMENTED but took no stance",
-              "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 27.9,
-              "additions": 481,
-              "deletions": 10,
-              "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "re-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
+              "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)"
             }
           ]
         }
@@ -293,7 +267,7 @@
               "state": "needs-first-review",
               "reason": "52d since open (SLA breach)",
               "short_reason": "52d",
-              "age_days": 51.7,
+              "age_days": 51.8,
               "additions": 1,
               "deletions": 1,
               "is_auth": false,
@@ -310,9 +284,9 @@
               "author": "wdawson",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/155",
               "state": "needs-first-review",
-              "reason": "33d since open (SLA breach)",
-              "short_reason": "33d",
-              "age_days": 33.4,
+              "reason": "34d since open (SLA breach)",
+              "short_reason": "34d",
+              "age_days": 33.5,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -388,7 +362,7 @@
               "state": "needs-first-review",
               "reason": "31d since open (SLA breach)",
               "short_reason": "31d",
-              "age_days": 30.8,
+              "age_days": 30.9,
               "additions": 9,
               "deletions": 9,
               "is_auth": false,
@@ -407,7 +381,7 @@
               "state": "needs-first-review",
               "reason": "29d since open (SLA breach)",
               "short_reason": "29d",
-              "age_days": 29.3,
+              "age_days": 29.4,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -426,7 +400,7 @@
               "state": "needs-first-review",
               "reason": "28d since open (SLA breach)",
               "short_reason": "28d",
-              "age_days": 28.3,
+              "age_days": 28.4,
               "additions": 17,
               "deletions": 6,
               "is_auth": false,
@@ -445,7 +419,7 @@
               "state": "needs-first-review",
               "reason": "24d since open (SLA breach)",
               "short_reason": "24d",
-              "age_days": 23.6,
+              "age_days": 23.7,
               "additions": 45,
               "deletions": 6,
               "is_auth": false,
@@ -483,7 +457,7 @@
               "state": "needs-first-review",
               "reason": "7d since open (SLA breach)",
               "short_reason": "7d",
-              "age_days": 7.4,
+              "age_days": 7.5,
               "additions": 2095,
               "deletions": 5,
               "is_auth": false,
@@ -502,8 +476,8 @@
       "idx": 4,
       "name": "Hygiene",
       "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 1,
-      "mins": 5,
+      "count": 2,
+      "mins": 15,
       "states": [
         {
           "name": "stale-awaiting-author",
@@ -518,9 +492,35 @@
               "state": "stale-awaiting-author",
               "reason": "40d since feedback, no response",
               "short_reason": "40d since feedback",
-              "age_days": 44.1,
+              "age_days": 44.2,
               "additions": 612,
               "deletions": 47,
+              "is_auth": true,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            }
+          ]
+        },
+        {
+          "name": "approved-rotted",
+          "desc": "Was approved, now conflicting. Rebase or ask author.",
+          "effort_min": 10,
+          "prs": [
+            {
+              "number": 170,
+              "title": "feat: add conformance test for authorization server metadata",
+              "author": "Michito-Okai",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/170",
+              "state": "approved-rotted",
+              "reason": "approved 0d ago, now conflicting",
+              "short_reason": "approved 0d ago, now conflicting",
+              "age_days": 28.0,
+              "additions": 481,
+              "deletions": 10,
               "is_auth": true,
               "is_maintainer": false,
               "sla_breach": false,
@@ -582,7 +582,7 @@
           "state": "bot-broke-ci",
           "reason": "bot PR, red CI",
           "short_reason": "bot PR, red CI",
-          "age_days": 0.7,
+          "age_days": 0.8,
           "additions": 318,
           "deletions": 583,
           "is_auth": false,
@@ -610,7 +610,7 @@
           "state": "parked",
           "reason": "maintainer draft, 70d",
           "short_reason": "maintainer draft, 70d",
-          "age_days": 69.9,
+          "age_days": 70.0,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -629,7 +629,7 @@
           "state": "parked",
           "reason": "maintainer draft, 48d",
           "short_reason": "maintainer draft, 48d",
-          "age_days": 47.7,
+          "age_days": 47.8,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -648,7 +648,7 @@
           "state": "parked",
           "reason": "maintainer draft, 36d",
           "short_reason": "maintainer draft, 36d",
-          "age_days": 35.6,
+          "age_days": 35.7,
           "additions": 4,
           "deletions": 4,
           "is_auth": true,
@@ -667,7 +667,7 @@
       "id": "sem:130",
       "kind": "semantic",
       "pick": 130,
-      "pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so it lands a newer version. It also updates cors (^2.8.6), tsx (^4.21.0), and esbuild (0.27.3) in the same pass, keeping all deps in sync. PR #132 only moves the sdk and would immediately be superseded.",
+      "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes.",
       "members": [
         {
           "number": 130,
@@ -675,9 +675,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)",
-          "age_days": 51.7,
+          "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
+          "age_days": 51.8,
           "additions": 179,
           "deletions": 135,
           "is_auth": false,
@@ -686,7 +686,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:130",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #130 upgrades @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so it lands a newer version. It also updates cors (^2.8.6), tsx (^4.21.0), and esbuild (0.27.3) in the same pass, keeping all deps in sync. PR #132 only moves the sdk and would immediately be superseded."
+          "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
         },
         {
           "number": 132,
@@ -694,9 +694,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged.",
-          "short_reason": "[llm] duplicates #130: Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged.",
-          "age_days": 48.5,
+          "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
+          "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
+          "age_days": 48.6,
           "additions": 57,
           "deletions": 17,
           "is_auth": false,
@@ -708,20 +708,20 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs bump @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They cannot both be merged. (2 PRs)"
+      "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.18,
+    "total_usd": 0.1854,
     "total_calls": 6,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0364
+        "cost": 0.0363
       },
       "semantic-cluster": {
         "count": 5,
-        "cost": 0.1436
+        "cost": 0.1491
       }
     }
   }
