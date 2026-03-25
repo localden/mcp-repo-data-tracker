@@ -1,6 +1,6 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-25T17:21:40.909451+00:00",
+  "lastUpdated": "2026-03-25T19:10:23.095026+00:00",
   "summary": {
     "actionable_count": 8,
     "auth_count": 5,
@@ -13,10 +13,18 @@
       {
         "idx": 1,
         "name": "We're blocking someone",
-        "count": 3,
+        "count": 2,
         "auth": 1,
-        "maint": 2,
-        "mins": 60
+        "maint": 1,
+        "mins": 40
+      },
+      {
+        "idx": 2,
+        "name": "High leverage",
+        "count": 1,
+        "auth": 0,
+        "maint": 1,
+        "mins": 20
       },
       {
         "idx": 3,
@@ -45,7 +53,8 @@
     ],
     "by_state": {
       "approved-rotted": 1,
-      "maintainer-intake": 2,
+      "maintainer-intake": 1,
+      "needs-decision": 1,
       "needs-first-review": 2,
       "needs-re-review": 1,
       "parked": 2,
@@ -57,7 +66,7 @@
       "first_review_eligible": 2,
       "re_review_24h_breach": 0,
       "re_review_eligible": 1,
-      "maint_24h_breach": 2,
+      "maint_24h_breach": 1,
       "maint_eligible": 2,
       "actionable_target": 10,
       "actionable_over_target": false
@@ -68,8 +77,8 @@
       "idx": 1,
       "name": "We're blocking someone",
       "blurb": "Author did what we asked and is waiting on us. Longest-waiting first.",
-      "count": 3,
-      "mins": 60,
+      "count": 2,
+      "mins": 40,
       "states": [
         {
           "name": "needs-re-review",
@@ -84,7 +93,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 0d waiting)",
               "short_reason": "push after approval (1 commits, 0d waiting)",
-              "age_days": 29.7,
+              "age_days": 29.8,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -103,25 +112,6 @@
           "effort_min": 20,
           "prs": [
             {
-              "number": 73,
-              "title": "Add SSE polling Phase 2 and Phase 3 tests (SEP-1699)",
-              "author": "pcarleton",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/73",
-              "state": "maintainer-intake",
-              "reason": "113d, no maintainer has looked yet",
-              "short_reason": "113d, no maintainer has looked yet",
-              "age_days": 113.2,
-              "additions": 691,
-              "deletions": 1,
-              "is_auth": false,
-              "is_maintainer": true,
-              "sla_breach": true,
-              "sla_kind": "maintainer",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
               "number": 106,
               "title": "feat: add step-up auth scenario for server auth testing",
               "author": "pcarleton",
@@ -129,13 +119,48 @@
               "state": "maintainer-intake",
               "reason": "70d, no maintainer has looked yet",
               "short_reason": "70d, no maintainer has looked yet",
-              "age_days": 70.2,
+              "age_days": 70.3,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
               "is_maintainer": true,
               "sla_breach": true,
               "sla_kind": "maintainer",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "idx": 2,
+      "name": "High leverage",
+      "blurb": "One decision unblocks or closes multiple things.",
+      "count": 1,
+      "mins": 20,
+      "states": [
+        {
+          "name": "needs-decision",
+          "desc": "Maintainer discussed but hasn't approved or requested changes yet.",
+          "effort_min": 20,
+          "prs": [
+            {
+              "number": 73,
+              "title": "Add SSE polling Phase 2 and Phase 3 tests (SEP-1699)",
+              "author": "pcarleton",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/73",
+              "state": "needs-decision",
+              "reason": "maintainer COMMENTED but took no stance",
+              "short_reason": "maintainer COMMENTED but took no stance",
+              "age_days": 113.3,
+              "additions": 691,
+              "deletions": 1,
+              "is_auth": false,
+              "is_maintainer": true,
+              "sla_breach": false,
+              "sla_kind": null,
               "cluster_id": null,
               "cluster_pick": false,
               "cluster_pick_reason": ""
@@ -244,7 +269,7 @@
               "state": "approved-rotted",
               "reason": "approved 0d ago, now conflicting",
               "short_reason": "approved 0d ago, now conflicting",
-              "age_days": 28.2,
+              "age_days": 28.3,
               "additions": 481,
               "deletions": 10,
               "is_auth": true,
@@ -279,7 +304,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 119d old",
               "short_reason": "CI never ran, 119d old",
-              "age_days": 119.0,
+              "age_days": 119.1,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -310,7 +335,7 @@
           "state": "parked",
           "reason": "maintainer draft, 70d",
           "short_reason": "maintainer draft, 70d",
-          "age_days": 70.2,
+          "age_days": 70.3,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -329,7 +354,7 @@
           "state": "parked",
           "reason": "maintainer draft, 48d",
           "short_reason": "maintainer draft, 48d",
-          "age_days": 48.0,
+          "age_days": 48.1,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
