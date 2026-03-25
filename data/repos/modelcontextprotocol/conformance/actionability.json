@@ -1,23 +1,15 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-25T15:21:34.607619+00:00",
+  "lastUpdated": "2026-03-25T17:21:40.909451+00:00",
   "summary": {
     "actionable_count": 8,
     "auth_count": 5,
     "maint_count": 2,
-    "effort_hours": 2.1,
+    "effort_hours": 2.3,
     "cluster_count": 0,
     "cluster_member_count": 0,
     "not_our_move_count": 2,
     "by_tier": [
-      {
-        "idx": 0,
-        "name": "Press a button",
-        "count": 1,
-        "auth": 1,
-        "maint": 0,
-        "mins": 1
-      },
       {
         "idx": 1,
         "name": "We're blocking someone",
@@ -37,10 +29,10 @@
       {
         "idx": 4,
         "name": "Hygiene",
-        "count": 1,
-        "auth": 1,
+        "count": 2,
+        "auth": 2,
         "maint": 0,
-        "mins": 5
+        "mins": 15
       },
       {
         "idx": 5,
@@ -52,17 +44,17 @@
       }
     ],
     "by_state": {
+      "approved-rotted": 1,
       "maintainer-intake": 2,
       "needs-first-review": 2,
-      "needs-merge": 1,
       "needs-re-review": 1,
       "parked": 2,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
-      "first_review_7d_breach": 3,
-      "first_review_eligible": 3,
+      "first_review_7d_breach": 2,
+      "first_review_eligible": 2,
       "re_review_24h_breach": 0,
       "re_review_eligible": 1,
       "maint_24h_breach": 2,
@@ -72,41 +64,6 @@
     }
   },
   "tiers": [
-    {
-      "idx": 0,
-      "name": "Press a button",
-      "blurb": "Already approved or already decided \u2014 ready for action.",
-      "count": 1,
-      "mins": 1,
-      "states": [
-        {
-          "name": "needs-merge",
-          "desc": "Approved and CI-green \u2014 ready to merge.",
-          "effort_min": 1,
-          "prs": [
-            {
-              "number": 170,
-              "title": "feat: add conformance test for authorization server metadata",
-              "author": "Michito-Okai",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/170",
-              "state": "needs-merge",
-              "reason": "[llm] PR has a maintainer approval from pcarleton (2026-03-25) with positive commentary from tnorimat. No CI is configured (NONE), it's not a draft, and there are no blocking issues. Ready to merge.",
-              "short_reason": "[llm] PR has a maintainer approval from pcarleton (2026-03-25) with positive commentary from tnorimat. No CI is configured (NONE), it's not a draft, and there are no blocking issues. Ready to merge.",
-              "age_days": 28.2,
-              "additions": 481,
-              "deletions": 10,
-              "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            }
-          ]
-        }
-      ]
-    },
     {
       "idx": 1,
       "name": "We're blocking someone",
@@ -127,7 +84,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 0d waiting)",
               "short_reason": "push after approval (1 commits, 0d waiting)",
-              "age_days": 29.6,
+              "age_days": 29.7,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -153,7 +110,7 @@
               "state": "maintainer-intake",
               "reason": "113d, no maintainer has looked yet",
               "short_reason": "113d, no maintainer has looked yet",
-              "age_days": 113.1,
+              "age_days": 113.2,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -172,7 +129,7 @@
               "state": "maintainer-intake",
               "reason": "70d, no maintainer has looked yet",
               "short_reason": "70d, no maintainer has looked yet",
-              "age_days": 70.1,
+              "age_days": 70.2,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -207,7 +164,7 @@
               "state": "needs-first-review",
               "reason": "34d since open (SLA breach)",
               "short_reason": "34d",
-              "age_days": 33.7,
+              "age_days": 33.8,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -226,7 +183,7 @@
               "state": "needs-first-review",
               "reason": "8d since open (SLA breach)",
               "short_reason": "8d",
-              "age_days": 7.7,
+              "age_days": 7.8,
               "additions": 2095,
               "deletions": 5,
               "is_auth": false,
@@ -245,8 +202,8 @@
       "idx": 4,
       "name": "Hygiene",
       "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 1,
-      "mins": 5,
+      "count": 2,
+      "mins": 15,
       "states": [
         {
           "name": "stale-awaiting-author",
@@ -261,9 +218,35 @@
               "state": "stale-awaiting-author",
               "reason": "40d since feedback, no response",
               "short_reason": "40d since feedback",
-              "age_days": 44.4,
+              "age_days": 44.5,
               "additions": 612,
               "deletions": 47,
+              "is_auth": true,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            }
+          ]
+        },
+        {
+          "name": "approved-rotted",
+          "desc": "Was approved, now conflicting. Rebase or ask author.",
+          "effort_min": 10,
+          "prs": [
+            {
+              "number": 170,
+              "title": "feat: add conformance test for authorization server metadata",
+              "author": "Michito-Okai",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/170",
+              "state": "approved-rotted",
+              "reason": "approved 0d ago, now conflicting",
+              "short_reason": "approved 0d ago, now conflicting",
+              "age_days": 28.2,
+              "additions": 481,
+              "deletions": 10,
               "is_auth": true,
               "is_maintainer": false,
               "sla_breach": false,
@@ -296,7 +279,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 119d old",
               "short_reason": "CI never ran, 119d old",
-              "age_days": 118.9,
+              "age_days": 119.0,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -362,16 +345,12 @@
   ],
   "clusters": [],
   "llm_cost": {
-    "total_usd": 0.0832,
-    "total_calls": 2,
+    "total_usd": 0.0364,
+    "total_calls": 1,
     "by_purpose": {
       "author-intent": {
         "count": 1,
         "cost": 0.0364
-      },
-      "unknown-fallback": {
-        "count": 1,
-        "cost": 0.0468
       }
     }
   }
