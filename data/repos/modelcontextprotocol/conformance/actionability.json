@@ -1,14 +1,14 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-25T11:04:37.258944+00:00",
+  "lastUpdated": "2026-03-25T13:22:26.514854+00:00",
   "summary": {
-    "actionable_count": 19,
+    "actionable_count": 9,
     "auth_count": 5,
     "maint_count": 2,
-    "effort_hours": 7.0,
-    "cluster_count": 1,
-    "cluster_member_count": 1,
-    "not_our_move_count": 3,
+    "effort_hours": 2.8,
+    "cluster_count": 0,
+    "cluster_member_count": 0,
+    "not_our_move_count": 2,
     "by_tier": [
       {
         "idx": 1,
@@ -19,20 +19,12 @@
         "mins": 60
       },
       {
-        "idx": 2,
-        "name": "High leverage",
-        "count": 1,
-        "auth": 0,
-        "maint": 0,
-        "mins": 8
-      },
-      {
         "idx": 3,
         "name": "Intake",
-        "count": 11,
+        "count": 3,
         "auth": 1,
         "maint": 0,
-        "mins": 330
+        "mins": 90
       },
       {
         "idx": 4,
@@ -49,37 +41,26 @@
         "auth": 1,
         "maint": 0,
         "mins": 1
-      },
-      {
-        "idx": 99,
-        "name": "bot corner",
-        "count": 1,
-        "auth": 0,
-        "maint": 0,
-        "mins": 0
       }
     ],
     "by_state": {
       "approved-rotted": 1,
-      "bot-broke-ci": 1,
-      "duplicate-cluster": 1,
-      "duplicate-cluster-member": 1,
       "maintainer-intake": 2,
-      "needs-first-review": 11,
+      "needs-first-review": 3,
       "needs-re-review": 1,
-      "parked": 3,
+      "parked": 2,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
-      "first_review_7d_breach": 12,
-      "first_review_eligible": 12,
-      "re_review_24h_breach": 1,
+      "first_review_7d_breach": 3,
+      "first_review_eligible": 3,
+      "re_review_24h_breach": 0,
       "re_review_eligible": 1,
       "maint_24h_breach": 2,
       "maint_eligible": 2,
       "actionable_target": 10,
-      "actionable_over_target": true
+      "actionable_over_target": false
     }
   },
   "tiers": [
@@ -96,20 +77,20 @@
           "effort_min": 20,
           "prs": [
             {
-              "number": 175,
-              "title": "fix: resolve CLI path for tier-check conformance subprocess",
-              "author": "DePasqualeOrg",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/175",
+              "number": 165,
+              "title": "fix: tools-call-simple-text now fails when tool returns isError: true",
+              "author": "lux999",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/165",
               "state": "needs-re-review",
-              "reason": "push after approval (1 commits, 13d waiting)",
-              "short_reason": "push after approval (1 commits, 13d waiting)",
-              "age_days": 23.7,
+              "reason": "push after approval (1 commits, 0d waiting)",
+              "short_reason": "push after approval (1 commits, 0d waiting)",
+              "age_days": 29.5,
               "additions": 2,
-              "deletions": 4,
+              "deletions": 0,
               "is_auth": false,
               "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "re-review",
+              "sla_breach": false,
+              "sla_kind": null,
               "cluster_id": null,
               "cluster_pick": false,
               "cluster_pick_reason": ""
@@ -129,7 +110,7 @@
               "state": "maintainer-intake",
               "reason": "113d, no maintainer has looked yet",
               "short_reason": "113d, no maintainer has looked yet",
-              "age_days": 112.9,
+              "age_days": 113.0,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -148,7 +129,7 @@
               "state": "maintainer-intake",
               "reason": "70d, no maintainer has looked yet",
               "short_reason": "70d, no maintainer has looked yet",
-              "age_days": 69.9,
+              "age_days": 70.0,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -164,120 +145,17 @@
       ]
     },
     {
-      "idx": 2,
-      "name": "High leverage",
-      "blurb": "One decision unblocks or closes multiple things.",
-      "count": 1,
-      "mins": 8,
-      "states": [
-        {
-          "name": "duplicate-cluster",
-          "desc": "Multiple PRs address the same issue \u2014 one will be picked, others closed as duplicates.",
-          "effort_min": 8,
-          "prs": [
-            {
-              "number": 130,
-              "title": "chore(deps): bump the all-dependencies group in /examples/servers/typescript with 4 updates",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
-              "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-              "age_days": 51.8,
-              "additions": 179,
-              "deletions": 135,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "sem:130",
-              "cluster_pick": true,
-              "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
-            }
-          ],
-          "clusters": [
-            {
-              "id": "sem:130",
-              "kind": "semantic",
-              "pick": 130,
-              "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes.",
-              "members": [
-                {
-                  "number": 130,
-                  "title": "chore(deps): bump the all-dependencies group in /examples/servers/typescript with 4 updates",
-                  "author": "app/dependabot",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-                  "age_days": 51.8,
-                  "additions": 179,
-                  "deletions": 135,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "sem:130",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
-                },
-                {
-                  "number": 132,
-                  "title": "chore(deps): bump @modelcontextprotocol/sdk from 1.24.0 to 1.26.0 in /examples/servers/typescript",
-                  "author": "app/dependabot",
-                  "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
-                  "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
-                  "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
-                  "age_days": 48.6,
-                  "additions": 57,
-                  "deletions": 17,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": false,
-                  "sla_kind": null,
-                  "cluster_id": "sem:130",
-                  "cluster_pick": false,
-                  "cluster_pick_reason": ""
-                }
-              ],
-              "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "idx": 3,
       "name": "Intake",
       "blurb": "PRs not yet reviewed by a maintainer. Oldest first.",
-      "count": 11,
-      "mins": 330,
+      "count": 3,
+      "mins": 90,
       "states": [
         {
           "name": "needs-first-review",
           "desc": "Not yet reviewed by a maintainer.",
           "effort_min": 30,
           "prs": [
-            {
-              "number": 129,
-              "title": "chore(deps): bump actions/setup-node from 4 to 6 in the all-actions group",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/129",
-              "state": "needs-first-review",
-              "reason": "52d since open (SLA breach)",
-              "short_reason": "52d",
-              "age_days": 51.8,
-              "additions": 1,
-              "deletions": 1,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
             {
               "number": 155,
               "title": "Improvements to the Draft Server Auth Conformance tests",
@@ -286,124 +164,10 @@
               "state": "needs-first-review",
               "reason": "34d since open (SLA breach)",
               "short_reason": "34d",
-              "age_days": 33.5,
+              "age_days": 33.6,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 157,
-              "title": "chore(deps): bump qs from 6.14.1 to 6.15.0",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/157",
-              "state": "needs-first-review",
-              "reason": "33d since open (SLA breach)",
-              "short_reason": "33d",
-              "age_days": 32.8,
-              "additions": 3,
-              "deletions": 3,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 159,
-              "title": "chore(deps): bump ajv from 8.17.1 to 8.18.0 in /examples/servers/typescript",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/159",
-              "state": "needs-first-review",
-              "reason": "33d since open (SLA breach)",
-              "short_reason": "33d",
-              "age_days": 32.8,
-              "additions": 59,
-              "deletions": 19,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 160,
-              "title": "chore(deps): bump qs from 6.14.1 to 6.15.0 in /examples/servers/typescript",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/160",
-              "state": "needs-first-review",
-              "reason": "33d since open (SLA breach)",
-              "short_reason": "33d",
-              "age_days": 32.8,
-              "additions": 59,
-              "deletions": 19,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 164,
-              "title": "chore(deps-dev): bump ajv from 6.12.6 to 6.14.0",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/164",
-              "state": "needs-first-review",
-              "reason": "31d since open (SLA breach)",
-              "short_reason": "31d",
-              "age_days": 30.9,
-              "additions": 9,
-              "deletions": 9,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 165,
-              "title": "fix: tools-call-simple-text now fails when tool returns isError: true",
-              "author": "lux999",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/165",
-              "state": "needs-first-review",
-              "reason": "29d since open (SLA breach)",
-              "short_reason": "29d",
-              "age_days": 29.4,
-              "additions": 2,
-              "deletions": 0,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 168,
-              "title": "Fix Windows compatibility in tier-check client conformance",
-              "author": "jeffhandley",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/168",
-              "state": "needs-first-review",
-              "reason": "28d since open (SLA breach)",
-              "short_reason": "28d",
-              "age_days": 28.4,
-              "additions": 17,
-              "deletions": 6,
-              "is_auth": false,
               "is_maintainer": false,
               "sla_breach": true,
               "sla_kind": "1st-review",
@@ -419,28 +183,9 @@
               "state": "needs-first-review",
               "reason": "24d since open (SLA breach)",
               "short_reason": "24d",
-              "age_days": 23.7,
+              "age_days": 23.8,
               "additions": 45,
               "deletions": 6,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 177,
-              "title": "fix: fail tools-list when tools array is empty",
-              "author": "lux999",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/177",
-              "state": "needs-first-review",
-              "reason": "22d since open (SLA breach)",
-              "short_reason": "22d",
-              "age_days": 22.4,
-              "additions": 4,
-              "deletions": 4,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": true,
@@ -455,9 +200,9 @@
               "author": "CaitieM20",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/188",
               "state": "needs-first-review",
-              "reason": "7d since open (SLA breach)",
-              "short_reason": "7d",
-              "age_days": 7.5,
+              "reason": "8d since open (SLA breach)",
+              "short_reason": "8d",
+              "age_days": 7.6,
               "additions": 2095,
               "deletions": 5,
               "is_auth": false,
@@ -492,7 +237,7 @@
               "state": "stale-awaiting-author",
               "reason": "40d since feedback, no response",
               "short_reason": "40d since feedback",
-              "age_days": 44.2,
+              "age_days": 44.3,
               "additions": 612,
               "deletions": 47,
               "is_auth": true,
@@ -518,7 +263,7 @@
               "state": "approved-rotted",
               "reason": "approved 0d ago, now conflicting",
               "short_reason": "approved 0d ago, now conflicting",
-              "age_days": 28.0,
+              "age_days": 28.1,
               "additions": 481,
               "deletions": 10,
               "is_auth": true,
@@ -553,7 +298,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 119d old",
               "short_reason": "CI never ran, 119d old",
-              "age_days": 118.7,
+              "age_days": 118.8,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -569,33 +314,7 @@
       ]
     }
   ],
-  "bot_corner": [
-    {
-      "name": "bot-broke-ci",
-      "desc": "Automated dependency update with failing CI.",
-      "prs": [
-        {
-          "number": 193,
-          "title": "chore(deps-dev): bump the all-dependencies group across 1 directory with 4 updates",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/193",
-          "state": "bot-broke-ci",
-          "reason": "bot PR, red CI",
-          "short_reason": "bot PR, red CI",
-          "age_days": 0.8,
-          "additions": 318,
-          "deletions": 583,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        }
-      ]
-    }
-  ],
+  "bot_corner": [],
   "untriaged": [],
   "not_our_move": [
     {
@@ -610,7 +329,7 @@
           "state": "parked",
           "reason": "maintainer draft, 70d",
           "short_reason": "maintainer draft, 70d",
-          "age_days": 70.0,
+          "age_days": 70.1,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -629,29 +348,10 @@
           "state": "parked",
           "reason": "maintainer draft, 48d",
           "short_reason": "maintainer draft, 48d",
-          "age_days": 47.8,
+          "age_days": 47.9,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
-          "is_maintainer": true,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        },
-        {
-          "number": 154,
-          "title": "fix: don't leak escalated scopes in PRM for step-up test",
-          "author": "pcarleton",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/154",
-          "state": "parked",
-          "reason": "maintainer draft, 36d",
-          "short_reason": "maintainer draft, 36d",
-          "age_days": 35.7,
-          "additions": 4,
-          "deletions": 4,
-          "is_auth": true,
           "is_maintainer": true,
           "sla_breach": false,
           "sla_kind": null,
@@ -662,66 +362,14 @@
       ]
     }
   ],
-  "clusters": [
-    {
-      "id": "sem:130",
-      "kind": "semantic",
-      "pick": 130,
-      "pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes.",
-      "members": [
-        {
-          "number": 130,
-          "title": "chore(deps): bump the all-dependencies group in /examples/servers/typescript with 4 updates",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/130",
-          "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)",
-          "age_days": 51.8,
-          "additions": 179,
-          "deletions": 135,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "sem:130",
-          "cluster_pick": true,
-          "cluster_pick_reason": "PR #130 bumps @modelcontextprotocol/sdk to ^1.27.1 vs PR #132's ^1.26.0, so #130 lands a newer version. #130 also covers three additional dependency updates (cors ^2.8.6, tsx ^4.21.0, esbuild 0.27.3) in one consolidated commit, making it strictly a superset of #132's changes."
-        },
-        {
-          "number": 132,
-          "title": "chore(deps): bump @modelcontextprotocol/sdk from 1.24.0 to 1.26.0 in /examples/servers/typescript",
-          "author": "app/dependabot",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/132",
-          "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
-          "short_reason": "[llm] duplicates #130: Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need.",
-          "age_days": 48.6,
-          "additions": 57,
-          "deletions": 17,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": "sem:130",
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        }
-      ],
-      "desc": "Both PRs update @modelcontextprotocol/sdk in examples/servers/typescript/package-lock.json and conflict on that file. They address the same underlying dependency update need. (2 PRs)"
-    }
-  ],
+  "clusters": [],
   "llm_cost": {
-    "total_usd": 0.1854,
-    "total_calls": 6,
+    "total_usd": 0.0364,
+    "total_calls": 1,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0363
-      },
-      "semantic-cluster": {
-        "count": 5,
-        "cost": 0.1491
+        "cost": 0.0364
       }
     }
   }
