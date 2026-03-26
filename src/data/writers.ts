@@ -2,7 +2,7 @@
  * Data file writers
  */
 
-import { writeFile, readFile, mkdir } from 'fs/promises';
+import { writeFile, readFile, mkdir, readdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import type {
   Metrics,
@@ -183,6 +183,8 @@ export async function writeSnapshot(metrics: Metrics, repoConfig?: RepoConfig): 
     },
   };
 
+  if (metrics.downloads) snapshot.downloads = metrics.downloads;
+
   await writeFile(filePath, JSON.stringify(snapshot, null, 2));
 }
 
@@ -200,10 +202,43 @@ export async function writeRepoIndex(repos: RepoConfig[]): Promise<void> {
       repo: r.repo,
       name: r.name || `${r.owner}/${r.repo}`,
       description: r.description || '',
+      ...(r.package && { package: r.package }),
     })),
   };
 
   await writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
+/**
+ * Load the most recent snapshot strictly before today, for diff-based metrics
+ * (NuGet daily = today.total - prev.total; npm running total = prev.total + daily).
+ */
+export async function loadLatestSnapshot(repoConfig: RepoConfig): Promise<DailySnapshot | undefined> {
+  const snapshotsDir = join(process.cwd(), getSnapshotsDir(repoConfig));
+  const today = new Date().toISOString().split('T')[0];
+
+  let files: string[];
+  try {
+    files = await readdir(snapshotsDir);
+  } catch {
+    return undefined;
+  }
+
+  const dates = files
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace('.json', ''))
+    .filter((d) => d < today)
+    .sort();
+
+  const latest = dates[dates.length - 1];
+  if (!latest) return undefined;
+
+  try {
+    const content = await readFile(join(snapshotsDir, `${latest}.json`), 'utf-8');
+    return JSON.parse(content) as DailySnapshot;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

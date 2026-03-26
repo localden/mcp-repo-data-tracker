@@ -21,8 +21,10 @@
   {{ $issuesSeries := slice }}
   {{ $pullsSeries := slice }}
   {{ $starsSeries := slice }}
+  {{ $downloadsSeries := slice }}
   {{ $allDates := slice }}
   {{ $anyInbound := false }}
+  {{ $anyDownloads := false }}
 
   {{ range $i, $rc := $reposIndex.repositories }}
     {{ $rm := false }}
@@ -52,6 +54,20 @@
       {{ $hasIss := and $ri $ri.summary }}
       {{ if or $hasAct $hasIss }}{{ $anyInbound = true }}{{ end }}
 
+      {{ $dl := $rm.downloads }}
+      {{ $dlDailySpark := slice }}
+      {{ $dlTrend := 0.0 }}
+      {{ $dlWeekly := $dl.last_week | default 0 }}
+      {{ if $dl }}
+        {{ $anyDownloads = true }}
+        {{ $dlDailySpark = partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 8) }}
+        {{ $dlTrend = partial "calc-trend.html" (dict "sparkline" $dlDailySpark) }}
+        {{ if not $dlWeekly }}
+          {{ $wk := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 7) }}
+          {{ range $wk }}{{ $dlWeekly = add $dlWeekly . }}{{ end }}
+        {{ end }}
+      {{ end }}
+
       {{ $rows = $rows | append (dict
         "owner" $rc.owner
         "repo" $rc.repo
@@ -72,21 +88,28 @@
         "triagePending" (cond (not (not $hasIss)) (add ($ri.summary.untriaged_count | default 0) ($ri.summary.partially_triaged_count | default 0)) 0)
         "p0Breach" (cond (not (not $hasIss)) $ri.summary.sla.p0_7d_breach 0)
         "p1Breach" (cond (not (not $hasIss)) $ri.summary.sla.p1_90d_breach 0)
+        "hasDl" (not (not $dl))
+        "dlDaily" ($dl.daily | default 0)
+        "dlWeekly" $dlWeekly
+        "dlTotal" ($dl.total | default 0)
+        "dlTrend" $dlTrend
+        "pkg" $rc.package
       ) }}
 
       {{/* Build chart series from snapshots - use {x,y} points so repos with fewer snapshots align correctly */}}
       {{ if $rsnaps }}
         {{ $entries := slice }}
         {{ range $fn, $d := $rsnaps }}
-          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars) }}
+          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "downloads" (index $d "downloads" "daily")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
-        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}
+        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}
         {{ range $sorted }}
           {{ $dates = $dates | append .date }}
           {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
           {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
           {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
+          {{ if .downloads }}{{ $dv = $dv | append (dict "x" .date "y" .downloads) }}{{ end }}
         {{ end }}
         {{ $allDates = $allDates | union $dates }}
         {{ $color := index $chartColors (mod $i (len $chartColors)) }}
@@ -94,6 +117,7 @@
         {{ $issuesSeries = $issuesSeries | append (dict "label" $label "data" $iv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
         {{ $pullsSeries = $pullsSeries | append (dict "label" $label "data" $pv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
         {{ $starsSeries = $starsSeries | append (dict "label" $label "data" $sv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
+        {{ if $dv }}{{ $downloadsSeries = $downloadsSeries | append (dict "label" $label "data" $dv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
       {{ end }}
     {{ end }}
   {{ end }}
@@ -246,6 +270,59 @@
           </tbody>
         </table>
       </div>
+    </section>
+    {{ end }}
+
+    <!-- SDK Downloads -->
+    {{ if $anyDownloads }}
+    <section class="mb-6">
+      <h2 class="text-sm font-semibold mb-3">SDK Downloads</h2>
+      <div class="rounded-lg border border-base-300 bg-base-100">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr>
+              <th class="bg-base-200">SDK</th>
+              <th class="bg-base-200 text-right">
+                <span class="inline-flex items-center gap-1">Daily<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads yesterday. Delta shows change over the last 7 days.<br>NuGet derives this from cumulative-total diffs, so C# needs two days of data before a value appears.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+              </th>
+              <th class="bg-base-200 text-right">
+                <span class="inline-flex items-center gap-1">Weekly<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+              </th>
+              <th class="bg-base-200 text-right">
+                <span class="inline-flex items-center gap-1">Total<span class="tooltip tooltip-left font-normal normal-case"><span class="tooltip-content text-xs">All-time cumulative downloads.<br>PyPI (pypistats) caps history at 6 months, so Python shows — here.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ $dash := "<span class=\"opacity-30\">—</span>" | safeHTML }}
+            {{ $regUrl := dict "npm" "https://www.npmjs.com/package/" "pypi" "https://pypi.org/project/" "nuget" "https://www.nuget.org/packages/" }}
+            {{ range $rows }}{{ if .hasDl }}
+            <tr class="hover:bg-base-200/50">
+              <td>
+                <div class="font-medium text-sm">{{ .name }}</div>
+                {{ with .pkg }}<a href="{{ index $regUrl .registry }}{{ .name }}" target="_blank" rel="noopener" class="font-mono text-[10px] opacity-50 hover:opacity-100 hover:underline">{{ .registry }} · {{ .name }}</a>{{ end }}
+              </td>
+              <td class="text-right">
+                {{ if .dlDaily }}
+                <span class="font-semibold">{{ lang.FormatNumber 0 .dlDaily }}</span>
+                {{ if ne .dlTrend 0.0 }}{{ $up := gt .dlTrend 0.0 }}{{ $abs := cond $up .dlTrend (mul .dlTrend -1) }}
+                <span class="block text-[10px] opacity-60 {{ cond $up "text-success" "text-error" }}">{{ cond $up "↑" "↓" }}{{ printf "%.1f" $abs }}%</span>
+                {{ end }}
+                {{ else }}{{ $dash }}{{ end }}
+              </td>
+              <td class="text-right font-semibold">{{ if .dlWeekly }}{{ lang.FormatNumber 0 .dlWeekly }}{{ else }}{{ $dash }}{{ end }}</td>
+              <td class="text-right font-semibold">{{ if .dlTotal }}{{ lang.FormatNumber 0 .dlTotal }}{{ else }}{{ $dash }}{{ end }}</td>
+            </tr>
+            {{ end }}{{ end }}
+          </tbody>
+        </table>
+      </div>
+      {{ if $downloadsSeries }}
+      <div class="bg-base-100 border border-base-300 rounded-lg p-4 mt-4">
+        <h3 class="text-xs font-medium opacity-70 mb-3">Daily Downloads Over Time</h3>
+        <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $downloadsSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+      </div>
+      {{ end }}
     </section>
     {{ end }}
 
