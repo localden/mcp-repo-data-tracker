@@ -106,6 +106,7 @@
           {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlTotal" (index $d "downloads" "total")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
+        {{ $latest := time.AsTime (index $sorted (sub (len $sorted) 1)).date }}
         {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $tv := slice }}
         {{ $weekBins := dict }}
         {{ range $sorted }}
@@ -115,9 +116,9 @@
           {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
           {{ if .dlDaily }}
             {{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}
-            {{ $t := time.AsTime .date }}
-            {{ $offset := mod (add (int $t.Weekday) 6) 7 }}
-            {{ $key := ($t.Add (time.ParseDuration (printf "-%dh" (mul 24 $offset)))).Format "2006-01-02" }}
+            {{ $ago := int (div ($latest.Sub (time.AsTime .date)).Hours 24) }}
+            {{ $bin := div $ago 7 }}
+            {{ $key := ($latest.Add (time.ParseDuration (printf "-%dh" (mul 168 $bin)))).Format "2006-01-02" }}
             {{ $weekBins = merge $weekBins (dict $key (add (index $weekBins $key | default 0) .dlDaily)) }}
           {{ end }}
           {{ if .dlTotal }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
