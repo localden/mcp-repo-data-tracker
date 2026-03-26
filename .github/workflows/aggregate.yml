@@ -16,41 +16,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  aggregate:
+  github:
+    name: GitHub metrics
     runs-on: ubuntu-latest
-    outputs:
-      changes: ${{ steps.commit.outputs.changes }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build TypeScript
-        run: npm run build
-
-      - name: Run data aggregation
+      - run: npm install
+      - run: npm run build
+      - name: Scrape GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: npm run aggregate
+        run: npm run aggregate -- --only=github
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-data
+          path: data/
+          retention-days: 1
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+  downloads:
+    name: Package downloads
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - name: Fetch download stats
+        run: npm run aggregate -- --only=downloads
+      - uses: actions/upload-artifact@v4
+        with:
+          name: downloads-data
+          path: data/repos/**/downloads.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  classifier:
+    name: PR actionability
+    runs-on: ubuntu-latest
+    needs: github
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: github-data
+          path: data/
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install claude CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Run PR actionability classifier
-        continue-on-error: true
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Classify PRs
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -59,14 +80,59 @@ jobs:
             --repo typescript-sdk,python-sdk,conformance \
             --maintainers-json data/maintainers.json \
             --visr-json 'data/repos/modelcontextprotocol/{repo}/actionability.json'
-          # Patch today's snapshot with .summary so sparklines see it
-          for repo in typescript-sdk python-sdk conformance; do
-            snap="data/repos/modelcontextprotocol/$repo/snapshots/$(date -u +%Y-%m-%d).json"
-            act="data/repos/modelcontextprotocol/$repo/actionability.json"
-            if [ -f "$snap" ] && [ -f "$act" ]; then
-              jq --slurpfile a "$act" '.actionability = $a[0].summary' "$snap" > "$snap.tmp" && mv "$snap.tmp" "$snap"
-            fi
-          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: classifier-data
+          path: data/repos/**/actionability.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  commit:
+    name: Merge & commit
+    runs-on: ubuntu-latest
+    needs: [github, downloads, classifier]
+    if: always() && needs.github.result == 'success'
+    outputs:
+      changes: ${{ steps.commit.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Merge artifacts into data/
+        run: |
+          # github-data is the full skeleton (metrics, snapshots, issues, seps, contributors)
+          rsync -a artifacts/github-data/ data/
+
+          today=$(date -u +%Y-%m-%d)
+
+          # Patch downloads.json sidecars into metrics + today's snapshot.
+          # upload-artifact strips everything before the first glob wildcard, so
+          # the artifact root is <owner>/<repo>/... — re-add the data/repos/ prefix.
+          if [ -d artifacts/downloads-data ]; then
+            find artifacts/downloads-data -name downloads.json | while read -r dl; do
+              rel=${dl#artifacts/downloads-data/}
+              dir=data/repos/${rel%/downloads.json}
+              metrics="$dir/metrics.json"
+              snap="$dir/snapshots/$today.json"
+              [ -f "$metrics" ] && jq --slurpfile d "$dl" '.downloads = $d[0]' "$metrics" > "$metrics.tmp" && mv "$metrics.tmp" "$metrics"
+              [ -f "$snap" ]    && jq --slurpfile d "$dl" '.downloads = $d[0]' "$snap"    > "$snap.tmp"    && mv "$snap.tmp" "$snap"
+            done
+          fi
+
+          # Patch actionability.json into today's snapshot (same pattern)
+          if [ -d artifacts/classifier-data ]; then
+            find artifacts/classifier-data -name actionability.json | while read -r act; do
+              rel=${act#artifacts/classifier-data/}
+              dir=data/repos/${rel%/actionability.json}
+              cp "$act" "$dir/actionability.json"
+              snap="$dir/snapshots/$today.json"
+              [ -f "$snap" ] && jq --slurpfile a "$act" '.actionability = $a[0].summary' "$snap" > "$snap.tmp" && mv "$snap.tmp" "$snap"
+            done
+          fi
 
       - name: Commit and push data changes
         id: commit
@@ -95,6 +161,6 @@ jobs:
           fi
 
   deploy:
-    needs: aggregate
-    if: needs.aggregate.outputs.changes == 'true'
+    needs: commit
+    if: needs.commit.outputs.changes == 'true'
     uses: ./.github/workflows/deploy.yml

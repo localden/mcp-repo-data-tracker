@@ -573,6 +573,18 @@ export interface DownloadMetrics {
   total?: number;
 }
 
+/**
+ * Per-version download breakdown (PyPI only, sourced from BigQuery).
+ * Written to data/repos/<owner>/<repo>/versions.json by the daily bigquery workflow.
+ */
+export interface VersionDownloadsData {
+  lastUpdated: string;
+  /** version -> cumulative count within the tracked window */
+  totals: Record<string, number>;
+  /** YYYY-MM-DD -> version -> daily count */
+  daily: Record<string, Record<string, number>>;
+}
+
 // =============================================================================
 // Repository Configuration
 // =============================================================================

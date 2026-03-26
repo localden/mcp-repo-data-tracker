@@ -11,6 +11,7 @@ import { fetchHotspotData } from './github/hotspots.js';
 import { fetchRepoStats } from './github/repo.js';
 import { fetchCommits } from './github/commits.js';
 import { fetchDownloads } from './downloads/index.js';
+import { fetchPypiVersions, mergeVersionData } from './downloads/bigquery.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
 import { buildIssueTiers } from './metrics/issueTiers.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
@@ -26,6 +27,9 @@ import {
   writeRepoIndex,
   writeSEPMetrics,
   loadRecentSnapshots,
+  writeDownloadsSidecar,
+  writeVersionDownloads,
+  loadVersionDownloads,
 } from './data/writers.js';
 import { loadConfig, createDefaultConfig } from './config/loader.js';
 import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics } from './types/index.js';
@@ -49,6 +53,11 @@ export async function aggregate(args: CliArgs): Promise<void> {
   if (args.sepOnly) {
     return aggregateSEPOnly(args);
   }
+
+  // Handle single-slice modes (split workflow)
+  if (args.only === 'downloads') return aggregateDownloadsOnly(args);
+  if (args.only === 'bigquery') return aggregateBigQuery(args);
+  // --only=github falls through to the normal path with skipDownloads=true
 
   const { dryRun, verbose, configPath } = args;
   const client = createGitHubClient();
@@ -89,9 +98,10 @@ export async function aggregate(args: CliArgs): Promise<void> {
 
   // Process each repository
   const repoCount = config.repositories.length;
+  const skipDownloads = args.only === 'github';
   for (let i = 0; i < repoCount; i++) {
     const repoConfig = config.repositories[i];
-    await aggregateRepository(client, repoConfig, maintainerSet, dryRun, verbose, i + 1, repoCount);
+    await aggregateRepository(client, repoConfig, maintainerSet, dryRun, verbose, i + 1, repoCount, skipDownloads);
   }
 
   // Write global files
@@ -124,7 +134,8 @@ async function aggregateRepository(
   dryRun: boolean,
   verbose: boolean,
   repoIndex: number,
-  totalRepos: number
+  totalRepos: number,
+  skipDownloads = false
 ): Promise<void> {
   const { owner, repo } = repoConfig;
   const displayName = repoConfig.name || `${owner}/${repo}`;
@@ -155,7 +166,7 @@ async function aggregateRepository(
 
   // Fetch package downloads (if configured)
   let downloads: DownloadMetrics | undefined;
-  if (repoConfig.package) {
+  if (repoConfig.package && !skipDownloads) {
     const dlSpinner = spinner(`Fetching ${repoConfig.package.registry} downloads`).start();
     try {
       const recent = await loadRecentSnapshots(repoConfig, 30);
@@ -306,4 +317,85 @@ async function aggregateSEPOnly(args: CliArgs): Promise<void> {
   newline();
   divider();
   success(`SEP aggregation complete in ${style.bold(duration + 's')}`);
+}
+
+/**
+ * Downloads-only mode (--only=downloads).
+ * Writes a downloads.json sidecar per package-bearing repo; the commit job
+ * jq-patches it into metrics.json and today's snapshot.
+ */
+async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
+  const { dryRun, configPath } = args;
+  const startTime = Date.now();
+
+  const config = await loadConfig(configPath);
+  header('Downloads-Only Aggregation');
+
+  for (const repoConfig of config.repositories) {
+    if (!repoConfig.package) continue;
+    const dlSpinner = spinner(`${repoConfig.owner}/${repoConfig.repo} (${repoConfig.package.registry})`).start();
+    try {
+      const recent = await loadRecentSnapshots(repoConfig, 30);
+      const prev = recent.find((s) => s.downloads?.total !== undefined) ?? recent[0];
+      const downloads = await fetchDownloads(repoConfig.package, prev);
+      if (downloads.last_week === undefined && downloads.daily !== undefined) {
+        downloads.last_week = recent.slice(0, 6).reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
+      }
+      if (downloads.last_month === undefined && downloads.daily !== undefined) {
+        downloads.last_month = recent.slice(0, 29).reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
+      }
+      if (!dryRun) await writeDownloadsSidecar(downloads, repoConfig);
+      const headline = downloads.daily !== undefined ? `${formatNumber(downloads.daily)}/day` : `${formatNumber(downloads.total ?? 0)} total`;
+      dlSpinner.succeed(`${repoConfig.package.name}: ${headline}`);
+    } catch (err) {
+      dlSpinner.fail(`${repoConfig.package.name}: ${(err as Error).message}`);
+    }
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  newline();
+  success(`Downloads aggregation complete in ${style.bold(duration + 's')}`);
+}
+
+/**
+ * BigQuery mode (--only=bigquery).
+ * Queries bigquery-public-data.pypi.file_downloads for per-version daily
+ * counts since the last stored date, merges into versions.json.
+ */
+async function aggregateBigQuery(args: CliArgs): Promise<void> {
+  const { dryRun, configPath } = args;
+  const startTime = Date.now();
+
+  const config = await loadConfig(configPath);
+  header('BigQuery PyPI Aggregation');
+
+  for (const repoConfig of config.repositories) {
+    if (repoConfig.package?.registry !== 'pypi') continue;
+    const pkg = repoConfig.package.name;
+    const bqSpinner = spinner(`${pkg}: querying BigQuery`).start();
+    try {
+      const existing = await loadVersionDownloads(repoConfig);
+      // Incremental: query from the day after our last stored date. First run
+      // bootstraps 90 days back.
+      const dates = existing ? Object.keys(existing.daily).sort() : [];
+      const since = dates.length > 0
+        ? new Date(new Date(dates[dates.length - 1]).getTime() + 86400000).toISOString().split('T')[0]
+        : new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
+
+      const fresh = await fetchPypiVersions(pkg, since);
+      const merged = mergeVersionData(existing, fresh);
+
+      if (!dryRun) await writeVersionDownloads(merged, repoConfig);
+      const nDays = Object.keys(fresh.daily).length;
+      const nVersions = Object.keys(merged.totals).length;
+      bqSpinner.succeed(`${pkg}: ${nDays} new day(s), ${nVersions} version(s) tracked`);
+    } catch (err) {
+      bqSpinner.fail(`${pkg}: ${(err as Error).message}`);
+      throw err;
+    }
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  newline();
+  success(`BigQuery aggregation complete in ${style.bold(duration + 's')}`);
 }

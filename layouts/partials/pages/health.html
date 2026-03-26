@@ -9,6 +9,7 @@
 {{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
 {{ $m := $data.metrics }}
 {{ $snapshots := $data.snapshots }}
+{{ $versions := $data.versions }}
 
 {{ if not $m }}
 <div class="alert alert-warning">
@@ -220,5 +221,100 @@
   </div>
   {{ end }}
 </section>
+
+<!-- Downloads by Version (PyPI only — sourced from BigQuery) -->
+{{ if $versions }}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold mb-1">Downloads by Version</h2>
+  <p class="text-[10px] text-base-content/40 mb-3">
+    PyPI per-version daily downloads via BigQuery
+    {{ with $versions.lastUpdated }}&middot; updated {{ dateFormat "Jan 2 15:04 UTC" (time .) }}{{ end }}
+  </p>
+
+  {{/* Rank versions by total and pick top 10 */}}
+  {{ $ranked := slice }}
+  {{ $grandTotal := 0 }}
+  {{ range $v, $n := $versions.totals }}
+    {{ $ranked = $ranked | append (dict "version" $v "count" $n) }}
+    {{ $grandTotal = add $grandTotal $n }}
+  {{ end }}
+  {{ $ranked = sort $ranked "count" "desc" }}
+  {{ $top := first 10 $ranked }}
+  {{ $topVersions := slice }}
+  {{ range $top }}{{ $topVersions = $topVersions | append .version }}{{ end }}
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <!-- Version totals table -->
+    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+      <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Versions</h3>
+      <table class="w-full text-xs font-mono">
+        <thead>
+          <tr class="text-[10px] text-base-content/50 border-b border-base-300">
+            <th class="text-left pb-1">Version</th>
+            <th class="text-right pb-1">Downloads</th>
+            <th class="text-right pb-1">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range $top }}
+          {{ $pct := 0.0 }}
+          {{ if gt $grandTotal 0 }}{{ $pct = mul (div (float .count) (float $grandTotal)) 100 }}{{ end }}
+          <tr class="border-b border-base-300/30">
+            <td class="py-1">{{ .version }}</td>
+            <td class="py-1 text-right tabular-nums">{{ lang.FormatNumber 0 .count }}</td>
+            <td class="py-1 text-right tabular-nums text-base-content/60">{{ printf "%.1f%%" $pct }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Stacked area chart -->
+    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+      <h3 class="text-xs font-medium text-base-content/70 mb-3">Daily by Version <span class="opacity-60">(top 10)</span></h3>
+      {{/* Build sorted date axis and one data series per top-N version plus "other" */}}
+      {{ $vDates := slice }}
+      {{ range $d, $_ := $versions.daily }}{{ $vDates = $vDates | append $d }}{{ end }}
+      {{ $vDates = sort $vDates }}
+
+      {{ $palette := slice "#2563eb" "#16a34a" "#dc2626" "#ca8a04" "#9333ea" "#0891b2" "#db2777" "#65a30d" "#ea580c" "#475569" }}
+      {{ $datasets := slice }}
+      {{ range $i, $v := $topVersions }}
+        {{ $series := slice }}
+        {{ range $d := $vDates }}
+          {{ $dayMap := index $versions.daily $d }}
+          {{ $series = $series | append (or (index $dayMap $v) 0) }}
+        {{ end }}
+        {{ $datasets = $datasets | append (dict "label" $v "data" $series "borderColor" (index $palette $i) "backgroundColor" (index $palette $i) "fill" true "tension" 0.2 "borderWidth" 1 "pointRadius" 0) }}
+      {{ end }}
+      {{/* "other" bucket: per-day sum of versions outside the top 10 */}}
+      {{ $otherSeries := slice }}
+      {{ range $d := $vDates }}
+        {{ $dayMap := index $versions.daily $d }}
+        {{ $dayOther := 0 }}
+        {{ range $v, $n := $dayMap }}
+          {{ if not (in $topVersions $v) }}{{ $dayOther = add $dayOther $n }}{{ end }}
+        {{ end }}
+        {{ $otherSeries = $otherSeries | append $dayOther }}
+      {{ end }}
+      {{ $datasets = $datasets | append (dict "label" "other" "data" $otherSeries "borderColor" "#94a3b8" "backgroundColor" "#94a3b8" "fill" true "tension" 0.2 "borderWidth" 1 "pointRadius" 0) }}
+
+      <canvas data-chart='{
+        "type": "line",
+        "data": {
+          "labels": {{ $vDates | jsonify }},
+          "datasets": {{ $datasets | jsonify }}
+        },
+        "options": {
+          "responsive": true,
+          "interaction": { "mode": "index", "intersect": false },
+          "plugins": { "legend": { "display": true, "position": "bottom", "labels": { "boxWidth": 10, "font": { "size": 9 } } } },
+          "scales": { "y": { "stacked": true } }
+        }
+      }'></canvas>
+    </div>
+  </div>
+</section>
+{{ end }}
 
 {{ end }}
