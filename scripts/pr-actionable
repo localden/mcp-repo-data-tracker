@@ -325,14 +325,27 @@ def is_bot_reviewer(login: str) -> bool:
 
 
 def sh(cmd: list[str]) -> str:
-    return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"{cmd[0]} exit {r.returncode}: {r.stderr.strip() or r.stdout.strip()}")
+    return r.stdout
 
 
 def gh_graphql(query: str, **vars) -> dict:
     args = ["gh", "api", "graphql", "-f", f"query={query}"]
     for k, v in vars.items():
         args += ["-F", f"{k}={v}"]
-    return json.loads(sh(args))["data"]
+    # GitHub's GraphQL endpoint occasionally 502s or trips secondary rate
+    # limits mid-pagination — retry with backoff before giving up.
+    last_err = None
+    for attempt in range(3):
+        try:
+            return json.loads(sh(args))["data"]
+        except (RuntimeError, json.JSONDecodeError) as e:
+            last_err = e
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+    raise last_err
 
 
 # --- Tier A: cheap bulk fetch ---
