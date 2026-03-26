@@ -11,7 +11,7 @@ import { fetchHotspotData } from './github/hotspots.js';
 import { fetchRepoStats } from './github/repo.js';
 import { fetchCommits } from './github/commits.js';
 import { fetchDownloads } from './downloads/index.js';
-import { fetchPypiVersions, mergeVersionData } from './downloads/bigquery.js';
+import { fetchPypiVersions, mergeVersionData, deriveDownloadMetrics } from './downloads/bigquery.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
 import { buildIssueTiers } from './metrics/issueTiers.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
@@ -333,6 +333,9 @@ async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
 
   for (const repoConfig of config.repositories) {
     if (!repoConfig.package) continue;
+    // PyPI is sourced from BigQuery (--only=bigquery); skip it here so we
+    // have a single source of truth.
+    if (repoConfig.package.registry === 'pypi') continue;
     const dlSpinner = spinner(`${repoConfig.owner}/${repoConfig.repo} (${repoConfig.package.registry})`).start();
     try {
       const recent = await loadRecentSnapshots(repoConfig, 30);
@@ -375,20 +378,25 @@ async function aggregateBigQuery(args: CliArgs): Promise<void> {
     const bqSpinner = spinner(`${pkg}: querying BigQuery`).start();
     try {
       const existing = await loadVersionDownloads(repoConfig);
-      // Incremental: query from the day after our last stored date. First run
-      // bootstraps 90 days back.
+      // Incremental: re-query from the last stored date (not +1) so partial
+      // intra-day data gets refreshed on the next 2h run. First run bootstraps
+      // 90 days back.
       const dates = existing ? Object.keys(existing.daily).sort() : [];
       const since = dates.length > 0
-        ? new Date(new Date(dates[dates.length - 1]).getTime() + 86400000).toISOString().split('T')[0]
+        ? dates[dates.length - 1]
         : new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
 
       const fresh = await fetchPypiVersions(pkg, since);
       const merged = mergeVersionData(existing, fresh);
+      const aggregate = deriveDownloadMetrics(merged);
 
-      if (!dryRun) await writeVersionDownloads(merged, repoConfig);
+      if (!dryRun) {
+        await writeVersionDownloads(merged, repoConfig);
+        await writeDownloadsSidecar(aggregate, repoConfig);
+      }
       const nDays = Object.keys(fresh.daily).length;
       const nVersions = Object.keys(merged.totals).length;
-      bqSpinner.succeed(`${pkg}: ${nDays} new day(s), ${nVersions} version(s) tracked`);
+      bqSpinner.succeed(`${pkg}: ${formatNumber(aggregate.daily ?? 0)}/day, ${nVersions} version(s), ${nDays} day(s) refreshed`);
     } catch (err) {
       bqSpinner.fail(`${pkg}: ${(err as Error).message}`);
       throw err;

@@ -12,7 +12,7 @@
  */
 
 import { BigQuery } from '@google-cloud/bigquery';
-import type { VersionDownloadsData } from '../types/index.js';
+import type { DownloadMetrics, VersionDownloadsData } from '../types/index.js';
 
 interface Row {
   date: { value: string };
@@ -74,4 +74,31 @@ export function mergeVersionData(
     }
   }
   return { lastUpdated: fresh.lastUpdated, daily, totals };
+}
+
+/**
+ * Collapse per-version data into aggregate DownloadMetrics for the main
+ * dashboard (the same shape the npm/nuget fetchers produce).
+ */
+export function deriveDownloadMetrics(v: VersionDownloadsData): DownloadMetrics {
+  const dates = Object.keys(v.daily).sort();
+  const sumDay = (d: string) => Object.values(v.daily[d]).reduce((a, b) => a + b, 0);
+
+  // Most-recent nonzero day — PyPI logs batch with lag so trailing zeros
+  // mean "not posted yet", not zero downloads.
+  let daily: number | undefined;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const n = sumDay(dates[i]);
+    if (n > 0) { daily = n; break; }
+  }
+
+  const sumLastN = (n: number) => dates.slice(-n).reduce((s, d) => s + sumDay(d), 0);
+  const total = Object.values(v.totals).reduce((a, b) => a + b, 0);
+
+  return {
+    daily,
+    last_week: dates.length >= 7 ? sumLastN(7) : undefined,
+    last_month: dates.length >= 30 ? sumLastN(30) : undefined,
+    total,
+  };
 }
