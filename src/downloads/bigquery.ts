@@ -15,7 +15,7 @@ import { BigQuery } from '@google-cloud/bigquery';
 import type { DownloadMetrics, VersionDownloadsData } from '../types/index.js';
 
 interface Row {
-  date: { value: string };
+  date: string;
   version: string;
   downloads: number;
 }
@@ -31,15 +31,20 @@ interface Row {
 export async function fetchPypiVersions(pkg: string, since: string): Promise<VersionDownloadsData> {
   const bq = new BigQuery();
 
+  // FORMAT_DATE returns a plain STRING, sidestepping the client's DATE-type
+  // decoder (which errors with "timestamp_output_format is not supported yet"
+  // on recent BigQuery backend responses). Partition pruning keys on the
+  // raw timestamp column, so compare against TIMESTAMP(@since) rather than
+  // the formatted string.
   const [rows] = await bq.query({
     query: `
       SELECT
-        DATE(timestamp) AS date,
+        FORMAT_DATE('%Y-%m-%d', DATE(timestamp)) AS date,
         file.version AS version,
         COUNT(*) AS downloads
       FROM \`bigquery-public-data.pypi.file_downloads\`
       WHERE file.project = @pkg
-        AND DATE(timestamp) BETWEEN @since AND CURRENT_DATE()
+        AND timestamp >= TIMESTAMP(@since)
       GROUP BY date, version
       ORDER BY date, version
     `,
@@ -50,9 +55,8 @@ export async function fetchPypiVersions(pkg: string, since: string): Promise<Ver
   const totals: Record<string, number> = {};
 
   for (const row of rows as Row[]) {
-    const d = row.date.value;
-    (daily[d] ??= {})[row.version] = row.downloads;
-    totals[row.version] = (totals[row.version] ?? 0) + row.downloads;
+    (daily[row.date] ??= {})[row.version] = Number(row.downloads);
+    totals[row.version] = (totals[row.version] ?? 0) + Number(row.downloads);
   }
 
   return { lastUpdated: new Date().toISOString(), daily, totals };
