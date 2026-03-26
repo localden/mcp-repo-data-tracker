@@ -26,6 +26,15 @@
   {{ $dlTotalSeries := slice }}
   {{ $allDates := slice }}
   {{ $allWeeks := slice }}
+
+  {{/* Global latest snapshot date — used as the trailing-week anchor so all repos bin to the same x-axis even if one lags. */}}
+  {{ $latestDate := "" }}
+  {{ range $rc := $reposIndex.repositories }}
+    {{ with index site.Data.repos $rc.owner }}{{ with index . $rc.repo }}{{ range .snapshots }}
+      {{ if gt .date $latestDate }}{{ $latestDate = .date }}{{ end }}
+    {{ end }}{{ end }}{{ end }}
+  {{ end }}
+  {{ $latest := time.AsTime (cond (ne $latestDate "") $latestDate (now.Format "2006-01-02")) }}
   {{ $anyInbound := false }}
   {{ $anyDownloads := false }}
 
@@ -106,7 +115,6 @@
           {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlTotal" (index $d "downloads" "total")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
-        {{ $latest := time.AsTime (index $sorted (sub (len $sorted) 1)).date }}
         {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $tv := slice }}
         {{ $weekBins := dict }}
         {{ range $sorted }}
@@ -114,14 +122,14 @@
           {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
           {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
           {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
-          {{ if .dlDaily }}
+          {{ if ne .dlDaily nil }}
             {{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}
             {{ $ago := int (div ($latest.Sub (time.AsTime .date)).Hours 24) }}
             {{ $bin := div $ago 7 }}
             {{ $key := ($latest.Add (time.ParseDuration (printf "-%dh" (mul 168 $bin)))).Format "2006-01-02" }}
             {{ $weekBins = merge $weekBins (dict $key (add (index $weekBins $key | default 0) .dlDaily)) }}
           {{ end }}
-          {{ if .dlTotal }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
+          {{ if ne .dlTotal nil }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
         {{ end }}
         {{ $wv := slice }}
         {{ range $k, $v := $weekBins }}{{ $wv = $wv | append (dict "x" $k "y" $v) }}{{ end }}
