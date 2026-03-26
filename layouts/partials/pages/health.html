@@ -243,26 +243,25 @@
   {{ $topVersions := slice }}
   {{ range $top }}{{ $topVersions = $topVersions | append .version }}{{ end }}
 
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="space-y-4">
     <!-- Version totals table -->
-    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-      <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Versions</h3>
-      <table class="w-full text-xs font-mono">
+    <div class="rounded-lg border border-base-300 bg-base-100">
+      <table class="table table-sm w-full">
         <thead>
-          <tr class="text-[10px] text-base-content/50 border-b border-base-300">
-            <th class="text-left pb-1">Version</th>
-            <th class="text-right pb-1">Downloads</th>
-            <th class="text-right pb-1">Share</th>
+          <tr>
+            <th class="bg-base-200">Version</th>
+            <th class="bg-base-200 text-right">Downloads</th>
+            <th class="bg-base-200 text-right">Share</th>
           </tr>
         </thead>
         <tbody>
           {{ range $top }}
           {{ $pct := 0.0 }}
           {{ if gt $grandTotal 0 }}{{ $pct = mul (div (float .count) (float $grandTotal)) 100 }}{{ end }}
-          <tr class="border-b border-base-300/30">
-            <td class="py-1">{{ .version }}</td>
-            <td class="py-1 text-right tabular-nums">{{ lang.FormatNumber 0 .count }}</td>
-            <td class="py-1 text-right tabular-nums text-base-content/60">{{ printf "%.1f%%" $pct }}</td>
+          <tr class="hover:bg-base-200/50">
+            <td class="font-mono">{{ .version }}</td>
+            <td class="text-right font-semibold tabular-nums">{{ lang.FormatNumber 0 .count }}</td>
+            <td class="text-right tabular-nums text-base-content/60">{{ printf "%.1f%%" $pct }}</td>
           </tr>
           {{ end }}
         </tbody>
@@ -271,7 +270,7 @@
 
     <!-- Stacked area chart -->
     <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-      <h3 class="text-xs font-medium text-base-content/70 mb-3">Daily by Version <span class="opacity-60">(top 10)</span></h3>
+      <h3 class="text-xs font-medium text-base-content/70 mb-3">Daily by Version <span class="opacity-60">(top 10, UTC)</span></h3>
       {{/* Build sorted date axis and one data series per top-N version plus "other" */}}
       {{ $vDates := slice }}
       {{ range $d, $_ := $versions.daily }}{{ $vDates = $vDates | append $d }}{{ end }}
@@ -308,7 +307,7 @@
         "options": {
           "responsive": true,
           "interaction": { "mode": "index", "intersect": false },
-          "plugins": { "legend": { "display": true, "position": "bottom", "labels": { "boxWidth": 10, "font": { "size": 9 } } } },
+          "plugins": { "legend": { "position": "bottom", "labels": { "boxWidth": 12, "padding": 12 } } },
           "scales": { "y": { "stacked": true } }
         }
       }'></canvas>
