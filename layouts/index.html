@@ -126,6 +126,8 @@
         {{ $wv := slice }}
         {{ range $k, $v := $weekBins }}{{ $wv = $wv | append (dict "x" $k "y" $v) }}{{ end }}
         {{ $wv = sort $wv "x" "asc" }}
+        {{/* Drop oldest bin when snapshot count mod 7 != 0 — it's a partial week that looks like a cliff. */}}
+        {{ if and (gt (len $wv) 1) (ne (mod (len $dv) 7) 0) }}{{ $wv = after 1 $wv }}{{ end }}
         {{ range $wv }}{{ $allWeeks = $allWeeks | union (slice .x) }}{{ end }}
         {{ $allDates = $allDates | union $dates }}
         {{ $color := index $chartColors (mod $i (len $chartColors)) }}

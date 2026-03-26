@@ -7,21 +7,41 @@
  */
 
 import type { PackageConfig, DownloadMetrics, DailySnapshot } from '../types/index.js';
-import { fetchNpmDaily } from './npm.js';
+import { fetchNpmDaily, fetchNpmRange } from './npm.js';
 import { fetchPypiRecent } from './pypi.js';
 import { fetchNugetTotal } from './nuget.js';
+
+const DAY_MS = 86400000;
+
+function addDays(date: string, n: number): string {
+  return new Date(new Date(date).getTime() + n * DAY_MS).toISOString().split('T')[0];
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / DAY_MS);
+}
 
 export async function fetchDownloads(
   config: PackageConfig,
   prevSnapshot?: DailySnapshot
 ): Promise<DownloadMetrics> {
   const prev = prevSnapshot?.downloads;
+  const prevDate = prevSnapshot?.date;
+  const today = new Date().toISOString().split('T')[0];
 
   switch (config.registry) {
     case 'npm': {
-      const daily = await fetchNpmDaily(config.name);
-      const total = prev?.total !== undefined ? prev.total + daily : undefined;
-      return { daily, total };
+      // Use the range API keyed by date so we never re-add days already in prev
+      // (the /point/last-day/ endpoint lags and the backfill already stored
+      // that day under its own date → running-sum double-count).
+      if (prevDate && prev?.total !== undefined) {
+        const range = await fetchNpmRange(config.name, addDays(prevDate, 1), today);
+        const delta = [...range.values()].reduce((a, b) => a + b, 0);
+        const dates = [...range.keys()].sort();
+        const daily = dates.length ? range.get(dates[dates.length - 1]) : undefined;
+        return { daily, total: prev.total + delta };
+      }
+      return { daily: await fetchNpmDaily(config.name) };
     }
 
     case 'pypi': {
@@ -32,8 +52,12 @@ export async function fetchDownloads(
 
     case 'nuget': {
       const total = await fetchNugetTotal(config.name);
-      const daily = prev?.total !== undefined ? total - prev.total : undefined;
-      return { daily, total };
+      if (prev?.total === undefined || !prevDate) return { total };
+      const gap = daysBetween(prevDate, today);
+      const delta = Math.max(0, total - prev.total);
+      // Gaps > 1 day mean the diff spans multiple days — report per-day average
+      // so the daily chart doesn't spike.
+      return { daily: gap > 0 ? Math.round(delta / gap) : undefined, total };
     }
   }
 }
