@@ -574,14 +574,23 @@ export interface DownloadMetrics {
 }
 
 /**
- * Per-version download breakdown (PyPI only, sourced from BigQuery).
- * Written to data/repos/<owner>/<repo>/versions.json by the daily bigquery workflow.
+ * Per-version download breakdown. Written to data/repos/<owner>/<repo>/versions.json.
+ * PyPI via BigQuery gives true daily; npm and NuGet snapshot their own APIs
+ * each run and accumulate history over time.
  */
 export interface VersionDownloadsData {
   lastUpdated: string;
+  /**
+   * What each daily[date][version] value represents. Registries expose
+   * different granularities:
+   *   - daily:      true per-day count (PyPI via BigQuery)
+   *   - last_week:  7-day rolling sum (npm /versions/{pkg}/last-week)
+   *   - cumulative: all-time running total (NuGet search API)
+   */
+  unit: 'daily' | 'last_week' | 'cumulative';
   /** version -> cumulative count within the tracked window */
   totals: Record<string, number>;
-  /** YYYY-MM-DD -> version -> daily count */
+  /** YYYY-MM-DD -> version -> count (interpretation per `unit`) */
   daily: Record<string, Record<string, number>>;
 }
 

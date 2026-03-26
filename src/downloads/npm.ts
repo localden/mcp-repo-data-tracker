@@ -36,3 +36,15 @@ export async function fetchNpmRange(pkg: string, start: string, end: string): Pr
   const data = (await res.json()) as NpmRangeResponse;
   return new Map(data.downloads.map((d) => [d.day, d.downloads]));
 }
+
+/**
+ * Per-version downloads over the last 7 days. npm doesn't expose per-version
+ * daily history, only this rolling-week snapshot — we accumulate our own
+ * time series by storing it each run.
+ */
+export async function fetchNpmVersions(pkg: string): Promise<Record<string, number>> {
+  const res = await fetch(`https://api.npmjs.org/versions/${encodeURIComponent(pkg)}/last-week`);
+  if (!res.ok) throw new Error(`npm versions API ${res.status} for ${pkg}`);
+  const data = (await res.json()) as { downloads: Record<string, number> };
+  return data.downloads;
+}

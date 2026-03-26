@@ -59,7 +59,7 @@ export async function fetchPypiVersions(pkg: string, since: string): Promise<Ver
     totals[row.version] = (totals[row.version] ?? 0) + Number(row.downloads);
   }
 
-  return { lastUpdated: new Date().toISOString(), daily, totals };
+  return { lastUpdated: new Date().toISOString(), unit: 'daily', daily, totals };
 }
 
 /**
@@ -77,7 +77,7 @@ export function mergeVersionData(
       totals[v] = (totals[v] ?? 0) + n;
     }
   }
-  return { lastUpdated: fresh.lastUpdated, daily, totals };
+  return { lastUpdated: fresh.lastUpdated, unit: fresh.unit, daily, totals };
 }
 
 /**
