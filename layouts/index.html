@@ -25,6 +25,7 @@
   {{ $dlWeeklySeries := slice }}
   {{ $dlTotalSeries := slice }}
   {{ $allDates := slice }}
+  {{ $allWeeks := slice }}
   {{ $anyInbound := false }}
   {{ $anyDownloads := false }}
 
@@ -102,19 +103,29 @@
       {{ if $rsnaps }}
         {{ $entries := slice }}
         {{ range $fn, $d := $rsnaps }}
-          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlWeekly" (index $d "downloads" "last_week") "dlTotal" (index $d "downloads" "total")) }}
+          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlTotal" (index $d "downloads" "total")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
-        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $wv := slice }}{{ $tv := slice }}
+        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $tv := slice }}
+        {{ $weekBins := dict }}
         {{ range $sorted }}
           {{ $dates = $dates | append .date }}
           {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
           {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
           {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
-          {{ if .dlDaily }}{{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}{{ end }}
-          {{ if .dlWeekly }}{{ $wv = $wv | append (dict "x" .date "y" .dlWeekly) }}{{ end }}
+          {{ if .dlDaily }}
+            {{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}
+            {{ $t := time.AsTime .date }}
+            {{ $offset := mod (add (int $t.Weekday) 6) 7 }}
+            {{ $key := ($t.Add (time.ParseDuration (printf "-%dh" (mul 24 $offset)))).Format "2006-01-02" }}
+            {{ $weekBins = merge $weekBins (dict $key (add (index $weekBins $key | default 0) .dlDaily)) }}
+          {{ end }}
           {{ if .dlTotal }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
         {{ end }}
+        {{ $wv := slice }}
+        {{ range $k, $v := $weekBins }}{{ $wv = $wv | append (dict "x" $k "y" $v) }}{{ end }}
+        {{ $wv = sort $wv "x" "asc" }}
+        {{ range $wv }}{{ $allWeeks = $allWeeks | union (slice .x) }}{{ end }}
         {{ $allDates = $allDates | union $dates }}
         {{ $color := index $chartColors (mod $i (len $chartColors)) }}
         {{ $label := $rc.name | default (printf "%s/%s" $rc.owner $rc.repo) }}
@@ -336,8 +347,8 @@
         {{ end }}
         {{ if $dlWeeklySeries }}
         <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-          <h3 class="text-xs font-medium opacity-70 mb-3">Weekly Downloads Over Time</h3>
-          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $dlWeeklySeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+          <h3 class="text-xs font-medium opacity-70 mb-3">Weekly Downloads</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ (sort $allWeeks) | jsonify }},"datasets":{{ $dlWeeklySeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
         </div>
         {{ end }}
         {{ if $dlTotalSeries }}
