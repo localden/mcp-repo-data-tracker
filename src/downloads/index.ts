@@ -25,7 +25,9 @@ export async function fetchDownloads(
     }
 
     case 'pypi': {
-      return await fetchPypiRecent(config.name);
+      const recent = await fetchPypiRecent(config.name);
+      const total = prev?.total !== undefined ? prev.total + recent.daily : undefined;
+      return { ...recent, total };
     }
 
     case 'nuget': {

@@ -39,7 +39,15 @@ async function fetchHistory(
     }
     case 'pypi': {
       const daily = await fetchPypiRange(pkg.name);
-      return { daily };
+      // pypistats caps at ~6 months, so this cumulative is "since pypistats retention
+      // window" not true all-time. Still useful as a trend baseline.
+      let running = 0;
+      const cumulative = new Map<string, number>();
+      for (const date of [...daily.keys()].sort()) {
+        running += daily.get(date) ?? 0;
+        cumulative.set(date, running);
+      }
+      return { daily, cumulative };
     }
     case 'nuget':
       return { daily: new Map() };
