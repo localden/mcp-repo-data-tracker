@@ -325,17 +325,19 @@ async function aggregateSEPOnly(args: CliArgs): Promise<void> {
  * jq-patches it into metrics.json and today's snapshot.
  */
 async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
-  const { dryRun, configPath } = args;
+  const { dryRun, configPath, registry } = args;
   const startTime = Date.now();
 
   const config = await loadConfig(configPath);
-  header('Downloads-Only Aggregation');
+  header(`Downloads-Only Aggregation${registry ? ` (${registry})` : ''}`);
 
+  let failed = false;
   for (const repoConfig of config.repositories) {
     if (!repoConfig.package) continue;
     // PyPI is sourced from BigQuery (--only=bigquery); skip it here so we
     // have a single source of truth.
     if (repoConfig.package.registry === 'pypi') continue;
+    if (registry && repoConfig.package.registry !== registry) continue;
     const dlSpinner = spinner(`${repoConfig.owner}/${repoConfig.repo} (${repoConfig.package.registry})`).start();
     try {
       const recent = await loadRecentSnapshots(repoConfig, 30);
@@ -352,11 +354,15 @@ async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
       dlSpinner.succeed(`${repoConfig.package.name}: ${headline}`);
     } catch (err) {
       dlSpinner.fail(`${repoConfig.package.name}: ${(err as Error).message}`);
+      failed = true;
     }
   }
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
   newline();
+  // With --registry the job covers one ecosystem; a failure should surface
+  // as a red subjob rather than being swallowed.
+  if (failed && registry) throw new Error(`${registry} download fetch failed`);
   success(`Downloads aggregation complete in ${style.bold(duration + 's')}`);
 }
 
