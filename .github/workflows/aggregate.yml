@@ -51,7 +51,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-npm
-          path: data/repos/**/downloads.json
+          path: |
+            data/repos/**/downloads.json
+            data/repos/**/versions.json
           retention-days: 1
           if-no-files-found: ignore
 
@@ -70,7 +72,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-nuget
-          path: data/repos/**/downloads.json
+          path: |
+            data/repos/**/downloads.json
+            data/repos/**/versions.json
           retention-days: 1
           if-no-files-found: ignore
 

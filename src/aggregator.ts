@@ -12,6 +12,8 @@ import { fetchRepoStats } from './github/repo.js';
 import { fetchCommits } from './github/commits.js';
 import { fetchDownloads } from './downloads/index.js';
 import { fetchPypiVersions, mergeVersionData, deriveDownloadMetrics } from './downloads/bigquery.js';
+import { fetchNpmVersions } from './downloads/npm.js';
+import { fetchNugetVersions } from './downloads/nuget.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
 import { buildIssueTiers } from './metrics/issueTiers.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
@@ -32,7 +34,7 @@ import {
   loadVersionDownloads,
 } from './data/writers.js';
 import { loadConfig, createDefaultConfig } from './config/loader.js';
-import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics } from './types/index.js';
+import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics, VersionDownloadsData } from './types/index.js';
 import {
   spinner,
   header,
@@ -350,8 +352,32 @@ async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
         downloads.last_month = recent.slice(0, 29).reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
       }
       if (!dryRun) await writeDownloadsSidecar(downloads, repoConfig);
+
+      // Per-version snapshot: npm/nuget don't expose daily history, so we
+      // build our own by storing today's API response in versions.json.
+      const byVersion = repoConfig.package.registry === 'npm'
+        ? await fetchNpmVersions(repoConfig.package.name)
+        : repoConfig.package.registry === 'nuget'
+          ? await fetchNugetVersions(repoConfig.package.name)
+          : null;
+      if (byVersion) {
+        const existing = await loadVersionDownloads(repoConfig);
+        const today = new Date().toISOString().split('T')[0];
+        const unit = repoConfig.package.registry === 'npm' ? 'last_week' : 'cumulative';
+        const merged: VersionDownloadsData = {
+          lastUpdated: new Date().toISOString(),
+          unit,
+          daily: { ...existing?.daily, [today]: byVersion },
+          // For non-daily units the latest snapshot IS the totals — summing
+          // across dates would double-count overlapping windows.
+          totals: byVersion,
+        };
+        if (!dryRun) await writeVersionDownloads(merged, repoConfig);
+      }
+
       const headline = downloads.daily !== undefined ? `${formatNumber(downloads.daily)}/day` : `${formatNumber(downloads.total ?? 0)} total`;
-      dlSpinner.succeed(`${repoConfig.package.name}: ${headline}`);
+      const vCount = byVersion ? `, ${Object.keys(byVersion).length} versions` : '';
+      dlSpinner.succeed(`${repoConfig.package.name}: ${headline}${vCount}`);
     } catch (err) {
       dlSpinner.fail(`${repoConfig.package.name}: ${(err as Error).message}`);
       failed = true;
