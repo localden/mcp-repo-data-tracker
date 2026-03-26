@@ -36,14 +36,10 @@ jobs:
           path: data/
           retention-days: 1
 
-  downloads:
-    name: ${{ matrix.registry }} downloads
+  npm:
+    name: npm downloads
     runs-on: ubuntu-latest
     continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        registry: [npm, nuget]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,17 +47,35 @@ jobs:
           node-version: '20'
       - run: npm install
       - run: npm run build
-      - name: Fetch ${{ matrix.registry }} stats
-        run: npm run aggregate -- --only=downloads --registry=${{ matrix.registry }}
+      - run: npm run aggregate -- --only=downloads --registry=npm
       - uses: actions/upload-artifact@v4
         with:
-          name: downloads-${{ matrix.registry }}
+          name: downloads-npm
+          path: data/repos/**/downloads.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  nuget:
+    name: nuget downloads
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - run: npm run aggregate -- --only=downloads --registry=nuget
+      - uses: actions/upload-artifact@v4
+        with:
+          name: downloads-nuget
           path: data/repos/**/downloads.json
           retention-days: 1
           if-no-files-found: ignore
 
   pypi:
-    name: pypi downloads (BigQuery)
+    name: pypi downloads
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -75,8 +89,7 @@ jobs:
         run: |
           echo '${{ secrets.BQ_KEY }}' > /tmp/bq-key.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq-key.json" >> $GITHUB_ENV
-      - name: Query BigQuery
-        run: npm run aggregate -- --only=bigquery
+      - run: npm run aggregate -- --only=bigquery
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-pypi
@@ -120,7 +133,7 @@ jobs:
   commit:
     name: Merge & commit
     runs-on: ubuntu-latest
-    needs: [github, downloads, pypi, classifier]
+    needs: [github, npm, nuget, pypi, classifier]
     if: always() && needs.github.result == 'success'
     outputs:
       changes: ${{ steps.commit.outputs.changes }}
