@@ -27,7 +27,7 @@
       (built by <a href="https://den.dev" target="_blank" rel="noopener" class="font-medium text-base-content/80 hover:text-base-content transition-colors">Den Delimarsky</a>)
     </span>
     {{ if $timestamp }}
-    <span>Data updated <span class="font-medium text-base-content/80">{{ $timestamp | time.Format "Jan 2, 2006 at 3:04 PM" }}</span></span>
+    <span>Data updated <span class="font-medium text-base-content/80">{{ $timestamp | time.Format "Jan 2, 2006 at 3:04 PM" }} UTC</span></span>
     {{ end }}
     {{ with .GitInfo }}
     <code class="font-mono px-1.5 py-0.5 bg-base-200 rounded text-[10px]"><a href="https://github.com/localden/mcp-repo-data-tracker/commit/{{ .Hash }}" target="_blank" rel="noopener" class="hover:text-base-content transition-colors">{{ .AbbreviatedHash }}</a></code>
