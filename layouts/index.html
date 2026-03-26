@@ -67,13 +67,15 @@
       {{ if or $hasAct $hasIss }}{{ $anyInbound = true }}{{ end }}
 
       {{ $dl := $rm.downloads }}
-      {{ $dlDailySpark := slice }}
+      {{ $dlDaily := 0 }}
       {{ $dlTrend := 0.0 }}
       {{ $dlWeekly := $dl.last_week | default 0 }}
       {{ if $dl }}
         {{ $anyDownloads = true }}
-        {{ $dlDailySpark = partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 8) }}
-        {{ $dlTrend = partial "calc-trend.html" (dict "sparkline" $dlDailySpark) }}
+        {{/* Daily from most-recent snapshot with a value — registry APIs lag 1-2 days so metrics.json's daily is often undefined. */}}
+        {{ $spark := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 2) }}
+        {{ if $spark }}{{ $dlDaily = index $spark (sub (len $spark) 1) }}{{ end }}
+        {{ $dlTrend = partial "calc-trend.html" (dict "sparkline" $spark) }}
         {{ if not $dlWeekly }}
           {{ $wk := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 7) }}
           {{ range $wk }}{{ $dlWeekly = add $dlWeekly . }}{{ end }}
@@ -101,7 +103,7 @@
         "p0Breach" (cond (not (not $hasIss)) $ri.summary.sla.p0_7d_breach 0)
         "p1Breach" (cond (not (not $hasIss)) $ri.summary.sla.p1_90d_breach 0)
         "hasDl" (not (not $dl))
-        "dlDaily" ($dl.daily | default 0)
+        "dlDaily" $dlDaily
         "dlWeekly" $dlWeekly
         "dlTotal" ($dl.total | default 0)
         "dlTrend" $dlTrend
@@ -315,7 +317,7 @@
             <tr>
               <th class="bg-base-200">SDK</th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Daily<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads yesterday. Delta shows change over the last 7 days.<br>NuGet derives this from cumulative-total diffs, so C# needs two days of data before a value appears.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Daily<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads on the most recent day with data. Delta compares to the day before.<br>NuGet derives this from cumulative-total diffs, so C# needs two days of data before a value appears.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
                 <span class="inline-flex items-center gap-1">Weekly<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
