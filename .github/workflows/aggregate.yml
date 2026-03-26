@@ -37,7 +37,7 @@ jobs:
           retention-days: 1
 
   downloads:
-    name: Package downloads
+    name: Package downloads (npm/nuget)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -53,6 +53,32 @@ jobs:
         with:
           name: downloads-data
           path: data/repos/**/downloads.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  bigquery:
+    name: PyPI downloads (BigQuery)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - name: Write BigQuery credentials
+        run: |
+          echo '${{ secrets.BQ_KEY }}' > /tmp/bq-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq-key.json" >> $GITHUB_ENV
+      - name: Query BigQuery
+        run: npm run aggregate -- --only=bigquery
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bigquery-data
+          path: |
+            data/repos/**/versions.json
+            data/repos/**/downloads.json
           retention-days: 1
           if-no-files-found: ignore
 
@@ -90,7 +116,7 @@ jobs:
   commit:
     name: Merge & commit
     runs-on: ubuntu-latest
-    needs: [github, downloads, classifier]
+    needs: [github, downloads, bigquery, classifier]
     if: always() && needs.github.result == 'success'
     outputs:
       changes: ${{ steps.commit.outputs.changes }}
@@ -112,16 +138,21 @@ jobs:
           # Patch downloads.json sidecars into metrics + today's snapshot.
           # upload-artifact strips everything before the first glob wildcard, so
           # the artifact root is <owner>/<repo>/... — re-add the data/repos/ prefix.
-          if [ -d artifacts/downloads-data ]; then
-            find artifacts/downloads-data -name downloads.json | while read -r dl; do
-              rel=${dl#artifacts/downloads-data/}
+          for art in downloads-data bigquery-data; do
+            [ -d "artifacts/$art" ] || continue
+            find "artifacts/$art" -name downloads.json | while read -r dl; do
+              rel=${dl#artifacts/$art/}
               dir=data/repos/${rel%/downloads.json}
               metrics="$dir/metrics.json"
               snap="$dir/snapshots/$today.json"
               [ -f "$metrics" ] && jq --slurpfile d "$dl" '.downloads = $d[0]' "$metrics" > "$metrics.tmp" && mv "$metrics.tmp" "$metrics"
               [ -f "$snap" ]    && jq --slurpfile d "$dl" '.downloads = $d[0]' "$snap"    > "$snap.tmp"    && mv "$snap.tmp" "$snap"
             done
-          fi
+            find "artifacts/$art" -name versions.json | while read -r vf; do
+              rel=${vf#artifacts/$art/}
+              cp "$vf" "data/repos/${rel}"
+            done
+          done
 
           # Patch actionability.json into today's snapshot (same pattern)
           if [ -d artifacts/classifier-data ]; then
