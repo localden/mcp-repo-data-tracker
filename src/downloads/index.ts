@@ -37,8 +37,15 @@ export async function fetchDownloads(
       if (prevDate && prev?.total !== undefined) {
         const range = await fetchNpmRange(config.name, addDays(prevDate, 1), today);
         const delta = [...range.values()].reduce((a, b) => a + b, 0);
+        // npm lags ~1-2 days; trailing zeros mean "not posted yet", not zero
+        // downloads. Report the most recent nonzero day so the chart doesn't
+        // cliff-dive while we wait for the API to catch up.
         const dates = [...range.keys()].sort();
-        const daily = dates.length ? range.get(dates[dates.length - 1]) : undefined;
+        let daily: number | undefined;
+        for (let i = dates.length - 1; i >= 0; i--) {
+          const v = range.get(dates[i]);
+          if (v && v > 0) { daily = v; break; }
+        }
         return { daily, total: prev.total + delta };
       }
       return { daily: await fetchNpmDaily(config.name) };
