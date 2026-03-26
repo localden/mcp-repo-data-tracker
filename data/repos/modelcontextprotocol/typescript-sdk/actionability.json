@@ -1,6 +1,6 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-03-26T20:55:10.477363+00:00",
+  "lastUpdated": "2026-03-26T21:20:47.147633+00:00",
   "summary": {
     "actionable_count": 88,
     "auth_count": 18,
@@ -136,8 +136,8 @@
               "author": "jnMetaCode",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1640",
               "state": "needs-merge",
-              "reason": "[llm] CI is green, maintainer (felixweinberger) has approved with LGTM, Claude's review is positive, no outstanding concerns. Ready to merge.",
-              "short_reason": "[llm] CI is green, maintainer (felixweinberger) has approved with LGTM, Claude's review is positive, no outstanding concerns. Ready to merge.",
+              "reason": "approved 0d ago, green",
+              "short_reason": "approved 0d ago, green",
               "age_days": 19.7,
               "additions": 56,
               "deletions": 5,
@@ -166,15 +166,15 @@
           "effort_min": 8,
           "prs": [
             {
-              "number": 1083,
-              "title": "[v1.x] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
+              "number": 1396,
+              "title": "[v2] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
               "author": "mgyarmathy",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1083",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
               "state": "duplicate-cluster",
-              "reason": "cluster primary for issue #149 (2 PRs)",
-              "short_reason": "cluster primary for issue #149 (2 PRs)",
-              "age_days": 141.0,
-              "additions": 117,
+              "reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+              "short_reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+              "age_days": 69.1,
+              "additions": 119,
               "deletions": 15,
               "is_auth": false,
               "is_maintainer": false,
@@ -182,26 +182,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "149",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and each touches 2 files, so CI and diff-size criteria are tied. The sole remaining tiebreaker in the stated preference order is \"oldest,\" which is #1083 (lower PR number, targeting v1.x). #1396 targets the v2 branch; if the v2 fix is still needed, it can be re-opened or cherry-picked from #1083's approach once the issue is resolved on the v1.x line."
-            },
-            {
-              "number": 1563,
-              "title": "fix: inline local $ref in tool inputSchema for LLM consumption",
-              "author": "gogakoreli",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1563",
-              "state": "duplicate-cluster",
-              "reason": "cluster primary for issue #1562 (2 PRs)",
-              "short_reason": "cluster primary for issue #1562 (2 PRs)",
-              "age_days": 34.0,
-              "additions": 466,
-              "deletions": 1,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "1562",
-              "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI, so the tiebreaker is test coverage then diff size. #1563 touches 4 files vs. #1671's 2 files \u2014 the two extra files in #1563 are a concrete indicator that test coverage was included alongside the implementation fix. #1671's 2-file diff, while smaller, is more likely to be implementation-only with no tests. On the final tiebreaker (oldest), #1563 also wins. The approach difference (fixing at the inputSchema layer vs. the schemaToJson layer) cannot be evaluated without CI results, so file count and age are the deciding concrete signals."
+              "cluster_pick_reason": "Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision."
             },
             {
               "number": 1648,
@@ -209,8 +190,8 @@
               "author": "Rootlogger",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
-              "short_reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
+              "reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
               "age_days": 17.2,
               "additions": 15,
               "deletions": 6,
@@ -220,7 +201,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:1648",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1648's title correctly describes the change made (updating package name to @modelcontextprotocol/sdk). PR #1649 has an identical diff but a mismatched title referencing a Hono namespace change that is not present in its diff."
+              "cluster_pick_reason": "PR #1648 was opened first and its title accurately describes the actual change made (updating the package name to @modelcontextprotocol/sdk). PR #1649's title references a Hono namespace update that does not appear anywhere in its diff, suggesting it may have been opened in error or with the wrong branch."
             },
             {
               "number": 1670,
@@ -228,8 +209,8 @@
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-              "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
+              "reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
+              "short_reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
               "age_days": 14.6,
               "additions": 103,
               "deletions": 0,
@@ -239,7 +220,26 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:1443",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1670 includes the full implementation (wires `options.scope` into `this._clientMetadata.scope` in the constructor) and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field without any implementation."
+              "cluster_pick_reason": "PR #1670 includes the actual implementation (setting `_clientMetadata.scope` in the constructor) whereas PR #1443 only adds the interface field with no wiring \u2014 the scope would be silently ignored. PR #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
+            },
+            {
+              "number": 1671,
+              "title": "fix: inline $ref pointers in schemaToJson for self-contained tool schemas",
+              "author": "Vadaski",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
+              "state": "duplicate-cluster",
+              "reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+              "short_reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+              "age_days": 14.6,
+              "additions": 118,
+              "deletions": 1,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": "1562",
+              "cluster_pick": true,
+              "cluster_pick_reason": "CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order."
             },
             {
               "number": 1676,
@@ -249,7 +249,7 @@
               "state": "duplicate-cluster",
               "reason": "cluster primary for issue #430 (2 PRs)",
               "short_reason": "cluster primary for issue #430 (2 PRs)",
-              "age_days": 13.4,
+              "age_days": 13.5,
               "additions": 12,
               "deletions": 1,
               "is_auth": false,
@@ -258,7 +258,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "430",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. Falling back to diff size and age: #1676 touches 3 files vs #1761's 4 files, making it the smaller, more focused change, and it was opened earlier (lower PR number). #1761's title (\"convert remaining capability throws\") implies a broader scope, which accounts for the extra file. With no CI signal to differentiate, #1676 is preferred on smallest focused diff and oldest criteria."
+              "cluster_pick_reason": "CI status is unknown for both PRs, so that criterion is a tie. On diff size: #1676 is +12/-1 across 3 files vs #1761's +30/-12 across 4 files \u2014 #1676 is the smaller, more focused change. On age: #1676 was opened 13 days earlier. Both tiebreakers favor #1676. Note that #1761's title (\"convert *remaining* capability throws\") implies it may cover throw sites beyond assertCapability() that #1676 does not. If that is the case, a follow-up PR addressing those remaining sites would still be needed after merging #1676."
             },
             {
               "number": 1755,
@@ -266,9 +266,9 @@
               "author": "MrGDCrazy",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1755",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-              "short_reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-              "age_days": 1.2,
+              "reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+              "short_reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+              "age_days": 1.3,
               "additions": 399,
               "deletions": 167,
               "is_auth": true,
@@ -277,45 +277,26 @@
               "sla_kind": null,
               "cluster_id": "sem:1750",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') suggests it carries additional CI configuration changes (pnpm setup) beyond the changeset deletions, making it the most complete of the three. PRs #1750 and #1756 appear to be narrower patches with no distinguishing scope visible in the truncated diffs."
+              "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') has a descriptive, purpose-driven branch name suggesting it is part of a broader CI improvement effort, while #1750 ('patch 4') and #1756 ('patch 2') appear to be ad-hoc iterations of the same change with no additional distinguishing scope visible in the diffs."
             }
           ],
           "clusters": [
             {
               "id": "149",
               "kind": "issue",
-              "pick": 1083,
-              "pick_reason": "Both PRs have unknown CI status and each touches 2 files, so CI and diff-size criteria are tied. The sole remaining tiebreaker in the stated preference order is \"oldest,\" which is #1083 (lower PR number, targeting v1.x). #1396 targets the v2 branch; if the v2 fix is still needed, it can be re-opened or cherry-picked from #1083's approach once the issue is resolved on the v1.x line.",
+              "pick": 1396,
+              "pick_reason": "Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
               "members": [
                 {
                   "number": 1083,
                   "title": "[v1.x] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
                   "author": "mgyarmathy",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1083",
-                  "state": "duplicate-cluster",
-                  "reason": "cluster primary for issue #149 (2 PRs)",
-                  "short_reason": "cluster primary for issue #149 (2 PRs)",
+                  "state": "duplicate-cluster-member",
+                  "reason": "shares issue #149; #1396 is the pick",
+                  "short_reason": "shares issue #149; #1396 is the pick",
                   "age_days": 141.0,
                   "additions": 117,
-                  "deletions": 15,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "149",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and each touches 2 files, so CI and diff-size criteria are tied. The sole remaining tiebreaker in the stated preference order is \"oldest,\" which is #1083 (lower PR number, targeting v1.x). #1396 targets the v2 branch; if the v2 fix is still needed, it can be re-opened or cherry-picked from #1083's approach once the issue is resolved on the v1.x line."
-                },
-                {
-                  "number": 1396,
-                  "title": "[v2] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
-                  "author": "mgyarmathy",
-                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
-                  "state": "duplicate-cluster-member",
-                  "reason": "shares linked issue #149 with #1083",
-                  "short_reason": "shares linked issue #149 with #1083",
-                  "age_days": 69.1,
-                  "additions": 119,
                   "deletions": 15,
                   "is_auth": false,
                   "is_maintainer": false,
@@ -324,6 +305,25 @@
                   "cluster_id": "149",
                   "cluster_pick": false,
                   "cluster_pick_reason": ""
+                },
+                {
+                  "number": 1396,
+                  "title": "[v2] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
+                  "author": "mgyarmathy",
+                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+                  "short_reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+                  "age_days": 69.1,
+                  "additions": 119,
+                  "deletions": 15,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
+                  "cluster_id": "149",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/149"
@@ -331,38 +331,19 @@
             {
               "id": "1562",
               "kind": "issue",
-              "pick": 1563,
-              "pick_reason": "Both PRs have unknown CI, so the tiebreaker is test coverage then diff size. #1563 touches 4 files vs. #1671's 2 files \u2014 the two extra files in #1563 are a concrete indicator that test coverage was included alongside the implementation fix. #1671's 2-file diff, while smaller, is more likely to be implementation-only with no tests. On the final tiebreaker (oldest), #1563 also wins. The approach difference (fixing at the inputSchema layer vs. the schemaToJson layer) cannot be evaluated without CI results, so file count and age are the deciding concrete signals.",
+              "pick": 1671,
+              "pick_reason": "CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
               "members": [
                 {
                   "number": 1563,
                   "title": "fix: inline local $ref in tool inputSchema for LLM consumption",
                   "author": "gogakoreli",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1563",
-                  "state": "duplicate-cluster",
-                  "reason": "cluster primary for issue #1562 (2 PRs)",
-                  "short_reason": "cluster primary for issue #1562 (2 PRs)",
+                  "state": "duplicate-cluster-member",
+                  "reason": "shares issue #1562; #1671 is the pick",
+                  "short_reason": "shares issue #1562; #1671 is the pick",
                   "age_days": 34.0,
                   "additions": 466,
-                  "deletions": 1,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "1562",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI, so the tiebreaker is test coverage then diff size. #1563 touches 4 files vs. #1671's 2 files \u2014 the two extra files in #1563 are a concrete indicator that test coverage was included alongside the implementation fix. #1671's 2-file diff, while smaller, is more likely to be implementation-only with no tests. On the final tiebreaker (oldest), #1563 also wins. The approach difference (fixing at the inputSchema layer vs. the schemaToJson layer) cannot be evaluated without CI results, so file count and age are the deciding concrete signals."
-                },
-                {
-                  "number": 1671,
-                  "title": "fix: inline $ref pointers in schemaToJson for self-contained tool schemas",
-                  "author": "Vadaski",
-                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
-                  "state": "duplicate-cluster-member",
-                  "reason": "shares linked issue #1562 with #1563",
-                  "short_reason": "shares linked issue #1562 with #1563",
-                  "age_days": 14.5,
-                  "additions": 118,
                   "deletions": 1,
                   "is_auth": false,
                   "is_maintainer": false,
@@ -371,6 +352,25 @@
                   "cluster_id": "1562",
                   "cluster_pick": false,
                   "cluster_pick_reason": ""
+                },
+                {
+                  "number": 1671,
+                  "title": "fix: inline $ref pointers in schemaToJson for self-contained tool schemas",
+                  "author": "Vadaski",
+                  "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+                  "short_reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+                  "age_days": 14.6,
+                  "additions": 118,
+                  "deletions": 1,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
+                  "cluster_id": "1562",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -379,7 +379,7 @@
               "id": "430",
               "kind": "issue",
               "pick": 1676,
-              "pick_reason": "Both PRs have unknown CI status. Falling back to diff size and age: #1676 touches 3 files vs #1761's 4 files, making it the smaller, more focused change, and it was opened earlier (lower PR number). #1761's title (\"convert remaining capability throws\") implies a broader scope, which accounts for the extra file. With no CI signal to differentiate, #1676 is preferred on smallest focused diff and oldest criteria.",
+              "pick_reason": "CI status is unknown for both PRs, so that criterion is a tie. On diff size: #1676 is +12/-1 across 3 files vs #1761's +30/-12 across 4 files \u2014 #1676 is the smaller, more focused change. On age: #1676 was opened 13 days earlier. Both tiebreakers favor #1676. Note that #1761's title (\"convert *remaining* capability throws\") implies it may cover throw sites beyond assertCapability() that #1676 does not. If that is the case, a follow-up PR addressing those remaining sites would still be needed after merging #1676.",
               "members": [
                 {
                   "number": 1676,
@@ -389,7 +389,7 @@
                   "state": "duplicate-cluster",
                   "reason": "cluster primary for issue #430 (2 PRs)",
                   "short_reason": "cluster primary for issue #430 (2 PRs)",
-                  "age_days": 13.4,
+                  "age_days": 13.5,
                   "additions": 12,
                   "deletions": 1,
                   "is_auth": false,
@@ -398,7 +398,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "430",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. Falling back to diff size and age: #1676 touches 3 files vs #1761's 4 files, making it the smaller, more focused change, and it was opened earlier (lower PR number). #1761's title (\"convert remaining capability throws\") implies a broader scope, which accounts for the extra file. With no CI signal to differentiate, #1676 is preferred on smallest focused diff and oldest criteria."
+                  "cluster_pick_reason": "CI status is unknown for both PRs, so that criterion is a tie. On diff size: #1676 is +12/-1 across 3 files vs #1761's +30/-12 across 4 files \u2014 #1676 is the smaller, more focused change. On age: #1676 was opened 13 days earlier. Both tiebreakers favor #1676. Note that #1761's title (\"convert *remaining* capability throws\") implies it may cover throw sites beyond assertCapability() that #1676 does not. If that is the case, a follow-up PR addressing those remaining sites would still be needed after merging #1676."
                 },
                 {
                   "number": 1761,
@@ -426,7 +426,7 @@
               "id": "sem:1443",
               "kind": "semantic",
               "pick": 1670,
-              "pick_reason": "PR #1670 includes the full implementation (wires `options.scope` into `this._clientMetadata.scope` in the constructor) and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field without any implementation.",
+              "pick_reason": "PR #1670 includes the actual implementation (setting `_clientMetadata.scope` in the constructor) whereas PR #1443 only adds the interface field with no wiring \u2014 the scope would be silently ignored. PR #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title.",
               "members": [
                 {
                   "number": 1443,
@@ -434,8 +434,8 @@
                   "author": "NSeydoux",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-                  "short_reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+                  "reason": "[llm] duplicates #1670: Add `scope` option to client credentials providers so scopes can be passed during token requests",
+                  "short_reason": "[llm] duplicates #1670: Add `scope` option to client credentials providers so scopes can be passed during token requests",
                   "age_days": 52.2,
                   "additions": 120,
                   "deletions": 3,
@@ -453,8 +453,8 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
+                  "reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
                   "age_days": 14.6,
                   "additions": 103,
                   "deletions": 0,
@@ -464,16 +464,16 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:1443",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1670 includes the full implementation (wires `options.scope` into `this._clientMetadata.scope` in the constructor) and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field without any implementation."
+                  "cluster_pick_reason": "PR #1670 includes the actual implementation (setting `_clientMetadata.scope` in the constructor) whereas PR #1443 only adds the interface field with no wiring \u2014 the scope would be silently ignored. PR #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
                 }
               ],
-              "desc": "Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+              "desc": "Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)"
             },
             {
               "id": "sem:1648",
               "kind": "semantic",
               "pick": 1648,
-              "pick_reason": "PR #1648's title correctly describes the change made (updating package name to @modelcontextprotocol/sdk). PR #1649 has an identical diff but a mismatched title referencing a Hono namespace change that is not present in its diff.",
+              "pick_reason": "PR #1648 was opened first and its title accurately describes the actual change made (updating the package name to @modelcontextprotocol/sdk). PR #1649's title references a Hono namespace update that does not appear anywhere in its diff, suggesting it may have been opened in error or with the wrong branch.",
               "members": [
                 {
                   "number": 1648,
@@ -481,8 +481,8 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
-                  "short_reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
+                  "reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
                   "age_days": 17.2,
                   "additions": 15,
                   "deletions": 6,
@@ -492,7 +492,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:1648",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1648's title correctly describes the change made (updating package name to @modelcontextprotocol/sdk). PR #1649 has an identical diff but a mismatched title referencing a Hono namespace change that is not present in its diff."
+                  "cluster_pick_reason": "PR #1648 was opened first and its title accurately describes the actual change made (updating the package name to @modelcontextprotocol/sdk). PR #1649's title references a Hono namespace update that does not appear anywhere in its diff, suggesting it may have been opened in error or with the wrong branch."
                 },
                 {
                   "number": 1649,
@@ -500,8 +500,8 @@
                   "author": "Rootlogger",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1648: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk)",
-                  "short_reason": "[llm] duplicates #1648: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk)",
+                  "reason": "[llm] duplicates #1648: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles.",
+                  "short_reason": "[llm] duplicates #1648: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles.",
                   "age_days": 17.2,
                   "additions": 19,
                   "deletions": 10,
@@ -514,13 +514,13 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)"
+              "desc": "Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)"
             },
             {
               "id": "sem:1750",
               "kind": "semantic",
               "pick": 1755,
-              "pick_reason": "PR #1755 ('Ci/add pnpm setup') suggests it carries additional CI configuration changes (pnpm setup) beyond the changeset deletions, making it the most complete of the three. PRs #1750 and #1756 appear to be narrower patches with no distinguishing scope visible in the truncated diffs.",
+              "pick_reason": "PR #1755 ('Ci/add pnpm setup') has a descriptive, purpose-driven branch name suggesting it is part of a broader CI improvement effort, while #1750 ('patch 4') and #1756 ('patch 2') appear to be ad-hoc iterations of the same change with no additional distinguishing scope visible in the diffs.",
               "members": [
                 {
                   "number": 1750,
@@ -528,8 +528,8 @@
                   "author": "MrGDCrazy",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1750",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-                  "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
+                  "reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+                  "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
                   "age_days": 1.3,
                   "additions": 432,
                   "deletions": 167,
@@ -547,9 +547,9 @@
                   "author": "MrGDCrazy",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1755",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-                  "short_reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-                  "age_days": 1.2,
+                  "reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+                  "short_reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+                  "age_days": 1.3,
                   "additions": 399,
                   "deletions": 167,
                   "is_auth": true,
@@ -558,7 +558,7 @@
                   "sla_kind": null,
                   "cluster_id": "sem:1750",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') suggests it carries additional CI configuration changes (pnpm setup) beyond the changeset deletions, making it the most complete of the three. PRs #1750 and #1756 appear to be narrower patches with no distinguishing scope visible in the truncated diffs."
+                  "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') has a descriptive, purpose-driven branch name suggesting it is part of a broader CI improvement effort, while #1750 ('patch 4') and #1756 ('patch 2') appear to be ad-hoc iterations of the same change with no additional distinguishing scope visible in the diffs."
                 },
                 {
                   "number": 1756,
@@ -566,9 +566,9 @@
                   "author": "MrGDCrazy",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1756",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-                  "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-                  "age_days": 1.2,
+                  "reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+                  "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+                  "age_days": 1.3,
                   "additions": 382,
                   "deletions": 167,
                   "is_auth": true,
@@ -580,7 +580,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)"
+              "desc": "All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)"
             }
           ]
         },
@@ -730,7 +730,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 96.7,
+              "age_days": 96.8,
               "additions": 57,
               "deletions": 25,
               "is_auth": false,
@@ -806,7 +806,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 13.9,
+              "age_days": 14.0,
               "additions": 220,
               "deletions": 82,
               "is_auth": false,
@@ -825,7 +825,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 11.5,
+              "age_days": 11.6,
               "additions": 131,
               "deletions": 23,
               "is_auth": false,
@@ -882,7 +882,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 6.2,
+              "age_days": 6.3,
               "additions": 26,
               "deletions": 1,
               "is_auth": true,
@@ -1057,7 +1057,7 @@
               "state": "needs-first-review",
               "reason": "70d since open (SLA breach)",
               "short_reason": "70d",
-              "age_days": 69.9,
+              "age_days": 70.0,
               "additions": 80,
               "deletions": 1,
               "is_auth": false,
@@ -1152,7 +1152,7 @@
               "state": "needs-first-review",
               "reason": "52d since open (SLA breach)",
               "short_reason": "52d",
-              "age_days": 52.2,
+              "age_days": 52.3,
               "additions": 109,
               "deletions": 50,
               "is_auth": false,
@@ -1171,7 +1171,7 @@
               "state": "needs-first-review",
               "reason": "51d since open (SLA breach)",
               "short_reason": "51d",
-              "age_days": 51.0,
+              "age_days": 51.1,
               "additions": 16,
               "deletions": 0,
               "is_auth": true,
@@ -1190,7 +1190,7 @@
               "state": "needs-first-review",
               "reason": "51d since open (SLA breach)",
               "short_reason": "51d",
-              "age_days": 50.8,
+              "age_days": 50.9,
               "additions": 8,
               "deletions": 0,
               "is_auth": false,
@@ -1285,7 +1285,7 @@
               "state": "needs-first-review",
               "reason": "45d since open (SLA breach)",
               "short_reason": "45d",
-              "age_days": 45.3,
+              "age_days": 45.4,
               "additions": 8,
               "deletions": 6,
               "is_auth": false,
@@ -1399,7 +1399,7 @@
               "state": "needs-first-review",
               "reason": "40d since open (SLA breach)",
               "short_reason": "40d",
-              "age_days": 40.0,
+              "age_days": 40.1,
               "additions": 936,
               "deletions": 8,
               "is_auth": false,
@@ -1456,7 +1456,7 @@
               "state": "needs-first-review",
               "reason": "22d since open (SLA breach)",
               "short_reason": "22d",
-              "age_days": 21.9,
+              "age_days": 22.0,
               "additions": 74,
               "deletions": 0,
               "is_auth": false,
@@ -1494,7 +1494,7 @@
               "state": "needs-first-review",
               "reason": "21d since open (SLA breach)",
               "short_reason": "21d",
-              "age_days": 21.2,
+              "age_days": 21.3,
               "additions": 77,
               "deletions": 17,
               "is_auth": true,
@@ -1513,7 +1513,7 @@
               "state": "needs-first-review",
               "reason": "21d since open (SLA breach)",
               "short_reason": "21d",
-              "age_days": 20.7,
+              "age_days": 20.8,
               "additions": 72,
               "deletions": 2,
               "is_auth": false,
@@ -1532,7 +1532,7 @@
               "state": "needs-first-review",
               "reason": "17d since open (SLA breach)",
               "short_reason": "17d",
-              "age_days": 17.4,
+              "age_days": 17.5,
               "additions": 74,
               "deletions": 0,
               "is_auth": false,
@@ -1551,7 +1551,7 @@
               "state": "needs-first-review",
               "reason": "17d since open (SLA breach)",
               "short_reason": "17d",
-              "age_days": 16.9,
+              "age_days": 17.0,
               "additions": 270,
               "deletions": 0,
               "is_auth": false,
@@ -1722,7 +1722,7 @@
               "state": "needs-first-review",
               "reason": "15d since open (SLA breach)",
               "short_reason": "15d",
-              "age_days": 14.6,
+              "age_days": 14.7,
               "additions": 218,
               "deletions": 19,
               "is_auth": false,
@@ -1834,8 +1834,8 @@
               "author": "tiluckdave",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1709",
               "state": "needs-first-review",
-              "reason": "7d since open (SLA breach)",
-              "short_reason": "7d",
+              "reason": "8d since open (SLA breach)",
+              "short_reason": "8d",
               "age_days": 7.5,
               "additions": 18,
               "deletions": 8,
@@ -2247,7 +2247,7 @@
           "state": "stale-draft",
           "reason": "draft idle 21d",
           "short_reason": "draft idle 21d",
-          "age_days": 21.1,
+          "age_days": 21.2,
           "additions": 306,
           "deletions": 8,
           "is_auth": false,
@@ -2524,7 +2524,7 @@
           "state": "stale-draft-pinged",
           "reason": "pinged 175d ago, no response",
           "short_reason": "pinged 175d ago",
-          "age_days": 175.0,
+          "age_days": 175.1,
           "additions": 45,
           "deletions": 3,
           "is_auth": false,
@@ -2542,38 +2542,19 @@
     {
       "id": "149",
       "kind": "issue",
-      "pick": 1083,
-      "pick_reason": "Both PRs have unknown CI status and each touches 2 files, so CI and diff-size criteria are tied. The sole remaining tiebreaker in the stated preference order is \"oldest,\" which is #1083 (lower PR number, targeting v1.x). #1396 targets the v2 branch; if the v2 fix is still needed, it can be re-opened or cherry-picked from #1083's approach once the issue is resolved on the v1.x line.",
+      "pick": 1396,
+      "pick_reason": "Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
       "members": [
         {
           "number": 1083,
           "title": "[v1.x] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
           "author": "mgyarmathy",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1083",
-          "state": "duplicate-cluster",
-          "reason": "cluster primary for issue #149 (2 PRs)",
-          "short_reason": "cluster primary for issue #149 (2 PRs)",
+          "state": "duplicate-cluster-member",
+          "reason": "shares issue #149; #1396 is the pick",
+          "short_reason": "shares issue #149; #1396 is the pick",
           "age_days": 141.0,
           "additions": 117,
-          "deletions": 15,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "149",
-          "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and each touches 2 files, so CI and diff-size criteria are tied. The sole remaining tiebreaker in the stated preference order is \"oldest,\" which is #1083 (lower PR number, targeting v1.x). #1396 targets the v2 branch; if the v2 fix is still needed, it can be re-opened or cherry-picked from #1083's approach once the issue is resolved on the v1.x line."
-        },
-        {
-          "number": 1396,
-          "title": "[v2] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
-          "author": "mgyarmathy",
-          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
-          "state": "duplicate-cluster-member",
-          "reason": "shares linked issue #149 with #1083",
-          "short_reason": "shares linked issue #149 with #1083",
-          "age_days": 69.1,
-          "additions": 119,
           "deletions": 15,
           "is_auth": false,
           "is_maintainer": false,
@@ -2582,6 +2563,25 @@
           "cluster_id": "149",
           "cluster_pick": false,
           "cluster_pick_reason": ""
+        },
+        {
+          "number": 1396,
+          "title": "[v2] fix: Update UriTemplate implementation to handle optional/omitted, out-of-order, and encoded query parameters",
+          "author": "mgyarmathy",
+          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1396",
+          "state": "duplicate-cluster",
+          "reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+          "short_reason": "[llm pick] cluster primary for issue #149: Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision.",
+          "age_days": 69.1,
+          "additions": 119,
+          "deletions": 15,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
+          "cluster_id": "149",
+          "cluster_pick": true,
+          "cluster_pick_reason": "Both PRs are identical in title, file count (2), and CI status (unknown). The sole concrete difference is the target branch: #1083 targets v1.x and #1396 targets v2. Since v2 is the newer active branch and the \"oldest\" tiebreaker applies only when all other factors are equal among PRs on the same branch, #1396 is the appropriate fix to keep for the current codebase. #1083 addresses a legacy branch that would require a separate backport decision."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/149"
@@ -2589,38 +2589,19 @@
     {
       "id": "1562",
       "kind": "issue",
-      "pick": 1563,
-      "pick_reason": "Both PRs have unknown CI, so the tiebreaker is test coverage then diff size. #1563 touches 4 files vs. #1671's 2 files \u2014 the two extra files in #1563 are a concrete indicator that test coverage was included alongside the implementation fix. #1671's 2-file diff, while smaller, is more likely to be implementation-only with no tests. On the final tiebreaker (oldest), #1563 also wins. The approach difference (fixing at the inputSchema layer vs. the schemaToJson layer) cannot be evaluated without CI results, so file count and age are the deciding concrete signals.",
+      "pick": 1671,
+      "pick_reason": "CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
       "members": [
         {
           "number": 1563,
           "title": "fix: inline local $ref in tool inputSchema for LLM consumption",
           "author": "gogakoreli",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1563",
-          "state": "duplicate-cluster",
-          "reason": "cluster primary for issue #1562 (2 PRs)",
-          "short_reason": "cluster primary for issue #1562 (2 PRs)",
+          "state": "duplicate-cluster-member",
+          "reason": "shares issue #1562; #1671 is the pick",
+          "short_reason": "shares issue #1562; #1671 is the pick",
           "age_days": 34.0,
           "additions": 466,
-          "deletions": 1,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "1562",
-          "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI, so the tiebreaker is test coverage then diff size. #1563 touches 4 files vs. #1671's 2 files \u2014 the two extra files in #1563 are a concrete indicator that test coverage was included alongside the implementation fix. #1671's 2-file diff, while smaller, is more likely to be implementation-only with no tests. On the final tiebreaker (oldest), #1563 also wins. The approach difference (fixing at the inputSchema layer vs. the schemaToJson layer) cannot be evaluated without CI results, so file count and age are the deciding concrete signals."
-        },
-        {
-          "number": 1671,
-          "title": "fix: inline $ref pointers in schemaToJson for self-contained tool schemas",
-          "author": "Vadaski",
-          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
-          "state": "duplicate-cluster-member",
-          "reason": "shares linked issue #1562 with #1563",
-          "short_reason": "shares linked issue #1562 with #1563",
-          "age_days": 14.5,
-          "additions": 118,
           "deletions": 1,
           "is_auth": false,
           "is_maintainer": false,
@@ -2629,6 +2610,25 @@
           "cluster_id": "1562",
           "cluster_pick": false,
           "cluster_pick_reason": ""
+        },
+        {
+          "number": 1671,
+          "title": "fix: inline $ref pointers in schemaToJson for self-contained tool schemas",
+          "author": "Vadaski",
+          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1671",
+          "state": "duplicate-cluster",
+          "reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+          "short_reason": "[llm pick] cluster primary for issue #1562: CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order.",
+          "age_days": 14.6,
+          "additions": 118,
+          "deletions": 1,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
+          "cluster_id": "1562",
+          "cluster_pick": true,
+          "cluster_pick_reason": "CI is unknown for both PRs. Neither PR's test coverage could be verified due to access constraints. Falling back to diff size: #1671 touches 2 files versus #1563's 4 files, making it the smaller, more focused fix per the stated tiebreaker. #1563 has the age advantage (lower PR number), but smallest focused diff ranks above oldest in the preference order."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1562"
@@ -2637,7 +2637,7 @@
       "id": "430",
       "kind": "issue",
       "pick": 1676,
-      "pick_reason": "Both PRs have unknown CI status. Falling back to diff size and age: #1676 touches 3 files vs #1761's 4 files, making it the smaller, more focused change, and it was opened earlier (lower PR number). #1761's title (\"convert remaining capability throws\") implies a broader scope, which accounts for the extra file. With no CI signal to differentiate, #1676 is preferred on smallest focused diff and oldest criteria.",
+      "pick_reason": "CI status is unknown for both PRs, so that criterion is a tie. On diff size: #1676 is +12/-1 across 3 files vs #1761's +30/-12 across 4 files \u2014 #1676 is the smaller, more focused change. On age: #1676 was opened 13 days earlier. Both tiebreakers favor #1676. Note that #1761's title (\"convert *remaining* capability throws\") implies it may cover throw sites beyond assertCapability() that #1676 does not. If that is the case, a follow-up PR addressing those remaining sites would still be needed after merging #1676.",
       "members": [
         {
           "number": 1676,
@@ -2647,7 +2647,7 @@
           "state": "duplicate-cluster",
           "reason": "cluster primary for issue #430 (2 PRs)",
           "short_reason": "cluster primary for issue #430 (2 PRs)",
-          "age_days": 13.4,
+          "age_days": 13.5,
           "additions": 12,
           "deletions": 1,
           "is_auth": false,
@@ -2656,7 +2656,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "430",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. Falling back to diff size and age: #1676 touches 3 files vs #1761's 4 files, making it the smaller, more focused change, and it was opened earlier (lower PR number). #1761's title (\"convert remaining capability throws\") implies a broader scope, which accounts for the extra file. With no CI signal to differentiate, #1676 is preferred on smallest focused diff and oldest criteria."
+          "cluster_pick_reason": "CI status is unknown for both PRs, so that criterion is a tie. On diff size: #1676 is +12/-1 across 3 files vs #1761's +30/-12 across 4 files \u2014 #1676 is the smaller, more focused change. On age: #1676 was opened 13 days earlier. Both tiebreakers favor #1676. Note that #1761's title (\"convert *remaining* capability throws\") implies it may cover throw sites beyond assertCapability() that #1676 does not. If that is the case, a follow-up PR addressing those remaining sites would still be needed after merging #1676."
         },
         {
           "number": 1761,
@@ -2684,7 +2684,7 @@
       "id": "sem:1443",
       "kind": "semantic",
       "pick": 1670,
-      "pick_reason": "PR #1670 includes the full implementation (wires `options.scope` into `this._clientMetadata.scope` in the constructor) and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field without any implementation.",
+      "pick_reason": "PR #1670 includes the actual implementation (setting `_clientMetadata.scope` in the constructor) whereas PR #1443 only adds the interface field with no wiring \u2014 the scope would be silently ignored. PR #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title.",
       "members": [
         {
           "number": 1443,
@@ -2692,8 +2692,8 @@
           "author": "NSeydoux",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-          "short_reason": "[llm] duplicates #1670: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+          "reason": "[llm] duplicates #1670: Add `scope` option to client credentials providers so scopes can be passed during token requests",
+          "short_reason": "[llm] duplicates #1670: Add `scope` option to client credentials providers so scopes can be passed during token requests",
           "age_days": 52.2,
           "additions": 120,
           "deletions": 3,
@@ -2711,8 +2711,8 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-          "short_reason": "[llm] cluster primary: Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
+          "reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
+          "short_reason": "[llm] cluster primary: Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)",
           "age_days": 14.6,
           "additions": 103,
           "deletions": 0,
@@ -2722,16 +2722,16 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:1443",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1670 includes the full implementation (wires `options.scope` into `this._clientMetadata.scope` in the constructor) and extends scope support to PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field without any implementation."
+          "cluster_pick_reason": "PR #1670 includes the actual implementation (setting `_clientMetadata.scope` in the constructor) whereas PR #1443 only adds the interface field with no wiring \u2014 the scope would be silently ignored. PR #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
         }
       ],
-      "desc": "Add `scope` support to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+      "desc": "Add `scope` option to client credentials providers so scopes can be passed during token requests (2 PRs)"
     },
     {
       "id": "sem:1648",
       "kind": "semantic",
       "pick": 1648,
-      "pick_reason": "PR #1648's title correctly describes the change made (updating package name to @modelcontextprotocol/sdk). PR #1649 has an identical diff but a mismatched title referencing a Hono namespace change that is not present in its diff.",
+      "pick_reason": "PR #1648 was opened first and its title accurately describes the actual change made (updating the package name to @modelcontextprotocol/sdk). PR #1649's title references a Hono namespace update that does not appear anywhere in its diff, suggesting it may have been opened in error or with the wrong branch.",
       "members": [
         {
           "number": 1648,
@@ -2739,8 +2739,8 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1648",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
-          "short_reason": "[llm] cluster primary: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)",
+          "reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)",
           "age_days": 17.2,
           "additions": 15,
           "deletions": 6,
@@ -2750,7 +2750,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:1648",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1648's title correctly describes the change made (updating package name to @modelcontextprotocol/sdk). PR #1649 has an identical diff but a mismatched title referencing a Hono namespace change that is not present in its diff."
+          "cluster_pick_reason": "PR #1648 was opened first and its title accurately describes the actual change made (updating the package name to @modelcontextprotocol/sdk). PR #1649's title references a Hono namespace update that does not appear anywhere in its diff, suggesting it may have been opened in error or with the wrong branch."
         },
         {
           "number": 1649,
@@ -2758,8 +2758,8 @@
           "author": "Rootlogger",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1649",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1648: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk)",
-          "short_reason": "[llm] duplicates #1648: docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk)",
+          "reason": "[llm] duplicates #1648: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles.",
+          "short_reason": "[llm] duplicates #1648: Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles.",
           "age_days": 17.2,
           "additions": 19,
           "deletions": 10,
@@ -2772,13 +2772,13 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "docs/server-quickstart.md references the wrong npm package name (@modelcontextprotocol/server instead of @modelcontextprotocol/sdk) (2 PRs)"
+      "desc": "Both PRs make the identical change to docs/server-quickstart.md \u2014 replacing `@modelcontextprotocol/server` with `@modelcontextprotocol/sdk` in the npm install command \u2014 and include the exact same `.changeset/mcp-limit-fix.md` file. The diffs are byte-for-byte identical despite having different titles. (2 PRs)"
     },
     {
       "id": "sem:1750",
       "kind": "semantic",
       "pick": 1755,
-      "pick_reason": "PR #1755 ('Ci/add pnpm setup') suggests it carries additional CI configuration changes (pnpm setup) beyond the changeset deletions, making it the most complete of the three. PRs #1750 and #1756 appear to be narrower patches with no distinguishing scope visible in the truncated diffs.",
+      "pick_reason": "PR #1755 ('Ci/add pnpm setup') has a descriptive, purpose-driven branch name suggesting it is part of a broader CI improvement effort, while #1750 ('patch 4') and #1756 ('patch 2') appear to be ad-hoc iterations of the same change with no additional distinguishing scope visible in the diffs.",
       "members": [
         {
           "number": 1750,
@@ -2786,8 +2786,8 @@
           "author": "MrGDCrazy",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1750",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-          "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
+          "reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+          "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
           "age_days": 1.3,
           "additions": 432,
           "deletions": 167,
@@ -2805,9 +2805,9 @@
           "author": "MrGDCrazy",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1755",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-          "short_reason": "[llm] cluster primary: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)",
-          "age_days": 1.2,
+          "reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+          "short_reason": "[llm] cluster primary: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)",
+          "age_days": 1.3,
           "additions": 399,
           "deletions": 167,
           "is_auth": true,
@@ -2816,7 +2816,7 @@
           "sla_kind": null,
           "cluster_id": "sem:1750",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') suggests it carries additional CI configuration changes (pnpm setup) beyond the changeset deletions, making it the most complete of the three. PRs #1750 and #1756 appear to be narrower patches with no distinguishing scope visible in the truncated diffs."
+          "cluster_pick_reason": "PR #1755 ('Ci/add pnpm setup') has a descriptive, purpose-driven branch name suggesting it is part of a broader CI improvement effort, while #1750 ('patch 4') and #1756 ('patch 2') appear to be ad-hoc iterations of the same change with no additional distinguishing scope visible in the diffs."
         },
         {
           "number": 1756,
@@ -2824,9 +2824,9 @@
           "author": "MrGDCrazy",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1756",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-          "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets.",
-          "age_days": 1.2,
+          "reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+          "short_reason": "[llm] duplicates #1755: All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work.",
+          "age_days": 1.3,
           "additions": 382,
           "deletions": 167,
           "is_auth": true,
@@ -2838,24 +2838,20 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "All three PRs delete the identical set of three changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs for those files, indicating they all consume the same pending changesets. (3 PRs)"
+      "desc": "All three PRs delete the identical set of changeset files (add-hono-peer-dep.md, brave-lions-glow.md, busy-weeks-hang.md) with byte-for-byte identical diffs. They represent the same changeset consumption work. (3 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 1.4077,
-    "total_calls": 12,
+    "total_usd": 1.3058,
+    "total_calls": 11,
     "by_purpose": {
       "semantic-cluster": {
         "count": 8,
-        "cost": 0.4801
+        "cost": 0.4772
       },
       "cluster-pick": {
         "count": 3,
-        "cost": 0.8789
-      },
-      "unknown-fallback": {
-        "count": 1,
-        "cost": 0.0487
+        "cost": 0.8286
       }
     }
   }
