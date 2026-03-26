@@ -37,9 +37,13 @@ jobs:
           retention-days: 1
 
   downloads:
-    name: Package downloads (npm/nuget)
+    name: ${{ matrix.registry }} downloads
     runs-on: ubuntu-latest
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        registry: [npm, nuget]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,17 +51,17 @@ jobs:
           node-version: '20'
       - run: npm install
       - run: npm run build
-      - name: Fetch download stats
-        run: npm run aggregate -- --only=downloads
+      - name: Fetch ${{ matrix.registry }} stats
+        run: npm run aggregate -- --only=downloads --registry=${{ matrix.registry }}
       - uses: actions/upload-artifact@v4
         with:
-          name: downloads-data
+          name: downloads-${{ matrix.registry }}
           path: data/repos/**/downloads.json
           retention-days: 1
           if-no-files-found: ignore
 
-  bigquery:
-    name: PyPI downloads (BigQuery)
+  pypi:
+    name: pypi downloads (BigQuery)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -75,7 +79,7 @@ jobs:
         run: npm run aggregate -- --only=bigquery
       - uses: actions/upload-artifact@v4
         with:
-          name: bigquery-data
+          name: downloads-pypi
           path: |
             data/repos/**/versions.json
             data/repos/**/downloads.json
@@ -116,7 +120,7 @@ jobs:
   commit:
     name: Merge & commit
     runs-on: ubuntu-latest
-    needs: [github, downloads, bigquery, classifier]
+    needs: [github, downloads, pypi, classifier]
     if: always() && needs.github.result == 'success'
     outputs:
       changes: ${{ steps.commit.outputs.changes }}
@@ -138,18 +142,18 @@ jobs:
           # Patch downloads.json sidecars into metrics + today's snapshot.
           # upload-artifact strips everything before the first glob wildcard, so
           # the artifact root is <owner>/<repo>/... — re-add the data/repos/ prefix.
-          for art in downloads-data bigquery-data; do
-            [ -d "artifacts/$art" ] || continue
-            find "artifacts/$art" -name downloads.json | while read -r dl; do
-              rel=${dl#artifacts/$art/}
+          for art in artifacts/downloads-*; do
+            [ -d "$art" ] || continue
+            find "$art" -name downloads.json | while read -r dl; do
+              rel=${dl#$art/}
               dir=data/repos/${rel%/downloads.json}
               metrics="$dir/metrics.json"
               snap="$dir/snapshots/$today.json"
               [ -f "$metrics" ] && jq --slurpfile d "$dl" '.downloads = $d[0]' "$metrics" > "$metrics.tmp" && mv "$metrics.tmp" "$metrics"
               [ -f "$snap" ]    && jq --slurpfile d "$dl" '.downloads = $d[0]' "$snap"    > "$snap.tmp"    && mv "$snap.tmp" "$snap"
             done
-            find "artifacts/$art" -name versions.json | while read -r vf; do
-              rel=${vf#artifacts/$art/}
+            find "$art" -name versions.json | while read -r vf; do
+              rel=${vf#$art/}
               cp "$vf" "data/repos/${rel}"
             done
           done
