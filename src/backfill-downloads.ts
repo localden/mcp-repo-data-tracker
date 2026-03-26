@@ -71,6 +71,10 @@ async function fetchHistory(
 async function main() {
   const config = await loadConfig();
   const today = new Date().toISOString().split('T')[0];
+  // --since=YYYY-MM-DD creates download-only snapshots for dates before the
+  // earliest existing snapshot, so the download charts show full history even
+  // if the tracker started recently.
+  const sinceArg = process.argv.find((a) => a.startsWith('--since='))?.split('=')[1];
 
   for (const repo of config.repositories) {
     if (!repo.package) continue;
@@ -85,19 +89,29 @@ async function main() {
     }
     if (files.length === 0) continue;
 
-    const earliest = files[0].replace('.json', '');
+    const earliestExisting = files[0].replace('.json', '');
+    const earliest = sinceArg && sinceArg < earliestExisting ? sinceArg : earliestExisting;
     console.log(`[${repo.repo}] fetching ${repo.package.registry} history ${earliest}..${today}`);
 
     const { daily, cumulative, weekly } = await fetchHistory(repo.package, earliest, today);
+    const existingDates = new Set(files.map((f) => f.replace('.json', '')));
 
     let patched = 0;
-    for (const file of files) {
-      const path = join(snapDir, file);
-      const date = file.replace('.json', '');
+    let created = 0;
+    for (const date of [...daily.keys()].sort()) {
+      if (date < earliest || date > today) continue;
       const dl = daily.get(date);
       if (dl === undefined) continue;
 
-      const snap: DailySnapshot = JSON.parse(await readFile(path, 'utf-8'));
+      const path = join(snapDir, `${date}.json`);
+      let snap: Partial<DailySnapshot>;
+      if (existingDates.has(date)) {
+        snap = JSON.parse(await readFile(path, 'utf-8'));
+        patched++;
+      } else {
+        snap = { date };
+        created++;
+      }
       snap.downloads = { daily: dl };
       const cum = cumulative?.get(date);
       if (cum !== undefined) snap.downloads.total = cum;
@@ -105,9 +119,8 @@ async function main() {
       if (wk !== undefined) snap.downloads.last_week = wk;
 
       await writeFile(path, JSON.stringify(snap, null, 2));
-      patched++;
     }
-    console.log(`[${repo.repo}] patched ${patched}/${files.length} snapshots`);
+    console.log(`[${repo.repo}] patched ${patched}, created ${created} download-only snapshots`);
   }
 }
 

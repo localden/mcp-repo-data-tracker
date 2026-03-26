@@ -114,16 +114,16 @@
       {{ if $rsnaps }}
         {{ $entries := slice }}
         {{ range $fn, $d := $rsnaps }}
-          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlTotal" (index $d "downloads" "total")) }}
+          {{ $entries = $entries | append (dict "date" $d.date "issues" (index $d "issues" "open") "pulls" (index $d "pulls" "open") "stars" (index $d "repository" "stars") "dlDaily" (index $d "downloads" "daily") "dlTotal" (index $d "downloads" "total")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
         {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $tv := slice }}
         {{ $weekBins := dict }}
         {{ range $sorted }}
           {{ $dates = $dates | append .date }}
-          {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
-          {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
-          {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
+          {{ if ne .issues nil }}{{ $iv = $iv | append (dict "x" .date "y" .issues) }}{{ end }}
+          {{ if ne .pulls nil }}{{ $pv = $pv | append (dict "x" .date "y" .pulls) }}{{ end }}
+          {{ if ne .stars nil }}{{ $sv = $sv | append (dict "x" .date "y" .stars) }}{{ end }}
           {{ if ne .dlDaily nil }}
             {{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}
             {{ $ago := int (div ($latest.Sub (time.AsTime .date)).Hours 24) }}
