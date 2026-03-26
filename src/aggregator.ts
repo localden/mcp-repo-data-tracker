@@ -158,15 +158,18 @@ async function aggregateRepository(
   if (repoConfig.package) {
     const dlSpinner = spinner(`Fetching ${repoConfig.package.registry} downloads`).start();
     try {
-      const recent = await loadRecentSnapshots(repoConfig, 10);
+      const recent = await loadRecentSnapshots(repoConfig, 30);
       // Running-sum seed: use the most-recent snapshot that HAS a total, not
       // blindly yesterday's — a single lagged/failed day would otherwise break
       // the chain permanently.
       const prev = recent.find((s) => s.downloads?.total !== undefined) ?? recent[0];
       downloads = await fetchDownloads(repoConfig.package, prev);
-      // Registries that don't report last_week natively: sum today + prior 6 snapshots.
+      // Registries that don't report last_week/last_month natively: sum today + prior snapshots.
       if (downloads.last_week === undefined && downloads.daily !== undefined) {
         downloads.last_week = recent.slice(0, 6).reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
+      }
+      if (downloads.last_month === undefined && downloads.daily !== undefined) {
+        downloads.last_month = recent.slice(0, 29).reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
       }
       const headline = downloads.daily !== undefined ? `${formatNumber(downloads.daily)}/day` : `${formatNumber(downloads.total ?? 0)} total`;
       dlSpinner.succeed(`Downloads: ${style.bold(headline)} (${repoConfig.package.registry})`);

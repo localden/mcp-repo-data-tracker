@@ -23,9 +23,11 @@
   {{ $starsSeries := slice }}
   {{ $downloadsSeries := slice }}
   {{ $dlWeeklySeries := slice }}
+  {{ $dlMonthlySeries := slice }}
   {{ $dlTotalSeries := slice }}
   {{ $allDates := slice }}
   {{ $allWeeks := slice }}
+  {{ $allMonths := slice }}
 
   {{/* Global latest snapshot date — used as the trailing-week anchor so all repos bin to the same x-axis even if one lags. */}}
   {{ $latestDate := "" }}
@@ -70,6 +72,7 @@
       {{ $dlDaily := 0 }}
       {{ $dlTrend := 0.0 }}
       {{ $dlWeekly := $dl.last_week | default 0 }}
+      {{ $dlMonthly := $dl.last_month | default 0 }}
       {{ if $dl }}
         {{ $anyDownloads = true }}
         {{/* Daily from most-recent snapshot with a value — registry APIs lag 1-2 days so metrics.json's daily is often undefined. */}}
@@ -79,6 +82,10 @@
         {{ if not $dlWeekly }}
           {{ $wk := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 7) }}
           {{ range $wk }}{{ $dlWeekly = add $dlWeekly . }}{{ end }}
+        {{ end }}
+        {{ if not $dlMonthly }}
+          {{ $mo := partial "get-sparkline.html" (dict "snapshots" $rsnaps "path" "downloads.daily" "limit" 30) }}
+          {{ range $mo }}{{ $dlMonthly = add $dlMonthly . }}{{ end }}
         {{ end }}
       {{ end }}
 
@@ -105,6 +112,7 @@
         "hasDl" (not (not $dl))
         "dlDaily" $dlDaily
         "dlWeekly" $dlWeekly
+        "dlMonthly" $dlMonthly
         "dlTotal" ($dl.total | default 0)
         "dlTrend" $dlTrend
         "pkg" $rc.package
@@ -119,6 +127,7 @@
         {{ $sorted := sort $entries "date" "asc" }}
         {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $tv := slice }}
         {{ $weekBins := dict }}
+        {{ $monthBins := dict }}
         {{ range $sorted }}
           {{ $dates = $dates | append .date }}
           {{ if ne .issues nil }}{{ $iv = $iv | append (dict "x" .date "y" .issues) }}{{ end }}
@@ -130,6 +139,8 @@
             {{ $bin := div $ago 7 }}
             {{ $key := ($latest.Add (time.ParseDuration (printf "-%dh" (mul 168 $bin)))).Format "2006-01-02" }}
             {{ $weekBins = merge $weekBins (dict $key (add (index $weekBins $key | default 0) .dlDaily)) }}
+            {{ $mkey := (time.AsTime .date).Format "2006-01" }}
+            {{ $monthBins = merge $monthBins (dict $mkey (add (index $monthBins $mkey | default 0) .dlDaily)) }}
           {{ end }}
           {{ if ne .dlTotal nil }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
         {{ end }}
@@ -139,6 +150,10 @@
         {{/* Drop oldest bin when snapshot count mod 7 != 0 — it's a partial week that looks like a cliff. */}}
         {{ if and (gt (len $wv) 1) (ne (mod (len $dv) 7) 0) }}{{ $wv = after 1 $wv }}{{ end }}
         {{ range $wv }}{{ $allWeeks = $allWeeks | union (slice .x) }}{{ end }}
+        {{ $mv := slice }}
+        {{ range $k, $v := $monthBins }}{{ $mv = $mv | append (dict "x" $k "y" $v) }}{{ end }}
+        {{ $mv = sort $mv "x" "asc" }}
+        {{ range $mv }}{{ $allMonths = $allMonths | union (slice .x) }}{{ end }}
         {{ $allDates = $allDates | union $dates }}
         {{ $color := index $chartColors (mod $i (len $chartColors)) }}
         {{ $label := $rc.name | default (printf "%s/%s" $rc.owner $rc.repo) }}
@@ -147,6 +162,7 @@
         {{ $starsSeries = $starsSeries | append (dict "label" $label "data" $sv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
         {{ if $dv }}{{ $downloadsSeries = $downloadsSeries | append (dict "label" $label "data" $dv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
         {{ if $wv }}{{ $dlWeeklySeries = $dlWeeklySeries | append (dict "label" $label "data" $wv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
+        {{ if $mv }}{{ $dlMonthlySeries = $dlMonthlySeries | append (dict "label" $label "data" $mv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
         {{ if $tv }}{{ $dlTotalSeries = $dlTotalSeries | append (dict "label" $label "data" $tv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
       {{ end }}
     {{ end }}
@@ -323,6 +339,9 @@
                 <span class="inline-flex items-center gap-1">Weekly<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads over the last 7 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
+                <span class="inline-flex items-center gap-1">Monthly<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads over the last 30 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+              </th>
+              <th class="bg-base-200 text-right">
                 <span class="inline-flex items-center gap-1">Total<span class="tooltip tooltip-left font-normal normal-case"><span class="tooltip-content text-xs">Cumulative downloads. Native where the registry reports it; otherwise a running sum we maintain from daily counts (npm/PyPI). PyPI's starts from the 6-month pypistats window, so it undercounts older packages.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
             </tr>
@@ -345,6 +364,7 @@
                 {{ else }}{{ $dash }}{{ end }}
               </td>
               <td class="text-right font-semibold">{{ if .dlWeekly }}{{ lang.FormatNumber 0 .dlWeekly }}{{ else }}{{ $dash }}{{ end }}</td>
+              <td class="text-right font-semibold">{{ if .dlMonthly }}{{ lang.FormatNumber 0 .dlMonthly }}{{ else }}{{ $dash }}{{ end }}</td>
               <td class="text-right font-semibold">{{ if .dlTotal }}{{ lang.FormatNumber 0 .dlTotal }}{{ else }}{{ $dash }}{{ end }}</td>
             </tr>
             {{ end }}{{ end }}
@@ -362,6 +382,12 @@
         <div class="bg-base-100 border border-base-300 rounded-lg p-4">
           <h3 class="text-xs font-medium opacity-70 mb-3">Weekly Downloads <span class="opacity-60">(UTC)</span></h3>
           <canvas data-chart='{"type":"line","data":{"labels":{{ (sort $allWeeks) | jsonify }},"datasets":{{ $dlWeeklySeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        {{ end }}
+        {{ if $dlMonthlySeries }}
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium opacity-70 mb-3">Monthly Downloads <span class="opacity-60">(UTC)</span></h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ (sort $allMonths) | jsonify }},"datasets":{{ $dlMonthlySeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
         </div>
         {{ end }}
         {{ if $dlTotalSeries }}
