@@ -96,10 +96,18 @@ async function main() {
     const { daily, cumulative, weekly } = await fetchHistory(repo.package, earliest, today);
     const existingDates = new Set(files.map((f) => f.replace('.json', '')));
 
+    // Trailing zeros from the range API mean "not posted yet" (npm lags ~1-2
+    // days). Trim them so we don't plot a cliff-dive while waiting.
+    const sortedDates = [...daily.keys()].sort();
+    while (sortedDates.length && (daily.get(sortedDates[sortedDates.length - 1]) ?? 0) === 0) {
+      sortedDates.pop();
+    }
+    const lastRealDate = sortedDates[sortedDates.length - 1] ?? '';
+
     let patched = 0;
     let created = 0;
-    for (const date of [...daily.keys()].sort()) {
-      if (date < earliest || date > today) continue;
+    for (const date of sortedDates) {
+      if (date < earliest || date > today || date > lastRealDate) continue;
       const dl = daily.get(date);
       if (dl === undefined) continue;
 
