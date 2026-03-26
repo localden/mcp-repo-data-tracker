@@ -22,6 +22,8 @@
   {{ $pullsSeries := slice }}
   {{ $starsSeries := slice }}
   {{ $downloadsSeries := slice }}
+  {{ $dlWeeklySeries := slice }}
+  {{ $dlTotalSeries := slice }}
   {{ $allDates := slice }}
   {{ $anyInbound := false }}
   {{ $anyDownloads := false }}
@@ -100,16 +102,18 @@
       {{ if $rsnaps }}
         {{ $entries := slice }}
         {{ range $fn, $d := $rsnaps }}
-          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "downloads" (index $d "downloads" "daily")) }}
+          {{ $entries = $entries | append (dict "date" $d.date "issues" $d.issues.open "pulls" $d.pulls.open "stars" $d.repository.stars "dlDaily" (index $d "downloads" "daily") "dlWeekly" (index $d "downloads" "last_week") "dlTotal" (index $d "downloads" "total")) }}
         {{ end }}
         {{ $sorted := sort $entries "date" "asc" }}
-        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}
+        {{ $dates := slice }}{{ $iv := slice }}{{ $pv := slice }}{{ $sv := slice }}{{ $dv := slice }}{{ $wv := slice }}{{ $tv := slice }}
         {{ range $sorted }}
           {{ $dates = $dates | append .date }}
           {{ $iv = $iv | append (dict "x" .date "y" .issues) }}
           {{ $pv = $pv | append (dict "x" .date "y" .pulls) }}
           {{ $sv = $sv | append (dict "x" .date "y" .stars) }}
-          {{ if .downloads }}{{ $dv = $dv | append (dict "x" .date "y" .downloads) }}{{ end }}
+          {{ if .dlDaily }}{{ $dv = $dv | append (dict "x" .date "y" .dlDaily) }}{{ end }}
+          {{ if .dlWeekly }}{{ $wv = $wv | append (dict "x" .date "y" .dlWeekly) }}{{ end }}
+          {{ if .dlTotal }}{{ $tv = $tv | append (dict "x" .date "y" .dlTotal) }}{{ end }}
         {{ end }}
         {{ $allDates = $allDates | union $dates }}
         {{ $color := index $chartColors (mod $i (len $chartColors)) }}
@@ -118,6 +122,8 @@
         {{ $pullsSeries = $pullsSeries | append (dict "label" $label "data" $pv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
         {{ $starsSeries = $starsSeries | append (dict "label" $label "data" $sv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}
         {{ if $dv }}{{ $downloadsSeries = $downloadsSeries | append (dict "label" $label "data" $dv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
+        {{ if $wv }}{{ $dlWeeklySeries = $dlWeeklySeries | append (dict "label" $label "data" $wv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
+        {{ if $tv }}{{ $dlTotalSeries = $dlTotalSeries | append (dict "label" $label "data" $tv "borderColor" $color "backgroundColor" "transparent" "tension" 0.3) }}{{ end }}
       {{ end }}
     {{ end }}
   {{ end }}
@@ -317,12 +323,26 @@
           </tbody>
         </table>
       </div>
-      {{ if $downloadsSeries }}
-      <div class="bg-base-100 border border-base-300 rounded-lg p-4 mt-4">
-        <h3 class="text-xs font-medium opacity-70 mb-3">Daily Downloads Over Time</h3>
-        <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $downloadsSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+      <div class="space-y-4 mt-4">
+        {{ if $downloadsSeries }}
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium opacity-70 mb-3">Daily Downloads Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $downloadsSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        {{ end }}
+        {{ if $dlWeeklySeries }}
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium opacity-70 mb-3">Weekly Downloads Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $dlWeeklySeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        {{ end }}
+        {{ if $dlTotalSeries }}
+        <div class="bg-base-100 border border-base-300 rounded-lg p-4">
+          <h3 class="text-xs font-medium opacity-70 mb-3">Total Downloads Over Time</h3>
+          <canvas data-chart='{"type":"line","data":{"labels":{{ $allDates | jsonify }},"datasets":{{ $dlTotalSeries | jsonify }}},"options":{"responsive":true,"plugins":{"legend":{"position":"bottom","labels":{"boxWidth":12,"padding":12}}}}}'></canvas>
+        </div>
+        {{ end }}
       </div>
-      {{ end }}
     </section>
     {{ end }}
 

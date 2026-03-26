@@ -210,10 +210,11 @@ export async function writeRepoIndex(repos: RepoConfig[]): Promise<void> {
 }
 
 /**
- * Load the most recent snapshot strictly before today, for diff-based metrics
- * (NuGet daily = today.total - prev.total; npm running total = prev.total + daily).
+ * Load the N most-recent snapshots strictly before today, newest first.
+ * Used for diff-based metrics (NuGet daily = today.total - prev.total;
+ * npm running total = prev.total + daily) and rolling-window sums (last_week).
  */
-export async function loadLatestSnapshot(repoConfig: RepoConfig): Promise<DailySnapshot | undefined> {
+export async function loadRecentSnapshots(repoConfig: RepoConfig, n: number): Promise<DailySnapshot[]> {
   const snapshotsDir = join(process.cwd(), getSnapshotsDir(repoConfig));
   const today = new Date().toISOString().split('T')[0];
 
@@ -221,24 +222,32 @@ export async function loadLatestSnapshot(repoConfig: RepoConfig): Promise<DailyS
   try {
     files = await readdir(snapshotsDir);
   } catch {
-    return undefined;
+    return [];
   }
 
   const dates = files
     .filter((f) => f.endsWith('.json'))
     .map((f) => f.replace('.json', ''))
     .filter((d) => d < today)
-    .sort();
+    .sort()
+    .slice(-n)
+    .reverse();
 
-  const latest = dates[dates.length - 1];
-  if (!latest) return undefined;
-
-  try {
-    const content = await readFile(join(snapshotsDir, `${latest}.json`), 'utf-8');
-    return JSON.parse(content) as DailySnapshot;
-  } catch {
-    return undefined;
+  const snapshots: DailySnapshot[] = [];
+  for (const d of dates) {
+    try {
+      const content = await readFile(join(snapshotsDir, `${d}.json`), 'utf-8');
+      snapshots.push(JSON.parse(content) as DailySnapshot);
+    } catch {
+      // skip unreadable
+    }
   }
+  return snapshots;
+}
+
+export async function loadLatestSnapshot(repoConfig: RepoConfig): Promise<DailySnapshot | undefined> {
+  const [latest] = await loadRecentSnapshots(repoConfig, 1);
+  return latest;
 }
 
 /**

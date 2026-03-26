@@ -25,7 +25,7 @@ import {
   writeSnapshot,
   writeRepoIndex,
   writeSEPMetrics,
-  loadLatestSnapshot,
+  loadRecentSnapshots,
 } from './data/writers.js';
 import { loadConfig, createDefaultConfig } from './config/loader.js';
 import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics } from './types/index.js';
@@ -158,8 +158,12 @@ async function aggregateRepository(
   if (repoConfig.package) {
     const dlSpinner = spinner(`Fetching ${repoConfig.package.registry} downloads`).start();
     try {
-      const prev = await loadLatestSnapshot(repoConfig);
-      downloads = await fetchDownloads(repoConfig.package, prev);
+      const recent = await loadRecentSnapshots(repoConfig, 6);
+      downloads = await fetchDownloads(repoConfig.package, recent[0]);
+      // Registries that don't report last_week natively: sum today + prior 6 snapshots.
+      if (downloads.last_week === undefined && downloads.daily !== undefined) {
+        downloads.last_week = recent.reduce((s, snap) => s + (snap.downloads?.daily ?? 0), downloads.daily);
+      }
       const headline = downloads.daily !== undefined ? `${formatNumber(downloads.daily)}/day` : `${formatNumber(downloads.total ?? 0)} total`;
       dlSpinner.succeed(`Downloads: ${style.bold(headline)} (${repoConfig.package.registry})`);
     } catch (err) {
