@@ -1,0 +1,77 @@
+/**
+ * PyPI download stats via Google BigQuery.
+ *
+ * The Linehaul project streams pip download logs into
+ * bigquery-public-data.pypi.file_downloads, partitioned by day on `timestamp`
+ * and clustered by `project`. Filtering on both keeps scanned bytes small
+ * enough to stay well inside the 1 TB/mo free tier on a daily cadence.
+ *
+ * Auth: @google-cloud/bigquery auto-resolves GOOGLE_APPLICATION_CREDENTIALS
+ * (service-account JSON path). The bigquery workflow writes BQ_KEY to a temp
+ * file and points the env var at it.
+ */
+
+import { BigQuery } from '@google-cloud/bigquery';
+import type { VersionDownloadsData } from '../types/index.js';
+
+interface Row {
+  date: { value: string };
+  version: string;
+  downloads: number;
+}
+
+/**
+ * Fetch per-version daily download counts for a PyPI package from BigQuery.
+ *
+ * @param pkg   PyPI project name (e.g. "mcp")
+ * @param since Only query rows on or after this date (YYYY-MM-DD). Partition
+ *              pruning keys on this — passing a small window keeps scan cost
+ *              proportional to the number of new days, not the dataset size.
+ */
+export async function fetchPypiVersions(pkg: string, since: string): Promise<VersionDownloadsData> {
+  const bq = new BigQuery();
+
+  const [rows] = await bq.query({
+    query: `
+      SELECT
+        DATE(timestamp) AS date,
+        file.version AS version,
+        COUNT(*) AS downloads
+      FROM \`bigquery-public-data.pypi.file_downloads\`
+      WHERE file.project = @pkg
+        AND DATE(timestamp) BETWEEN @since AND CURRENT_DATE()
+      GROUP BY date, version
+      ORDER BY date, version
+    `,
+    params: { pkg, since },
+  });
+
+  const daily: Record<string, Record<string, number>> = {};
+  const totals: Record<string, number> = {};
+
+  for (const row of rows as Row[]) {
+    const d = row.date.value;
+    (daily[d] ??= {})[row.version] = row.downloads;
+    totals[row.version] = (totals[row.version] ?? 0) + row.downloads;
+  }
+
+  return { lastUpdated: new Date().toISOString(), daily, totals };
+}
+
+/**
+ * Merge freshly-queried data into an existing versions.json, recomputing
+ * totals from the combined daily map so they stay consistent.
+ */
+export function mergeVersionData(
+  existing: VersionDownloadsData | undefined,
+  fresh: VersionDownloadsData,
+): VersionDownloadsData {
+  const daily = { ...existing?.daily, ...fresh.daily };
+  const totals: Record<string, number> = {};
+  for (const byVersion of Object.values(daily)) {
+    for (const [v, n] of Object.entries(byVersion)) {
+      totals[v] = (totals[v] ?? 0) + n;
+    }
+  }
+  return { lastUpdated: fresh.lastUpdated, daily, totals };
+}
