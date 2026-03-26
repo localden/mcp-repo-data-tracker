@@ -81,8 +81,16 @@ jobs:
             git commit -m "Update repository metrics data
 
           Automated data sync at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            git pull --rebase origin main
-            git push
+            # -X theirs during rebase keeps OUR commit's version on conflict
+            # (rebase inverts ours/theirs). Safe because we only stage data/
+            # and just regenerated it — our copy is fresher than any concurrent
+            # manual edit.
+            for attempt in 1 2 3; do
+              git pull --rebase -X theirs origin main
+              git push && break
+              [ $attempt -eq 3 ] && exit 1
+              sleep 2
+            done
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
