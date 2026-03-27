@@ -73,7 +73,7 @@ function toRow(issue: GitHubIssue, maintainers: Set<string>, owner: string, repo
   ];
 
   // Comment timeline analysis — split maintainer/community, exclude bot from both sides.
-  const maintComments = comments.filter(c => maintainers.has(c.author!.login));
+  const maintComments = comments.filter(c => maintainers.has(c.author!.login) && c.author!.login !== author);
   const communityComments = comments.filter(c => !maintainers.has(c.author!.login) && c.author!.login !== BOT_LOGIN);
   const lastMaintAt = maintComments.at(-1)?.createdAt;
   const lastCommunityAt = communityComments.at(-1)?.createdAt;
