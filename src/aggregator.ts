@@ -12,6 +12,7 @@ import { fetchRepoStats } from './github/repo.js';
 import { fetchCommits } from './github/commits.js';
 import { fetchDownloads } from './downloads/index.js';
 import { fetchPypiVersions, mergeVersionData, deriveDownloadMetrics } from './downloads/bigquery.js';
+import { fetchPypiFirstPublished } from './downloads/pypi.js';
 import { fetchNpmVersions } from './downloads/npm.js';
 import { fetchNugetVersions } from './downloads/nuget.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
@@ -412,11 +413,12 @@ async function aggregateBigQuery(args: CliArgs): Promise<void> {
       const existing = await loadVersionDownloads(repoConfig);
       // Incremental: re-query from the last stored date (not +1) so partial
       // intra-day data gets refreshed on the next 2h run. First run bootstraps
-      // 90 days back.
+      // from the package's first-published date so the total reflects full
+      // lifetime downloads.
       const dates = existing ? Object.keys(existing.daily).sort() : [];
       const since = dates.length > 0
         ? dates[dates.length - 1]
-        : new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
+        : await fetchPypiFirstPublished(pkg);
 
       const fresh = await fetchPypiVersions(pkg, since);
       const merged = mergeVersionData(existing, fresh);

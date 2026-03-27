@@ -325,7 +325,7 @@
       <h2 class="text-sm font-semibold mb-3">SDK Downloads</h2>
       <div class="rounded-lg p-4 mb-3 text-sm flex gap-3 items-start" style="background-color: color-mix(in oklab, var(--color-error) 10%, transparent)">
         <i class="fa-solid fa-triangle-exclamation text-error text-xl shrink-0"></i>
-        <span><strong class="text-error">Total column caveat:</strong> npm and PyPI don't expose all-time cumulative download counts, so those totals are self-computed running sums. PyPI's is bootstrapped from pypistats' 6-month retention window and undercounts by whatever the package accumulated before that — treat it as a trend indicator, not a true lifetime total.</span>
+        <span><strong class="text-error">Total column caveat:</strong> npm doesn't expose all-time cumulative download counts, so that total is a self-computed running sum — treat it as a trend indicator, not a true lifetime total. PyPI totals come from BigQuery's full download log history starting from the package's first-published date.</span>
       </div>
       <div class="rounded-lg border border-base-300 bg-base-100">
         <table class="table table-sm w-full">
@@ -342,7 +342,7 @@
                 <span class="inline-flex items-center gap-1">Monthly<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Downloads over the last 30 days.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Total<span class="tooltip tooltip-left font-normal normal-case"><span class="tooltip-content text-xs">Cumulative downloads. Native where the registry reports it; otherwise a running sum we maintain from daily counts (npm/PyPI). PyPI's starts from the 6-month pypistats window, so it undercounts older packages.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Total<span class="tooltip tooltip-left font-normal normal-case"><span class="tooltip-content text-xs">Cumulative downloads. Native where the registry reports it; npm is a running sum we maintain from daily counts; PyPI comes from BigQuery's full download log history.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
             </tr>
           </thead>
