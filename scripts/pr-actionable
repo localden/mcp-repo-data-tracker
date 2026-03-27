@@ -997,7 +997,10 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         # >7d: check if maintainer pinged AND author didn't reply after. A reply followed
         # by silence is stale-draft (re-ping), not stale-draft-pinged (close).
         fetch_tier_c(pr, owner, name)
-        maint_comments = [c for c in (pr.comments or []) if c["author"] in MAINTAINERS]
+        maint_comments = [
+            c for c in (pr.comments or [])
+            if c["author"] in MAINTAINERS and c["author"] != pr.author
+        ]
         latest_ping = max((c["created_at"] for c in maint_comments), default=None)
         author_replied_after = latest_ping and any(
             c["author"] == pr.author and c["created_at"] > latest_ping
@@ -1044,7 +1047,10 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
                 pr.reason = f"author self-diagnosed CI {days_since(author_diagnosed[-1]['created_at']):.0f}d ago, never fixed"
                 return
             # Maintainer pinged about CI → awaiting-author-ci
-            maintainer_ci_ping = [c for c in comments_after_ci if c["author"] in MAINTAINERS]
+            maintainer_ci_ping = [
+                c for c in comments_after_ci
+                if c["author"] in MAINTAINERS and c["author"] != pr.author
+            ]
             if maintainer_ci_ping:
                 since_ping = days_since(maintainer_ci_ping[-1]["created_at"])
                 if since_ping > DAYS_STALE_AUTHOR:
@@ -1055,7 +1061,10 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
 
         # Check for substantive maintainer comments (needs-decision case, #819)
         fetch_tier_c(pr, owner, name)
-        maintainer_comments = [c for c in (pr.comments or []) if c["author"] in MAINTAINERS]
+        maintainer_comments = [
+            c for c in (pr.comments or [])
+            if c["author"] in MAINTAINERS and c["author"] != pr.author
+        ]
         author_pings = []
         for c in (pr.comments or []):
             if c["author"] != pr.author or "@" not in c["body"]:
