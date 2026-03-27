@@ -362,7 +362,7 @@ query($owner: String!, $name: String!, $cursor: String) {
         number title isDraft createdAt baseRefName additions deletions bodyText
         author { login __typename }
         labels(first: 20) { nodes { name } }
-        closingIssuesReferences(first: 10) { nodes { number } }
+        closingIssuesReferences(first: 10) { nodes { number repository { nameWithOwner } } }
         files(first: 30) { nodes { path } }
       }
     }
@@ -388,7 +388,8 @@ def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR
                 created_at=parse_dt(n["createdAt"]),
                 base_ref=n["baseRefName"],
                 labels=[l["name"] for l in n["labels"]["nodes"]],
-                linked_issues=[i["number"] for i in n["closingIssuesReferences"]["nodes"]],
+                linked_issues=[i["number"] for i in n["closingIssuesReferences"]["nodes"]
+                               if i["repository"]["nameWithOwner"] == f"{owner}/{name}"],
                 files=[f["path"] for f in n["files"]["nodes"]],
                 additions=n.get("additions", 0),
                 deletions=n.get("deletions", 0),
@@ -693,13 +694,16 @@ Valid states: {", ".join(states)}"""
 
 def detect_clusters(prs: list[PR]) -> None:
     """Phase 1: group by shared closingIssuesReferences. Deterministic, no LLM.
-    Runs on the full set (including maintainer PRs)."""
-    issue_to_prs: dict[int, list[PR]] = defaultdict(list)
+    Runs on the full set (including maintainer PRs).
+
+    Partitioned by base_ref so a main-branch fix and its v1.x backport don't
+    cluster as duplicates — they're complementary, not competing."""
+    issue_to_prs: dict[tuple[int, str], list[PR]] = defaultdict(list)
     for pr in prs:
         for issue in pr.linked_issues:
-            issue_to_prs[issue].append(pr)
+            issue_to_prs[(issue, pr.base_ref)].append(pr)
 
-    for issue, members in issue_to_prs.items():
+    for (issue, _base_ref), members in issue_to_prs.items():
         # A PR linking ≥2 clustering issues would get overwritten on the second pass,
         # orphaning the first cluster. First-wins keeps everyone reachable.
         members = [m for m in members if m.cluster_id is None]
@@ -714,6 +718,22 @@ def detect_clusters(prs: list[PR]) -> None:
         for m in members[1:]:
             m.state = "duplicate-cluster-member"
             m.reason = f"shares linked issue #{issue} with #{members[0].number}"
+
+    # Same issue across different base_refs → backport pair, not a duplicate.
+    # Covers the cross-author case that detect_backport_pairs (same-author-only) misses.
+    issue_mains: dict[int, PR] = {}
+    for pr in prs:
+        if pr.base_ref == "main":
+            for issue in pr.linked_issues:
+                issue_mains.setdefault(issue, pr)
+    for pr in prs:
+        if pr.base_ref == "main" or pr.cluster_id is not None:
+            continue
+        for issue in pr.linked_issues:
+            if issue in issue_mains:
+                pr.state = "backport-follows-primary"
+                pr.reason = f"follows #{issue_mains[issue].number} (same issue #{issue}, different branch)"
+                break
 
 
 def _file_jaccard(a: list[str], b: list[str]) -> float:
@@ -876,13 +896,13 @@ def pick_cluster_winners(prs: list[PR], owner: str, name: str, use_llm: bool) ->
     if not use_llm:
         return
 
-    clusters: dict[int, list[PR]] = defaultdict(list)
+    clusters: dict[tuple[int, str], list[PR]] = defaultdict(list)
     for p in prs:
         if isinstance(p.cluster_id, int):  # phase-1 only (int issue number)
-            clusters[p.cluster_id].append(p)
+            clusters[(p.cluster_id, p.base_ref)].append(p)
 
     work = [(issue, sorted(members, key=lambda p: p.number))
-            for issue, members in clusters.items() if len(members) >= 2]
+            for (issue, _), members in clusters.items() if len(members) >= 2]
     if not work:
         return
 
