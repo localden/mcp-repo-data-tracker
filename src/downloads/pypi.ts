@@ -38,3 +38,20 @@ export async function fetchPypiRange(pkg: string): Promise<Map<string, number>> 
   const data = (await res.json()) as PypiOverallResponse;
   return new Map(data.data.map((d) => [d.date, d.downloads]));
 }
+
+/**
+ * Fetch the package's first-published date (YYYY-MM-DD) from PyPI's JSON API.
+ * Used to bound the BigQuery bootstrap window so the total reflects full
+ * lifetime downloads rather than an arbitrary lookback.
+ */
+export async function fetchPypiFirstPublished(pkg: string): Promise<string> {
+  const res = await fetch(`https://pypi.org/pypi/${pkg}/json`);
+  if (!res.ok) throw new Error(`PyPI JSON API ${res.status} for ${pkg}`);
+  const data = (await res.json()) as { releases: Record<string, Array<{ upload_time: string }>> };
+  const uploads = Object.values(data.releases)
+    .flat()
+    .map((f) => f.upload_time)
+    .sort();
+  if (uploads.length === 0) throw new Error(`No releases found for ${pkg}`);
+  return uploads[0].split('T')[0];
+}
