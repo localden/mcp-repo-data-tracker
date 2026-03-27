@@ -1019,8 +1019,14 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
     reviews = pr.reviews or []
 
     # Per-reviewer current state (the P0-3 fix)
-    approved_by = {r["author"] for r in reviews if r["state"] == "APPROVED"}
-    changes_requested_by = {r["author"] for r in reviews if r["state"] == "CHANGES_REQUESTED"}
+    approved_by = {
+        r["author"] for r in reviews
+        if r["state"] == "APPROVED" and r["author"] in MAINTAINERS
+    }
+    changes_requested_by = {
+        r["author"] for r in reviews
+        if r["state"] == "CHANGES_REQUESTED" and r["author"] in MAINTAINERS
+    }
     latest_review_at = max((r["submitted_at"] for r in reviews), default=None)
 
     # Never reviewed
