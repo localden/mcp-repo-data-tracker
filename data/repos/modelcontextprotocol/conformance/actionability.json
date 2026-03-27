@@ -1,6 +1,6 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-03-27T13:13:30.810184+00:00",
+  "lastUpdated": "2026-03-27T13:35:38.963102+00:00",
   "summary": {
     "actionable_count": 8,
     "auth_count": 5,
@@ -13,18 +13,18 @@
       {
         "idx": 1,
         "name": "We're blocking someone",
-        "count": 2,
+        "count": 3,
         "auth": 1,
-        "maint": 1,
-        "mins": 40
+        "maint": 2,
+        "mins": 60
       },
       {
         "idx": 2,
         "name": "High leverage",
-        "count": 2,
+        "count": 1,
         "auth": 1,
-        "maint": 1,
-        "mins": 40
+        "maint": 0,
+        "mins": 20
       },
       {
         "idx": 3,
@@ -52,8 +52,8 @@
       }
     ],
     "by_state": {
-      "maintainer-intake": 1,
-      "needs-decision": 2,
+      "maintainer-intake": 2,
+      "needs-decision": 1,
       "needs-first-review": 2,
       "needs-re-review": 1,
       "parked": 2,
@@ -76,8 +76,8 @@
       "idx": 1,
       "name": "We're blocking someone",
       "blurb": "Author did what we asked and is waiting on us. Longest-waiting first.",
-      "count": 2,
-      "mins": 40,
+      "count": 3,
+      "mins": 60,
       "states": [
         {
           "name": "needs-re-review",
@@ -111,6 +111,25 @@
           "effort_min": 20,
           "prs": [
             {
+              "number": 73,
+              "title": "Add SSE polling Phase 2 and Phase 3 tests (SEP-1699)",
+              "author": "pcarleton",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/73",
+              "state": "maintainer-intake",
+              "reason": "115d, no maintainer has looked yet",
+              "short_reason": "115d, no maintainer has looked yet",
+              "age_days": 115.0,
+              "additions": 691,
+              "deletions": 1,
+              "is_auth": false,
+              "is_maintainer": true,
+              "sla_breach": true,
+              "sla_kind": "maintainer",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
               "number": 106,
               "title": "feat: add step-up auth scenario for server auth testing",
               "author": "pcarleton",
@@ -118,7 +137,7 @@
               "state": "maintainer-intake",
               "reason": "72d, no maintainer has looked yet",
               "short_reason": "72d, no maintainer has looked yet",
-              "age_days": 72.0,
+              "age_days": 72.1,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -137,33 +156,14 @@
       "idx": 2,
       "name": "High leverage",
       "blurb": "One decision unblocks or closes multiple things.",
-      "count": 2,
-      "mins": 40,
+      "count": 1,
+      "mins": 20,
       "states": [
         {
           "name": "needs-decision",
           "desc": "Maintainer discussed but hasn't approved or requested changes yet.",
           "effort_min": 20,
           "prs": [
-            {
-              "number": 73,
-              "title": "Add SSE polling Phase 2 and Phase 3 tests (SEP-1699)",
-              "author": "pcarleton",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/73",
-              "state": "needs-decision",
-              "reason": "maintainer COMMENTED but took no stance",
-              "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 115.0,
-              "additions": 691,
-              "deletions": 1,
-              "is_auth": false,
-              "is_maintainer": true,
-              "sla_breach": true,
-              "sla_kind": "maintainer",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
             {
               "number": 170,
               "title": "feat: add conformance test for authorization server metadata",
@@ -296,7 +296,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 121d old",
               "short_reason": "CI never ran, 121d old",
-              "age_days": 120.8,
+              "age_days": 120.9,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
