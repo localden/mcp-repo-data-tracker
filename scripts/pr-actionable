@@ -1173,8 +1173,18 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         return
 
     # COMMENTED only (no approve, no request-changes)
-    pr.wait_since = latest_review_at
-    pr.state, pr.reason = "needs-decision", "maintainer COMMENTED but took no stance"
+    maintainer_reviewers = [r["author"] for r in reviews if r["author"] in MAINTAINERS]
+    if maintainer_reviewers:
+        pr.wait_since = latest_review_at
+        pr.state, pr.reason = "needs-decision", "maintainer COMMENTED but took no stance"
+        return
+
+    # Only non-maintainer reviews — treat as unreviewed by maintainers
+    if pr.is_maintainer:
+        pr.state, pr.reason = "maintainer-intake", f"{age:.0f}d, no maintainer has looked yet"
+        return
+    sla = " (SLA breach)" if age > DAYS_COMMUNITY_SLA else ""
+    pr.state, pr.reason = "needs-first-review", f"{age:.0f}d since open{sla}"
 
 
 def _label_hint(pr: PR) -> str | None:
