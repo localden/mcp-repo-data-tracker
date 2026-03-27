@@ -146,6 +146,9 @@ STATES: list[StateSpec] = [
     StateSpec("needs-first-review", "actionable",
               "Not yet reviewed by a maintainer.",
               effort_min=30, tier="Intake", sort_by="age"),
+    StateSpec("community-reviewed", "actionable",
+              "Community members have reviewed, but no maintainer has engaged yet.",
+              effort_min=25, tier="Intake", sort_by="age"),
 
     # --- Tier 4: Hygiene ---
     StateSpec("stale-awaiting-author", "actionable",
@@ -1179,12 +1182,13 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         pr.state, pr.reason = "needs-decision", "maintainer COMMENTED but took no stance"
         return
 
-    # Only non-maintainer reviews — treat as unreviewed by maintainers
+    # Only non-maintainer reviews — community engaged but no maintainer yet
+    reviewers = ", ".join(sorted({r["author"] for r in reviews}))
     if pr.is_maintainer:
-        pr.state, pr.reason = "maintainer-intake", f"{age:.0f}d, no maintainer has looked yet"
+        pr.state, pr.reason = "maintainer-intake", f"{age:.0f}d, community reviewed ({reviewers})"
         return
     sla = " (SLA breach)" if age > DAYS_COMMUNITY_SLA else ""
-    pr.state, pr.reason = "needs-first-review", f"{age:.0f}d since open{sla}"
+    pr.state, pr.reason = "community-reviewed", f"{age:.0f}d, reviewed by {reviewers}{sla}"
 
 
 def _label_hint(pr: PR) -> str | None:
