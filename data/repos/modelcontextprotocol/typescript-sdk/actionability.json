@@ -1,6 +1,6 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-03-27T20:38:30.593365+00:00",
+  "lastUpdated": "2026-03-27T20:59:16.420130+00:00",
   "summary": {
     "actionable_count": 66,
     "auth_count": 15,
@@ -62,7 +62,7 @@
       "stale-draft-pinged": 1
     },
     "sla": {
-      "first_review_7d_breach": 39,
+      "first_review_7d_breach": 38,
       "first_review_eligible": 45,
       "re_review_24h_breach": 3,
       "re_review_eligible": 6,
@@ -173,8 +173,8 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (0d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (0d waiting)",
-              "age_days": 17.1,
-              "additions": 325,
+              "age_days": 17.2,
+              "additions": 321,
               "deletions": 6,
               "is_auth": true,
               "is_maintainer": false,
@@ -199,7 +199,7 @@
               "state": "maintainer-intake",
               "reason": "2d, no maintainer has looked yet",
               "short_reason": "2d, no maintainer has looked yet",
-              "age_days": 1.9,
+              "age_days": 2.0,
               "additions": 334,
               "deletions": 314,
               "is_auth": false,
@@ -275,7 +275,7 @@
               "state": "maintainer-intake",
               "reason": "1d, no maintainer has looked yet",
               "short_reason": "1d, no maintainer has looked yet",
-              "age_days": 1.1,
+              "age_days": 1.2,
               "additions": 147,
               "deletions": 60,
               "is_auth": true,
@@ -474,33 +474,14 @@
           "effort_min": 8,
           "prs": [
             {
-              "number": 1652,
-              "title": "test: add compile-time key-parity assertions for spec type checks",
-              "author": "rechedev9",
-              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1652",
-              "state": "duplicate-cluster",
-              "reason": "cluster primary for issue #1298 (2 PRs)",
-              "short_reason": "cluster primary for issue #1298 (2 PRs)",
-              "age_days": 17.9,
-              "additions": 270,
-              "deletions": 0,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "1298",
-              "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. Applying the remaining criteria in order: #1652 (\"test:\" prefix) explicitly adds compile-time key-parity assertions, making test coverage its entire contribution, while #1798's test coverage is unspecified. #1652 also has a smaller diff (1 file vs. 2 files) and was opened earlier (lower PR number). It wins on has-tests, smallest-focused-diff, and oldest \u2014 all three remaining tiebreakers."
-            },
-            {
               "number": 1670,
               "title": "feat: add scope option to ClientCredentialsProvider, PrivateKeyJwtProvider, and StaticPrivateKeyJwtProvider",
               "author": "Vadaski",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-              "short_reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-              "age_days": 15.5,
+              "reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+              "short_reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+              "age_days": 15.6,
               "additions": 103,
               "deletions": 0,
               "is_auth": true,
@@ -509,43 +490,62 @@
               "sla_kind": "1st-review",
               "cluster_id": "sem:1443",
               "cluster_pick": true,
-              "cluster_pick_reason": "PR #1670 includes both the interface field addition and the implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates it also covers PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+              "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that actually sets `_clientMetadata.scope`, making the feature functional. PR #1443 only adds the interface field with no implementation, so the scope value would be silently ignored at runtime. #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
+            },
+            {
+              "number": 1798,
+              "title": "fix(core): cover optional spec schema properties",
+              "author": "rechedev9",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1798",
+              "state": "duplicate-cluster",
+              "reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
+              "short_reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
+              "age_days": 0.0,
+              "additions": 179,
+              "deletions": 1,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": "1298",
+              "cluster_pick": true,
+              "cluster_pick_reason": "Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own."
             }
           ],
           "clusters": [
             {
               "id": "1298",
               "kind": "issue",
-              "pick": 1652,
-              "pick_reason": "Both PRs have unknown CI status. Applying the remaining criteria in order: #1652 (\"test:\" prefix) explicitly adds compile-time key-parity assertions, making test coverage its entire contribution, while #1798's test coverage is unspecified. #1652 also has a smaller diff (1 file vs. 2 files) and was opened earlier (lower PR number). It wins on has-tests, smallest-focused-diff, and oldest \u2014 all three remaining tiebreakers.",
+              "pick": 1798,
+              "pick_reason": "Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
               "members": [
                 {
                   "number": 1652,
                   "title": "test: add compile-time key-parity assertions for spec type checks",
                   "author": "rechedev9",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1652",
-                  "state": "duplicate-cluster",
-                  "reason": "cluster primary for issue #1298 (2 PRs)",
-                  "short_reason": "cluster primary for issue #1298 (2 PRs)",
+                  "state": "duplicate-cluster-member",
+                  "reason": "shares issue #1298; #1798 is the pick",
+                  "short_reason": "shares issue #1298; #1798 is the pick",
                   "age_days": 17.9,
                   "additions": 270,
                   "deletions": 0,
                   "is_auth": false,
                   "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
+                  "sla_breach": false,
+                  "sla_kind": null,
                   "cluster_id": "1298",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. Applying the remaining criteria in order: #1652 (\"test:\" prefix) explicitly adds compile-time key-parity assertions, making test coverage its entire contribution, while #1798's test coverage is unspecified. #1652 also has a smaller diff (1 file vs. 2 files) and was opened earlier (lower PR number). It wins on has-tests, smallest-focused-diff, and oldest \u2014 all three remaining tiebreakers."
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
                 },
                 {
                   "number": 1798,
                   "title": "fix(core): cover optional spec schema properties",
                   "author": "rechedev9",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1798",
-                  "state": "duplicate-cluster-member",
-                  "reason": "shares linked issue #1298 with #1652",
-                  "short_reason": "shares linked issue #1298 with #1652",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
+                  "short_reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
                   "age_days": 0.0,
                   "additions": 179,
                   "deletions": 1,
@@ -554,8 +554,8 @@
                   "sla_breach": false,
                   "sla_kind": null,
                   "cluster_id": "1298",
-                  "cluster_pick": false,
-                  "cluster_pick_reason": ""
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1298"
@@ -564,7 +564,7 @@
               "id": "sem:1443",
               "kind": "semantic",
               "pick": 1670,
-              "pick_reason": "PR #1670 includes both the interface field addition and the implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates it also covers PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional.",
+              "pick_reason": "PR #1670 includes both the interface field and the constructor implementation that actually sets `_clientMetadata.scope`, making the feature functional. PR #1443 only adds the interface field with no implementation, so the scope value would be silently ignored at runtime. #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title.",
               "members": [
                 {
                   "number": 1443,
@@ -572,8 +572,8 @@
                   "author": "NSeydoux",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #1670: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-                  "short_reason": "[llm] duplicates #1670: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+                  "reason": "[llm] duplicates #1670: Add scope parameter support to client credentials providers in authExtensions.ts",
+                  "short_reason": "[llm] duplicates #1670: Add scope parameter support to client credentials providers in authExtensions.ts",
                   "age_days": 53.2,
                   "additions": 120,
                   "deletions": 3,
@@ -591,9 +591,9 @@
                   "author": "Vadaski",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-                  "age_days": 15.5,
+                  "reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+                  "age_days": 15.6,
                   "additions": 103,
                   "deletions": 0,
                   "is_auth": true,
@@ -602,10 +602,10 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "sem:1443",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "PR #1670 includes both the interface field addition and the implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates it also covers PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+                  "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that actually sets `_clientMetadata.scope`, making the feature functional. PR #1443 only adds the interface field with no implementation, so the scope value would be silently ignored at runtime. #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
                 }
               ],
-              "desc": "Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+              "desc": "Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)"
             }
           ]
         },
@@ -930,7 +930,7 @@
               "state": "needs-first-review",
               "reason": "48d since open (SLA breach)",
               "short_reason": "48d",
-              "age_days": 47.7,
+              "age_days": 47.8,
               "additions": 30,
               "deletions": 3,
               "is_auth": false,
@@ -1327,8 +1327,8 @@
               "author": "sid293",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1698",
               "state": "needs-first-review",
-              "reason": "9d since open (SLA breach)",
-              "short_reason": "9d",
+              "reason": "10d since open (SLA breach)",
+              "short_reason": "10d",
               "age_days": 9.5,
               "additions": 49,
               "deletions": 15,
@@ -1443,7 +1443,7 @@
               "state": "needs-first-review",
               "reason": "1d since open",
               "short_reason": "1d",
-              "age_days": 0.9,
+              "age_days": 1.0,
               "additions": 4,
               "deletions": 0,
               "is_auth": true,
@@ -1576,7 +1576,7 @@
           "state": "stale-draft",
           "reason": "draft idle 122d",
           "short_reason": "draft idle 122d",
-          "age_days": 122.0,
+          "age_days": 122.1,
           "additions": 6,
           "deletions": 17,
           "is_auth": false,
@@ -1709,7 +1709,7 @@
           "state": "stale-draft",
           "reason": "draft idle 7d",
           "short_reason": "draft idle 7d",
-          "age_days": 7.3,
+          "age_days": 7.4,
           "additions": 55,
           "deletions": 153,
           "is_auth": true,
@@ -2099,36 +2099,36 @@
     {
       "id": "1298",
       "kind": "issue",
-      "pick": 1652,
-      "pick_reason": "Both PRs have unknown CI status. Applying the remaining criteria in order: #1652 (\"test:\" prefix) explicitly adds compile-time key-parity assertions, making test coverage its entire contribution, while #1798's test coverage is unspecified. #1652 also has a smaller diff (1 file vs. 2 files) and was opened earlier (lower PR number). It wins on has-tests, smallest-focused-diff, and oldest \u2014 all three remaining tiebreakers.",
+      "pick": 1798,
+      "pick_reason": "Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
       "members": [
         {
           "number": 1652,
           "title": "test: add compile-time key-parity assertions for spec type checks",
           "author": "rechedev9",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1652",
-          "state": "duplicate-cluster",
-          "reason": "cluster primary for issue #1298 (2 PRs)",
-          "short_reason": "cluster primary for issue #1298 (2 PRs)",
+          "state": "duplicate-cluster-member",
+          "reason": "shares issue #1298; #1798 is the pick",
+          "short_reason": "shares issue #1298; #1798 is the pick",
           "age_days": 17.9,
           "additions": 270,
           "deletions": 0,
           "is_auth": false,
           "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
+          "sla_breach": false,
+          "sla_kind": null,
           "cluster_id": "1298",
-          "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. Applying the remaining criteria in order: #1652 (\"test:\" prefix) explicitly adds compile-time key-parity assertions, making test coverage its entire contribution, while #1798's test coverage is unspecified. #1652 also has a smaller diff (1 file vs. 2 files) and was opened earlier (lower PR number). It wins on has-tests, smallest-focused-diff, and oldest \u2014 all three remaining tiebreakers."
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
         },
         {
           "number": 1798,
           "title": "fix(core): cover optional spec schema properties",
           "author": "rechedev9",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1798",
-          "state": "duplicate-cluster-member",
-          "reason": "shares linked issue #1298 with #1652",
-          "short_reason": "shares linked issue #1298 with #1652",
+          "state": "duplicate-cluster",
+          "reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
+          "short_reason": "[llm pick] cluster primary for issue #1298: Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own.",
           "age_days": 0.0,
           "additions": 179,
           "deletions": 1,
@@ -2137,8 +2137,8 @@
           "sla_breach": false,
           "sla_kind": null,
           "cluster_id": "1298",
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
+          "cluster_pick": true,
+          "cluster_pick_reason": "Both PRs have unknown CI status. #1798 (\"fix(core): cover optional spec schema properties\") directly patches the production code path for optional spec schema properties across 2 files (one fix, one test), which is the minimum needed to actually resolve issue #1298 at runtime. #1652 (\"test: add compile-time key-parity assertions\") is scoped to tests only (1 file) and adds assertions that detect the contract gap but do not fix the underlying behavior \u2014 end users on the unpatched code would still encounter the bug. For a bug fix issue, a production code change is required; a test-only PR cannot close it on its own."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1298"
@@ -2147,7 +2147,7 @@
       "id": "sem:1443",
       "kind": "semantic",
       "pick": 1670,
-      "pick_reason": "PR #1670 includes both the interface field addition and the implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates it also covers PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional.",
+      "pick_reason": "PR #1670 includes both the interface field and the constructor implementation that actually sets `_clientMetadata.scope`, making the feature functional. PR #1443 only adds the interface field with no implementation, so the scope value would be silently ignored at runtime. #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title.",
       "members": [
         {
           "number": 1443,
@@ -2155,8 +2155,8 @@
           "author": "NSeydoux",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1443",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #1670: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
-          "short_reason": "[llm] duplicates #1670: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts`",
+          "reason": "[llm] duplicates #1670: Add scope parameter support to client credentials providers in authExtensions.ts",
+          "short_reason": "[llm] duplicates #1670: Add scope parameter support to client credentials providers in authExtensions.ts",
           "age_days": 53.2,
           "additions": 120,
           "deletions": 3,
@@ -2174,9 +2174,9 @@
           "author": "Vadaski",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1670",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-          "short_reason": "[llm] cluster primary: Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)",
-          "age_days": 15.5,
+          "reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+          "short_reason": "[llm] cluster primary: Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)",
+          "age_days": 15.6,
           "additions": 103,
           "deletions": 0,
           "is_auth": true,
@@ -2185,14 +2185,14 @@
           "sla_kind": "1st-review",
           "cluster_id": "sem:1443",
           "cluster_pick": true,
-          "cluster_pick_reason": "PR #1670 includes both the interface field addition and the implementation (`this._clientMetadata.scope = options.scope` in the constructor), and its title indicates it also covers PrivateKeyJwtProvider and StaticPrivateKeyJwtProvider. PR #1443 only adds the interface field with no implementation, leaving the feature non-functional."
+          "cluster_pick_reason": "PR #1670 includes both the interface field and the constructor implementation that actually sets `_clientMetadata.scope`, making the feature functional. PR #1443 only adds the interface field with no implementation, so the scope value would be silently ignored at runtime. #1670 also covers additional providers (PrivateKeyJwtProvider, StaticPrivateKeyJwtProvider) per its title."
         }
       ],
-      "desc": "Add `scope` option to `ClientCredentialsProviderOptions` in `authExtensions.ts` (2 PRs)"
+      "desc": "Add scope parameter support to client credentials providers in authExtensions.ts (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.6791,
+    "total_usd": 0.5924,
     "total_calls": 9,
     "by_purpose": {
       "author-intent": {
@@ -2201,11 +2201,11 @@
       },
       "semantic-cluster": {
         "count": 7,
-        "cost": 0.3886
+        "cost": 0.3941
       },
       "cluster-pick": {
         "count": 1,
-        "cost": 0.2542
+        "cost": 0.162
       }
     }
   }
