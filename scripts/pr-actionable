@@ -66,7 +66,7 @@ LABEL_OVERRIDES = {
 # --- Timers ---
 
 DAYS_COMMUNITY_SLA = 7
-DAYS_STALE_AUTHOR = 7
+DAYS_STALE_AUTHOR = 14
 DAYS_STALE_AUTHOR_SUSPECTED_BOT = 3
 DAYS_PARKED_THRESHOLD = 30
 DAYS_PRE_CI_GHOST = 90
@@ -152,7 +152,7 @@ STATES: list[StateSpec] = [
 
     # --- Tier 4: Hygiene ---
     StateSpec("stale-awaiting-author", "actionable",
-              "Changes requested over a week ago with no author response.",
+              "Changes requested over two weeks ago with no author response.",
               effort_min=5, tier="Hygiene", sort_by="wait"),
     StateSpec("approved-rotted", "actionable",
               "Was approved, now conflicting. Rebase or ask author.",
