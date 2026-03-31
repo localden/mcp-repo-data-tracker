@@ -260,7 +260,7 @@
             <tr>
               <th class="bg-base-200">Repository</th>
               <th class="bg-base-200 text-right">
-                <span class="inline-flex items-center gap-1">Actionable PRs<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">PRs where the ball is in our court.<br>Green: ≤ 10 · Yellow: 11–20 · Red: &gt; 20</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
+                <span class="inline-flex items-center gap-1">Actionable PRs<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">PRs where the ball is in our court.<br>Green: ≤ 25 · Yellow: 26–50 · Red: &gt; 50</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
               </th>
               <th class="bg-base-200 text-right">
                 <span class="inline-flex items-center gap-1">Bugs + Enh<span class="tooltip tooltip-top font-normal normal-case"><span class="tooltip-content text-xs">Open issues labeled bug or enhancement.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span></span>
@@ -286,7 +286,7 @@
               </td>
               <td class="text-right font-semibold">
                 {{- if .hasAct -}}
-                  {{- $c := cond (le .actionablePRs 10) "text-success" (cond (le .actionablePRs 20) "text-warning" "text-error") -}}
+                  {{- $c := cond (le .actionablePRs 25) "text-success" (cond (le .actionablePRs 50) "text-warning" "text-error") -}}
                   <span class="{{ $c }}">{{ .actionablePRs }}</span>
                 {{- else }}{{ $dash }}{{ end -}}
               </td>
