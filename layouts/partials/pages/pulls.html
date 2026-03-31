@@ -120,9 +120,9 @@
 {{ $act := $a.summary.actionable_count }}
 {{ $auth := $a.summary.auth_count }}
 {{ $hrs := $a.summary.effort_hours }}
-{{/* Actionable: ≤10 green / ≤20 yellow / >20 red. Hours: <2 green / <8 yellow / ≥8 red. */}}
-{{ $actClr  := cond (le $act 10) "text-success" (cond (le $act 20) "text-warning" "text-error") }}
-{{ $hrsClr  := cond (lt $hrs 2.0) "text-success" (cond (lt $hrs 8.0) "text-warning" "text-error") }}
+{{/* Actionable: ≤25 green / ≤50 yellow / >50 red. Hours: <5 green / <10 yellow / ≥10 red. */}}
+{{ $actClr  := cond (le $act 25) "text-success" (cond (le $act 50) "text-warning" "text-error") }}
+{{ $hrsClr  := cond (lt $hrs 5.0) "text-success" (cond (lt $hrs 10.0) "text-warning" "text-error") }}
 {{ $actPct  := div (mul 100.0 $act) $s.actionable_target }}
 {{ $authPct := cond (gt $act 0) (div (mul 100.0 $auth) $act) 0.0 }}
 {{/* SLA breach counts — directly actionable: review one old PR → number drops by one.
@@ -143,7 +143,7 @@
       "total" $s.actionable_target "percent" $actPct "percentLabel" "of target"
       "sparkline" $actCountSpark "sparklineColor" (cond $s.actionable_over_target "rgb(220, 53, 69)" "rgb(40, 167, 69)")
       "trend" $actCountTrend "trendGoodDirection" "down"
-      "info" (printf "PRs where the ball is in our court.\n\nGreen: ≤ 10\nYellow: 11–20\nRed: > 20")) }}
+      "info" (printf "PRs where the ball is in our court.\n\nGreen: ≤ 25\nYellow: 26–50\nRed: > 50")) }}
     <div onclick="actFilterToggle('label:auth')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
       "label" "Auth"
@@ -157,7 +157,7 @@
       "value" (printf "~%s" ($hrs | lang.FormatNumber 1)) "valueClass" $hrsClr
       "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)"
       "trend" $actHoursTrend "trendGoodDirection" "down"
-      "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 2h\nYellow: 2–8h\nRed: > 8h")) }}
+      "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 5h\nYellow: 5–10h\nRed: ≥ 10h")) }}
     <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
       "label" "1st review > 7d"
