@@ -126,11 +126,11 @@
 {{ $actPct  := div (mul 100.0 $act) $s.actionable_target }}
 {{ $authPct := cond (gt $act 0) (div (mul 100.0 $auth) $act) 0.0 }}
 {{/* SLA breach counts — directly actionable: review one old PR → number drops by one.
-     0 green / 1-2 yellow / 3+ red. Compliance % is also snapshotted for history. */}}
-{{ $slaClr := slice "text-success" "text-warning" "text-warning" "text-error" }}
-{{ $firstClr := index $slaClr (int (math.Min $s.first_review_7d_breach 3)) }}
-{{ $reClr    := index $slaClr (int (math.Min $s.re_review_24h_breach 3)) }}
-{{ $maintClr := index $slaClr (int (math.Min $s.maint_24h_breach 3)) }}
+     First/re-review: <5 green / <10 yellow / 10+ red (volume-driven, weekends cause noise).
+     Maintainer: 0-1 green / 2-3 yellow / 4+ red (tighter — these are teammates blocked). */}}
+{{ $firstClr := cond (lt $s.first_review_7d_breach 5) "text-success" (cond (lt $s.first_review_7d_breach 10) "text-warning" "text-error") }}
+{{ $reClr    := cond (lt $s.re_review_24h_breach 5)   "text-success" (cond (lt $s.re_review_24h_breach 10)   "text-warning" "text-error") }}
+{{ $maintClr := cond (le $s.maint_24h_breach 1)       "text-success" (cond (le $s.maint_24h_breach 3)        "text-warning" "text-error") }}
 {{ $firstSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.first_review_7d_breach") }}
 {{ $reSpark    := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.re_review_24h_breach") }}
 {{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
@@ -165,7 +165,7 @@
       "descriptor" (printf "of %d eligible" (int ($s.first_review_eligible | default 0)))
       "sparkline" $firstSpark "sparklineColor" "rgb(220, 53, 69)"
       "trendGoodDirection" "down"
-      "info" (printf "Community PRs past 7 days with no maintainer review — across all pressing states, not just the first-review bucket.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+      "info" (printf "Community PRs past 7 days with no maintainer review — across all pressing states, not just the first-review bucket.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
     </div>
     <div onclick="actFilterToggle('label:re-review')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
@@ -174,7 +174,7 @@
       "descriptor" (printf "of %d eligible" (int ($s.re_review_eligible | default 0)))
       "sparkline" $reSpark "sparklineColor" "rgb(220, 53, 69)"
       "trendGoodDirection" "down"
-      "info" (printf "PRs where the author acted (pushed/commented) after our review, past 24h — across all pressing states.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+      "info" (printf "PRs where the author acted (pushed/commented) after our review, past 24h — across all pressing states.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
     </div>
     <div onclick="actFilterToggle('label:maintainer')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
@@ -183,7 +183,7 @@
       "descriptor" (printf "of %d eligible" (int ($s.maint_eligible | default 0)))
       "sparkline" $maintSpark "sparklineColor" "rgb(220, 53, 69)"
       "trendGoodDirection" "down"
-      "info" (printf "PRs from maintainers past 24 hours — across all pressing states. A maintainer PR in a cluster still counts.\nClick to filter to these PRs.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+      "info" (printf "PRs from maintainers past 24 hours — across all pressing states. A maintainer PR in a cluster still counts.\nClick to filter to these PRs.\n\nGreen: 0–1\nYellow: 2–3\nRed: ≥ 4")) }}
     </div>
   </div>
 </section>
