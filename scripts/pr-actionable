@@ -47,10 +47,10 @@ AUTH_TITLE_KEYWORDS = (
     "jwt", "bearer", "scope", "pkce", "oidc",
 )
 
-BOT_RELEASE_TITLES = {
+BOT_RELEASE_TITLE_PREFIXES = (
     "Version Packages",
     "chore: weekly dependency update",
-}
+)
 
 LLM_MODEL = "sonnet"
 
@@ -997,7 +997,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
     # --- Tier A classifications (no extra fetch needed) ---
     age = days_since(pr.created_at)
 
-    if pr.author.startswith("app/") and pr.title in BOT_RELEASE_TITLES:
+    if pr.author.startswith("app/") and pr.title.startswith(BOT_RELEASE_TITLE_PREFIXES):
         pr.state, pr.reason = "bot-release", "release bot PR"
         return
 
