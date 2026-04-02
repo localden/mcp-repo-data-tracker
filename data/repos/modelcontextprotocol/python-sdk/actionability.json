@@ -1,6 +1,6 @@
 {
   "repo": "python-sdk",
-  "lastUpdated": "2026-04-02T16:30:38.359080+00:00",
+  "lastUpdated": "2026-04-02T17:14:26.187151+00:00",
   "summary": {
     "actionable_count": 116,
     "auth_count": 41,
@@ -102,7 +102,7 @@
               "state": "author-pinged-after-procedural",
               "reason": "author pinged @felixweinberger 129d ago, no response",
               "short_reason": "author pinged @felixweinberger 129d ago",
-              "age_days": 177.0,
+              "age_days": 177.1,
               "additions": 34,
               "deletions": 1,
               "is_auth": false,
@@ -119,9 +119,9 @@
               "author": "daamitt",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1486",
               "state": "author-pinged-after-procedural",
-              "reason": "author pinged @maxisbey, @felixweinberger 137d ago, no response",
-              "short_reason": "author pinged @maxisbey, @felixweinberger 137d ago",
-              "age_days": 168.4,
+              "reason": "author pinged @felixweinberger, @maxisbey 137d ago, no response",
+              "short_reason": "author pinged @felixweinberger, @maxisbey 137d ago",
+              "age_days": 168.5,
               "additions": 16,
               "deletions": 4,
               "is_auth": false,
@@ -140,7 +140,7 @@
               "state": "author-pinged-after-procedural",
               "reason": "author pinged @maxisbey 100d ago, no response",
               "short_reason": "author pinged @maxisbey 100d ago",
-              "age_days": 148.5,
+              "age_days": 148.6,
               "additions": 332,
               "deletions": 44,
               "is_auth": false,
@@ -214,8 +214,8 @@
               "author": "gspeter-max",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2124",
               "state": "author-pinged-after-procedural",
-              "reason": "author pinged @maxisbey, @Kludex, @felixweinberger 39d ago, no response",
-              "short_reason": "author pinged @maxisbey, @Kludex, @felixweinberger 39d ago",
+              "reason": "author pinged @Kludex, @felixweinberger, @maxisbey 39d ago, no response",
+              "short_reason": "author pinged @Kludex, @felixweinberger, @maxisbey 39d ago",
               "age_days": 39.4,
               "additions": 81,
               "deletions": 31,
@@ -242,7 +242,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (240d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (240d waiting)",
-              "age_days": 252.7,
+              "age_days": 252.8,
               "additions": 23,
               "deletions": 0,
               "is_auth": false,
@@ -261,7 +261,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (97d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (97d waiting)",
-              "age_days": 177.9,
+              "age_days": 178.0,
               "additions": 1204,
               "deletions": 645,
               "is_auth": false,
@@ -299,7 +299,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (139d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (139d waiting)",
-              "age_days": 153.9,
+              "age_days": 154.0,
               "additions": 27,
               "deletions": 2,
               "is_auth": false,
@@ -337,7 +337,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 3d waiting)",
               "short_reason": "push after approval (1 commits, 3d waiting)",
-              "age_days": 49.7,
+              "age_days": 49.8,
               "additions": 392,
               "deletions": 17,
               "is_auth": true,
@@ -375,7 +375,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (37d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (37d waiting)",
-              "age_days": 40.7,
+              "age_days": 40.8,
               "additions": 1306,
               "deletions": 270,
               "is_auth": true,
@@ -464,7 +464,7 @@
               "sla_kind": "maintainer",
               "cluster_id": "1919",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. #1938 touches 4 files vs. #2019's 5, making it the smaller, more focused diff. The title scope also favors #1938: it strips trailing slashes from OAuth metadata URL fields broadly, which is a more complete fix for #1919, while #2019 only addresses the issuer URL field specifically. #1938 is also the older submission. All four tiebreakers (diff size, fix completeness, age) favor #1938."
+              "cluster_pick_reason": "CI status is unknown for both PRs and neither diff was accessible for review. Applying the stated tiebreaker chain: with CI and test coverage unknown, the next criterion is smallest focused diff \u2014 #1938 changes 4 files vs #2019's 5 files. The final tiebreaker (oldest) also favors #1938. The broader title scope (\"URL fields\" plural) in #1938 may also indicate a more complete fix, but without diff access this cannot be confirmed. #1938 wins on file count and age."
             },
             {
               "number": 1838,
@@ -483,26 +483,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1811",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs target the same issue with the same file count (2) and unknown CI status, making direct comparison on CI or test coverage impossible. Falling back to the oldest-first tiebreaker: #1838 was opened before #1949, so it is preferred by the stated priority order."
-            },
-            {
-              "number": 2143,
-              "title": "Handle BrokenResourceError in stdio client shutdown path",
-              "author": "aframedelta",
-              "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2143",
-              "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-              "short_reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-              "age_days": 36.4,
-              "additions": 16,
-              "deletions": 2,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": "sem:2143",
-              "cluster_pick": true,
-              "cluster_pick_reason": "PR #2143 and #2268 have byte-for-byte identical diffs to src/mcp/client/stdio.py. Both also modify tests/client/test_stdio.py but with different blob hashes (2439d1825 vs 08c233b2e), indicating divergent test implementations. PR #2143 was filed first (lower PR number) and carries the same production fix. If #2268 has additional or improved test coverage, those tests should be cherry-picked into #2143 before closing #2268."
+              "cluster_pick_reason": "Both PRs have unknown CI status and both touch 2 files, so no distinction on CI or diff size could be established. Falling back to the \"oldest\" tiebreaker: #1838 was opened first (lower PR number), giving it priority over #1949 under the stated preference order."
             },
             {
               "number": 2190,
@@ -521,7 +502,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1257",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. Neither is noted as having tests. On diff size, #2190 touches 1 file versus #2371's 2 files \u2014 a smaller, more focused change for the same fix. #2190 is also the older PR (lower number), which is the final tiebreaker. No technical advantage distinguishes #2371's 2-file approach that would outweigh the simpler, older #2190."
+              "cluster_pick_reason": "Both PRs have unknown CI status. Neither PR description mentions added tests. On diff size, #2190 touches 1 file versus #2371's 2 files, making it the smaller, more focused change. On age, #2190 (lower PR number) predates #2371. With CI and tests equal, the tiebreakers \u2014 smallest diff and oldest \u2014 both favor #2190."
             },
             {
               "number": 2224,
@@ -531,7 +512,7 @@
               "state": "duplicate-cluster",
               "reason": "cluster primary for issue #2216 (3 PRs)",
               "short_reason": "cluster primary for issue #2216 (3 PRs)",
-              "age_days": 27.5,
+              "age_days": 27.6,
               "additions": 45,
               "deletions": 4,
               "is_auth": true,
@@ -540,7 +521,26 @@
               "sla_kind": "1st-review",
               "cluster_id": "2216",
               "cluster_pick": true,
-              "cluster_pick_reason": "All three PRs have unknown CI status. #2301 is eliminated by scope: it touches 5 files and removes the check from the authorize handler entirely (93 lines changed), a broader architectural change versus the targeted None-guard the issue requires. Between #2224 and #2368 \u2014 both fixing validate_scope in 2 files \u2014 #2224 has a smaller total diff (49 lines vs. 54 lines) and is the oldest submission (27.5 days vs. 5.1 days), satisfying both remaining tiebreakers in order."
+              "cluster_pick_reason": "All three PRs have unknown CI status, so CI cannot differentiate them. #2224 and #2368 both touch 2 files (smallest focused diff), while #2301 touches 5 files \u2014 a broader change that removes the scope check from the authorize handler entirely, going beyond the minimal fix and increasing review surface. Between the two 2-file PRs, #2224 is the oldest, giving it more time for community review. #2224 fixes the issue at the registration side (treating None registered_scopes as no restrictions), which addresses the root cause, whereas #2368 patches the validation call site. #2301's architectural change to the authorize handler is a larger scope than needed to fix #2216."
+            },
+            {
+              "number": 2268,
+              "title": "Fix stdio_client BrokenResourceError race condition during shutdown",
+              "author": "weiguangli-io",
+              "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2268",
+              "state": "duplicate-cluster",
+              "reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+              "short_reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+              "age_days": 22.6,
+              "additions": 40,
+              "deletions": 2,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": "sem:2143",
+              "cluster_pick": true,
+              "cluster_pick_reason": "The stdio.py diffs are byte-for-byte identical between the two PRs. #2268 is preferred because its title ('race condition during shutdown') more precisely describes the root cause, and its test file (index 08c233b2e vs 2439d1825 in #2143) is a distinct implementation \u2014 review the test coverage in each to confirm, but #2268's framing provides better context for future maintainers."
             },
             {
               "number": 2366,
@@ -548,9 +548,9 @@
               "author": "paikend",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2366",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-              "short_reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-              "age_days": 5.3,
+              "reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+              "short_reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+              "age_days": 5.4,
               "additions": 25,
               "deletions": 41,
               "is_auth": false,
@@ -559,7 +559,7 @@
               "sla_kind": null,
               "cluster_id": "397",
               "cluster_pick": true,
-              "cluster_pick_reason": "Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them."
+              "cluster_pick_reason": "CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397."
             },
             {
               "number": 2374,
@@ -567,8 +567,8 @@
               "author": "Aboudjem",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2374",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
-              "short_reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
+              "reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
+              "short_reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
               "age_days": 4.7,
               "additions": 141,
               "deletions": 0,
@@ -578,26 +578,26 @@
               "sla_kind": null,
               "cluster_id": "1401",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects."
+              "cluster_pick_reason": "CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue."
             },
             {
-              "number": 2377,
-              "title": "fix: allow custom Content-Type header in StreamableHTTPTransport",
-              "author": "guoyangzhen",
-              "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2377",
+              "number": 2383,
+              "title": "fix(streamable_http): allow Content-Type header override",
+              "author": "haroldfabla2-hue",
+              "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2383",
               "state": "duplicate-cluster",
-              "reason": "cluster primary for issue #2375 (2 PRs)",
-              "short_reason": "cluster primary for issue #2375 (2 PRs)",
-              "age_days": 4.1,
-              "additions": 10,
-              "deletions": 2,
+              "reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
+              "short_reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
+              "age_days": 1.8,
+              "additions": 46,
+              "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": false,
               "sla_kind": null,
               "cluster_id": "2375",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. With CI equal, the tiebreakers apply: #2377 touches 1 file vs #2383's 2 files, making it the smaller, more focused diff. #2377 is also the older PR. Without evidence that #2383's second file is a test (which would have elevated it), the \"smallest focused diff\" and \"oldest\" criteria both point to #2377."
+              "cluster_pick_reason": "Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age."
             }
           ],
           "clusters": [
@@ -605,7 +605,7 @@
               "id": "1257",
               "kind": "issue",
               "pick": 2190,
-              "pick_reason": "Both PRs have unknown CI status. Neither is noted as having tests. On diff size, #2190 touches 1 file versus #2371's 2 files \u2014 a smaller, more focused change for the same fix. #2190 is also the older PR (lower number), which is the final tiebreaker. No technical advantage distinguishes #2371's 2-file approach that would outweigh the simpler, older #2190.",
+              "pick_reason": "Both PRs have unknown CI status. Neither PR description mentions added tests. On diff size, #2190 touches 1 file versus #2371's 2 files, making it the smaller, more focused change. On age, #2190 (lower PR number) predates #2371. With CI and tests equal, the tiebreakers \u2014 smallest diff and oldest \u2014 both favor #2190.",
               "members": [
                 {
                   "number": 2190,
@@ -624,7 +624,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1257",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. Neither is noted as having tests. On diff size, #2190 touches 1 file versus #2371's 2 files \u2014 a smaller, more focused change for the same fix. #2190 is also the older PR (lower number), which is the final tiebreaker. No technical advantage distinguishes #2371's 2-file approach that would outweigh the simpler, older #2190."
+                  "cluster_pick_reason": "Both PRs have unknown CI status. Neither PR description mentions added tests. On diff size, #2190 touches 1 file versus #2371's 2 files, making it the smaller, more focused change. On age, #2190 (lower PR number) predates #2371. With CI and tests equal, the tiebreakers \u2014 smallest diff and oldest \u2014 both favor #2190."
                 },
                 {
                   "number": 2371,
@@ -652,7 +652,7 @@
               "id": "1401",
               "kind": "issue",
               "pick": 2374,
-              "pick_reason": "Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
+              "pick_reason": "CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
               "members": [
                 {
                   "number": 2122,
@@ -662,7 +662,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1401; #2374 is the pick",
                   "short_reason": "shares issue #1401; #2374 is the pick",
-                  "age_days": 40.1,
+                  "age_days": 40.2,
                   "additions": 115,
                   "deletions": 16,
                   "is_auth": false,
@@ -679,8 +679,8 @@
                   "author": "Aboudjem",
                   "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2374",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
-                  "short_reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
+                  "reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
+                  "short_reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
                   "age_days": 4.7,
                   "additions": 141,
                   "deletions": 0,
@@ -690,7 +690,7 @@
                   "sla_kind": null,
                   "cluster_id": "1401",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects."
+                  "cluster_pick_reason": "CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/python-sdk/issues/1401"
@@ -699,7 +699,7 @@
               "id": "1811",
               "kind": "issue",
               "pick": 1838,
-              "pick_reason": "Both PRs target the same issue with the same file count (2) and unknown CI status, making direct comparison on CI or test coverage impossible. Falling back to the oldest-first tiebreaker: #1838 was opened before #1949, so it is preferred by the stated priority order.",
+              "pick_reason": "Both PRs have unknown CI status and both touch 2 files, so no distinction on CI or diff size could be established. Falling back to the \"oldest\" tiebreaker: #1838 was opened first (lower PR number), giving it priority over #1949 under the stated preference order.",
               "members": [
                 {
                   "number": 1838,
@@ -718,7 +718,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1811",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs target the same issue with the same file count (2) and unknown CI status, making direct comparison on CI or test coverage impossible. Falling back to the oldest-first tiebreaker: #1838 was opened before #1949, so it is preferred by the stated priority order."
+                  "cluster_pick_reason": "Both PRs have unknown CI status and both touch 2 files, so no distinction on CI or diff size could be established. Falling back to the \"oldest\" tiebreaker: #1838 was opened first (lower PR number), giving it priority over #1949 under the stated preference order."
                 },
                 {
                   "number": 1949,
@@ -746,7 +746,7 @@
               "id": "1919",
               "kind": "issue",
               "pick": 1938,
-              "pick_reason": "Both PRs have unknown CI status. #1938 touches 4 files vs. #2019's 5, making it the smaller, more focused diff. The title scope also favors #1938: it strips trailing slashes from OAuth metadata URL fields broadly, which is a more complete fix for #1919, while #2019 only addresses the issuer URL field specifically. #1938 is also the older submission. All four tiebreakers (diff size, fix completeness, age) favor #1938.",
+              "pick_reason": "CI status is unknown for both PRs and neither diff was accessible for review. Applying the stated tiebreaker chain: with CI and test coverage unknown, the next criterion is smallest focused diff \u2014 #1938 changes 4 files vs #2019's 5 files. The final tiebreaker (oldest) also favors #1938. The broader title scope (\"URL fields\" plural) in #1938 may also indicate a more complete fix, but without diff access this cannot be confirmed. #1938 wins on file count and age.",
               "members": [
                 {
                   "number": 1938,
@@ -765,7 +765,7 @@
                   "sla_kind": "maintainer",
                   "cluster_id": "1919",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. #1938 touches 4 files vs. #2019's 5, making it the smaller, more focused diff. The title scope also favors #1938: it strips trailing slashes from OAuth metadata URL fields broadly, which is a more complete fix for #1919, while #2019 only addresses the issuer URL field specifically. #1938 is also the older submission. All four tiebreakers (diff size, fix completeness, age) favor #1938."
+                  "cluster_pick_reason": "CI status is unknown for both PRs and neither diff was accessible for review. Applying the stated tiebreaker chain: with CI and test coverage unknown, the next criterion is smallest focused diff \u2014 #1938 changes 4 files vs #2019's 5 files. The final tiebreaker (oldest) also favors #1938. The broader title scope (\"URL fields\" plural) in #1938 may also indicate a more complete fix, but without diff access this cannot be confirmed. #1938 wins on file count and age."
                 },
                 {
                   "number": 2019,
@@ -775,7 +775,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1919 with #1938",
                   "short_reason": "shares linked issue #1919 with #1938",
-                  "age_days": 52.6,
+                  "age_days": 52.7,
                   "additions": 111,
                   "deletions": 11,
                   "is_auth": true,
@@ -793,7 +793,7 @@
               "id": "2216",
               "kind": "issue",
               "pick": 2224,
-              "pick_reason": "All three PRs have unknown CI status. #2301 is eliminated by scope: it touches 5 files and removes the check from the authorize handler entirely (93 lines changed), a broader architectural change versus the targeted None-guard the issue requires. Between #2224 and #2368 \u2014 both fixing validate_scope in 2 files \u2014 #2224 has a smaller total diff (49 lines vs. 54 lines) and is the oldest submission (27.5 days vs. 5.1 days), satisfying both remaining tiebreakers in order.",
+              "pick_reason": "All three PRs have unknown CI status, so CI cannot differentiate them. #2224 and #2368 both touch 2 files (smallest focused diff), while #2301 touches 5 files \u2014 a broader change that removes the scope check from the authorize handler entirely, going beyond the minimal fix and increasing review surface. Between the two 2-file PRs, #2224 is the oldest, giving it more time for community review. #2224 fixes the issue at the registration side (treating None registered_scopes as no restrictions), which addresses the root cause, whereas #2368 patches the validation call site. #2301's architectural change to the authorize handler is a larger scope than needed to fix #2216.",
               "members": [
                 {
                   "number": 2224,
@@ -803,7 +803,7 @@
                   "state": "duplicate-cluster",
                   "reason": "cluster primary for issue #2216 (3 PRs)",
                   "short_reason": "cluster primary for issue #2216 (3 PRs)",
-                  "age_days": 27.5,
+                  "age_days": 27.6,
                   "additions": 45,
                   "deletions": 4,
                   "is_auth": true,
@@ -812,7 +812,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "2216",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All three PRs have unknown CI status. #2301 is eliminated by scope: it touches 5 files and removes the check from the authorize handler entirely (93 lines changed), a broader architectural change versus the targeted None-guard the issue requires. Between #2224 and #2368 \u2014 both fixing validate_scope in 2 files \u2014 #2224 has a smaller total diff (49 lines vs. 54 lines) and is the oldest submission (27.5 days vs. 5.1 days), satisfying both remaining tiebreakers in order."
+                  "cluster_pick_reason": "All three PRs have unknown CI status, so CI cannot differentiate them. #2224 and #2368 both touch 2 files (smallest focused diff), while #2301 touches 5 files \u2014 a broader change that removes the scope check from the authorize handler entirely, going beyond the minimal fix and increasing review surface. Between the two 2-file PRs, #2224 is the oldest, giving it more time for community review. #2224 fixes the issue at the registration side (treating None registered_scopes as no restrictions), which addresses the root cause, whereas #2368 patches the validation call site. #2301's architectural change to the authorize handler is a larger scope than needed to fix #2216."
                 },
                 {
                   "number": 2301,
@@ -841,7 +841,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #2216 with #2224",
                   "short_reason": "shares linked issue #2216 with #2224",
-                  "age_days": 5.1,
+                  "age_days": 5.2,
                   "additions": 50,
                   "deletions": 4,
                   "is_auth": true,
@@ -858,17 +858,17 @@
             {
               "id": "2375",
               "kind": "issue",
-              "pick": 2377,
-              "pick_reason": "Both PRs have unknown CI status. With CI equal, the tiebreakers apply: #2377 touches 1 file vs #2383's 2 files, making it the smaller, more focused diff. #2377 is also the older PR. Without evidence that #2383's second file is a test (which would have elevated it), the \"smallest focused diff\" and \"oldest\" criteria both point to #2377.",
+              "pick": 2383,
+              "pick_reason": "Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
               "members": [
                 {
                   "number": 2377,
                   "title": "fix: allow custom Content-Type header in StreamableHTTPTransport",
                   "author": "guoyangzhen",
                   "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2377",
-                  "state": "duplicate-cluster",
-                  "reason": "cluster primary for issue #2375 (2 PRs)",
-                  "short_reason": "cluster primary for issue #2375 (2 PRs)",
+                  "state": "duplicate-cluster-member",
+                  "reason": "shares issue #2375; #2383 is the pick",
+                  "short_reason": "shares issue #2375; #2383 is the pick",
                   "age_days": 4.1,
                   "additions": 10,
                   "deletions": 2,
@@ -877,17 +877,17 @@
                   "sla_breach": false,
                   "sla_kind": null,
                   "cluster_id": "2375",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. With CI equal, the tiebreakers apply: #2377 touches 1 file vs #2383's 2 files, making it the smaller, more focused diff. #2377 is also the older PR. Without evidence that #2383's second file is a test (which would have elevated it), the \"smallest focused diff\" and \"oldest\" criteria both point to #2377."
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
                 },
                 {
                   "number": 2383,
                   "title": "fix(streamable_http): allow Content-Type header override",
                   "author": "haroldfabla2-hue",
                   "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2383",
-                  "state": "duplicate-cluster-member",
-                  "reason": "shares linked issue #2375 with #2377",
-                  "short_reason": "shares linked issue #2375 with #2377",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
+                  "short_reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
                   "age_days": 1.8,
                   "additions": 46,
                   "deletions": 3,
@@ -896,8 +896,8 @@
                   "sla_breach": false,
                   "sla_kind": null,
                   "cluster_id": "2375",
-                  "cluster_pick": false,
-                  "cluster_pick_reason": ""
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/python-sdk/issues/2375"
@@ -906,7 +906,7 @@
               "id": "397",
               "kind": "issue",
               "pick": 2366,
-              "pick_reason": "Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
+              "pick_reason": "CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
               "members": [
                 {
                   "number": 1907,
@@ -933,9 +933,9 @@
                   "author": "paikend",
                   "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2366",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-                  "short_reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-                  "age_days": 5.3,
+                  "reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+                  "short_reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+                  "age_days": 5.4,
                   "additions": 25,
                   "deletions": 41,
                   "is_auth": false,
@@ -944,7 +944,7 @@
                   "sla_kind": null,
                   "cluster_id": "397",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them."
+                  "cluster_pick_reason": "CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397."
                 },
                 {
                   "number": 2367,
@@ -971,38 +971,19 @@
             {
               "id": "sem:2143",
               "kind": "semantic",
-              "pick": 2143,
-              "pick_reason": "PR #2143 and #2268 have byte-for-byte identical diffs to src/mcp/client/stdio.py. Both also modify tests/client/test_stdio.py but with different blob hashes (2439d1825 vs 08c233b2e), indicating divergent test implementations. PR #2143 was filed first (lower PR number) and carries the same production fix. If #2268 has additional or improved test coverage, those tests should be cherry-picked into #2143 before closing #2268.",
+              "pick": 2268,
+              "pick_reason": "The stdio.py diffs are byte-for-byte identical between the two PRs. #2268 is preferred because its title ('race condition during shutdown') more precisely describes the root cause, and its test file (index 08c233b2e vs 2439d1825 in #2143) is a distinct implementation \u2014 review the test coverage in each to confirm, but #2268's framing provides better context for future maintainers.",
               "members": [
                 {
                   "number": 2143,
                   "title": "Handle BrokenResourceError in stdio client shutdown path",
                   "author": "aframedelta",
                   "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2143",
-                  "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-                  "age_days": 36.4,
-                  "additions": 16,
-                  "deletions": 2,
-                  "is_auth": false,
-                  "is_maintainer": false,
-                  "sla_breach": true,
-                  "sla_kind": "1st-review",
-                  "cluster_id": "sem:2143",
-                  "cluster_pick": true,
-                  "cluster_pick_reason": "PR #2143 and #2268 have byte-for-byte identical diffs to src/mcp/client/stdio.py. Both also modify tests/client/test_stdio.py but with different blob hashes (2439d1825 vs 08c233b2e), indicating divergent test implementations. PR #2143 was filed first (lower PR number) and carries the same production fix. If #2268 has additional or improved test coverage, those tests should be cherry-picked into #2143 before closing #2268."
-                },
-                {
-                  "number": 2268,
-                  "title": "Fix stdio_client BrokenResourceError race condition during shutdown",
-                  "author": "weiguangli-io",
-                  "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2268",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #2143: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers.",
-                  "short_reason": "[llm] duplicates #2143: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers.",
-                  "age_days": 22.5,
-                  "additions": 40,
+                  "reason": "[llm] duplicates #2268: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers",
+                  "short_reason": "[llm] duplicates #2268: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers",
+                  "age_days": 36.5,
+                  "additions": 16,
                   "deletions": 2,
                   "is_auth": false,
                   "is_maintainer": false,
@@ -1011,9 +992,28 @@
                   "cluster_id": "sem:2143",
                   "cluster_pick": false,
                   "cluster_pick_reason": ""
+                },
+                {
+                  "number": 2268,
+                  "title": "Fix stdio_client BrokenResourceError race condition during shutdown",
+                  "author": "weiguangli-io",
+                  "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2268",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+                  "short_reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+                  "age_days": 22.6,
+                  "additions": 40,
+                  "deletions": 2,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": true,
+                  "sla_kind": "1st-review",
+                  "cluster_id": "sem:2143",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "The stdio.py diffs are byte-for-byte identical between the two PRs. #2268 is preferred because its title ('race condition during shutdown') more precisely describes the root cause, and its test file (index 08c233b2e vs 2439d1825 in #2143) is a distinct implementation \u2014 review the test coverage in each to confirm, but #2268's framing provides better context for future maintainers."
                 }
               ],
-              "desc": "BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)"
+              "desc": "stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)"
             }
           ]
         },
@@ -1125,7 +1125,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 157.3,
+              "age_days": 157.4,
               "additions": 9,
               "deletions": 0,
               "is_auth": true,
@@ -1217,7 +1217,7 @@
               "state": "needs-first-review",
               "reason": "183d since open (SLA breach)",
               "short_reason": "183d",
-              "age_days": 183.1,
+              "age_days": 183.2,
               "additions": 56,
               "deletions": 2,
               "is_auth": true,
@@ -1236,7 +1236,7 @@
               "state": "needs-first-review",
               "reason": "155d since open (SLA breach)",
               "short_reason": "155d",
-              "age_days": 155.4,
+              "age_days": 155.5,
               "additions": 10,
               "deletions": 2,
               "is_auth": true,
@@ -1255,7 +1255,7 @@
               "state": "needs-first-review",
               "reason": "150d since open (SLA breach)",
               "short_reason": "150d",
-              "age_days": 149.9,
+              "age_days": 150.0,
               "additions": 366,
               "deletions": 367,
               "is_auth": false,
@@ -1274,7 +1274,7 @@
               "state": "needs-first-review",
               "reason": "148d since open (SLA breach)",
               "short_reason": "148d",
-              "age_days": 147.6,
+              "age_days": 147.7,
               "additions": 50,
               "deletions": 10,
               "is_auth": false,
@@ -1331,7 +1331,7 @@
               "state": "needs-first-review",
               "reason": "143d since open (SLA breach)",
               "short_reason": "143d",
-              "age_days": 142.7,
+              "age_days": 142.8,
               "additions": 889,
               "deletions": 4,
               "is_auth": false,
@@ -1407,7 +1407,7 @@
               "state": "needs-first-review",
               "reason": "104d since open (SLA breach)",
               "short_reason": "104d",
-              "age_days": 103.9,
+              "age_days": 104.0,
               "additions": 73,
               "deletions": 2,
               "is_auth": false,
@@ -1424,8 +1424,8 @@
               "author": "ivanbelenky",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1812",
               "state": "needs-first-review",
-              "reason": "102d since open (SLA breach)",
-              "short_reason": "102d",
+              "reason": "103d since open (SLA breach)",
+              "short_reason": "103d",
               "age_days": 102.5,
               "additions": 20,
               "deletions": 1,
@@ -1443,8 +1443,8 @@
               "author": "challenger71498",
               "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1817",
               "state": "needs-first-review",
-              "reason": "97d since open (SLA breach)",
-              "short_reason": "97d",
+              "reason": "98d since open (SLA breach)",
+              "short_reason": "98d",
               "age_days": 97.5,
               "additions": 89,
               "deletions": 11,
@@ -1464,7 +1464,7 @@
               "state": "needs-first-review",
               "reason": "93d since open (SLA breach)",
               "short_reason": "93d",
-              "age_days": 92.5,
+              "age_days": 92.6,
               "additions": 671,
               "deletions": 9,
               "is_auth": true,
@@ -1597,7 +1597,7 @@
               "state": "needs-first-review",
               "reason": "49d since open (SLA breach)",
               "short_reason": "49d",
-              "age_days": 49.4,
+              "age_days": 49.5,
               "additions": 144,
               "deletions": 1,
               "is_auth": true,
@@ -1616,7 +1616,7 @@
               "state": "needs-first-review",
               "reason": "47d since open (SLA breach)",
               "short_reason": "47d",
-              "age_days": 47.0,
+              "age_days": 47.1,
               "additions": 107,
               "deletions": 1,
               "is_auth": true,
@@ -1692,7 +1692,7 @@
               "state": "needs-first-review",
               "reason": "36d since open (SLA breach)",
               "short_reason": "36d",
-              "age_days": 35.9,
+              "age_days": 36.0,
               "additions": 187,
               "deletions": 26,
               "is_auth": false,
@@ -2015,7 +2015,7 @@
               "state": "needs-first-review",
               "reason": "8d since open (SLA breach)",
               "short_reason": "8d",
-              "age_days": 8.2,
+              "age_days": 8.3,
               "additions": 41,
               "deletions": 18,
               "is_auth": false,
@@ -2053,7 +2053,7 @@
               "state": "needs-first-review",
               "reason": "8d since open (SLA breach)",
               "short_reason": "8d",
-              "age_days": 7.9,
+              "age_days": 8.0,
               "additions": 701,
               "deletions": 0,
               "is_auth": false,
@@ -2193,7 +2193,7 @@
               "state": "community-reviewed",
               "reason": "18d, reviewed by Bortlesboat, pawamoy (SLA breach)",
               "short_reason": "18d, reviewed by Bortlesboat, pawamoy (SLA breach)",
-              "age_days": 18.0,
+              "age_days": 18.1,
               "additions": 248,
               "deletions": 0,
               "is_auth": false,
@@ -2266,7 +2266,7 @@
               "state": "stale-awaiting-author",
               "reason": "57d since feedback, no response",
               "short_reason": "57d since feedback",
-              "age_days": 79.7,
+              "age_days": 79.8,
               "additions": 203,
               "deletions": 8,
               "is_auth": false,
@@ -2285,7 +2285,7 @@
               "state": "stale-awaiting-author",
               "reason": "author self-diagnosed CI 45d ago, never fixed",
               "short_reason": "author self-diagnosed CI 45d ago, never fixed",
-              "age_days": 52.6,
+              "age_days": 52.7,
               "additions": 285,
               "deletions": 10,
               "is_auth": false,
@@ -2394,7 +2394,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 28d, nobody's mentioned it",
               "short_reason": "red CI 28d",
-              "age_days": 28.0,
+              "age_days": 28.1,
               "additions": 85,
               "deletions": 3,
               "is_auth": false,
@@ -2508,7 +2508,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 6d, nobody's mentioned it",
               "short_reason": "red CI 6d",
-              "age_days": 5.7,
+              "age_days": 5.8,
               "additions": 307,
               "deletions": 49,
               "is_auth": true,
@@ -2527,7 +2527,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 5d, nobody's mentioned it",
               "short_reason": "red CI 5d",
-              "age_days": 5.1,
+              "age_days": 5.2,
               "additions": 127,
               "deletions": 0,
               "is_auth": false,
@@ -2546,7 +2546,7 @@
               "state": "ci-red-silent",
               "reason": "red CI 5d, nobody's mentioned it",
               "short_reason": "red CI 5d",
-              "age_days": 5.0,
+              "age_days": 5.1,
               "additions": 70,
               "deletions": 2,
               "is_auth": false,
@@ -2619,7 +2619,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 143d, no activity",
               "short_reason": "red CI 143d, no activity",
-              "age_days": 142.8,
+              "age_days": 142.9,
               "additions": 330,
               "deletions": 1,
               "is_auth": true,
@@ -2638,7 +2638,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 133d, no activity",
               "short_reason": "red CI 133d, no activity",
-              "age_days": 132.9,
+              "age_days": 133.0,
               "additions": 10,
               "deletions": 1,
               "is_auth": false,
@@ -2657,7 +2657,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 122d, no activity",
               "short_reason": "red CI 122d, no activity",
-              "age_days": 121.9,
+              "age_days": 122.0,
               "additions": 128,
               "deletions": 6,
               "is_auth": false,
@@ -2771,7 +2771,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 36d, no activity",
               "short_reason": "red CI 36d, no activity",
-              "age_days": 36.0,
+              "age_days": 36.1,
               "additions": 296,
               "deletions": 20,
               "is_auth": false,
@@ -2790,7 +2790,7 @@
               "state": "stale-ci-abandoned",
               "reason": "red CI 33d, no activity",
               "short_reason": "red CI 33d, no activity",
-              "age_days": 33.1,
+              "age_days": 33.2,
               "additions": 266,
               "deletions": 2,
               "is_auth": false,
@@ -2840,7 +2840,7 @@
           "state": "stale-draft",
           "reason": "draft idle 113d",
           "short_reason": "draft idle 113d",
-          "age_days": 113.0,
+          "age_days": 113.1,
           "additions": 28,
           "deletions": 7,
           "is_auth": false,
@@ -2916,7 +2916,7 @@
           "state": "stale-draft",
           "reason": "draft idle 38d",
           "short_reason": "draft idle 38d",
-          "age_days": 37.7,
+          "age_days": 37.8,
           "additions": 2024,
           "deletions": 268,
           "is_auth": true,
@@ -2973,7 +2973,7 @@
           "state": "stale-draft",
           "reason": "draft idle 37d",
           "short_reason": "draft idle 37d",
-          "age_days": 36.8,
+          "age_days": 36.9,
           "additions": 2600,
           "deletions": 268,
           "is_auth": true,
@@ -3207,7 +3207,7 @@
           "state": "stale-draft-pinged",
           "reason": "pinged 188d ago, no response",
           "short_reason": "pinged 188d ago",
-          "age_days": 294.2,
+          "age_days": 294.3,
           "additions": 125,
           "deletions": 138,
           "is_auth": false,
@@ -3264,7 +3264,7 @@
           "state": "stale-draft-pinged",
           "reason": "pinged 184d ago, no response",
           "short_reason": "pinged 184d ago",
-          "age_days": 190.1,
+          "age_days": 190.2,
           "additions": 2,
           "deletions": 1,
           "is_auth": true,
@@ -3371,7 +3371,7 @@
           "state": "draft-active",
           "reason": "7d old",
           "short_reason": "7d old",
-          "age_days": 6.9,
+          "age_days": 7.0,
           "additions": 3093,
           "deletions": 38,
           "is_auth": false,
@@ -3396,7 +3396,7 @@
           "state": "bot-release",
           "reason": "release bot PR",
           "short_reason": "release bot PR",
-          "age_days": 49.3,
+          "age_days": 49.4,
           "additions": 904,
           "deletions": 757,
           "is_auth": false,
@@ -3415,7 +3415,7 @@
       "id": "1257",
       "kind": "issue",
       "pick": 2190,
-      "pick_reason": "Both PRs have unknown CI status. Neither is noted as having tests. On diff size, #2190 touches 1 file versus #2371's 2 files \u2014 a smaller, more focused change for the same fix. #2190 is also the older PR (lower number), which is the final tiebreaker. No technical advantage distinguishes #2371's 2-file approach that would outweigh the simpler, older #2190.",
+      "pick_reason": "Both PRs have unknown CI status. Neither PR description mentions added tests. On diff size, #2190 touches 1 file versus #2371's 2 files, making it the smaller, more focused change. On age, #2190 (lower PR number) predates #2371. With CI and tests equal, the tiebreakers \u2014 smallest diff and oldest \u2014 both favor #2190.",
       "members": [
         {
           "number": 2190,
@@ -3434,7 +3434,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1257",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. Neither is noted as having tests. On diff size, #2190 touches 1 file versus #2371's 2 files \u2014 a smaller, more focused change for the same fix. #2190 is also the older PR (lower number), which is the final tiebreaker. No technical advantage distinguishes #2371's 2-file approach that would outweigh the simpler, older #2190."
+          "cluster_pick_reason": "Both PRs have unknown CI status. Neither PR description mentions added tests. On diff size, #2190 touches 1 file versus #2371's 2 files, making it the smaller, more focused change. On age, #2190 (lower PR number) predates #2371. With CI and tests equal, the tiebreakers \u2014 smallest diff and oldest \u2014 both favor #2190."
         },
         {
           "number": 2371,
@@ -3462,7 +3462,7 @@
       "id": "1401",
       "kind": "issue",
       "pick": 2374,
-      "pick_reason": "Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
+      "pick_reason": "CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
       "members": [
         {
           "number": 2122,
@@ -3472,7 +3472,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1401; #2374 is the pick",
           "short_reason": "shares issue #1401; #2374 is the pick",
-          "age_days": 40.1,
+          "age_days": 40.2,
           "additions": 115,
           "deletions": 16,
           "is_auth": false,
@@ -3489,8 +3489,8 @@
           "author": "Aboudjem",
           "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2374",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
-          "short_reason": "[llm pick] cluster primary for issue #1401: Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects.",
+          "reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
+          "short_reason": "[llm pick] cluster primary for issue #1401: CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue.",
           "age_days": 4.7,
           "additions": 141,
           "deletions": 0,
@@ -3500,7 +3500,7 @@
           "sla_kind": null,
           "cluster_id": "1401",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. Without test coverage data available, the next tiebreaker is diff size: #2374 touches 2 files vs #2122's 3 files, making it the more focused change. Both address silent error swallowing in session/message handling, but #2374's scope is narrower and therefore carries less risk of unintended side effects."
+          "cluster_pick_reason": "CI is unknown for both PRs. Both have no confirmed tests. On diff size, #2374 changes 2 files vs #2122's 3 files, making it the smaller and more focused change. On approach, #2374 directly targets the silent-swallow behavior in the default message_handler \u2014 the root cause described in #1401 \u2014 while #2122 takes a broader approach (propagating SSE stream errors across 3 files) that introduces more surface area for regressions. Preferring the smallest focused diff per the tiebreaker chain, and the approach that is more narrowly scoped to the reported issue."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/python-sdk/issues/1401"
@@ -3509,7 +3509,7 @@
       "id": "1811",
       "kind": "issue",
       "pick": 1838,
-      "pick_reason": "Both PRs target the same issue with the same file count (2) and unknown CI status, making direct comparison on CI or test coverage impossible. Falling back to the oldest-first tiebreaker: #1838 was opened before #1949, so it is preferred by the stated priority order.",
+      "pick_reason": "Both PRs have unknown CI status and both touch 2 files, so no distinction on CI or diff size could be established. Falling back to the \"oldest\" tiebreaker: #1838 was opened first (lower PR number), giving it priority over #1949 under the stated preference order.",
       "members": [
         {
           "number": 1838,
@@ -3528,7 +3528,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1811",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs target the same issue with the same file count (2) and unknown CI status, making direct comparison on CI or test coverage impossible. Falling back to the oldest-first tiebreaker: #1838 was opened before #1949, so it is preferred by the stated priority order."
+          "cluster_pick_reason": "Both PRs have unknown CI status and both touch 2 files, so no distinction on CI or diff size could be established. Falling back to the \"oldest\" tiebreaker: #1838 was opened first (lower PR number), giving it priority over #1949 under the stated preference order."
         },
         {
           "number": 1949,
@@ -3556,7 +3556,7 @@
       "id": "1919",
       "kind": "issue",
       "pick": 1938,
-      "pick_reason": "Both PRs have unknown CI status. #1938 touches 4 files vs. #2019's 5, making it the smaller, more focused diff. The title scope also favors #1938: it strips trailing slashes from OAuth metadata URL fields broadly, which is a more complete fix for #1919, while #2019 only addresses the issuer URL field specifically. #1938 is also the older submission. All four tiebreakers (diff size, fix completeness, age) favor #1938.",
+      "pick_reason": "CI status is unknown for both PRs and neither diff was accessible for review. Applying the stated tiebreaker chain: with CI and test coverage unknown, the next criterion is smallest focused diff \u2014 #1938 changes 4 files vs #2019's 5 files. The final tiebreaker (oldest) also favors #1938. The broader title scope (\"URL fields\" plural) in #1938 may also indicate a more complete fix, but without diff access this cannot be confirmed. #1938 wins on file count and age.",
       "members": [
         {
           "number": 1938,
@@ -3575,7 +3575,7 @@
           "sla_kind": "maintainer",
           "cluster_id": "1919",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. #1938 touches 4 files vs. #2019's 5, making it the smaller, more focused diff. The title scope also favors #1938: it strips trailing slashes from OAuth metadata URL fields broadly, which is a more complete fix for #1919, while #2019 only addresses the issuer URL field specifically. #1938 is also the older submission. All four tiebreakers (diff size, fix completeness, age) favor #1938."
+          "cluster_pick_reason": "CI status is unknown for both PRs and neither diff was accessible for review. Applying the stated tiebreaker chain: with CI and test coverage unknown, the next criterion is smallest focused diff \u2014 #1938 changes 4 files vs #2019's 5 files. The final tiebreaker (oldest) also favors #1938. The broader title scope (\"URL fields\" plural) in #1938 may also indicate a more complete fix, but without diff access this cannot be confirmed. #1938 wins on file count and age."
         },
         {
           "number": 2019,
@@ -3585,7 +3585,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1919 with #1938",
           "short_reason": "shares linked issue #1919 with #1938",
-          "age_days": 52.6,
+          "age_days": 52.7,
           "additions": 111,
           "deletions": 11,
           "is_auth": true,
@@ -3603,7 +3603,7 @@
       "id": "2216",
       "kind": "issue",
       "pick": 2224,
-      "pick_reason": "All three PRs have unknown CI status. #2301 is eliminated by scope: it touches 5 files and removes the check from the authorize handler entirely (93 lines changed), a broader architectural change versus the targeted None-guard the issue requires. Between #2224 and #2368 \u2014 both fixing validate_scope in 2 files \u2014 #2224 has a smaller total diff (49 lines vs. 54 lines) and is the oldest submission (27.5 days vs. 5.1 days), satisfying both remaining tiebreakers in order.",
+      "pick_reason": "All three PRs have unknown CI status, so CI cannot differentiate them. #2224 and #2368 both touch 2 files (smallest focused diff), while #2301 touches 5 files \u2014 a broader change that removes the scope check from the authorize handler entirely, going beyond the minimal fix and increasing review surface. Between the two 2-file PRs, #2224 is the oldest, giving it more time for community review. #2224 fixes the issue at the registration side (treating None registered_scopes as no restrictions), which addresses the root cause, whereas #2368 patches the validation call site. #2301's architectural change to the authorize handler is a larger scope than needed to fix #2216.",
       "members": [
         {
           "number": 2224,
@@ -3613,7 +3613,7 @@
           "state": "duplicate-cluster",
           "reason": "cluster primary for issue #2216 (3 PRs)",
           "short_reason": "cluster primary for issue #2216 (3 PRs)",
-          "age_days": 27.5,
+          "age_days": 27.6,
           "additions": 45,
           "deletions": 4,
           "is_auth": true,
@@ -3622,7 +3622,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "2216",
           "cluster_pick": true,
-          "cluster_pick_reason": "All three PRs have unknown CI status. #2301 is eliminated by scope: it touches 5 files and removes the check from the authorize handler entirely (93 lines changed), a broader architectural change versus the targeted None-guard the issue requires. Between #2224 and #2368 \u2014 both fixing validate_scope in 2 files \u2014 #2224 has a smaller total diff (49 lines vs. 54 lines) and is the oldest submission (27.5 days vs. 5.1 days), satisfying both remaining tiebreakers in order."
+          "cluster_pick_reason": "All three PRs have unknown CI status, so CI cannot differentiate them. #2224 and #2368 both touch 2 files (smallest focused diff), while #2301 touches 5 files \u2014 a broader change that removes the scope check from the authorize handler entirely, going beyond the minimal fix and increasing review surface. Between the two 2-file PRs, #2224 is the oldest, giving it more time for community review. #2224 fixes the issue at the registration side (treating None registered_scopes as no restrictions), which addresses the root cause, whereas #2368 patches the validation call site. #2301's architectural change to the authorize handler is a larger scope than needed to fix #2216."
         },
         {
           "number": 2301,
@@ -3651,7 +3651,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #2216 with #2224",
           "short_reason": "shares linked issue #2216 with #2224",
-          "age_days": 5.1,
+          "age_days": 5.2,
           "additions": 50,
           "deletions": 4,
           "is_auth": true,
@@ -3668,17 +3668,17 @@
     {
       "id": "2375",
       "kind": "issue",
-      "pick": 2377,
-      "pick_reason": "Both PRs have unknown CI status. With CI equal, the tiebreakers apply: #2377 touches 1 file vs #2383's 2 files, making it the smaller, more focused diff. #2377 is also the older PR. Without evidence that #2383's second file is a test (which would have elevated it), the \"smallest focused diff\" and \"oldest\" criteria both point to #2377.",
+      "pick": 2383,
+      "pick_reason": "Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
       "members": [
         {
           "number": 2377,
           "title": "fix: allow custom Content-Type header in StreamableHTTPTransport",
           "author": "guoyangzhen",
           "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2377",
-          "state": "duplicate-cluster",
-          "reason": "cluster primary for issue #2375 (2 PRs)",
-          "short_reason": "cluster primary for issue #2375 (2 PRs)",
+          "state": "duplicate-cluster-member",
+          "reason": "shares issue #2375; #2383 is the pick",
+          "short_reason": "shares issue #2375; #2383 is the pick",
           "age_days": 4.1,
           "additions": 10,
           "deletions": 2,
@@ -3687,17 +3687,17 @@
           "sla_breach": false,
           "sla_kind": null,
           "cluster_id": "2375",
-          "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. With CI equal, the tiebreakers apply: #2377 touches 1 file vs #2383's 2 files, making it the smaller, more focused diff. #2377 is also the older PR. Without evidence that #2383's second file is a test (which would have elevated it), the \"smallest focused diff\" and \"oldest\" criteria both point to #2377."
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
         },
         {
           "number": 2383,
           "title": "fix(streamable_http): allow Content-Type header override",
           "author": "haroldfabla2-hue",
           "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2383",
-          "state": "duplicate-cluster-member",
-          "reason": "shares linked issue #2375 with #2377",
-          "short_reason": "shares linked issue #2375 with #2377",
+          "state": "duplicate-cluster",
+          "reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
+          "short_reason": "[llm pick] cluster primary for issue #2375: Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age.",
           "age_days": 1.8,
           "additions": 46,
           "deletions": 3,
@@ -3706,8 +3706,8 @@
           "sla_breach": false,
           "sla_kind": null,
           "cluster_id": "2375",
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
+          "cluster_pick": true,
+          "cluster_pick_reason": "Both PRs have unknown CI status and address the same Content-Type override issue in StreamableHTTPTransport. #2383 changes 2 files versus #2377's 1 file; for this type of fix (one implementation file), the second file in #2383 most likely represents a test, satisfying the \"has tests\" criterion which outranks diff size in the preference order. #2377 is older and has a smaller diff, but without test coverage those criteria rank lower. If #2383's second file turns out not to be a test, the tiebreaker would favor #2377 on both smallest diff and age."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/python-sdk/issues/2375"
@@ -3716,7 +3716,7 @@
       "id": "397",
       "kind": "issue",
       "pick": 2366,
-      "pick_reason": "Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
+      "pick_reason": "CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
       "members": [
         {
           "number": 1907,
@@ -3743,9 +3743,9 @@
           "author": "paikend",
           "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2366",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-          "short_reason": "[llm pick] cluster primary for issue #397: Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them.",
-          "age_days": 5.3,
+          "reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+          "short_reason": "[llm pick] cluster primary for issue #397: CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397.",
+          "age_days": 5.4,
           "additions": 25,
           "deletions": 41,
           "is_auth": false,
@@ -3754,7 +3754,7 @@
           "sla_kind": null,
           "cluster_id": "397",
           "cluster_pick": true,
-          "cluster_pick_reason": "Among the three PRs fixing issue #397, #2366 and #2367 both touch 2 files (vs. #1907's 3 files), making them more focused diffs. Between #2366 and #2367, #2366 is preferred because its title (\"align Context logging methods with MCP spec data type\") describes a targeted, type-level correction matching the scope of the issue, while #2367's approach (\"allow Any type for logging message parameter\") broadens the type to Any, which is a looser fix that reduces type safety rather than aligning with the spec. #1907's larger 3-file diff suggests broader scope changes beyond what the issue requires. All three have unknown CI status, so that criterion cannot differentiate them."
+          "cluster_pick_reason": "CI is unknown for all three PRs. #1907 touches 3 files vs. 2 files for #2366 and #2367, making it a larger diff. Between the two 2-file PRs, #2366 is older than #2367 (lower PR number), which wins on the tiebreaker. #2366's title (\"align Context logging methods with MCP spec data type\") also suggests it addresses the full spec alignment rather than only the message parameter type, making it a more complete fix of #397."
         },
         {
           "number": 2367,
@@ -3781,38 +3781,19 @@
     {
       "id": "sem:2143",
       "kind": "semantic",
-      "pick": 2143,
-      "pick_reason": "PR #2143 and #2268 have byte-for-byte identical diffs to src/mcp/client/stdio.py. Both also modify tests/client/test_stdio.py but with different blob hashes (2439d1825 vs 08c233b2e), indicating divergent test implementations. PR #2143 was filed first (lower PR number) and carries the same production fix. If #2268 has additional or improved test coverage, those tests should be cherry-picked into #2143 before closing #2268.",
+      "pick": 2268,
+      "pick_reason": "The stdio.py diffs are byte-for-byte identical between the two PRs. #2268 is preferred because its title ('race condition during shutdown') more precisely describes the root cause, and its test file (index 08c233b2e vs 2439d1825 in #2143) is a distinct implementation \u2014 review the test coverage in each to confirm, but #2268's framing provides better context for future maintainers.",
       "members": [
         {
           "number": 2143,
           "title": "Handle BrokenResourceError in stdio client shutdown path",
           "author": "aframedelta",
           "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2143",
-          "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-          "short_reason": "[llm] cluster primary: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)",
-          "age_days": 36.4,
-          "additions": 16,
-          "deletions": 2,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": true,
-          "sla_kind": "1st-review",
-          "cluster_id": "sem:2143",
-          "cluster_pick": true,
-          "cluster_pick_reason": "PR #2143 and #2268 have byte-for-byte identical diffs to src/mcp/client/stdio.py. Both also modify tests/client/test_stdio.py but with different blob hashes (2439d1825 vs 08c233b2e), indicating divergent test implementations. PR #2143 was filed first (lower PR number) and carries the same production fix. If #2268 has additional or improved test coverage, those tests should be cherry-picked into #2143 before closing #2268."
-        },
-        {
-          "number": 2268,
-          "title": "Fix stdio_client BrokenResourceError race condition during shutdown",
-          "author": "weiguangli-io",
-          "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2268",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #2143: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers.",
-          "short_reason": "[llm] duplicates #2143: BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers.",
-          "age_days": 22.5,
-          "additions": 40,
+          "reason": "[llm] duplicates #2268: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers",
+          "short_reason": "[llm] duplicates #2268: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers",
+          "age_days": 36.5,
+          "additions": 16,
           "deletions": 2,
           "is_auth": false,
           "is_maintainer": false,
@@ -3821,22 +3802,41 @@
           "cluster_id": "sem:2143",
           "cluster_pick": false,
           "cluster_pick_reason": ""
+        },
+        {
+          "number": 2268,
+          "title": "Fix stdio_client BrokenResourceError race condition during shutdown",
+          "author": "weiguangli-io",
+          "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2268",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+          "short_reason": "[llm] cluster primary: stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)",
+          "age_days": 22.6,
+          "additions": 40,
+          "deletions": 2,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": true,
+          "sla_kind": "1st-review",
+          "cluster_id": "sem:2143",
+          "cluster_pick": true,
+          "cluster_pick_reason": "The stdio.py diffs are byte-for-byte identical between the two PRs. #2268 is preferred because its title ('race condition during shutdown') more precisely describes the root cause, and its test file (index 08c233b2e vs 2439d1825 in #2143) is a distinct implementation \u2014 review the test coverage in each to confirm, but #2268's framing provides better context for future maintainers."
         }
       ],
-      "desc": "BrokenResourceError not caught in stdio client shutdown path \u2014 both PRs make the identical change to src/mcp/client/stdio.py, adding anyio.BrokenResourceError alongside anyio.ClosedResourceError in both the stdout_reader and stdin_writer exception handlers. (2 PRs)"
+      "desc": "stdio_client shutdown raises unhandled anyio.BrokenResourceError in stdout_reader and stdin_writer; fix is to catch BrokenResourceError alongside ClosedResourceError in both exception handlers (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 1.5323,
+    "total_usd": 1.6265,
     "total_calls": 18,
     "by_purpose": {
       "semantic-cluster": {
         "count": 11,
-        "cost": 0.481
+        "cost": 0.4936
       },
       "cluster-pick": {
         "count": 7,
-        "cost": 1.0513
+        "cost": 1.1329
       }
     }
   }
