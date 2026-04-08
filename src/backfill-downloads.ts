@@ -122,7 +122,10 @@ async function main() {
       }
       snap.downloads = { daily: dl };
       const cum = cumulative?.get(date);
-      if (cum !== undefined) snap.downloads.total = cum;
+      if (cum !== undefined) {
+        snap.downloads.total = cum;
+        snap.downloads.total_through = date;
+      }
       const wk = weekly?.get(date);
       if (wk !== undefined) snap.downloads.last_week = wk;
 
