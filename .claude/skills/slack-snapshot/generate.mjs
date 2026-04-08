@@ -2,7 +2,7 @@
 // slack-snapshot generator — emits Slack mrkdwn digest of SDK health to stdout.
 // No external deps. Exit 0 always; missing data renders "—".
 //
-// Usage: node .claude/skills/slack-snapshot/generate.mjs [--dashboard-url URL]
+// Usage: node .claude/skills/slack-snapshot/generate.mjs [--format mrkdwn|svg] [--dashboard-url URL]
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -72,13 +72,16 @@ const TH = mode === 'ANT'
   ? { triageAbs: 30, triageRatio: null, p90h: 400 }
   : { triageAbs: 10, triageRatio: 0.2, p90h: 120 };
 
-// ---------- dashboard url ----------
-const argIdx = process.argv.indexOf('--dashboard-url');
-const dashboardUrl = argIdx > -1 && process.argv[argIdx + 1]
-  ? process.argv[argIdx + 1]
-  : (mode === 'ANT'
-      ? 'https://localden.github.io/ant-repo-data-tracker'
-      : 'https://modelcontextprotocol.github.io/repo-data-tracker');
+// ---------- args ----------
+function arg(flag, dflt) {
+  const i = process.argv.indexOf(flag);
+  return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
+}
+const format = arg('--format', 'mrkdwn');
+const dashboardUrl = arg('--dashboard-url',
+  mode === 'ANT'
+    ? 'https://localden.github.io/ant-repo-data-tracker'
+    : 'https://modelcontextprotocol.github.io/repo-data-tracker');
 
 // ---------- per-repo snapshot loading ----------
 function loadRepo(r) {
@@ -108,7 +111,13 @@ function loadRepo(r) {
     }
   }
   if (!cur) cur = readJSON(join(dir, 'metrics.json'));
-  return { cfg: r, cur, prev, curDate, prevDate };
+  // last ~14 snapshots for sparklines (svg mode)
+  let recent = [];
+  if (existsSync(snapDir)) {
+    const files = readdirSync(snapDir).filter(f => f.endsWith('.json')).sort();
+    recent = files.slice(-14).map(f => readJSON(join(snapDir, f))).filter(Boolean);
+  }
+  return { cfg: r, cur, prev, curDate, prevDate, recent };
 }
 
 const loaded = repos.map(loadRepo);
@@ -234,31 +243,134 @@ if (mode === 'MCP') {
   if (n > 0) actLine = `Actionable PRs: *${sum}* (target ${target || dash})`;
 }
 
+// ---------- SVG renderer ----------
+function svgTileFor(l) {
+  const c = l.cur || {}, p = l.prev || {};
+  const dlW = c.downloads?.last_week;
+  const dlWp = p.downloads?.last_week;
+  const wow = dlW != null && dlWp ? Math.round((dlW - dlWp) / dlWp * 100) : null;
+  const issOpen = c.issues?.open ?? c.issues?.open_count;
+  const issPrev = p.issues?.open ?? p.issues?.open_count;
+  const tri = c.issues?.[triageField];
+  const p90 = c.pulls?.review_time?.p90_hours;
+  const triageWarn = tri != null && (tri > TH.triageAbs || (TH.triageRatio && issOpen && tri / issOpen > TH.triageRatio));
+  const p90Warn = p90 != null && p90 > TH.p90h;
+  const warnCount = (triageWarn ? 1 : 0) + (p90Warn ? 1 : 0);
+  const status = warnCount >= 2 ? 'red' : warnCount === 1 ? 'yellow' : 'green';
+  let series = (l.recent || []).map(s => s.downloads?.daily).filter(v => v != null && isFinite(v));
+  let sparkLabel = 'dl/day';
+  if (series.length < 5) {
+    series = (l.recent || []).map(s => s.issues?.open ?? s.issues?.open_count).filter(v => v != null);
+    sparkLabel = 'open iss';
+  }
+  return {
+    name: shortName(l), status, dlW, wow, issOpen,
+    issD: issOpen != null && issPrev != null ? issOpen - issPrev : null,
+    tri, p90, triageWarn, p90Warn, series, sparkLabel,
+  };
+}
+
+function renderSvg() {
+  const C = { bg: '#0f1419', panel: '#1a2129', text: '#e6edf3', sub: '#8b949e',
+              red: '#f85149', yellow: '#d29922', green: '#3fb950' };
+  const FONT = 'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Inter,system-ui,sans-serif"';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const fmtDur = (h) => h == null || h === 0 ? dash : h >= 48 ? Math.round(h / 24) + 'd' : Math.round(h) + 'h';
+  const triageWord = mode === 'ANT' ? 'untriaged' : 'no-resp';
+
+  const tiles = [...sdkRepos, ...(specRepo ? [specRepo] : [])].map(svgTileFor);
+  const order = { red: 0, yellow: 1, green: 2 };
+  tiles.sort((a, b) => order[a.status] - order[b.status] || (b.dlW ?? 0) - (a.dlW ?? 0));
+
+  const TW = 280, THt = 110, COLS = 2, GAP = 16, PAD = 24;
+  const Wd = PAD * 2 + COLS * TW + (COLS - 1) * GAP;
+  const rowsN = Math.ceil(tiles.length / COLS);
+  const tilesH = rowsN * THt + (rowsN - 1) * GAP;
+  const attn = tiles.filter(t => t.status !== 'green').slice(0, 4);
+  const attnH = attn.length ? 28 + attn.length * 22 + 12 : 0;
+  const Ht = 70 + tilesH + (attnH ? 20 + attnH : 0) + 36;
+
+  const spark = (series, x, y, w, h, color) => {
+    if (series.length < 2) return '';
+    const lo = Math.min(...series), hi = Math.max(...series), rng = hi - lo || 1;
+    const pts = series.map((v, i) =>
+      `${(x + i * w / (series.length - 1)).toFixed(1)},${(y + h - (v - lo) / rng * h).toFixed(1)}`).join(' ');
+    const [lx, ly] = pts.split(' ').pop().split(',');
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>` +
+           `<circle cx="${lx}" cy="${ly}" r="2.5" fill="${color}"/>`;
+  };
+
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${Wd}" height="${Ht}" viewBox="0 0 ${Wd} ${Ht}">`;
+  s += `<rect width="${Wd}" height="${Ht}" fill="${C.bg}"/>`;
+  s += `<text x="${PAD}" y="36" fill="${C.text}" ${FONT} font-size="22" font-weight="700">SDK Health</text>`;
+  s += `<text x="${PAD}" y="56" fill="${C.sub}" ${FONT} font-size="13">week of ${esc(headerPrev)} → ${esc(headerCur)}</text>`;
+
+  tiles.forEach((t, i) => {
+    const cx = PAD + (i % COLS) * (TW + GAP);
+    const cy = 70 + Math.floor(i / COLS) * (THt + GAP);
+    const dot = C[t.status];
+    const tint = t.status === 'red' ? '#2d1618' : t.status === 'yellow' ? '#2b2417' : C.panel;
+    s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${tint}" stroke="${dot}" stroke-opacity="0.35"/>`;
+    s += `<circle cx="${cx + 18}" cy="${cy + 22}" r="6" fill="${dot}"/>`;
+    s += `<text x="${cx + 32}" y="${cy + 27}" fill="${C.text}" ${FONT} font-size="15" font-weight="600">${esc(t.name)}</text>`;
+    s += `<text x="${cx + TW - 16}" y="${cy + 27}" fill="${C.sub}" ${FONT} font-size="9" text-anchor="end">${t.sparkLabel}</text>`;
+    const head = t.dlW != null ? `${fmtNum(t.dlW)}/wk` : `${t.issOpen ?? dash} issues`;
+    const subBits = [];
+    if (t.dlW != null && t.wow != null) subBits.push(`${t.wow >= 0 ? '▲' : '▼'}${Math.abs(t.wow)}%`);
+    else if (t.issD != null) subBits.push(`${t.issD >= 0 ? '+' : ''}${t.issD}`);
+    subBits.push(`${t.tri ?? dash} ${triageWord}`);
+    subBits.push(`p90 ${fmtDur(t.p90)}`);
+    s += `<text x="${cx + 16}" y="${cy + 54}" fill="${C.text}" ${FONT} font-size="20" font-weight="700">${esc(head)}</text>`;
+    s += `<text x="${cx + 16}" y="${cy + 72}" fill="${C.sub}" ${FONT} font-size="11">${esc(subBits.join(' · '))}</text>`;
+    s += spark(t.series, cx + 16, cy + 80, TW - 32, 20, dot);
+  });
+
+  if (attn.length) {
+    const ay = 70 + tilesH + 20;
+    s += `<text x="${PAD}" y="${ay + 16}" fill="${C.text}" ${FONT} font-size="14" font-weight="700">Needs attention</text>`;
+    attn.forEach((t, i) => {
+      const y = ay + 36 + i * 22;
+      const bits = [];
+      if (t.triageWarn) bits.push(`${t.tri} ${triageWord} >7d`);
+      if (t.p90Warn) bits.push(`PR p90 ${fmtDur(t.p90)}`);
+      s += `<circle cx="${PAD + 6}" cy="${y - 4}" r="3" fill="${C[t.status]}"/>`;
+      s += `<text x="${PAD + 18}" y="${y}" fill="${C.text}" ${FONT} font-size="12"><tspan font-weight="600">${esc(t.name)}</tspan> — ${esc(bits.join('; '))}</text>`;
+    });
+  }
+  s += `<text x="${PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="11">${esc(dashboardUrl.replace(/^https?:\/\//, ''))}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
 // ---------- emit ----------
-const out = [];
-out.push(`*SDK Health — week of ${headerPrev} → ${headerCur}*`);
-out.push('');
-out.push(renderTable(sdkRepos.map(rowFor)));
-if (actLine) { out.push(''); out.push(actLine); }
-
-if (specRepo) {
+if (format === 'svg') {
+  process.stdout.write(renderSvg());
+} else {
+  const out = [];
+  out.push(`*SDK Health — week of ${headerPrev} → ${headerCur}*`);
   out.push('');
-  out.push('*Specification*');
-  const r = rowFor(specRepo);
-  const c = specRepo.cur || {};
-  const prOpen = c.pulls?.open ?? c.pulls?.open_count;
-  out.push('`' + pad(r.name, W.name) + pad(r.dl, W.dl) + pad(r.iss, W.iss)
-    + pad(r.triage, W.triage) + pad(r.p50, W.p50) + r.p90 + '`');
-  out.push(`Open PRs: ${prOpen ?? dash} · Stars: ${fmtNum(c.repository?.stars)} · Active maintainers (30d): ${c.contributors?.active_maintainers_30d ?? dash}`);
-}
+  out.push(renderTable(sdkRepos.map(rowFor)));
+  if (actLine) { out.push(''); out.push(actLine); }
 
-if (allAnoms.length) {
+  if (specRepo) {
+    out.push('');
+    out.push('*Specification*');
+    const r = rowFor(specRepo);
+    const c = specRepo.cur || {};
+    const prOpen = c.pulls?.open ?? c.pulls?.open_count;
+    out.push('`' + pad(r.name, W.name) + pad(r.dl, W.dl) + pad(r.iss, W.iss)
+      + pad(r.triage, W.triage) + pad(r.p50, W.p50) + r.p90 + '`');
+    out.push(`Open PRs: ${prOpen ?? dash} · Stars: ${fmtNum(c.repository?.stars)} · Active maintainers (30d): ${c.contributors?.active_maintainers_30d ?? dash}`);
+  }
+
+  if (allAnoms.length) {
+    out.push('');
+    out.push('*Needs attention*');
+    for (const a of allAnoms) out.push(`> • *${a.name}:* ${a.msg}`);
+  }
+
   out.push('');
-  out.push('*Needs attention*');
-  for (const a of allAnoms) out.push(`> • *${a.name}:* ${a.msg}`);
+  out.push(`Dashboard → <${dashboardUrl}|link> · reply in thread to claim`);
+
+  console.log(out.join('\n'));
 }
-
-out.push('');
-out.push(`Dashboard → <${dashboardUrl}|link> · reply in thread to claim`);
-
-console.log(out.join('\n'));

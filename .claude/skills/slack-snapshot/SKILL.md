@@ -20,9 +20,11 @@ Produces a Slack-mrkdwn weekly digest covering every repo in `data/repos.json`: 
    node .claude/skills/slack-snapshot/generate.mjs
    ```
 
-   Optional flag: `--dashboard-url <url>` to override the footer link.
+   Optional flags:
+   - `--format mrkdwn|svg` — output format (default `mrkdwn`). `svg` emits a self-contained traffic-light status card with per-SDK tiles and 14-day sparklines; redirect to a file (`> digest.svg`) and upload to Slack.
+   - `--dashboard-url <url>` — override the footer link.
 
-2. The script writes Slack mrkdwn to **stdout**. It auto-detects whether this is the ANT or MCP tracker variant from the metrics schema and adapts column headers / anomaly rules accordingly. Missing data renders as `—`; the script never throws on absent fields.
+2. The script writes to **stdout** (mrkdwn text, or an SVG document when `--format svg`). It auto-detects whether this is the ANT or MCP tracker variant from the metrics schema and adapts column headers / anomaly rules accordingly. Missing data renders as `—`; the script never throws on absent fields.
 
 3. Return the stdout verbatim as the message body. If the user asked you to post it, send it to the requested Slack channel; otherwise just print it for copy-paste.
 
