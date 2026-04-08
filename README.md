@@ -321,6 +321,26 @@ Make sure you're running Hugo from the repository root directory where `hugo.tom
 2. Check that `data/metrics.json` exists and has content
 3. Rebuild the site: `hugo`
 
+## Slack Digest
+
+A Claude Code skill at `.claude/skills/slack-snapshot/` generates a copy-pasteable Slack message summarising the week's repo health — download trends (WoW), open-issue deltas, triage backlog, response/review latency, and a rule-driven *Needs attention* block. In this repo it also adds a dedicated **Specification** section, an Actionable PRs aggregate, and a 7-day first-review SLA callout.
+
+**From a Claude Code session in this repo:**
+
+```
+/slack-snapshot
+```
+
+**Directly:**
+
+```bash
+node .claude/skills/slack-snapshot/generate.mjs
+# override the footer link:
+node .claude/skills/slack-snapshot/generate.mjs --dashboard-url https://your.dashboard
+```
+
+The script reads `data/repos.json` plus each repo's `metrics.json` and recent snapshots, and writes Slack mrkdwn to stdout. It has no external dependencies and auto-detects which tracker variant it's running in, so the same script works unchanged in the sibling SDK tracker. To post on a schedule, wrap the command in a weekly GitHub Action that pipes stdout to a Slack incoming-webhook.
+
 ## Documentation
 
 See [specs/001-first-design/](specs/001-first-design/) for the full specification and implementation tasks.
