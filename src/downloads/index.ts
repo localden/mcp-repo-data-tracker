@@ -31,22 +31,26 @@ export async function fetchDownloads(
 
   switch (config.registry) {
     case 'npm': {
-      // Use the range API keyed by date so we never re-add days already in prev
-      // (the /point/last-day/ endpoint lags and the backfill already stored
-      // that day under its own date → running-sum double-count).
+      // npm lags ~1-2 days: "today" always reads 0. Anchor the running sum on
+      // the last date we actually summed (total_through), not the snapshot date —
+      // the snapshot date advances daily even when no new npm data has posted,
+      // which permanently skips those days. Only advance the anchor to the last
+      // nonzero day so still-pending days are re-queried next run.
       if (prevDate && prev?.total !== undefined) {
-        const range = await fetchNpmRange(config.name, addDays(prevDate, 1), today);
-        const delta = [...range.values()].reduce((a, b) => a + b, 0);
-        // npm lags ~1-2 days; trailing zeros mean "not posted yet", not zero
-        // downloads. Report the most recent nonzero day so the chart doesn't
-        // cliff-dive while we wait for the API to catch up.
-        const dates = [...range.keys()].sort();
+        const anchor = prev.total_through ?? prevDate;
+        const range = await fetchNpmRange(config.name, addDays(anchor, 1), today);
+        let delta = 0;
         let daily: number | undefined;
-        for (let i = dates.length - 1; i >= 0; i--) {
-          const v = range.get(dates[i]);
-          if (v && v > 0) { daily = v; break; }
+        let through = anchor;
+        for (const d of [...range.keys()].sort()) {
+          const v = range.get(d) ?? 0;
+          if (d > anchor && v > 0) {
+            delta += v;
+            through = d;
+            daily = v;
+          }
         }
-        return { daily, total: prev.total + delta };
+        return { daily, total: prev.total + delta, total_through: through };
       }
       return { daily: await fetchNpmDaily(config.name) };
     }
