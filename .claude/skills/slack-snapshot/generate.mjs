@@ -319,8 +319,7 @@ function renderSvg() {
     const cy = 70 + Math.floor(i / COLS) * (THt + GAP);
     const dot = C[t.status];
     s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${C.panel}" stroke="${C.border}"/>`;
-    s += `<circle cx="${cx + 18}" cy="${cy + 22}" r="6" fill="${dot}"/>`;
-    s += `<text x="${cx + 32}" y="${cy + 27}" fill="${C.text}" ${FONT} font-size="15" font-weight="600">${esc(t.name)}</text>`;
+    s += `<text x="${cx + 16}" y="${cy + 27}" fill="${C.text}" ${FONT} font-size="15" font-weight="600">${esc(t.name)}</text>`;
     s += `<text x="${cx + TW - 16}" y="${cy + 27}" fill="${C.sub}" ${FONT} font-size="9" text-anchor="end">open issues (14d)</text>`;
     // 4-column metric strip — same labels and positions on every tile
     const colW = (TW - 32) / 4;
