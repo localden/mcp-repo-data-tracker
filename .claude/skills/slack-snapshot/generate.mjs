@@ -79,9 +79,10 @@ function arg(flag, dflt) {
 }
 const format = arg('--format', 'mrkdwn');
 const dashboardUrl = arg('--dashboard-url',
-  mode === 'ANT'
-    ? 'https://localden.github.io/ant-repo-data-tracker'
-    : 'https://modelcontextprotocol.github.io/repo-data-tracker');
+  process.env.DIGEST_DASHBOARD_URL
+    ?? (mode === 'ANT'
+      ? 'https://localden.github.io/ant-repo-data-tracker'
+      : 'https://modelcontextprotocol.github.io/repo-data-tracker'));
 
 // ---------- per-repo snapshot loading ----------
 function loadRepo(r) {
@@ -273,9 +274,8 @@ function svgTileFor(l) {
 }
 
 function renderSvg() {
-  const C = { bg: '#0f1419', panel: '#1a2129', text: '#e6edf3', sub: '#8b949e',
-              red: '#f85149', yellow: '#d29922', green: '#3fb950' };
-  const TINT = { red: '#2d1618', yellow: '#2b2417', green: C.panel };
+  const C = { bg: '#0f1419', panel: '#1a2129', border: '#2d333b', text: '#e6edf3', sub: '#8b949e',
+              red: '#f85149', yellow: '#d29922', green: '#3fb950', accent: '#58a6ff' };
   const FONT = 'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Inter,system-ui,sans-serif"';
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const fmtDur = (h) => h == null || h === 0 ? dash : h >= 48 ? Math.round(h / 24) + 'd' : Math.round(h) + 'h';
@@ -309,7 +309,7 @@ function renderSvg() {
 
   const metricCell = (x, y, label, value, delta, warnColor) => {
     let m = `<text x="${x}" y="${y}" fill="${C.sub}" ${FONT} font-size="9" letter-spacing="0.5">${esc(label)}</text>`;
-    m += `<text x="${x}" y="${y + 22}" fill="${C.text}" ${FONT} font-size="18" font-weight="700">${esc(value)}</text>`;
+    m += `<text x="${x}" y="${y + 22}" fill="${warnColor || C.text}" ${FONT} font-size="18" font-weight="700">${esc(value)}</text>`;
     m += `<text x="${x}" y="${y + 36}" fill="${warnColor || C.sub}" ${FONT} font-size="10">${esc(delta)}</text>`;
     return m;
   };
@@ -318,7 +318,7 @@ function renderSvg() {
     const cx = PAD + (i % COLS) * (TW + GAP);
     const cy = 70 + Math.floor(i / COLS) * (THt + GAP);
     const dot = C[t.status];
-    s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${TINT[t.status]}" stroke="${dot}" stroke-opacity="0.35"/>`;
+    s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${C.panel}" stroke="${C.border}"/>`;
     s += `<circle cx="${cx + 18}" cy="${cy + 22}" r="6" fill="${dot}"/>`;
     s += `<text x="${cx + 32}" y="${cy + 27}" fill="${C.text}" ${FONT} font-size="15" font-weight="600">${esc(t.name)}</text>`;
     s += `<text x="${cx + TW - 16}" y="${cy + 27}" fill="${C.sub}" ${FONT} font-size="9" text-anchor="end">open issues (14d)</text>`;
@@ -340,7 +340,7 @@ function renderSvg() {
       fmtDur(t.p90),
       (t.p90Warn ? '⚠ ' : '') + p90Delta,
       t.p90Warn ? dot : null);
-    s += spark(t.series, cx + 16, cy + 100, TW - 32, 24, dot);
+    s += spark(t.series, cx + 16, cy + 100, TW - 32, 24, C.accent);
   });
 
   s += `<text x="${PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="11">${esc(dashboardUrl.replace(/^https?:\/\//, ''))}</text>`;
