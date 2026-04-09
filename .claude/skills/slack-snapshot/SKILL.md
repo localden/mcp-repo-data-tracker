@@ -29,7 +29,10 @@ Map these to the script flags below. If no `url` argument is given, the script r
    ```
 
    - `--format svg` emits a self-contained status card with per-SDK tiles and 14-day sparklines; redirect to a file (`> digest.svg`) and attach/upload to Slack.
+   - `--png <path>` (with `--format svg`) also rasterises the card to a PNG at the given path. Requires `rsvg-convert` (from `librsvg2-bin`) or ImageMagick `convert` on PATH; if neither is present the SVG is still written and a note goes to stderr.
    - `--dashboard-url <url>` overrides the footer link (takes precedence over `DIGEST_DASHBOARD_URL`).
+
+   When the user asks for the SVG, also pass `--png digest.png` so both artifacts are produced, and attach the PNG (Slack previews PNGs more reliably than SVGs on mobile).
 
 2. The script writes to **stdout** (mrkdwn text, or an SVG document when `--format svg`). It auto-detects whether this is the ANT or MCP tracker variant from the metrics schema and adapts column headers / anomaly rules accordingly. Missing data renders as `—`; the script never throws on absent fields.
 

@@ -7,7 +7,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..', '..');
@@ -83,6 +83,7 @@ function arg(flag, dflt) {
   return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
 }
 const format = arg('--format', 'mrkdwn');
+const pngPath = arg('--png', null);
 const dashboardUrl = arg('--dashboard-url',
   process.env.DIGEST_DASHBOARD_URL
     ?? (mode === 'ANT'
@@ -357,8 +358,23 @@ function renderSvg() {
 }
 
 // ---------- emit ----------
+function rasterizePng(svg, outPath) {
+  for (const [bin, args] of [['rsvg-convert', ['-f', 'png', '-o', outPath]], ['convert', ['svg:-', outPath]]]) {
+    const r = spawnSync(bin, args, { input: svg });
+    if (r.status === 0) return true;
+    if (r.error?.code !== 'ENOENT') {
+      process.stderr.write(`slack-snapshot: ${bin} failed: ${r.stderr?.toString() || r.error}\n`);
+      return false;
+    }
+  }
+  process.stderr.write('slack-snapshot: --png requires rsvg-convert (librsvg2-bin) or ImageMagick; neither found\n');
+  return false;
+}
+
 if (format === 'svg') {
-  process.stdout.write(renderSvg());
+  const svg = renderSvg();
+  process.stdout.write(svg);
+  if (pngPath) rasterizePng(svg, pngPath);
 } else {
   const out = [];
   out.push(`*SDK Health — week of ${headerPrev} → ${headerCur}*`);
