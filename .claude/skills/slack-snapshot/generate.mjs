@@ -7,10 +7,15 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..', '..');
 const DATA = join(ROOT, 'data');
+
+const generatedAt = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+let gitSha = '';
+try { gitSha = execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 
 // ---------- helpers ----------
 const readJSON = (p) => {
@@ -303,7 +308,10 @@ function renderSvg() {
   };
 
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${Wd}" height="${Ht}" viewBox="0 0 ${Wd} ${Ht}">`;
+  s += `<defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">`
+     + `<circle cx="1" cy="1" r="1" fill="${C.border}" fill-opacity="0.6"/></pattern></defs>`;
   s += `<rect width="${Wd}" height="${Ht}" fill="${C.bg}"/>`;
+  s += `<rect width="${Wd}" height="${Ht}" fill="url(#grid)"/>`;
   s += `<text x="${PAD}" y="36" fill="${C.text}" ${FONT} font-size="22" font-weight="700">SDK Health</text>`;
   s += `<text x="${PAD}" y="56" fill="${C.sub}" ${FONT} font-size="13">week of ${esc(headerPrev)} → ${esc(headerCur)}</text>`;
 
@@ -343,6 +351,7 @@ function renderSvg() {
   });
 
   s += `<text x="${PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="11">${esc(dashboardUrl.replace(/^https?:\/\//, ''))}</text>`;
+  s += `<text x="${Wd - PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="10" text-anchor="end">generated ${esc(generatedAt)}${gitSha ? ` · ${esc(gitSha)}` : ''}</text>`;
   s += `</svg>`;
   return s;
 }
