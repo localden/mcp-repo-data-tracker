@@ -278,16 +278,12 @@ function renderSvg() {
   const tiles = [...sdkRepos, ...(specRepo ? [specRepo] : [])].map(svgTileFor);
   const order = { red: 0, yellow: 1, green: 2 };
   tiles.sort((a, b) => order[a.status] - order[b.status] || (b.dlW ?? 0) - (a.dlW ?? 0));
-  const statusOf = Object.fromEntries(tiles.map(t => [t.name, t.status]));
 
-  const TW = 300, THt = 140, COLS = 2, GAP = 16, PAD = 24;
+  const TW = 360, THt = 140, COLS = 2, GAP = 16, PAD = 24;
   const Wd = PAD * 2 + COLS * TW + (COLS - 1) * GAP;
   const rowsN = Math.ceil(tiles.length / COLS);
   const tilesH = rowsN * THt + (rowsN - 1) * GAP;
-  const attn = allAnoms.slice(0, 5);
-  const AC = 36, AGAP = 10;
-  const attnH = attn.length ? 28 + attn.length * (AC + AGAP) - AGAP : 0;
-  const Ht = 70 + tilesH + (attnH ? 20 + attnH : 0) + 36;
+  const Ht = 70 + tilesH + 36;
 
   const spark = (series, x, y, w, h, color) => {
     if (series.length < 2) return '';
@@ -332,25 +328,14 @@ function renderSvg() {
       t.tri != null ? String(t.tri) : dash,
       t.triageWarn ? '⚠ ' + fmtSigned(t.triD) : fmtSigned(t.triD),
       t.triageWarn ? dot : null);
+    const p90Delta = t.p90P != null && t.p90 != null ? (t.p90 >= t.p90P ? '▲' : '▼') + fmtDur(Math.abs(t.p90 - t.p90P)) : dash;
     s += metricCell(mx + 3 * colW, my, 'PR P90',
       fmtDur(t.p90),
-      t.p90Warn ? '⚠ over' : (t.p90P != null && t.p90 != null ? (t.p90 >= t.p90P ? '▲' : '▼') + fmtDur(Math.abs(t.p90 - t.p90P)) : dash),
+      (t.p90Warn ? '⚠ ' : '') + p90Delta,
       t.p90Warn ? dot : null);
     s += spark(t.series, cx + 16, cy + 100, TW - 32, 24, dot);
   });
 
-  if (attn.length) {
-    let ay = 70 + tilesH + 20;
-    s += `<text x="${PAD}" y="${ay + 16}" fill="${C.text}" ${FONT} font-size="14" font-weight="700">Needs attention</text>`;
-    ay += 28;
-    attn.forEach((a, i) => {
-      const y = ay + i * (AC + AGAP);
-      const st = statusOf[a.name] || 'yellow';
-      s += `<rect x="${PAD}" y="${y}" width="${Wd - 2 * PAD}" height="${AC}" rx="8" fill="${TINT[st]}" stroke="${C[st]}" stroke-opacity="0.35"/>`;
-      s += `<circle cx="${PAD + 16}" cy="${y + AC / 2}" r="4" fill="${C[st]}"/>`;
-      s += `<text x="${PAD + 30}" y="${y + AC / 2 + 4}" fill="${C.text}" ${FONT} font-size="12"><tspan font-weight="600">${esc(a.name)}</tspan> ${esc(dash)} ${esc(a.msg)}</text>`;
-    });
-  }
   s += `<text x="${PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="11">${esc(dashboardUrl.replace(/^https?:\/\//, ''))}</text>`;
   s += `</svg>`;
   return s;
