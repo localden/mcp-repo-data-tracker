@@ -246,7 +246,14 @@ if (mode === 'MCP') {
 // ---------- SVG renderer ----------
 function svgTileFor(l) {
   const c = l.cur || {}, p = l.prev || {};
-  const dlW = c.downloads?.last_week;
+  // npm-lagged registries can leave the latest snapshot without daily/last_week
+  // (data through yesterday, today still 0). Fall back to summing the last 7
+  // nonzero dailies from recent[], so the tile doesn't go blank during the lag.
+  const sumDaily = (snaps, n) => {
+    const ds = snaps.map(s => s.downloads?.daily).filter(v => v != null && v > 0);
+    return ds.length ? ds.slice(-n).reduce((a, b) => a + b, 0) : null;
+  };
+  const dlW = c.downloads?.last_week ?? sumDaily(l.recent || [], 7);
   const dlWp = p.downloads?.last_week;
   const wow = dlW != null && dlWp ? Math.round((dlW - dlWp) / dlWp * 100) : null;
   const issOpen = c.issues?.open ?? c.issues?.open_count;
@@ -279,7 +286,7 @@ function renderSvg() {
   const order = { red: 0, yellow: 1, green: 2 };
   tiles.sort((a, b) => order[a.status] - order[b.status] || (b.dlW ?? 0) - (a.dlW ?? 0));
 
-  const TW = 360, THt = 140, COLS = 2, GAP = 16, PAD = 24;
+  const TW = 440, THt = 140, COLS = 2, GAP = 16, PAD = 24;
   const Wd = PAD * 2 + COLS * TW + (COLS - 1) * GAP;
   const rowsN = Math.ceil(tiles.length / COLS);
   const tilesH = rowsN * THt + (rowsN - 1) * GAP;
