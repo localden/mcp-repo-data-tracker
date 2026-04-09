@@ -93,9 +93,9 @@
 {{ $opened7dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
 {{ $opened30dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
 {{ $opened90dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{ $merged7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-{{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
+{{ $merged7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
+{{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
+{{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 {{ $closedUnmerged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
 {{/* Actionability — from scripts/pr-actionable classifier. Only exists for typescript-sdk/python-sdk. */}}
 {{ $a := $data.actionability }}
@@ -110,6 +110,8 @@
 {{ $actAuthSpark  := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.auth_count") }}
 {{ $actCountTrend := partial "calc-trend.html" (dict "sparkline" $actCountSpark) }}
 {{ $actHoursTrend := partial "calc-trend.html" (dict "sparkline" $actHoursSpark) }}
+{{ $actionedSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.actioned") }}
+{{ $actionedTrend := partial "calc-trend.html" (dict "sparkline" $actionedSpark) }}
 
 {{/* ──────────────────────────────────────────────────────────────────────────
      HEADLINE + SLA — two card rows. Row 1 = queue health, row 2 = SLA breaches.
@@ -136,7 +138,7 @@
 {{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
 
 <section class="mb-4">
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     {{ partial "metric-card.html" (dict
       "label" "Actionable vs target"
       "value" $act "valueClass" $actClr
@@ -144,7 +146,7 @@
       "sparkline" $actCountSpark "sparklineColor" (cond $s.actionable_over_target "rgb(220, 53, 69)" "rgb(40, 167, 69)")
       "trend" $actCountTrend "trendGoodDirection" "down"
       "info" (printf "PRs where the ball is in our court.\n\nGreen: ≤ 25\nYellow: 26–50\nRed: > 50")) }}
-    <div onclick="actFilterToggle('label:auth')" style="cursor:pointer">
+    <div onclick="actFilterToggle('label:auth')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
       "label" "Auth"
       "value" $auth
@@ -152,13 +154,29 @@
       "sparkline" $actAuthSpark "sparklineColor" "rgb(255, 193, 7)"
       "info" (printf "Actionable PRs touching auth code.\nClick to filter to these PRs.\n\nNo target — informational.")) }}
     </div>
+    {{ if isset $a.summary "actioned_7d" }}
+    {{ partial "metric-card.html" (dict
+      "label" "Actioned (7d)"
+      "value" $a.summary.actioned_7d
+      "descriptor" (printf "%d in last 30d" (int ($a.summary.actioned_30d | default 0)))
+      "sparkline" $actionedSpark "sparklineColor" "rgb(40, 167, 69)"
+      "trend" $actionedTrend "trendGoodDirection" "up"
+      "info" "Throughput: actionable→non-actionable transitions per day. A PR that cycles review→author→re-review counts each cycle. Sparkline shows daily values.") }}
+    {{ end }}
+    {{ $mergedSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.merged_7d") }}
+    {{ partial "metric-card.html" (dict
+      "label" "Merged (7d)"
+      "value" $m.pulls.merged_7d
+      "descriptor" (printf "%d in last 30d" (int ($m.pulls.merged_30d | default 0)))
+      "sparkline" $mergedSpark "sparklineColor" "rgb(108, 117, 125)"
+      "info" "PRs merged in the last 7 days — the terminal-outcome subset of Actioned. Rolling 7×24h window from last data refresh.") }}
     {{ partial "metric-card.html" (dict
       "label" "Hours to clear"
       "value" (printf "~%s" ($hrs | lang.FormatNumber 1)) "valueClass" $hrsClr
       "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)"
       "trend" $actHoursTrend "trendGoodDirection" "down"
       "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 5h\nYellow: 5–10h\nRed: ≥ 10h")) }}
-    <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer">
+    <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
       "label" "1st review > 7d"
       "value" $s.first_review_7d_breach "valueClass" $firstClr
@@ -167,7 +185,7 @@
       "trendGoodDirection" "down"
       "info" (printf "Community PRs past 7 days with no maintainer review — across all pressing states, not just the first-review bucket.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
     </div>
-    <div onclick="actFilterToggle('label:re-review')" style="cursor:pointer">
+    <div onclick="actFilterToggle('label:re-review')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
       "label" "Re-review > 24h"
       "value" $s.re_review_24h_breach "valueClass" $reClr
@@ -176,7 +194,7 @@
       "trendGoodDirection" "down"
       "info" (printf "PRs where the author acted (pushed/commented) after our review, past 24h — across all pressing states.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
     </div>
-    <div onclick="actFilterToggle('label:maintainer')" style="cursor:pointer">
+    <div onclick="actFilterToggle('label:maintainer')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
       "label" "Maintainer > 24h"
       "value" $s.maint_24h_breach "valueClass" $maintClr
