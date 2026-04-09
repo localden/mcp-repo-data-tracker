@@ -182,9 +182,12 @@ jobs:
               dir=data/repos/${rel%/actionability.json}
               cp "$act" "$dir/actionability.json"
               snap="$dir/snapshots/$today.json"
-              [ -f "$snap" ] && jq --slurpfile a "$act" '.actionability = $a[0].summary' "$snap" > "$snap.tmp" && mv "$snap.tmp" "$snap"
+              [ -f "$snap" ] && jq --slurpfile a "$act" '.actionability = ((.actionability // {}) + $a[0].summary)' "$snap" > "$snap.tmp" && mv "$snap.tmp" "$snap"
             done
           fi
+
+          # Compute actioned-velocity from accumulated snapshot prs sets
+          python3 scripts/pr-velocity
 
       - name: Commit and push data changes
         id: commit
