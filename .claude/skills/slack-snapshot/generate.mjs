@@ -359,7 +359,11 @@ function renderSvg() {
 
 // ---------- emit ----------
 function rasterizePng(svg, outPath) {
-  for (const [bin, args] of [['rsvg-convert', ['-f', 'png', '-o', outPath]], ['convert', ['svg:-', outPath]]]) {
+  const scale = Number(arg('--png-scale', '2'));
+  for (const [bin, args] of [
+    ['rsvg-convert', ['-z', String(scale), '-f', 'png', '-o', outPath]],
+    ['convert', ['-density', String(96 * scale), 'svg:-', outPath]],
+  ]) {
     const r = spawnSync(bin, args, { input: svg });
     if (r.status === 0) return true;
     if (r.error?.code !== 'ENOENT') {
