@@ -251,43 +251,42 @@ function svgTileFor(l) {
   const wow = dlW != null && dlWp ? Math.round((dlW - dlWp) / dlWp * 100) : null;
   const issOpen = c.issues?.open ?? c.issues?.open_count;
   const issPrev = p.issues?.open ?? p.issues?.open_count;
+  const issD = issOpen != null && issPrev != null ? issOpen - issPrev : null;
   const tri = c.issues?.[triageField];
+  const triP = p.issues?.[triageField];
+  const triD = tri != null && triP != null ? tri - triP : null;
   const p90 = c.pulls?.review_time?.p90_hours;
+  const p90P = p.pulls?.review_time?.p90_hours;
   const triageWarn = tri != null && (tri > TH.triageAbs || (TH.triageRatio && issOpen && tri / issOpen > TH.triageRatio));
   const p90Warn = p90 != null && p90 > TH.p90h;
   const warnCount = (triageWarn ? 1 : 0) + (p90Warn ? 1 : 0);
   const status = warnCount >= 2 ? 'red' : warnCount === 1 ? 'yellow' : 'green';
-  let series = (l.recent || []).map(s => s.downloads?.daily).filter(v => v != null && isFinite(v));
-  let sparkLabel = 'dl/day';
-  if (series.length < 5) {
-    series = (l.recent || []).map(s => s.issues?.open ?? s.issues?.open_count).filter(v => v != null);
-    sparkLabel = 'open iss';
-  }
-  return {
-    name: shortName(l), status, dlW, wow, issOpen,
-    issD: issOpen != null && issPrev != null ? issOpen - issPrev : null,
-    tri, p90, triageWarn, p90Warn, series, sparkLabel,
-  };
+  const series = (l.recent || []).map(s => s.issues?.open ?? s.issues?.open_count).filter(v => v != null);
+  return { name: shortName(l), status, dlW, wow, issOpen, issD, tri, triD, p90, p90P, triageWarn, p90Warn, series };
 }
 
 function renderSvg() {
   const C = { bg: '#0f1419', panel: '#1a2129', text: '#e6edf3', sub: '#8b949e',
               red: '#f85149', yellow: '#d29922', green: '#3fb950' };
+  const TINT = { red: '#2d1618', yellow: '#2b2417', green: C.panel };
   const FONT = 'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Inter,system-ui,sans-serif"';
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const fmtDur = (h) => h == null || h === 0 ? dash : h >= 48 ? Math.round(h / 24) + 'd' : Math.round(h) + 'h';
-  const triageWord = mode === 'ANT' ? 'untriaged' : 'no-resp';
+  const fmtSigned = (d) => d == null ? dash : d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d);
+  const triageHdr = mode === 'ANT' ? 'UNTRIAGED' : 'NO-RESP';
 
   const tiles = [...sdkRepos, ...(specRepo ? [specRepo] : [])].map(svgTileFor);
   const order = { red: 0, yellow: 1, green: 2 };
   tiles.sort((a, b) => order[a.status] - order[b.status] || (b.dlW ?? 0) - (a.dlW ?? 0));
+  const statusOf = Object.fromEntries(tiles.map(t => [t.name, t.status]));
 
-  const TW = 280, THt = 110, COLS = 2, GAP = 16, PAD = 24;
+  const TW = 300, THt = 140, COLS = 2, GAP = 16, PAD = 24;
   const Wd = PAD * 2 + COLS * TW + (COLS - 1) * GAP;
   const rowsN = Math.ceil(tiles.length / COLS);
   const tilesH = rowsN * THt + (rowsN - 1) * GAP;
-  const attn = tiles.filter(t => t.status !== 'green').slice(0, 4);
-  const attnH = attn.length ? 28 + attn.length * 22 + 12 : 0;
+  const attn = allAnoms.slice(0, 5);
+  const AC = 36, AGAP = 10;
+  const attnH = attn.length ? 28 + attn.length * (AC + AGAP) - AGAP : 0;
   const Ht = 70 + tilesH + (attnH ? 20 + attnH : 0) + 36;
 
   const spark = (series, x, y, w, h, color) => {
@@ -305,36 +304,51 @@ function renderSvg() {
   s += `<text x="${PAD}" y="36" fill="${C.text}" ${FONT} font-size="22" font-weight="700">SDK Health</text>`;
   s += `<text x="${PAD}" y="56" fill="${C.sub}" ${FONT} font-size="13">week of ${esc(headerPrev)} → ${esc(headerCur)}</text>`;
 
+  const metricCell = (x, y, label, value, delta, warnColor) => {
+    let m = `<text x="${x}" y="${y}" fill="${C.sub}" ${FONT} font-size="9" letter-spacing="0.5">${esc(label)}</text>`;
+    m += `<text x="${x}" y="${y + 22}" fill="${C.text}" ${FONT} font-size="18" font-weight="700">${esc(value)}</text>`;
+    m += `<text x="${x}" y="${y + 36}" fill="${warnColor || C.sub}" ${FONT} font-size="10">${esc(delta)}</text>`;
+    return m;
+  };
+
   tiles.forEach((t, i) => {
     const cx = PAD + (i % COLS) * (TW + GAP);
     const cy = 70 + Math.floor(i / COLS) * (THt + GAP);
     const dot = C[t.status];
-    const tint = t.status === 'red' ? '#2d1618' : t.status === 'yellow' ? '#2b2417' : C.panel;
-    s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${tint}" stroke="${dot}" stroke-opacity="0.35"/>`;
+    s += `<rect x="${cx}" y="${cy}" width="${TW}" height="${THt}" rx="10" fill="${TINT[t.status]}" stroke="${dot}" stroke-opacity="0.35"/>`;
     s += `<circle cx="${cx + 18}" cy="${cy + 22}" r="6" fill="${dot}"/>`;
     s += `<text x="${cx + 32}" y="${cy + 27}" fill="${C.text}" ${FONT} font-size="15" font-weight="600">${esc(t.name)}</text>`;
-    s += `<text x="${cx + TW - 16}" y="${cy + 27}" fill="${C.sub}" ${FONT} font-size="9" text-anchor="end">${t.sparkLabel}</text>`;
-    const head = t.dlW != null ? `${fmtNum(t.dlW)}/wk` : `${t.issOpen ?? dash} issues`;
-    const subBits = [];
-    if (t.dlW != null && t.wow != null) subBits.push(`${t.wow >= 0 ? '▲' : '▼'}${Math.abs(t.wow)}%`);
-    else if (t.issD != null) subBits.push(`${t.issD >= 0 ? '+' : ''}${t.issD}`);
-    subBits.push(`${t.tri ?? dash} ${triageWord}`);
-    subBits.push(`p90 ${fmtDur(t.p90)}`);
-    s += `<text x="${cx + 16}" y="${cy + 54}" fill="${C.text}" ${FONT} font-size="20" font-weight="700">${esc(head)}</text>`;
-    s += `<text x="${cx + 16}" y="${cy + 72}" fill="${C.sub}" ${FONT} font-size="11">${esc(subBits.join(' · '))}</text>`;
-    s += spark(t.series, cx + 16, cy + 80, TW - 32, 20, dot);
+    s += `<text x="${cx + TW - 16}" y="${cy + 27}" fill="${C.sub}" ${FONT} font-size="9" text-anchor="end">open issues (14d)</text>`;
+    // 4-column metric strip — same labels and positions on every tile
+    const colW = (TW - 32) / 4;
+    const mx = cx + 16, my = cy + 50;
+    s += metricCell(mx, my, 'DOWNLOADS/WK',
+      t.dlW != null ? fmtNum(t.dlW) : dash,
+      t.wow != null ? `${t.wow >= 0 ? '▲' : '▼'}${Math.abs(t.wow)}%` : dash);
+    s += metricCell(mx + colW, my, 'ISSUES',
+      t.issOpen != null ? String(t.issOpen) : dash,
+      fmtSigned(t.issD));
+    s += metricCell(mx + 2 * colW, my, triageHdr,
+      t.tri != null ? String(t.tri) : dash,
+      t.triageWarn ? '⚠ ' + fmtSigned(t.triD) : fmtSigned(t.triD),
+      t.triageWarn ? dot : null);
+    s += metricCell(mx + 3 * colW, my, 'PR P90',
+      fmtDur(t.p90),
+      t.p90Warn ? '⚠ over' : (t.p90P != null && t.p90 != null ? (t.p90 >= t.p90P ? '▲' : '▼') + fmtDur(Math.abs(t.p90 - t.p90P)) : dash),
+      t.p90Warn ? dot : null);
+    s += spark(t.series, cx + 16, cy + 100, TW - 32, 24, dot);
   });
 
   if (attn.length) {
-    const ay = 70 + tilesH + 20;
+    let ay = 70 + tilesH + 20;
     s += `<text x="${PAD}" y="${ay + 16}" fill="${C.text}" ${FONT} font-size="14" font-weight="700">Needs attention</text>`;
-    attn.forEach((t, i) => {
-      const y = ay + 36 + i * 22;
-      const bits = [];
-      if (t.triageWarn) bits.push(`${t.tri} ${triageWord} >7d`);
-      if (t.p90Warn) bits.push(`PR p90 ${fmtDur(t.p90)}`);
-      s += `<circle cx="${PAD + 6}" cy="${y - 4}" r="3" fill="${C[t.status]}"/>`;
-      s += `<text x="${PAD + 18}" y="${y}" fill="${C.text}" ${FONT} font-size="12"><tspan font-weight="600">${esc(t.name)}</tspan> — ${esc(bits.join('; '))}</text>`;
+    ay += 28;
+    attn.forEach((a, i) => {
+      const y = ay + i * (AC + AGAP);
+      const st = statusOf[a.name] || 'yellow';
+      s += `<rect x="${PAD}" y="${y}" width="${Wd - 2 * PAD}" height="${AC}" rx="8" fill="${TINT[st]}" stroke="${C[st]}" stroke-opacity="0.35"/>`;
+      s += `<circle cx="${PAD + 16}" cy="${y + AC / 2}" r="4" fill="${C[st]}"/>`;
+      s += `<text x="${PAD + 30}" y="${y + AC / 2 + 4}" fill="${C.text}" ${FONT} font-size="12"><tspan font-weight="600">${esc(a.name)}</tspan> ${esc(dash)} ${esc(a.msg)}</text>`;
     });
   }
   s += `<text x="${PAD}" y="${Ht - 14}" fill="${C.sub}" ${FONT} font-size="11">${esc(dashboardUrl.replace(/^https?:\/\//, ''))}</text>`;
