@@ -1,14 +1,14 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-04-13T17:59:07.885787+00:00",
+  "lastUpdated": "2026-04-13T18:35:42.976442+00:00",
   "summary": {
-    "actionable_count": 37,
+    "actionable_count": 39,
     "auth_count": 6,
     "maint_count": 5,
-    "effort_hours": 9.3,
+    "effort_hours": 9.8,
     "cluster_count": 2,
     "cluster_member_count": 4,
-    "not_our_move_count": 34,
+    "not_our_move_count": 32,
     "by_tier": [
       {
         "idx": 0,
@@ -21,10 +21,10 @@
       {
         "idx": 1,
         "name": "We're blocking someone",
-        "count": 15,
+        "count": 16,
         "auth": 3,
         "maint": 4,
-        "mins": 295
+        "mins": 315
       },
       {
         "idx": 2,
@@ -45,10 +45,10 @@
       {
         "idx": 4,
         "name": "Hygiene",
-        "count": 7,
+        "count": 8,
         "auth": 1,
         "maint": 0,
-        "mins": 23
+        "mins": 28
       },
       {
         "idx": 5,
@@ -61,7 +61,7 @@
     ],
     "by_state": {
       "approval-contested": 1,
-      "awaiting-author": 11,
+      "awaiting-author": 9,
       "backport-follows-primary": 2,
       "bot-release": 1,
       "ci-red-silent": 3,
@@ -73,9 +73,9 @@
       "needs-decision": 5,
       "needs-first-review": 3,
       "needs-merge": 1,
-      "needs-re-review": 10,
+      "needs-re-review": 11,
       "parked": 6,
-      "stale-awaiting-author": 4,
+      "stale-awaiting-author": 5,
       "stale-ci-abandoned": 1,
       "stale-draft": 12,
       "stale-draft-pinged": 1
@@ -133,8 +133,8 @@
       "idx": 1,
       "name": "We're blocking someone",
       "blurb": "Author did what we asked and is waiting on us. Longest-waiting first.",
-      "count": 15,
-      "mins": 295,
+      "count": 16,
+      "mins": 315,
       "states": [
         {
           "name": "needs-re-review",
@@ -206,7 +206,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (11d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (11d waiting)",
-              "age_days": 34.0,
+              "age_days": 34.1,
               "additions": 618,
               "deletions": 50,
               "is_auth": true,
@@ -223,8 +223,8 @@
               "author": "travisbreaks",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1712",
               "state": "needs-re-review",
-              "reason": "author pushed after CHANGES_REQUESTED (3d waiting)",
-              "short_reason": "author pushed after CHANGES_REQUESTED (3d waiting)",
+              "reason": "author pushed after CHANGES_REQUESTED (4d waiting)",
+              "short_reason": "author pushed after CHANGES_REQUESTED (4d waiting)",
               "age_days": 25.1,
               "additions": 57,
               "deletions": 1,
@@ -320,7 +320,7 @@
               "state": "needs-re-review",
               "reason": "author question after CHANGES_REQUESTED (4d waiting) [llm]",
               "short_reason": "author question after CHANGES_REQUESTED (4d waiting) [llm]",
-              "age_days": 7.8,
+              "age_days": 7.9,
               "additions": 133,
               "deletions": 2,
               "is_auth": false,
@@ -391,7 +391,7 @@
               "state": "maintainer-intake",
               "reason": "19d, no maintainer has looked yet",
               "short_reason": "19d, no maintainer has looked yet",
-              "age_days": 18.8,
+              "age_days": 18.9,
               "additions": 340,
               "deletions": 315,
               "is_auth": false,
@@ -410,7 +410,7 @@
               "state": "maintainer-intake",
               "reason": "17d, community reviewed (mgyarmathy)",
               "short_reason": "17d, community reviewed (mgyarmathy)",
-              "age_days": 17.2,
+              "age_days": 17.3,
               "additions": 162,
               "deletions": 7,
               "is_auth": false,
@@ -481,8 +481,8 @@
               "author": "Christian-Sidak",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
-              "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
+              "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
+              "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
               "age_days": 7.6,
               "additions": 14,
               "deletions": 7,
@@ -492,7 +492,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1397",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue."
+              "cluster_pick_reason": "Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative."
             },
             {
               "number": 1881,
@@ -500,8 +500,8 @@
               "author": "sainathreddyb",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1881",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
-              "short_reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
+              "reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
+              "short_reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
               "age_days": 1.7,
               "additions": 168,
               "deletions": 2,
@@ -511,7 +511,7 @@
               "sla_kind": null,
               "cluster_id": "1864",
               "cluster_pick": true,
-              "cluster_pick_reason": "All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals."
+              "cluster_pick_reason": "CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size."
             }
           ],
           "clusters": [
@@ -519,7 +519,7 @@
               "id": "1397",
               "kind": "issue",
               "pick": 1855,
-              "pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
+              "pick_reason": "Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
               "members": [
                 {
                   "number": 1821,
@@ -529,7 +529,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1397; #1855 is the pick",
                   "short_reason": "shares issue #1397; #1855 is the pick",
-                  "age_days": 14.0,
+                  "age_days": 14.1,
                   "additions": 534,
                   "deletions": 485,
                   "is_auth": false,
@@ -546,8 +546,8 @@
                   "author": "Christian-Sidak",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
-                  "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
+                  "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
+                  "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
                   "age_days": 7.6,
                   "additions": 14,
                   "deletions": 7,
@@ -557,7 +557,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1397",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue."
+                  "cluster_pick_reason": "Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1397"
@@ -566,7 +566,7 @@
               "id": "1864",
               "kind": "issue",
               "pick": 1881,
-              "pick_reason": "All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
+              "pick_reason": "CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
               "members": [
                 {
                   "number": 1873,
@@ -595,7 +595,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1864 with #1873",
                   "short_reason": "shares linked issue #1864 with #1873",
-                  "age_days": 1.7,
+                  "age_days": 1.8,
                   "additions": 14,
                   "deletions": 3,
                   "is_auth": false,
@@ -612,8 +612,8 @@
                   "author": "sainathreddyb",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1881",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
-                  "short_reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
+                  "reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
+                  "short_reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
                   "age_days": 1.7,
                   "additions": 168,
                   "deletions": 2,
@@ -623,7 +623,7 @@
                   "sla_kind": null,
                   "cluster_id": "1864",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals."
+                  "cluster_pick_reason": "CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size."
                 },
                 {
                   "number": 1885,
@@ -901,8 +901,8 @@
       "idx": 4,
       "name": "Hygiene",
       "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 7,
-      "mins": 23,
+      "count": 8,
+      "mins": 28,
       "states": [
         {
           "name": "stale-awaiting-author",
@@ -917,8 +917,27 @@
               "state": "stale-awaiting-author",
               "reason": "14d since feedback, no response",
               "short_reason": "14d since feedback",
-              "age_days": 64.6,
+              "age_days": 64.7,
               "additions": 30,
+              "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            },
+            {
+              "number": 1509,
+              "title": "fix: pass empty args to registerToolTask handler when no inputSchema",
+              "author": "corvid-agent",
+              "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1509",
+              "state": "stale-awaiting-author",
+              "reason": "14d since feedback, no response",
+              "short_reason": "14d since feedback",
+              "age_days": 62.9,
+              "additions": 8,
               "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
@@ -974,7 +993,7 @@
               "state": "stale-awaiting-author",
               "reason": "14d since feedback, no response",
               "short_reason": "14d since feedback",
-              "age_days": 15.2,
+              "age_days": 15.3,
               "additions": 211,
               "deletions": 43,
               "is_auth": false,
@@ -1142,7 +1161,7 @@
           "state": "stale-draft",
           "reason": "draft idle 139d",
           "short_reason": "draft idle 139d",
-          "age_days": 138.9,
+          "age_days": 139.0,
           "additions": 6,
           "deletions": 17,
           "is_auth": false,
@@ -1237,7 +1256,7 @@
           "state": "stale-draft",
           "reason": "draft idle 24d",
           "short_reason": "draft idle 24d",
-          "age_days": 24.2,
+          "age_days": 24.3,
           "additions": 55,
           "deletions": 153,
           "is_auth": true,
@@ -1313,9 +1332,9 @@
           "state": "stale-draft",
           "reason": "draft idle 11d",
           "short_reason": "draft idle 11d",
-          "age_days": 11.2,
-          "additions": 740,
-          "deletions": 1,
+          "age_days": 11.3,
+          "additions": 835,
+          "deletions": 36,
           "is_auth": false,
           "is_maintainer": true,
           "sla_breach": false,
@@ -1388,25 +1407,6 @@
           "cluster_pick_reason": ""
         },
         {
-          "number": 1509,
-          "title": "fix: pass empty args to registerToolTask handler when no inputSchema",
-          "author": "corvid-agent",
-          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1509",
-          "state": "awaiting-author",
-          "reason": "14d since feedback",
-          "short_reason": "14d since feedback",
-          "age_days": 62.8,
-          "additions": 8,
-          "deletions": 3,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        },
-        {
           "number": 1666,
           "title": "fix: allow registering tools/resources/prompts after connect when capabilities pre-declared (#893)",
           "author": "Vadaski",
@@ -1433,7 +1433,7 @@
           "state": "awaiting-author",
           "reason": "14d since feedback",
           "short_reason": "14d since feedback",
-          "age_days": 32.4,
+          "age_days": 32.5,
           "additions": 122,
           "deletions": 6,
           "is_auth": true,
@@ -1452,7 +1452,7 @@
           "state": "awaiting-author",
           "reason": "11d since feedback",
           "short_reason": "11d since feedback",
-          "age_days": 18.0,
+          "age_days": 18.1,
           "additions": 220,
           "deletions": 58,
           "is_auth": false,
@@ -1490,29 +1490,10 @@
           "state": "awaiting-author",
           "reason": "11d since feedback",
           "short_reason": "11d since feedback",
-          "age_days": 15.3,
+          "age_days": 15.4,
           "additions": 386,
           "deletions": 0,
           "is_auth": true,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        },
-        {
-          "number": 1854,
-          "title": "Added default mcp tool call timeout from env",
-          "author": "haydenrear",
-          "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1854",
-          "state": "awaiting-author",
-          "reason": "4d since feedback",
-          "short_reason": "4d since feedback",
-          "age_days": 7.8,
-          "additions": 133,
-          "deletions": 2,
-          "is_auth": false,
           "is_maintainer": false,
           "sla_breach": false,
           "sla_kind": null,
@@ -1526,8 +1507,8 @@
           "author": "pch007",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1865",
           "state": "awaiting-author",
-          "reason": "3d since feedback",
-          "short_reason": "3d since feedback",
+          "reason": "4d since feedback",
+          "short_reason": "4d since feedback",
           "age_days": 4.8,
           "additions": 246,
           "deletions": 0,
@@ -1591,7 +1572,7 @@
           "state": "parked",
           "reason": "maintainer draft, 66d",
           "short_reason": "maintainer draft, 66d",
-          "age_days": 65.9,
+          "age_days": 66.0,
           "additions": 1253,
           "deletions": 10,
           "is_auth": false,
@@ -1610,7 +1591,7 @@
           "state": "parked",
           "reason": "maintainer draft, 59d",
           "short_reason": "maintainer draft, 59d",
-          "age_days": 59.2,
+          "age_days": 59.3,
           "additions": 441,
           "deletions": 140,
           "is_auth": true,
@@ -1674,7 +1655,7 @@
           "reason": "4d old",
           "short_reason": "4d old",
           "age_days": 4.2,
-          "additions": 672,
+          "additions": 677,
           "deletions": 0,
           "is_auth": false,
           "is_maintainer": true,
@@ -1712,8 +1693,8 @@
           "reason": "0d old",
           "short_reason": "0d old",
           "age_days": 0.2,
-          "additions": 174,
-          "deletions": 4,
+          "additions": 266,
+          "deletions": 74,
           "is_auth": false,
           "is_maintainer": true,
           "sla_breach": false,
@@ -1780,7 +1761,7 @@
       "id": "1397",
       "kind": "issue",
       "pick": 1855,
-      "pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
+      "pick_reason": "Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
       "members": [
         {
           "number": 1821,
@@ -1790,7 +1771,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1397; #1855 is the pick",
           "short_reason": "shares issue #1397; #1855 is the pick",
-          "age_days": 14.0,
+          "age_days": 14.1,
           "additions": 534,
           "deletions": 485,
           "is_auth": false,
@@ -1807,8 +1788,8 @@
           "author": "Christian-Sidak",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
-          "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue.",
+          "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
+          "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative.",
           "age_days": 7.6,
           "additions": 14,
           "deletions": 7,
@@ -1818,7 +1799,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1397",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller diff for the same fix, which is the correct scope for adding `| undefined` to transport option callbacks to satisfy `exactOptionalPropertyTypes`. #1821 is labeled \"PoC:\" (proof of concept), signaling it is exploratory rather than merge-ready, and its broader file footprint increases review surface and merge-conflict risk without additional benefit for this specific issue."
+          "cluster_pick_reason": "Both PRs have unknown CI status, so the decision falls to diff size and approach focus. #1855 touches 3 files versus #1821's 30 files \u2014 a 10x difference. A 3-file diff scoped to adding `| undefined` to transport option callbacks is surgically targeted at the root cause: optional callback properties need explicit `undefined` in their union types to satisfy `exactOptionalPropertyTypes`. #1821's 30-file footprint, combined with its \"PoC\" title prefix, indicates a broader exploratory refactor that likely adjusts types across the SDK surface rather than fixing the specific callbacks that triggered issue #1397. A smaller diff carries lower regression risk, is easier to revert if problems emerge, and is faster to review. #1821 can be revisited later if a wider `exactOptionalPropertyTypes` rollout is desired as a separate initiative."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1397"
@@ -1827,7 +1808,7 @@
       "id": "1864",
       "kind": "issue",
       "pick": 1881,
-      "pick_reason": "All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
+      "pick_reason": "CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
       "members": [
         {
           "number": 1873,
@@ -1856,7 +1837,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1864 with #1873",
           "short_reason": "shares linked issue #1864 with #1873",
-          "age_days": 1.7,
+          "age_days": 1.8,
           "additions": 14,
           "deletions": 3,
           "is_auth": false,
@@ -1873,8 +1854,8 @@
           "author": "sainathreddyb",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1881",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
-          "short_reason": "[llm pick] cluster primary for issue #1864: All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals.",
+          "reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
+          "short_reason": "[llm pick] cluster primary for issue #1864: CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size.",
           "age_days": 1.7,
           "additions": 168,
           "deletions": 2,
@@ -1884,7 +1865,7 @@
           "sla_kind": null,
           "cluster_id": "1864",
           "cluster_pick": true,
-          "cluster_pick_reason": "All four PRs have unknown CI. #1881 shares the exact title of #1873 but adds one extra file (4 vs 3), which is the most common pattern when a PR is revised to address a \"please add tests\" review comment \u2014 making it the most likely candidate to have test coverage. #1879 has the smallest diff (2 files) but its scope description differs (\"tools/list response\") and without test evidence it ranks below a likely-tested PR. #1885 is the newest and offers no observable advantage. #1873 is the oldest version of the same fix that #1881 appears to supersede. On the \"has tests > smallest diff > oldest\" chain, #1881 is the strongest pick based on available signals."
+          "cluster_pick_reason": "CI is unknown for all four PRs. #1881 and #1873 share an identical title; #1881 touches 4 files vs #1873's 3, making it the most likely of the four to include a test file \u2014 the \"has tests\" criterion outranks smallest diff. #1879 (2 files) is the tightest diff but the least likely to carry test coverage. #1885 (3 files, newest, non-conventional-commit title) offers no advantage over the others. If the 4th file in #1881 is confirmed to be a test, it is the clear winner; if not, re-evaluate #1879 on diff size."
         },
         {
           "number": 1885,
@@ -1910,20 +1891,20 @@
     }
   ],
   "llm_cost": {
-    "total_usd": 0.8783,
+    "total_usd": 0.9521,
     "total_calls": 7,
     "by_purpose": {
       "author-intent": {
         "count": 2,
-        "cost": 0.0481
+        "cost": 0.0479
       },
       "semantic-cluster": {
         "count": 3,
-        "cost": 0.2712
+        "cost": 0.2719
       },
       "cluster-pick": {
         "count": 2,
-        "cost": 0.5589
+        "cost": 0.6323
       }
     }
   }

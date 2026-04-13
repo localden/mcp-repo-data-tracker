@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-13T17:43:15.603Z",
+  "timestamp": "2026-04-13T18:20:06.878Z",
   "repository": {
     "stars": 4190,
     "forks": 678
@@ -143,6 +143,17 @@
         "commentCount": 2
       },
       {
+        "number": 681,
+        "title": "Not able to authenticate MCP Servers",
+        "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/681",
+        "createdAt": "2025-08-06T18:07:45Z",
+        "daysWaiting": 250,
+        "labels": [
+          "bug"
+        ],
+        "commentCount": 6
+      },
+      {
         "number": 684,
         "title": "Using incorrect oauth-authorization-server endpoint",
         "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/684",
@@ -154,17 +165,6 @@
           "needs confirmation"
         ],
         "commentCount": 1
-      },
-      {
-        "number": 681,
-        "title": "Not able to authenticate MCP Servers",
-        "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/681",
-        "createdAt": "2025-08-06T18:07:45Z",
-        "daysWaiting": 249,
-        "labels": [
-          "bug"
-        ],
-        "commentCount": 6
       },
       {
         "number": 689,
@@ -270,7 +270,7 @@
         "title": "Support externally sourced JWT in Auth header from MCP client",
         "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/917",
         "createdAt": "2025-10-23T17:54:16Z",
-        "daysWaiting": 171,
+        "daysWaiting": 172,
         "labels": [
           "enhancement"
         ],
@@ -281,7 +281,7 @@
         "title": "Transfer-Encoding=Chunked causes issues with locally run Azure Functions",
         "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/932",
         "createdAt": "2025-10-31T17:48:55Z",
-        "daysWaiting": 163,
+        "daysWaiting": 164,
         "labels": [
           "bug"
         ],
@@ -339,7 +339,7 @@
         "title": "Request for Sample: ASP.NET Core MCP Client with One Persisted Connection Per User Session",
         "url": "https://github.com/modelcontextprotocol/csharp-sdk/issues/1126",
         "createdAt": "2025-12-29T17:53:15Z",
-        "daysWaiting": 104,
+        "daysWaiting": 105,
         "labels": [
           "documentation",
           "help wanted",
@@ -619,7 +619,7 @@
         "title": "ProtectedMcpServer: enforce per-user concurrent tool-call limit with `PartitionedRateLimiter` in call-tool filter",
         "url": "https://github.com/modelcontextprotocol/csharp-sdk/pull/1393",
         "createdAt": "2026-02-26T18:13:59Z",
-        "daysWaiting": 45,
+        "daysWaiting": 46,
         "labels": [],
         "isDraft": true,
         "additions": 35,
@@ -839,14 +839,14 @@
       }
     ],
     "review_time": {
-      "avg_hours": 27.8,
+      "avg_hours": 28,
       "median_hours": 2.1,
       "p90_hours": 62.4,
-      "p95_hours": 141.2
+      "p95_hours": 143.7
     },
     "merge_time": {
-      "avg_hours": 69.9,
-      "median_hours": 18.7
+      "avg_hours": 70.2,
+      "median_hours": 18.8
     },
     "code_review_rate_pct": 96.8,
     "rejection_rate_pct": 20.2,
@@ -861,8 +861,8 @@
     "total_known": 222,
     "active_30d": 25,
     "first_time_30d": 16,
-    "retention_rate_pct": 100,
-    "churned_30d": 0,
+    "retention_rate_pct": 22.9,
+    "churned_30d": 27,
     "commits_per_week_avg": 14.8,
     "commits_per_week_trend": [
       2,
@@ -1141,38 +1141,38 @@
       },
       {
         "path": "tests/ModelContextProtocol.Tests/Server/McpServerTests.cs",
-        "pr_count": 26,
-        "total_changes": 1056
+        "pr_count": 28,
+        "total_changes": 1078
       },
       {
         "path": "tests/ModelContextProtocol.TestSseServer/Program.cs",
-        "pr_count": 22,
-        "total_changes": 1315
+        "pr_count": 25,
+        "total_changes": 1389
       },
       {
         "path": "tests/ModelContextProtocol.Tests/ClientIntegrationTests.cs",
-        "pr_count": 21,
-        "total_changes": 467
+        "pr_count": 23,
+        "total_changes": 513
       },
       {
         "path": "tests/ModelContextProtocol.Tests/Configuration/McpServerBuilderExtensionsToolsTests.cs",
+        "pr_count": 21,
+        "total_changes": 1228
+      },
+      {
+        "path": "tests/ModelContextProtocol.TestServer/Program.cs",
         "pr_count": 19,
-        "total_changes": 1161
+        "total_changes": 543
+      },
+      {
+        "path": "src/ModelContextProtocol/Server/McpServer.cs",
+        "pr_count": 19,
+        "total_changes": 1358
       },
       {
         "path": "src/ModelContextProtocol.Core/Server/McpServerImpl.cs",
         "pr_count": 18,
         "total_changes": 723
-      },
-      {
-        "path": "src/ModelContextProtocol/Server/McpServer.cs",
-        "pr_count": 18,
-        "total_changes": 1337
-      },
-      {
-        "path": "tests/ModelContextProtocol.TestServer/Program.cs",
-        "pr_count": 17,
-        "total_changes": 466
       },
       {
         "path": "src/ModelContextProtocol/Client/McpClientExtensions.cs",
@@ -1185,9 +1185,29 @@
         "total_changes": 577
       },
       {
-        "path": "src/Directory.Build.props",
+        "path": "tests/ModelContextProtocol.Tests/Configuration/McpServerBuilderExtensionsPromptsTests.cs",
         "pr_count": 15,
-        "total_changes": 37
+        "total_changes": 549
+      },
+      {
+        "path": "tests/ModelContextProtocol.Tests/Server/McpServerToolTests.cs",
+        "pr_count": 15,
+        "total_changes": 950
+      },
+      {
+        "path": "tests/ModelContextProtocol.Tests/Transport/StdioServerTransportTests.cs",
+        "pr_count": 14,
+        "total_changes": 288
+      },
+      {
+        "path": "src/Directory.Build.props",
+        "pr_count": 14,
+        "total_changes": 33
+      },
+      {
+        "path": "tests/ModelContextProtocol.Tests/Client/McpClientExtensionsTests.cs",
+        "pr_count": 14,
+        "total_changes": 275
       },
       {
         "path": "src/ModelContextProtocol/Client/McpClient.cs",
@@ -1195,44 +1215,24 @@
         "total_changes": 406
       },
       {
+        "path": "tests/ModelContextProtocol.AspNetCore.Tests/StreamableHttpServerConformanceTests.cs",
+        "pr_count": 13,
+        "total_changes": 245
+      },
+      {
+        "path": "tests/ModelContextProtocol.Tests/Server/McpServerResourceTests.cs",
+        "pr_count": 13,
+        "total_changes": 780
+      },
+      {
         "path": "src/ModelContextProtocol.Core/McpSessionHandler.cs",
         "pr_count": 13,
         "total_changes": 516
       },
       {
-        "path": "tests/ModelContextProtocol.Tests/Configuration/McpServerBuilderExtensionsPromptsTests.cs",
-        "pr_count": 13,
-        "total_changes": 524
-      },
-      {
-        "path": "tests/ModelContextProtocol.Tests/Server/McpServerToolTests.cs",
-        "pr_count": 13,
-        "total_changes": 854
-      },
-      {
-        "path": "tests/ModelContextProtocol.Tests/Client/McpClientExtensionsTests.cs",
+        "path": "tests/ModelContextProtocol.AspNetCore.Tests/MapMcpTests.cs",
         "pr_count": 12,
-        "total_changes": 250
-      },
-      {
-        "path": "tests/ModelContextProtocol.AspNetCore.Tests/MapMcpStreamableHttpTests.cs",
-        "pr_count": 11,
-        "total_changes": 593
-      },
-      {
-        "path": "tests/ModelContextProtocol.AspNetCore.Tests/StreamableHttpServerConformanceTests.cs",
-        "pr_count": 11,
-        "total_changes": 216
-      },
-      {
-        "path": "tests/ModelContextProtocol.Tests/Server/McpServerResourceTests.cs",
-        "pr_count": 11,
-        "total_changes": 762
-      },
-      {
-        "path": "tests/ModelContextProtocol.Tests/Transport/StdioServerTransportTests.cs",
-        "pr_count": 11,
-        "total_changes": 280
+        "total_changes": 554
       }
     ],
     "by_directory": [
@@ -1243,33 +1243,38 @@
       },
       {
         "path": "src/ModelContextProtocol.Core/Server/",
-        "pr_count": 49,
-        "file_count": 44
+        "pr_count": 51,
+        "file_count": 51
       },
       {
         "path": "tests/ModelContextProtocol.Tests/Server/",
-        "pr_count": 48,
+        "pr_count": 50,
         "file_count": 19
       },
       {
         "path": "tests/ModelContextProtocol.AspNetCore.Tests/",
-        "pr_count": 43,
-        "file_count": 22
+        "pr_count": 46,
+        "file_count": 23
       },
       {
         "path": "tests/ModelContextProtocol.Tests/",
-        "pr_count": 40,
-        "file_count": 17
+        "pr_count": 43,
+        "file_count": 18
+      },
+      {
+        "path": "tests/ModelContextProtocol.Tests/Configuration/",
+        "pr_count": 35,
+        "file_count": 12
       },
       {
         "path": "src/ModelContextProtocol.Core/Protocol/",
         "pr_count": 35,
-        "file_count": 104
+        "file_count": 111
       },
       {
-        "path": "tests/ModelContextProtocol.Tests/Configuration/",
+        "path": "src/ModelContextProtocol/",
         "pr_count": 32,
-        "file_count": 12
+        "file_count": 34
       },
       {
         "path": "src/ModelContextProtocol.Core/Client/",
@@ -1279,12 +1284,7 @@
       {
         "path": "src/ModelContextProtocol.Core/",
         "pr_count": 31,
-        "file_count": 27
-      },
-      {
-        "path": "tests/ModelContextProtocol.Tests/Protocol/",
-        "pr_count": 30,
-        "file_count": 87
+        "file_count": 29
       }
     ],
     "top_n": 20
