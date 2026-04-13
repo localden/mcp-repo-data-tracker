@@ -42,9 +42,12 @@ BOT_REVIEWER_PATTERNS = (
 )
 
 AUTH_PATH_GLOBS = ("auth", "oauth", "token", "Token", "OAuth")
+# Dropped from title keywords: "session" (MCP ClientSession/session_id is a transport
+# concept), "token" (progressToken/resumption/cancellation tokens), "oidc" (CI trusted
+# publishing). "token"/"Token" stay in PATH_GLOBS — auth code lives in token-named files.
 AUTH_TITLE_KEYWORDS = (
-    "auth", "oauth", "token", "session", "credential", "authorization",
-    "jwt", "bearer", "scope", "pkce", "oidc",
+    "auth", "oauth", "credential", "authorization",
+    "jwt", "bearer", "scope", "pkce",
 )
 
 BOT_RELEASE_TITLE_PREFIXES = (
@@ -380,6 +383,8 @@ def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR
         for n in conn["nodes"]:
             author = n["author"]["login"] if n["author"] else "ghost"
             author_type = n["author"]["__typename"] if n["author"] else "User"
+            labels = [l["name"] for l in n["labels"]["nodes"]]
+            files = [f["path"] for f in n["files"]["nodes"]]
             prs.append(PR(
                 number=n["number"],
                 title=n["title"],
@@ -387,15 +392,15 @@ def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR
                 is_draft=n["isDraft"],
                 created_at=parse_dt(n["createdAt"]),
                 base_ref=n["baseRefName"],
-                labels=[l["name"] for l in n["labels"]["nodes"]],
+                labels=labels,
                 linked_issues=[i["number"] for i in n["closingIssuesReferences"]["nodes"]
                                if i["repository"]["nameWithOwner"] == f"{owner}/{name}"],
-                files=[f["path"] for f in n["files"]["nodes"]],
+                files=files,
                 additions=n.get("additions", 0),
                 deletions=n.get("deletions", 0),
                 body=n.get("bodyText", "") or "",
                 is_maintainer=(author in maintainers.all),
-                is_auth=_is_auth(n["title"], [f["path"] for f in n["files"]["nodes"]]),
+                is_auth=_is_auth(n["title"], files, labels),
             ))
             if author_type == "Bot":
                 prs[-1].author = f"app/{author}"
@@ -405,11 +410,17 @@ def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR
     return prs
 
 
-def _is_auth(title: str, files: list[str]) -> bool:
+def _is_auth(title: str, files: list[str], labels: list[str]) -> bool:
+    if "auth" in labels:
+        return True
     title_lower = title.lower()
     if any(kw in title_lower for kw in AUTH_TITLE_KEYWORDS):
         return True
-    return any(any(g in f for g in AUTH_PATH_GLOBS) for f in files)
+    auth_files = [f for f in files if any(g in f for g in AUTH_PATH_GLOBS)]
+    if not auth_files:
+        return False
+    # Wide refactors that incidentally touch auth.py among many other files aren't auth PRs.
+    return len(files) <= 5 or len(auth_files) / len(files) > 0.3
 
 
 # --- Tier B: reviews + mergeable + CI (batched) ---
