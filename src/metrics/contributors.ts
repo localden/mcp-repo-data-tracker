@@ -11,7 +11,7 @@ import type {
   ContributorMetrics,
   RepoConfig,
 } from '../types/index.js';
-import { loadContributors, loadPreviousPeriodContributors, savePreviousPeriodContributors } from '../data/writers.js';
+import { loadContributors } from '../data/writers.js';
 import type { CommitData } from '../github/commits.js';
 import { groupCommitsByWeek } from '../github/commits.js';
 import { round, average } from '../utils/stats.js';
@@ -19,7 +19,6 @@ import { isBot } from '../utils/bots.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 const ONE_TWENTY_DAYS_MS = 120 * 24 * 60 * 60 * 1000;
 
 /**
@@ -40,7 +39,6 @@ export async function calculateContributorMetrics(
 ): Promise<ContributorMetrics> {
   const now = Date.now();
   const existingContributors = new Set(await loadContributors(repoConfig));
-  const previousPeriodContributors = new Set(await loadPreviousPeriodContributors(repoConfig));
 
   // Collect all contributors from current data
   const currentContributors = new Set<string>();
@@ -105,15 +103,11 @@ export async function calculateContributorMetrics(
     }
   }
 
-  // Calculate retention rate
-  // If we have previous period data from last run, compare current active against it
-  // Otherwise, use the contributors from 30-60 days ago as a proxy
-  let retentionBase: Set<string>;
-  if (previousPeriodContributors.size > 0) {
-    retentionBase = previousPeriodContributors;
-  } else {
-    retentionBase = prevWindowContributors;
-  }
+  // Retention base = contributors active 30–60 days ago. The persisted-sidecar
+  // approach was overwriting itself every 2h with the *current* set, pinning
+  // retention at 100%. Computing from the activity stream is stateless and
+  // correct.
+  const retentionBase = prevWindowContributors;
 
   let retained = 0;
   for (const contributor of retentionBase) {
@@ -151,9 +145,6 @@ export async function calculateContributorMetrics(
     }
   }
   const active_community_30d = activeContributors.size - active_maintainers_30d;
-
-  // Save current active contributors for next period's retention calculation
-  await savePreviousPeriodContributors(Array.from(activeContributors), repoConfig);
 
   return {
     total_known: allContributors.size,

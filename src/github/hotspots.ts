@@ -25,14 +25,14 @@ export async function fetchHotspotData(
     mergedPRs,
     REQUEST_DELAY_MS,
     async (pr) => {
-      const response = await client.rest.pulls.listFiles({
+      const data = await client.rest.paginate(client.rest.pulls.listFiles, {
         owner,
         repo,
         pull_number: pr.number,
-        per_page: 300,
+        per_page: 100,
       });
 
-      const files: GitHubPRFile[] = response.data.map((file) => ({
+      const files: GitHubPRFile[] = data.map((file) => ({
         filename: file.filename,
         additions: file.additions,
         deletions: file.deletions,
