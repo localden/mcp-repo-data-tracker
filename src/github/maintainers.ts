@@ -5,7 +5,10 @@
  * https://github.com/modelcontextprotocol/access/blob/main/src/config/users.ts
  */
 
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import type { GitHubClient } from './client.js';
+import { withRetry } from './client.js';
 import type { MaintainersData, Maintainer } from '../types/index.js';
 
 // Canonical maintainers source (constant)
@@ -25,11 +28,11 @@ export async function fetchMaintainers(
       console.log(`  Fetching ${MAINTAINERS_OWNER}/${MAINTAINERS_REPO}/${MAINTAINERS_PATH}`);
     }
 
-    const response = await client.rest.repos.getContent({
+    const response = await withRetry(() => client.rest.repos.getContent({
       owner: MAINTAINERS_OWNER,
       repo: MAINTAINERS_REPO,
       path: MAINTAINERS_PATH,
-    });
+    }));
 
     // Handle file content (not directory)
     if (Array.isArray(response.data) || response.data.type !== 'file') {
@@ -45,11 +48,13 @@ export async function fetchMaintainers(
     };
   } catch (error) {
     console.warn('Warning: Failed to fetch maintainer data:', error);
-    console.warn('Continuing with empty maintainer list');
-    return {
-      lastUpdated: new Date().toISOString(),
-      maintainers: [],
-    };
+    // An empty maintainer set silently poisons every maintainer-derived metric
+    // and the classifier. Fall back to the last committed copy; only if that
+    // is also unavailable do we re-throw.
+    const fallbackPath = join(process.cwd(), 'data', 'maintainers.json');
+    console.warn(`Falling back to last-committed ${fallbackPath}`);
+    const content = await readFile(fallbackPath, 'utf-8');
+    return JSON.parse(content) as MaintainersData;
   }
 }
 

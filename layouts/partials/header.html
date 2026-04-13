@@ -20,7 +20,7 @@
       </button>
       <div tabindex="0" class="dropdown-content bg-base-100 rounded-lg z-[100] w-80 max-w-[calc(100vw-2rem)] p-1.5 shadow-xl border border-base-300" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
         <div class="repo-picker-item" role="option" data-owner="" data-repo="" data-name="All Repositories">
-          <a class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
+          <a href="?repo=__all__" class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
             <span class="text-xs font-medium">All Repositories</span>
             <span class="text-[10px] text-base-content/50">Summary across all tracked repos</span>
           </a>
@@ -28,7 +28,7 @@
         <div class="border-t border-base-300 my-1"></div>
         {{ range $index, $repo := $reposIndex.repositories }}
         <div class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
-          <a class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
+          <a href="?repo={{ $repo.owner }}/{{ $repo.repo }}" class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
             <span class="text-xs font-medium">{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}</span>
             <code class="font-mono text-[10px] text-base-content/50">{{ $repo.owner }}/{{ $repo.repo }}</code>
           </a>

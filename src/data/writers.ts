@@ -269,38 +269,6 @@ export async function loadContributors(repoConfig?: RepoConfig): Promise<string[
 }
 
 /**
- * Load previous period contributors (for retention calculation)
- */
-export async function loadPreviousPeriodContributors(repoConfig?: RepoConfig): Promise<string[]> {
-  const dataDir = getRepoDataDir(repoConfig);
-  const filePath = join(process.cwd(), dataDir, 'previous-period-contributors.json');
-
-  try {
-    const content = await readFile(filePath, 'utf-8');
-    const data = JSON.parse(content);
-    return data.contributors || [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Save current active contributors for next period's retention calculation
- */
-export async function savePreviousPeriodContributors(contributors: string[], repoConfig?: RepoConfig): Promise<void> {
-  const dataDir = getRepoDataDir(repoConfig);
-  const filePath = join(process.cwd(), dataDir, 'previous-period-contributors.json');
-  await ensureDir(dirname(filePath));
-
-  const data = {
-    lastUpdated: new Date().toISOString(),
-    contributors: contributors.sort(),
-  };
-
-  await writeFile(filePath, JSON.stringify(data, null, 2));
-}
-
-/**
  * Write SEP metrics for a repository (only for modelcontextprotocol/modelcontextprotocol)
  */
 export async function writeSEPMetrics(sepMetrics: SEPMetrics, repoConfig: RepoConfig): Promise<void> {

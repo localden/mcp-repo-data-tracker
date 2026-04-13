@@ -3,6 +3,7 @@
  */
 
 import type { GitHubClient } from './client.js';
+import { withRetry } from './client.js';
 import type { RepositoryStats } from '../types/index.js';
 
 /**
@@ -13,10 +14,10 @@ export async function fetchRepoStats(
   owner: string,
   repo: string
 ): Promise<RepositoryStats> {
-  const response = await client.rest.repos.get({
+  const response = await withRetry(() => client.rest.repos.get({
     owner,
     repo,
-  });
+  }));
 
   return {
     stars: response.data.stargazers_count,

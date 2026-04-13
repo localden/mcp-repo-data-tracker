@@ -102,9 +102,18 @@ export async function aggregate(args: CliArgs): Promise<void> {
   // Process each repository
   const repoCount = config.repositories.length;
   const skipDownloads = args.only === 'github';
+  let failed = 0;
   for (let i = 0; i < repoCount; i++) {
     const repoConfig = config.repositories[i];
-    await aggregateRepository(client, repoConfig, maintainerSet, dryRun, verbose, i + 1, repoCount, skipDownloads);
+    try {
+      await aggregateRepository(client, repoConfig, maintainerSet, dryRun, verbose, i + 1, repoCount, skipDownloads);
+    } catch (err) {
+      failed++;
+      warning(`Skipping ${repoConfig.owner}/${repoConfig.repo}: ${(err as Error).message}`);
+    }
+  }
+  if (failed === repoCount) {
+    throw new Error(`All ${repoCount} repositories failed to aggregate`);
   }
 
   // Write global files
