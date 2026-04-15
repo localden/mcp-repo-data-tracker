@@ -36,7 +36,6 @@
     {{ if .is_maintainer }}<span class="font-semibold">{{ .author }}</span>{{ else }}<span class="text-base-content/60">{{ .author }}</span>{{ end }}
   </td>
   <td class="text-xs truncate px-2" style="max-width:30rem" title="{{ .title }}">
-    {{ if .bot_triaged }}<span class="text-base-content/40" title="mcp-claude triaged">🤖</span> {{ end -}}
     {{ .title }}
     {{- range .linked_prs }} <a href="{{ $.url | replaceRE "/issues/" "/pull/" | replaceRE "[0-9]+$" (string .) }}" target="_blank" class="text-primary hover:underline font-mono text-[10px]" onclick="event.stopPropagation()">→#{{ . }}</a>{{ end }}
   </td>
@@ -46,6 +45,9 @@
   </td>
   <td class="text-xs text-right px-2 {{ if gt .comment_count 5 }}font-semibold{{ end }}">
     {{ if gt .comment_count 0 }}{{ .comment_count }}{{ else }}<span class="text-base-content/30">—</span>{{ end }}
+  </td>
+  <td class="text-xs text-right px-2">
+    {{ if gt .bot_comment_count 0 }}{{ .bot_comment_count }}{{ else }}<span class="text-base-content/30">—</span>{{ end }}
   </td>
   <td class="text-xs text-right font-medium whitespace-nowrap px-3">
     {{ if .sla_breach }}<span class="text-error">{{ printf "%.0f" .age_days }}d</span>
@@ -174,76 +176,71 @@
      ═════════════════════════════════════════════════════════════════════════ */}}
 {{ with $t }}
 
-{{/* ───────── Row 1: type distribution (4 cards) ───────── */}}
+{{/* ───────── Row 1: actionable subset by type (4 cards) ───────── */}}
 {{ with .summary }}
 {{ $s := . }}
-{{ $partially := $s.partially_triaged_count | default 0 }}
-{{ $triageTotal := add $s.untriaged_count $partially }}
-{{ $untClr := cond (lt $triageTotal 5) "text-success" (cond (lt $triageTotal 10) "text-warning" "text-error") }}
+{{ $fixClr := cond (gt $s.bugs_fix_ready.p01 0) "text-error" (cond (gt $s.bugs_fix_ready.total 10) "text-warning" "text-success") }}
+{{ $decClr := cond (gt $s.decisions_pending.p1 0) "text-warning" "" }}
+{{ $qClr   := cond (eq $s.questions_stale_2d 0) "text-success" (cond (lt $s.questions_stale_2d 5) "text-warning" "text-error") }}
 <section class="mb-4">
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div onclick="issFilterToggle('label:bug')" style="cursor:pointer">
+    <div onclick="issFilterToggle('tier:ready-for-work')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
-      "label" "Bug"
-      "value" $s.by_type.bug
-      "info" "Open issues with the bug label.\nClick to filter.") }}
+      "label" "Bugs ready"
+      "value" $s.bugs_fix_ready.total "valueClass" $fixClr
+      "descriptor" (printf "%d P0/P1 · %d fix proposed" (int $s.bugs_fix_ready.p01) (int ($s.bugs_fix_ready.fix_proposed | default 0)))
+      "info" "bug + ready for work — triaged and reproducible.\nClick to jump to the tier.\n\nRed: any P0/P1\nYellow: > 10\nGreen: ≤ 10") }}
     </div>
-    <div onclick="issFilterToggle('label:enhancement')" style="cursor:pointer">
+    <div onclick="issFilterToggle('tier:decide')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
-      "label" "Enhancement"
-      "value" $s.by_type.enhancement
-      "info" "Open issues with the enhancement label.\nClick to filter.") }}
+      "label" "Decisions pending"
+      "value" $s.decisions_pending.total "valueClass" $decClr
+      "descriptor" (printf "%d at P1" (int $s.decisions_pending.p1))
+      "info" "enhancement + needs decision — say yes (→ ready/design) or no (→ close).\nClick to jump to the tier.") }}
     </div>
-    <div onclick="issFilterToggle('label:question')" style="cursor:pointer">
+    <div onclick="issFilterToggle('tier:answer')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
-      "label" "Question"
-      "value" $s.by_type.question
-      "info" "Open issues with the question label.\nClick to filter.") }}
+      "label" "Questions > 2d"
+      "value" $s.questions_stale_2d "valueClass" $qClr
+      "info" "Questions past 2 business days with no maintainer response.\nClick to jump to the tier.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
     </div>
-    <div onclick="issFilterToggle('tier:triage-pending')" style="cursor:pointer">
     {{ partial "metric-card.html" (dict
-      "label" "Triage pending"
-      "value" $triageTotal "valueClass" $untClr
-      "info" (printf "Issues missing type label or priority.\nClick to filter.\n\nGreen: < 5\nYellow: 5–9\nRed: 10+")) }}
-    </div>
+      "label" "Close candidates"
+      "value" $s.close_candidates.total
+      "descriptor" (printf "median %dd old" (int $s.close_candidates.median_age))
+      "info" "potentially close + repro/confirm requests expired (>14d). Across all types.") }}
   </div>
 </section>
 
-{{/* ───────── Row 2: SLA cards (4 cards) ───────── */}}
-{{ $slaBreach := slice "text-success" "text-warning" "text-warning" "text-error" }}
-{{ $triageClr := index $slaBreach (int (math.Min $s.sla.triage_2bd_breach 3)) }}
-{{ $replyClr  := index $slaBreach (int (math.Min $s.sla.reply_2bd_breach 3)) }}
-{{ $p0Clr     := cond (gt $s.sla.p0_7d_breach 0) "text-error" "text-success" }}
-{{ $p1Clr     := cond (eq $s.sla.p1_90d_breach 0) "text-success" (cond (lt $s.sla.p1_90d_breach 5) "text-warning" "text-error") }}
+{{/* ───────── Row 2: SLA breaches (4 cards) ───────── */}}
+{{ $p0Clr  := cond (gt $s.sla.p0_7d_breach 0) "text-error" (cond (gt $s.p0_open 0) "text-warning" "text-success") }}
+{{ $p1Clr  := cond (eq $s.sla.p1_90d_breach 0) "text-success" (cond (lt $s.sla.p1_90d_breach 5) "text-warning" "text-error") }}
+{{ $reproClr := cond (eq $s.needs_repro_14d 0) "text-success" (cond (lt $s.needs_repro_14d 5) "text-warning" "text-error") }}
+{{ $botClr := cond (eq $s.untriaged_count 0) "text-success" (cond (lt $s.untriaged_count 3) "text-warning" "text-error") }}
 <section class="mb-4">
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div onclick="issFilterToggle('sla:breach tier:triage-pending')" style="cursor:pointer">
+    <div onclick="issFilterToggle('label:p0')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
-      "label" "Triage > 2d"
-      "value" $s.sla.triage_2bd_breach "valueClass" $triageClr
-      "trendGoodDirection" "down"
-      "info" (printf "Issues missing type or priority label, past 2 business days.\nSEP-1730: triage within 2 business days.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
+      "label" "P0 open"
+      "value" $s.p0_open "valueClass" $p0Clr
+      "descriptor" (printf "%d past 7d SLA" (int $s.sla.p0_7d_breach))
+      "info" "All open P0 issues. SEP-1730: resolve within 7 days.\n\nGreen: 0\nYellow: any open\nRed: any past 7d") }}
     </div>
-    <div onclick="issFilterToggle('sla:breach tier:needs-reply')" style="cursor:pointer">
-    {{ partial "metric-card.html" (dict
-      "label" "Reply > 2d"
-      "value" $s.sla.reply_2bd_breach "valueClass" $replyClr
-      "trendGoodDirection" "down"
-      "info" (printf "Reporter replied after our last comment and we haven't responded in 2 business days.\n\nGreen: 0\nYellow: 1–2\nRed: 3+")) }}
-    </div>
-    <div onclick="issFilterToggle('label:p0 sla:breach')" style="cursor:pointer">
-    {{ partial "metric-card.html" (dict
-      "label" "P0 > 7d"
-      "value" $s.sla.p0_7d_breach "valueClass" $p0Clr
-      "trendGoodDirection" "down"
-      "info" (printf "P0 issues open longer than 7 days.\nSEP-1730: resolve critical bugs within 7 days.\n\nGreen: 0\nRed: any")) }}
-    </div>
-    <div onclick="issFilterToggle('label:p1 sla:breach')" style="cursor:pointer">
+    <div onclick="issFilterToggle('label:p1 sla:breach')" style="cursor:pointer;display:grid">
     {{ partial "metric-card.html" (dict
       "label" "P1 > 90d"
       "value" $s.sla.p1_90d_breach "valueClass" $p1Clr
-      "trendGoodDirection" "down"
-      "info" (printf "P1 issues open longer than 90 days.\nNot in SEP-1730 — surfaces aspirational-P1 rot.\n\nGreen: 0\nYellow: 1–4\nRed: 5+")) }}
+      "info" "P1 issues open longer than 90 days.\nNot in SEP-1730 — surfaces aspirational-P1 rot.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
+    </div>
+    {{ partial "metric-card.html" (dict
+      "label" "Repro expired"
+      "value" $s.needs_repro_14d "valueClass" $reproClr
+      "info" "needs repro / needs confirmation requested >14d ago, no reporter reply. Auto-close candidates.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
+    <div onclick="issFilterToggle('tier:untriaged')" style="cursor:pointer;display:grid">
+    {{ partial "metric-card.html" (dict
+      "label" "Bot pending"
+      "value" $s.untriaged_count "valueClass" $botClr
+      "info" "No type label yet — bot hasn't run, or needs manual triage.\nShould be ~0 within 30min of any issue activity.\n\nGreen: 0\nYellow: 1–2\nRed: 3+") }}
     </div>
   </div>
 </section>
@@ -334,7 +331,7 @@ function issFilterToggle(q) {
     <table class="table table-xs table-fixed w-full">
       <colgroup>
         <col style="width:5rem"><col style="width:8rem"><col>
-        <col style="width:10rem"><col style="width:3rem"><col style="width:4rem">
+        <col style="width:10rem"><col style="width:3rem"><col style="width:3rem"><col style="width:4rem">
       </colgroup>
       <thead>
         <tr class="border-b border-base-300">
@@ -343,6 +340,7 @@ function issFilterToggle(q) {
           <th class="bg-base-200/50 text-xs font-medium">Title</th>
           <th class="bg-base-200/50 text-xs font-medium text-right">Labels</th>
           <th class="bg-base-200/50 text-xs font-medium text-right" title="Comments">💬</th>
+          <th class="bg-base-200/50 text-xs font-medium text-right" title="mcp-claude comments">🤖</th>
           <th class="bg-base-200/50 text-xs font-medium text-right">Age</th>
         </tr>
       </thead>

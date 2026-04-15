@@ -334,6 +334,8 @@ export interface GitHubTimelineEvent {
     number?: number;
     state?: 'OPEN' | 'CLOSED' | 'MERGED';
   };
+  // LABELED_EVENT
+  actor?: { login: string } | null;
 }
 
 export interface GitHubIssue {
@@ -347,6 +349,9 @@ export interface GitHubIssue {
   author: {
     login: string;
   } | null;
+  assignees: {
+    nodes: Array<{ login: string }>;
+  };
   labels: {
     nodes: Array<{ name: string }>;
   };
@@ -391,6 +396,9 @@ export interface IssueRow {
   reporter_replied: boolean;
   reply_wait_days: number | null;
   bot_triaged: boolean;
+  bot_comment_count: number;
+  status: string | null;
+  assignee: string | null;
   sla_breach: boolean;
 }
 
@@ -411,6 +419,12 @@ export interface IssueTiersSummary {
   by_type: Record<IssueType, number>;
   untriaged_count: number;
   partially_triaged_count: number;
+  bugs_fix_ready: { total: number; p01: number; fix_proposed: number };
+  decisions_pending: { total: number; p1: number };
+  questions_stale_2d: number;
+  close_candidates: { total: number; median_age: number };
+  p0_open: number;
+  needs_repro_14d: number;
   sla: {
     triage_2bd_breach: number;
     reply_2bd_breach: number;
