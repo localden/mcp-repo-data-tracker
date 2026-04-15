@@ -16,6 +16,7 @@ export const FETCH_ISSUES_QUERY = `
           updatedAt
           closedAt
           author { login }
+          assignees(first: 5) { nodes { login } }
           labels(first: 20) { nodes { name } }
           comments(first: 100) {
             pageInfo { hasNextPage endCursor }
@@ -25,7 +26,7 @@ export const FETCH_ISSUES_QUERY = `
             }
             totalCount
           }
-          timelineItems(first: 50, itemTypes: [REOPENED_EVENT, CLOSED_EVENT, CROSS_REFERENCED_EVENT]) {
+          timelineItems(first: 100, itemTypes: [REOPENED_EVENT, CLOSED_EVENT, CROSS_REFERENCED_EVENT, LABELED_EVENT]) {
             nodes {
               __typename
               ... on ReopenedEvent { createdAt }
@@ -34,6 +35,7 @@ export const FETCH_ISSUES_QUERY = `
                 isCrossRepository
                 source { __typename ... on PullRequest { number state } }
               }
+              ... on LabeledEvent { actor { login } }
             }
           }
         }
