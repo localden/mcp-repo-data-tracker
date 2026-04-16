@@ -1,13 +1,13 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-04-16T21:09:10.489224+00:00",
+  "lastUpdated": "2026-04-16T22:59:50.928019+00:00",
   "summary": {
-    "actionable_count": 25,
+    "actionable_count": 24,
     "auth_count": 8,
     "maint_count": 4,
-    "effort_hours": 10.2,
-    "cluster_count": 0,
-    "cluster_member_count": 0,
+    "effort_hours": 9.4,
+    "cluster_count": 1,
+    "cluster_member_count": 1,
     "not_our_move_count": 2,
     "by_tier": [
       {
@@ -19,12 +19,20 @@
         "mins": 100
       },
       {
+        "idx": 2,
+        "name": "High leverage",
+        "count": 1,
+        "auth": 0,
+        "maint": 0,
+        "mins": 8
+      },
+      {
         "idx": 3,
         "name": "Intake",
-        "count": 17,
+        "count": 15,
         "auth": 4,
         "maint": 0,
-        "mins": 505
+        "mins": 445
       },
       {
         "idx": 4,
@@ -54,8 +62,10 @@
     "by_state": {
       "bot-broke-ci": 1,
       "community-reviewed": 1,
+      "duplicate-cluster": 1,
+      "duplicate-cluster-member": 1,
       "maintainer-intake": 4,
-      "needs-first-review": 16,
+      "needs-first-review": 14,
       "needs-re-review": 1,
       "parked": 2,
       "pre-ci-ghost": 1,
@@ -63,7 +73,7 @@
     },
     "sla": {
       "first_review_7d_breach": 8,
-      "first_review_eligible": 17,
+      "first_review_eligible": 16,
       "re_review_24h_breach": 1,
       "re_review_eligible": 1,
       "maint_24h_breach": 4,
@@ -95,7 +105,7 @@
               "state": "needs-re-review",
               "reason": "push after approval (1 commits, 22d waiting)",
               "short_reason": "push after approval (1 commits, 22d waiting)",
-              "age_days": 51.8,
+              "age_days": 51.9,
               "additions": 2,
               "deletions": 0,
               "is_auth": false,
@@ -121,7 +131,7 @@
               "state": "maintainer-intake",
               "reason": "135d, no maintainer has looked yet",
               "short_reason": "135d, no maintainer has looked yet",
-              "age_days": 135.3,
+              "age_days": 135.4,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -159,7 +169,7 @@
               "state": "maintainer-intake",
               "reason": "20d, no maintainer has looked yet",
               "short_reason": "20d, no maintainer has looked yet",
-              "age_days": 19.9,
+              "age_days": 20.0,
               "additions": 160,
               "deletions": 2,
               "is_auth": false,
@@ -178,7 +188,7 @@
               "state": "maintainer-intake",
               "reason": "17d, no maintainer has looked yet",
               "short_reason": "17d, no maintainer has looked yet",
-              "age_days": 17.0,
+              "age_days": 17.1,
               "additions": 150,
               "deletions": 20,
               "is_auth": true,
@@ -194,11 +204,95 @@
       ]
     },
     {
+      "idx": 2,
+      "name": "High leverage",
+      "blurb": "One decision unblocks or closes multiple things.",
+      "count": 1,
+      "mins": 8,
+      "states": [
+        {
+          "name": "duplicate-cluster",
+          "desc": "Multiple PRs address the same issue \u2014 one will be picked, others closed as duplicates.",
+          "effort_min": 8,
+          "prs": [
+            {
+              "number": 232,
+              "title": "chore(deps): bump hono from 4.12.9 to 4.12.14",
+              "author": "app/dependabot",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
+              "state": "duplicate-cluster",
+              "reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+              "age_days": 0.9,
+              "additions": 3,
+              "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": "sem:232",
+              "cluster_pick": true,
+              "cluster_pick_reason": "PR #232 updates the core `hono` package, which is the primary dependency. PR #233's `@hono/node-server` bump should be added to #232 to produce a single consolidated lockfile change, avoiding the conflict that would occur if #233 were merged on top of #232's modified lockfile."
+            }
+          ],
+          "clusters": [
+            {
+              "id": "sem:232",
+              "kind": "semantic",
+              "pick": 232,
+              "pick_reason": "PR #232 updates the core `hono` package, which is the primary dependency. PR #233's `@hono/node-server` bump should be added to #232 to produce a single consolidated lockfile change, avoiding the conflict that would occur if #233 were merged on top of #232's modified lockfile.",
+              "members": [
+                {
+                  "number": 232,
+                  "title": "chore(deps): bump hono from 4.12.9 to 4.12.14",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+                  "age_days": 0.9,
+                  "additions": 3,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:232",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "PR #232 updates the core `hono` package, which is the primary dependency. PR #233's `@hono/node-server` bump should be added to #232 to produce a single consolidated lockfile change, avoiding the conflict that would occur if #233 were merged on top of #232's modified lockfile."
+                },
+                {
+                  "number": 233,
+                  "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/233",
+                  "state": "duplicate-cluster-member",
+                  "reason": "[llm] duplicates #232: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them.",
+                  "short_reason": "[llm] duplicates #232: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them.",
+                  "age_days": 0.9,
+                  "additions": 3,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:232",
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
+                }
+              ],
+              "desc": "Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "idx": 3,
       "name": "Intake",
       "blurb": "PRs not yet reviewed by a maintainer. Oldest first.",
-      "count": 17,
-      "mins": 505,
+      "count": 15,
+      "mins": 445,
       "states": [
         {
           "name": "needs-first-review",
@@ -213,7 +307,7 @@
               "state": "needs-first-review",
               "reason": "56d since open (SLA breach)",
               "short_reason": "56d",
-              "age_days": 55.9,
+              "age_days": 56.0,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -232,7 +326,7 @@
               "state": "needs-first-review",
               "reason": "30d since open (SLA breach)",
               "short_reason": "30d",
-              "age_days": 29.9,
+              "age_days": 30.0,
               "additions": 2095,
               "deletions": 5,
               "is_auth": false,
@@ -251,7 +345,7 @@
               "state": "needs-first-review",
               "reason": "15d since open (SLA breach)",
               "short_reason": "15d",
-              "age_days": 15.0,
+              "age_days": 15.1,
               "additions": 5,
               "deletions": 5,
               "is_auth": false,
@@ -308,7 +402,7 @@
               "state": "needs-first-review",
               "reason": "9d since open (SLA breach)",
               "short_reason": "9d",
-              "age_days": 8.7,
+              "age_days": 8.8,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -327,7 +421,7 @@
               "state": "needs-first-review",
               "reason": "8d since open (SLA breach)",
               "short_reason": "8d",
-              "age_days": 7.8,
+              "age_days": 7.9,
               "additions": 741,
               "deletions": 3,
               "is_auth": true,
@@ -344,9 +438,9 @@
               "author": "codefromthecrypt",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/222",
               "state": "needs-first-review",
-              "reason": "6d since open",
-              "short_reason": "6d",
-              "age_days": 6.5,
+              "reason": "7d since open",
+              "short_reason": "7d",
+              "age_days": 6.6,
               "additions": 609,
               "deletions": 1,
               "is_auth": false,
@@ -384,7 +478,7 @@
               "state": "needs-first-review",
               "reason": "2d since open",
               "short_reason": "2d",
-              "age_days": 1.6,
+              "age_days": 1.7,
               "additions": 216,
               "deletions": 3,
               "is_auth": true,
@@ -403,7 +497,7 @@
               "state": "needs-first-review",
               "reason": "2d since open",
               "short_reason": "2d",
-              "age_days": 1.5,
+              "age_days": 1.6,
               "additions": 63,
               "deletions": 5,
               "is_auth": true,
@@ -422,7 +516,7 @@
               "state": "needs-first-review",
               "reason": "1d since open",
               "short_reason": "1d",
-              "age_days": 0.8,
+              "age_days": 0.9,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -441,7 +535,7 @@
               "state": "needs-first-review",
               "reason": "1d since open",
               "short_reason": "1d",
-              "age_days": 0.8,
+              "age_days": 0.9,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -460,47 +554,9 @@
               "state": "needs-first-review",
               "reason": "1d since open",
               "short_reason": "1d",
-              "age_days": 0.8,
+              "age_days": 0.9,
               "additions": 331,
               "deletions": 21,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 232,
-              "title": "chore(deps): bump hono from 4.12.9 to 4.12.14",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
-              "state": "needs-first-review",
-              "reason": "1d since open",
-              "short_reason": "1d",
-              "age_days": 0.8,
-              "additions": 3,
-              "deletions": 3,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 233,
-              "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/233",
-              "state": "needs-first-review",
-              "reason": "1d since open",
-              "short_reason": "1d",
-              "age_days": 0.8,
-              "additions": 3,
-              "deletions": 3,
               "is_auth": false,
               "is_maintainer": false,
               "sla_breach": false,
@@ -559,7 +615,7 @@
               "state": "stale-awaiting-author",
               "reason": "62d since feedback, no response",
               "short_reason": "62d since feedback",
-              "age_days": 66.6,
+              "age_days": 66.7,
               "additions": 612,
               "deletions": 47,
               "is_auth": true,
@@ -623,7 +679,7 @@
           "state": "bot-broke-ci",
           "reason": "bot PR, red CI",
           "short_reason": "bot PR, red CI",
-          "age_days": 15.0,
+          "age_days": 15.1,
           "additions": 331,
           "deletions": 325,
           "is_auth": false,
@@ -651,7 +707,7 @@
           "state": "parked",
           "reason": "maintainer draft, 92d",
           "short_reason": "maintainer draft, 92d",
-          "age_days": 92.4,
+          "age_days": 92.5,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -670,7 +726,7 @@
           "state": "parked",
           "reason": "maintainer draft, 70d",
           "short_reason": "maintainer draft, 70d",
-          "age_days": 70.2,
+          "age_days": 70.3,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -684,18 +740,66 @@
       ]
     }
   ],
-  "clusters": [],
+  "clusters": [
+    {
+      "id": "sem:232",
+      "kind": "semantic",
+      "pick": 232,
+      "pick_reason": "PR #232 updates the core `hono` package, which is the primary dependency. PR #233's `@hono/node-server` bump should be added to #232 to produce a single consolidated lockfile change, avoiding the conflict that would occur if #233 were merged on top of #232's modified lockfile.",
+      "members": [
+        {
+          "number": 232,
+          "title": "chore(deps): bump hono from 4.12.9 to 4.12.14",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)",
+          "age_days": 0.9,
+          "additions": 3,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:232",
+          "cluster_pick": true,
+          "cluster_pick_reason": "PR #232 updates the core `hono` package, which is the primary dependency. PR #233's `@hono/node-server` bump should be added to #232 to produce a single consolidated lockfile change, avoiding the conflict that would occur if #233 were merged on top of #232's modified lockfile."
+        },
+        {
+          "number": 233,
+          "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/233",
+          "state": "duplicate-cluster-member",
+          "reason": "[llm] duplicates #232: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them.",
+          "short_reason": "[llm] duplicates #232: Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them.",
+          "age_days": 0.9,
+          "additions": 3,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:232",
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        }
+      ],
+      "desc": "Both PRs update the Hono web framework ecosystem. `hono` (core) and `@hono/node-server` (Node.js adapter) are tightly coupled companion packages that must stay version-compatible; updating one without the other leaves the lockfile in an inconsistent state. Both PRs also share the same base commit (`82032f1`) on `package-lock.json`, creating a merge conflict between them. (2 PRs)"
+    }
+  ],
   "llm_cost": {
-    "total_usd": 0.1443,
+    "total_usd": 0.1548,
     "total_calls": 3,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0267
+        "cost": 0.0265
       },
       "semantic-cluster": {
         "count": 2,
-        "cost": 0.1176
+        "cost": 0.1283
       }
     }
   }
