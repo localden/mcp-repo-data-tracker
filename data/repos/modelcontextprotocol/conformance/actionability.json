@@ -1,13 +1,13 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-04-20T10:21:52.153662+00:00",
+  "lastUpdated": "2026-04-20T11:44:31.091687+00:00",
   "summary": {
-    "actionable_count": 26,
+    "actionable_count": 25,
     "auth_count": 9,
     "maint_count": 4,
-    "effort_hours": 10.4,
-    "cluster_count": 1,
-    "cluster_member_count": 1,
+    "effort_hours": 9.5,
+    "cluster_count": 2,
+    "cluster_member_count": 2,
     "not_our_move_count": 2,
     "by_tier": [
       {
@@ -21,18 +21,18 @@
       {
         "idx": 2,
         "name": "High leverage",
-        "count": 2,
+        "count": 3,
         "auth": 0,
         "maint": 0,
-        "mins": 28
+        "mins": 36
       },
       {
         "idx": 3,
         "name": "Intake",
-        "count": 17,
+        "count": 15,
         "auth": 5,
         "maint": 0,
-        "mins": 505
+        "mins": 445
       },
       {
         "idx": 4,
@@ -62,27 +62,27 @@
     "by_state": {
       "bot-broke-ci": 1,
       "community-reviewed": 1,
-      "duplicate-cluster": 1,
-      "duplicate-cluster-member": 1,
+      "duplicate-cluster": 2,
+      "duplicate-cluster-member": 2,
       "maintainer-intake": 4,
       "needs-decision": 1,
-      "needs-first-review": 16,
+      "needs-first-review": 14,
       "parked": 2,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
       "first_review_7d_breach": 10,
-      "first_review_eligible": 18,
+      "first_review_eligible": 17,
       "re_review_24h_breach": 1,
       "re_review_eligible": 1,
       "maint_24h_breach": 4,
       "maint_eligible": 4,
       "actionable_target": 25,
-      "actionable_over_target": true
+      "actionable_over_target": false
     },
-    "actioned_7d": 6,
-    "actioned_30d": 31
+    "actioned_7d": 7,
+    "actioned_30d": 32
   },
   "tiers": [
     {
@@ -105,7 +105,7 @@
               "state": "maintainer-intake",
               "reason": "139d, no maintainer has looked yet",
               "short_reason": "139d, no maintainer has looked yet",
-              "age_days": 138.9,
+              "age_days": 139.0,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -124,7 +124,7 @@
               "state": "maintainer-intake",
               "reason": "96d, no maintainer has looked yet",
               "short_reason": "96d, no maintainer has looked yet",
-              "age_days": 95.9,
+              "age_days": 96.0,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -141,9 +141,9 @@
               "author": "pja-ant",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/200",
               "state": "maintainer-intake",
-              "reason": "23d, no maintainer has looked yet",
-              "short_reason": "23d, no maintainer has looked yet",
-              "age_days": 23.4,
+              "reason": "24d, no maintainer has looked yet",
+              "short_reason": "24d, no maintainer has looked yet",
+              "age_days": 23.5,
               "additions": 160,
               "deletions": 2,
               "is_auth": false,
@@ -162,7 +162,7 @@
               "state": "maintainer-intake",
               "reason": "21d, no maintainer has looked yet",
               "short_reason": "21d, no maintainer has looked yet",
-              "age_days": 20.6,
+              "age_days": 20.7,
               "additions": 150,
               "deletions": 20,
               "is_auth": true,
@@ -181,8 +181,8 @@
       "idx": 2,
       "name": "High leverage",
       "blurb": "One decision unblocks or closes multiple things.",
-      "count": 2,
-      "mins": 28,
+      "count": 3,
+      "mins": 36,
       "states": [
         {
           "name": "duplicate-cluster",
@@ -190,14 +190,33 @@
           "effort_min": 8,
           "prs": [
             {
+              "number": 229,
+              "title": "chore(deps): bump hono from 4.12.9 to 4.12.14 in /examples/servers/typescript",
+              "author": "app/dependabot",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/229",
+              "state": "duplicate-cluster",
+              "reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+              "age_days": 4.4,
+              "additions": 3,
+              "deletions": 3,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": "sem:229",
+              "cluster_pick": true,
+              "cluster_pick_reason": "PR #229 updates the core `hono` package (4.12.9\u21924.12.14); PR #230's `@hono/node-server` bump (1.19.11\u21921.19.14) can be folded into the same commit since both packages share a release cadence and the combined diff is smaller than two separate merge operations."
+            },
+            {
               "number": 232,
               "title": "chore(deps): bump hono from 4.12.9 to 4.12.14",
               "author": "app/dependabot",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
               "state": "duplicate-cluster",
-              "reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-              "short_reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-              "age_days": 4.3,
+              "reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+              "short_reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+              "age_days": 4.4,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -206,15 +225,62 @@
               "sla_kind": null,
               "cluster_id": "sem:232",
               "cluster_pick": true,
-              "cluster_pick_reason": "#232 targets the core `hono` package, which is the primary dependency; `@hono/node-server` is an adapter that builds on it. Keeping #232 as the base and folding the `@hono/node-server` bump from #233 into it produces a single coherent Hono stack upgrade with a smaller net diff than two sequential merges."
+              "cluster_pick_reason": "PR #232 updates the hono core framework (4.12.9\u21924.12.14); PR #233's @hono/node-server bump should be folded into it so the framework and its Node adapter stay in sync in one commit."
             }
           ],
           "clusters": [
             {
+              "id": "sem:229",
+              "kind": "semantic",
+              "pick": 229,
+              "pick_reason": "PR #229 updates the core `hono` package (4.12.9\u21924.12.14); PR #230's `@hono/node-server` bump (1.19.11\u21921.19.14) can be folded into the same commit since both packages share a release cadence and the combined diff is smaller than two separate merge operations.",
+              "members": [
+                {
+                  "number": 229,
+                  "title": "chore(deps): bump hono from 4.12.9 to 4.12.14 in /examples/servers/typescript",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/229",
+                  "state": "duplicate-cluster",
+                  "reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+                  "age_days": 4.4,
+                  "additions": 3,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:229",
+                  "cluster_pick": true,
+                  "cluster_pick_reason": "PR #229 updates the core `hono` package (4.12.9\u21924.12.14); PR #230's `@hono/node-server` bump (1.19.11\u21921.19.14) can be folded into the same commit since both packages share a release cadence and the combined diff is smaller than two separate merge operations."
+                },
+                {
+                  "number": 230,
+                  "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14 in /examples/servers/typescript",
+                  "author": "app/dependabot",
+                  "url": "https://github.com/modelcontextprotocol/conformance/pull/230",
+                  "state": "duplicate-cluster-member",
+                  "reason": "[llm] duplicates #229: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits.",
+                  "short_reason": "[llm] duplicates #229: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits.",
+                  "age_days": 4.4,
+                  "additions": 3,
+                  "deletions": 3,
+                  "is_auth": false,
+                  "is_maintainer": false,
+                  "sla_breach": false,
+                  "sla_kind": null,
+                  "cluster_id": "sem:229",
+                  "cluster_pick": false,
+                  "cluster_pick_reason": ""
+                }
+              ],
+              "desc": "Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)"
+            },
+            {
               "id": "sem:232",
               "kind": "semantic",
               "pick": 232,
-              "pick_reason": "#232 targets the core `hono` package, which is the primary dependency; `@hono/node-server` is an adapter that builds on it. Keeping #232 as the base and folding the `@hono/node-server` bump from #233 into it produces a single coherent Hono stack upgrade with a smaller net diff than two sequential merges.",
+              "pick_reason": "PR #232 updates the hono core framework (4.12.9\u21924.12.14); PR #233's @hono/node-server bump should be folded into it so the framework and its Node adapter stay in sync in one commit.",
               "members": [
                 {
                   "number": 232,
@@ -222,9 +288,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
                   "state": "duplicate-cluster",
-                  "reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-                  "short_reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-                  "age_days": 4.3,
+                  "reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+                  "short_reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+                  "age_days": 4.4,
                   "additions": 3,
                   "deletions": 3,
                   "is_auth": false,
@@ -233,7 +299,7 @@
                   "sla_kind": null,
                   "cluster_id": "sem:232",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "#232 targets the core `hono` package, which is the primary dependency; `@hono/node-server` is an adapter that builds on it. Keeping #232 as the base and folding the `@hono/node-server` bump from #233 into it produces a single coherent Hono stack upgrade with a smaller net diff than two sequential merges."
+                  "cluster_pick_reason": "PR #232 updates the hono core framework (4.12.9\u21924.12.14); PR #233's @hono/node-server bump should be folded into it so the framework and its Node adapter stay in sync in one commit."
                 },
                 {
                   "number": 233,
@@ -241,9 +307,9 @@
                   "author": "app/dependabot",
                   "url": "https://github.com/modelcontextprotocol/conformance/pull/233",
                   "state": "duplicate-cluster-member",
-                  "reason": "[llm] duplicates #232: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR.",
-                  "short_reason": "[llm] duplicates #232: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR.",
-                  "age_days": 4.3,
+                  "reason": "[llm] duplicates #232: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR.",
+                  "short_reason": "[llm] duplicates #232: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR.",
+                  "age_days": 4.4,
                   "additions": 3,
                   "deletions": 3,
                   "is_auth": false,
@@ -255,7 +321,7 @@
                   "cluster_pick_reason": ""
                 }
               ],
-              "desc": "Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)"
+              "desc": "Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)"
             }
           ]
         },
@@ -272,7 +338,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 55.4,
+              "age_days": 55.5,
               "additions": 10,
               "deletions": 2,
               "is_auth": false,
@@ -291,8 +357,8 @@
       "idx": 3,
       "name": "Intake",
       "blurb": "PRs not yet reviewed by a maintainer. Oldest first.",
-      "count": 17,
-      "mins": 505,
+      "count": 15,
+      "mins": 445,
       "states": [
         {
           "name": "needs-first-review",
@@ -305,8 +371,8 @@
               "author": "wdawson",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/155",
               "state": "needs-first-review",
-              "reason": "59d since open (SLA breach)",
-              "short_reason": "59d",
+              "reason": "60d since open (SLA breach)",
+              "short_reason": "60d",
               "age_days": 59.5,
               "additions": 8122,
               "deletions": 2049,
@@ -324,8 +390,8 @@
               "author": "CaitieM20",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/188",
               "state": "needs-first-review",
-              "reason": "33d since open (SLA breach)",
-              "short_reason": "33d",
+              "reason": "34d since open (SLA breach)",
+              "short_reason": "34d",
               "age_days": 33.5,
               "additions": 2095,
               "deletions": 5,
@@ -364,7 +430,7 @@
               "state": "needs-first-review",
               "reason": "16d since open (SLA breach)",
               "short_reason": "16d",
-              "age_days": 16.1,
+              "age_days": 16.2,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -383,7 +449,7 @@
               "state": "needs-first-review",
               "reason": "16d since open (SLA breach)",
               "short_reason": "16d",
-              "age_days": 16.1,
+              "age_days": 16.2,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -402,7 +468,7 @@
               "state": "needs-first-review",
               "reason": "12d since open (SLA breach)",
               "short_reason": "12d",
-              "age_days": 12.2,
+              "age_days": 12.3,
               "additions": 3,
               "deletions": 3,
               "is_auth": false,
@@ -440,7 +506,7 @@
               "state": "needs-first-review",
               "reason": "10d since open (SLA breach)",
               "short_reason": "10d",
-              "age_days": 10.0,
+              "age_days": 10.1,
               "additions": 609,
               "deletions": 1,
               "is_auth": false,
@@ -459,7 +525,7 @@
               "state": "needs-first-review",
               "reason": "7d since open (SLA breach)",
               "short_reason": "7d",
-              "age_days": 7.2,
+              "age_days": 7.3,
               "additions": 1210,
               "deletions": 0,
               "is_auth": false,
@@ -478,7 +544,7 @@
               "state": "needs-first-review",
               "reason": "5d since open",
               "short_reason": "5d",
-              "age_days": 5.1,
+              "age_days": 5.2,
               "additions": 216,
               "deletions": 3,
               "is_auth": true,
@@ -509,44 +575,6 @@
               "cluster_pick_reason": ""
             },
             {
-              "number": 229,
-              "title": "chore(deps): bump hono from 4.12.9 to 4.12.14 in /examples/servers/typescript",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/229",
-              "state": "needs-first-review",
-              "reason": "4d since open",
-              "short_reason": "4d",
-              "age_days": 4.3,
-              "additions": 3,
-              "deletions": 3,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
-              "number": 230,
-              "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14 in /examples/servers/typescript",
-              "author": "app/dependabot",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/230",
-              "state": "needs-first-review",
-              "reason": "4d since open",
-              "short_reason": "4d",
-              "age_days": 4.3,
-              "additions": 3,
-              "deletions": 3,
-              "is_auth": false,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            },
-            {
               "number": 231,
               "title": "chore(deps-dev): bump vite from 8.0.2 to 8.0.8",
               "author": "app/dependabot",
@@ -554,7 +582,7 @@
               "state": "needs-first-review",
               "reason": "4d since open",
               "short_reason": "4d",
-              "age_days": 4.3,
+              "age_days": 4.4,
               "additions": 331,
               "deletions": 21,
               "is_auth": false,
@@ -592,7 +620,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 3.1,
+              "age_days": 3.2,
               "additions": 573,
               "deletions": 138,
               "is_auth": false,
@@ -618,7 +646,7 @@
               "state": "community-reviewed",
               "reason": "11d, reviewed by nbarbettini (SLA breach)",
               "short_reason": "11d, reviewed by nbarbettini (SLA breach)",
-              "age_days": 11.3,
+              "age_days": 11.4,
               "additions": 18,
               "deletions": 4,
               "is_auth": false,
@@ -688,7 +716,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 145d old",
               "short_reason": "CI never ran, 145d old",
-              "age_days": 144.7,
+              "age_days": 144.8,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -745,7 +773,7 @@
           "state": "parked",
           "reason": "maintainer draft, 96d",
           "short_reason": "maintainer draft, 96d",
-          "age_days": 95.9,
+          "age_days": 96.0,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -780,10 +808,57 @@
   ],
   "clusters": [
     {
+      "id": "sem:229",
+      "kind": "semantic",
+      "pick": 229,
+      "pick_reason": "PR #229 updates the core `hono` package (4.12.9\u21924.12.14); PR #230's `@hono/node-server` bump (1.19.11\u21921.19.14) can be folded into the same commit since both packages share a release cadence and the combined diff is smaller than two separate merge operations.",
+      "members": [
+        {
+          "number": 229,
+          "title": "chore(deps): bump hono from 4.12.9 to 4.12.14 in /examples/servers/typescript",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/229",
+          "state": "duplicate-cluster",
+          "reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)",
+          "age_days": 4.4,
+          "additions": 3,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:229",
+          "cluster_pick": true,
+          "cluster_pick_reason": "PR #229 updates the core `hono` package (4.12.9\u21924.12.14); PR #230's `@hono/node-server` bump (1.19.11\u21921.19.14) can be folded into the same commit since both packages share a release cadence and the combined diff is smaller than two separate merge operations."
+        },
+        {
+          "number": 230,
+          "title": "chore(deps): bump @hono/node-server from 1.19.11 to 1.19.14 in /examples/servers/typescript",
+          "author": "app/dependabot",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/230",
+          "state": "duplicate-cluster-member",
+          "reason": "[llm] duplicates #229: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits.",
+          "short_reason": "[llm] duplicates #229: Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits.",
+          "age_days": 4.4,
+          "additions": 3,
+          "deletions": 3,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": "sem:229",
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        }
+      ],
+      "desc": "Both bump Hono-ecosystem packages in the same file (examples/servers/typescript/package-lock.json) and should be done as a single lockfile update rather than two sequential conflicting commits. (2 PRs)"
+    },
+    {
       "id": "sem:232",
       "kind": "semantic",
       "pick": 232,
-      "pick_reason": "#232 targets the core `hono` package, which is the primary dependency; `@hono/node-server` is an adapter that builds on it. Keeping #232 as the base and folding the `@hono/node-server` bump from #233 into it produces a single coherent Hono stack upgrade with a smaller net diff than two sequential merges.",
+      "pick_reason": "PR #232 updates the hono core framework (4.12.9\u21924.12.14); PR #233's @hono/node-server bump should be folded into it so the framework and its Node adapter stay in sync in one commit.",
       "members": [
         {
           "number": 232,
@@ -791,9 +866,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/232",
           "state": "duplicate-cluster",
-          "reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-          "short_reason": "[llm] cluster primary: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)",
-          "age_days": 4.3,
+          "reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+          "short_reason": "[llm] cluster primary: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)",
+          "age_days": 4.4,
           "additions": 3,
           "deletions": 3,
           "is_auth": false,
@@ -802,7 +877,7 @@
           "sla_kind": null,
           "cluster_id": "sem:232",
           "cluster_pick": true,
-          "cluster_pick_reason": "#232 targets the core `hono` package, which is the primary dependency; `@hono/node-server` is an adapter that builds on it. Keeping #232 as the base and folding the `@hono/node-server` bump from #233 into it produces a single coherent Hono stack upgrade with a smaller net diff than two sequential merges."
+          "cluster_pick_reason": "PR #232 updates the hono core framework (4.12.9\u21924.12.14); PR #233's @hono/node-server bump should be folded into it so the framework and its Node adapter stay in sync in one commit."
         },
         {
           "number": 233,
@@ -810,9 +885,9 @@
           "author": "app/dependabot",
           "url": "https://github.com/modelcontextprotocol/conformance/pull/233",
           "state": "duplicate-cluster-member",
-          "reason": "[llm] duplicates #232: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR.",
-          "short_reason": "[llm] duplicates #232: Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR.",
-          "age_days": 4.3,
+          "reason": "[llm] duplicates #232: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR.",
+          "short_reason": "[llm] duplicates #232: Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR.",
+          "age_days": 4.4,
           "additions": 3,
           "deletions": 3,
           "is_auth": false,
@@ -824,20 +899,20 @@
           "cluster_pick_reason": ""
         }
       ],
-      "desc": "Both PRs update the Hono HTTP framework ecosystem in package-lock.json: #232 bumps the core `hono` package (4.12.9 \u2192 4.12.14) and #233 bumps `@hono/node-server` (1.19.11 \u2192 1.19.14), its companion Node.js adapter. These packages are tightly coupled and should be upgraded together in a single PR. (2 PRs)"
+      "desc": "Both bump Hono ecosystem packages (hono core + @hono/node-server adapter) that are tightly coupled and should be updated together in a single PR. (2 PRs)"
     }
   ],
   "llm_cost": {
-    "total_usd": 0.1576,
+    "total_usd": 0.1498,
     "total_calls": 3,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0259
+        "cost": 0.0266
       },
       "semantic-cluster": {
         "count": 2,
-        "cost": 0.1317
+        "cost": 0.1231
       }
     }
   }
