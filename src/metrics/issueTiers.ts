@@ -132,11 +132,11 @@ function toRow(issue: GitHubIssue, maintainers: Set<string>, owner: string, repo
 
 type GroupName = 'Bugs' | 'Enhancements' | 'Questions' | 'Docs' | 'Untriaged';
 const GROUPS: Array<{ name: GroupName; blurb: string }> = [
+  { name: 'Untriaged', blurb: 'No type label — bot pending or needs manual triage.' },
   { name: 'Bugs', blurb: 'Queue — pick the top fix-ready and work it. Priority then age.' },
   { name: 'Enhancements', blurb: 'Decisions — say yes/no, then design or implement.' },
   { name: 'Questions', blurb: 'Inbox — answer, then close or convert to bug/enhancement.' },
   { name: 'Docs', blurb: 'Documentation issues.' },
-  { name: 'Untriaged', blurb: 'No type label — bot pending or needs manual triage.' },
 ];
 
 interface TierSpec {
