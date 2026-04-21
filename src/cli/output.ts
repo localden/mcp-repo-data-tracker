@@ -55,6 +55,9 @@ export class Spinner {
       this.frameIndex = (this.frameIndex + 1) % SPINNER_FRAMES.length;
       this.render();
     }, 80);
+    // A spinner left running (e.g. an await between start() and succeed()
+    // threw) must not keep the process alive.
+    this.interval.unref();
     return this;
   }
 

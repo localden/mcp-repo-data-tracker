@@ -25,19 +25,32 @@ export async function fetchHotspotData(
     mergedPRs,
     REQUEST_DELAY_MS,
     async (pr) => {
-      const data = await client.rest.paginate(client.rest.pulls.listFiles, {
-        owner,
-        repo,
-        pull_number: pr.number,
-        per_page: 100,
-      });
-
-      const files: GitHubPRFile[] = data.map((file) => ({
-        filename: file.filename,
-        additions: file.additions,
-        deletions: file.deletions,
-        changes: file.changes,
-      }));
+      let files: GitHubPRFile[];
+      try {
+        const data = await client.rest.paginate(client.rest.pulls.listFiles, {
+          owner,
+          repo,
+          pull_number: pr.number,
+          per_page: 100,
+        });
+        files = data.map((file) => ({
+          filename: file.filename,
+          additions: file.additions,
+          deletions: file.deletions,
+          changes: file.changes,
+        }));
+      } catch (err) {
+        // GitHub returns 422 diff:not_available for PRs whose diff it can't
+        // compute (huge PRs, GC'd base, etc). Skip those rather than failing
+        // the whole repo's hotspot analysis.
+        const e = err as Error & { status?: number };
+        if (e.status && e.status >= 400 && e.status < 500 && e.status !== 403 && e.status !== 429) {
+          console.warn(`    Skipping PR #${pr.number}: ${e.message.split('\n')[0]}`);
+          files = [];
+        } else {
+          throw err;
+        }
+      }
 
       processed++;
       if (verbose && processed % 20 === 0) {
