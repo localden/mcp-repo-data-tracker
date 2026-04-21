@@ -1,6 +1,6 @@
 {
   "repo": "typescript-sdk",
-  "lastUpdated": "2026-04-21T10:12:34.178931+00:00",
+  "lastUpdated": "2026-04-21T10:52:39.392707+00:00",
   "summary": {
     "actionable_count": 68,
     "auth_count": 8,
@@ -167,7 +167,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (1d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (1d waiting)",
-              "age_days": 59.5,
+              "age_days": 59.6,
               "additions": 654,
               "deletions": 1,
               "is_auth": false,
@@ -281,7 +281,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (3d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (3d waiting)",
-              "age_days": 22.9,
+              "age_days": 23.0,
               "additions": 210,
               "deletions": 40,
               "is_auth": false,
@@ -338,7 +338,7 @@
               "state": "needs-re-review",
               "reason": "author pushed after CHANGES_REQUESTED (4d waiting)",
               "short_reason": "author pushed after CHANGES_REQUESTED (4d waiting)",
-              "age_days": 12.7,
+              "age_days": 12.8,
               "additions": 37,
               "deletions": 10,
               "is_auth": false,
@@ -362,8 +362,8 @@
               "author": "felixweinberger",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1764",
               "state": "maintainer-intake",
-              "reason": "26d, no maintainer has looked yet",
-              "short_reason": "26d, no maintainer has looked yet",
+              "reason": "27d, no maintainer has looked yet",
+              "short_reason": "27d, no maintainer has looked yet",
               "age_days": 26.5,
               "additions": 340,
               "deletions": 315,
@@ -421,7 +421,7 @@
               "state": "maintainer-intake",
               "reason": "6d, no maintainer has looked yet",
               "short_reason": "6d, no maintainer has looked yet",
-              "age_days": 5.6,
+              "age_days": 5.7,
               "additions": 564,
               "deletions": 15,
               "is_auth": false,
@@ -665,7 +665,7 @@
               "state": "duplicate-cluster",
               "reason": "cluster primary for issue #1079 (3 PRs)",
               "short_reason": "cluster primary for issue #1079 (3 PRs)",
-              "age_days": 24.9,
+              "age_days": 25.0,
               "additions": 162,
               "deletions": 7,
               "is_auth": false,
@@ -674,7 +674,7 @@
               "sla_kind": "maintainer",
               "cluster_id": "1079",
               "cluster_pick": true,
-              "cluster_pick_reason": "All three PRs are tied on CI (unknown) and file count (3). Falling back to tiebreakers: #1785 is the oldest by a significant margin (PRs #1920 and #1929 were opened much later against the same issue). Additionally, #1785's title is the only one that explicitly names all three fix dimensions \u2014 optional, out-of-order, and encoded query parameters \u2014 which aligns most completely with the RFC 6570 scope of issue #1079. #1920 and #1929 omit encoding from their descriptions, suggesting they may not cover the full fix surface."
+              "cluster_pick_reason": "All three PRs have unknown CI status and each touches 3 files, so the tiebreaker chain falls to \"oldest.\" PR #1785 is the earliest by PR number. Its title also explicitly names a third case \u2014 \"encoded query parameters\" \u2014 that the other two titles omit, suggesting broader test coverage of the parameter-parsing edge cases. Without access to the actual diffs or CI results, no further differentiation between #1920 and #1929 is possible, and neither has a seniority advantage over #1785."
             },
             {
               "number": 1855,
@@ -682,8 +682,8 @@
               "author": "Christian-Sidak",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
-              "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
+              "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
+              "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
               "age_days": 15.3,
               "additions": 14,
               "deletions": 7,
@@ -693,7 +693,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1397",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed."
+              "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order."
             },
             {
               "number": 1879,
@@ -701,8 +701,8 @@
               "author": "Yanhu007",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1879",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
-              "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
+              "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
+              "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
               "age_days": 9.4,
               "additions": 14,
               "deletions": 3,
@@ -712,7 +712,7 @@
               "sla_kind": "1st-review",
               "cluster_id": "1864",
               "cluster_pick": true,
-              "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead."
+              "cluster_pick_reason": "All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff."
             },
             {
               "number": 1912,
@@ -720,8 +720,8 @@
               "author": "kev-flex",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1912",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
-              "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
+              "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
+              "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
               "age_days": 5.2,
               "additions": 535,
               "deletions": 9,
@@ -731,7 +731,7 @@
               "sla_kind": null,
               "cluster_id": "1658",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author."
+              "cluster_pick_reason": "Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep."
             },
             {
               "number": 1933,
@@ -739,8 +739,8 @@
               "author": "Jim1874",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1933",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
-              "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
+              "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
+              "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
               "age_days": 1.3,
               "additions": 9,
               "deletions": 2,
@@ -750,7 +750,7 @@
               "sla_kind": null,
               "cluster_id": "1872",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage."
+              "cluster_pick_reason": "Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick."
             },
             {
               "number": 1935,
@@ -758,8 +758,8 @@
               "author": "Jim1874",
               "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1935",
               "state": "duplicate-cluster",
-              "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
-              "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
+              "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
+              "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
               "age_days": 1.3,
               "additions": 8,
               "deletions": 1,
@@ -769,7 +769,7 @@
               "sla_kind": null,
               "cluster_id": "1869",
               "cluster_pick": true,
-              "cluster_pick_reason": "Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering."
+              "cluster_pick_reason": "Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix."
             }
           ],
           "clusters": [
@@ -777,7 +777,7 @@
               "id": "1079",
               "kind": "issue",
               "pick": 1785,
-              "pick_reason": "All three PRs are tied on CI (unknown) and file count (3). Falling back to tiebreakers: #1785 is the oldest by a significant margin (PRs #1920 and #1929 were opened much later against the same issue). Additionally, #1785's title is the only one that explicitly names all three fix dimensions \u2014 optional, out-of-order, and encoded query parameters \u2014 which aligns most completely with the RFC 6570 scope of issue #1079. #1920 and #1929 omit encoding from their descriptions, suggesting they may not cover the full fix surface.",
+              "pick_reason": "All three PRs have unknown CI status and each touches 3 files, so the tiebreaker chain falls to \"oldest.\" PR #1785 is the earliest by PR number. Its title also explicitly names a third case \u2014 \"encoded query parameters\" \u2014 that the other two titles omit, suggesting broader test coverage of the parameter-parsing edge cases. Without access to the actual diffs or CI results, no further differentiation between #1920 and #1929 is possible, and neither has a seniority advantage over #1785.",
               "members": [
                 {
                   "number": 1785,
@@ -787,7 +787,7 @@
                   "state": "duplicate-cluster",
                   "reason": "cluster primary for issue #1079 (3 PRs)",
                   "short_reason": "cluster primary for issue #1079 (3 PRs)",
-                  "age_days": 24.9,
+                  "age_days": 25.0,
                   "additions": 162,
                   "deletions": 7,
                   "is_auth": false,
@@ -796,7 +796,7 @@
                   "sla_kind": "maintainer",
                   "cluster_id": "1079",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All three PRs are tied on CI (unknown) and file count (3). Falling back to tiebreakers: #1785 is the oldest by a significant margin (PRs #1920 and #1929 were opened much later against the same issue). Additionally, #1785's title is the only one that explicitly names all three fix dimensions \u2014 optional, out-of-order, and encoded query parameters \u2014 which aligns most completely with the RFC 6570 scope of issue #1079. #1920 and #1929 omit encoding from their descriptions, suggesting they may not cover the full fix surface."
+                  "cluster_pick_reason": "All three PRs have unknown CI status and each touches 3 files, so the tiebreaker chain falls to \"oldest.\" PR #1785 is the earliest by PR number. Its title also explicitly names a third case \u2014 \"encoded query parameters\" \u2014 that the other two titles omit, suggesting broader test coverage of the parameter-parsing edge cases. Without access to the actual diffs or CI results, no further differentiation between #1920 and #1929 is possible, and neither has a seniority advantage over #1785."
                 },
                 {
                   "number": 1920,
@@ -806,7 +806,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1079 with #1785",
                   "short_reason": "shares linked issue #1079 with #1785",
-                  "age_days": 4.2,
+                  "age_days": 4.3,
                   "additions": 99,
                   "deletions": 9,
                   "is_auth": false,
@@ -825,7 +825,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1079 with #1785",
                   "short_reason": "shares linked issue #1079 with #1785",
-                  "age_days": 2.1,
+                  "age_days": 2.2,
                   "additions": 76,
                   "deletions": 9,
                   "is_auth": false,
@@ -843,7 +843,7 @@
               "id": "1397",
               "kind": "issue",
               "pick": 1855,
-              "pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
+              "pick_reason": "Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
               "members": [
                 {
                   "number": 1821,
@@ -853,7 +853,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1397; #1855 is the pick",
                   "short_reason": "shares issue #1397; #1855 is the pick",
-                  "age_days": 21.7,
+                  "age_days": 21.8,
                   "additions": 534,
                   "deletions": 485,
                   "is_auth": false,
@@ -870,8 +870,8 @@
                   "author": "Christian-Sidak",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
-                  "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
+                  "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
+                  "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
                   "age_days": 15.3,
                   "additions": 14,
                   "deletions": 7,
@@ -881,7 +881,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1397",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed."
+                  "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1397"
@@ -890,7 +890,7 @@
               "id": "1658",
               "kind": "issue",
               "pick": 1912,
-              "pick_reason": "Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
+              "pick_reason": "Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
               "members": [
                 {
                   "number": 1786,
@@ -917,8 +917,8 @@
                   "author": "kev-flex",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1912",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
-                  "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
+                  "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
+                  "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
                   "age_days": 5.2,
                   "additions": 535,
                   "deletions": 9,
@@ -928,7 +928,7 @@
                   "sla_kind": null,
                   "cluster_id": "1658",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author."
+                  "cluster_pick_reason": "Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1658"
@@ -937,7 +937,7 @@
               "id": "1864",
               "kind": "issue",
               "pick": 1879,
-              "pick_reason": "All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
+              "pick_reason": "All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
               "members": [
                 {
                   "number": 1873,
@@ -947,7 +947,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1864; #1879 is the pick",
                   "short_reason": "shares issue #1864; #1879 is the pick",
-                  "age_days": 11.1,
+                  "age_days": 11.2,
                   "additions": 21,
                   "deletions": 2,
                   "is_auth": false,
@@ -964,8 +964,8 @@
                   "author": "Yanhu007",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1879",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
-                  "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
+                  "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
+                  "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
                   "age_days": 9.4,
                   "additions": 14,
                   "deletions": 3,
@@ -975,7 +975,7 @@
                   "sla_kind": "1st-review",
                   "cluster_id": "1864",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead."
+                  "cluster_pick_reason": "All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff."
                 },
                 {
                   "number": 1881,
@@ -985,7 +985,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares linked issue #1864 with #1873",
                   "short_reason": "shares linked issue #1864 with #1873",
-                  "age_days": 9.3,
+                  "age_days": 9.4,
                   "additions": 168,
                   "deletions": 2,
                   "is_auth": false,
@@ -1041,7 +1041,7 @@
               "id": "1869",
               "kind": "issue",
               "pick": 1935,
-              "pick_reason": "Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
+              "pick_reason": "Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
               "members": [
                 {
                   "number": 1921,
@@ -1051,7 +1051,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1869; #1935 is the pick",
                   "short_reason": "shares issue #1869; #1935 is the pick",
-                  "age_days": 4.2,
+                  "age_days": 4.3,
                   "additions": 54,
                   "deletions": 1,
                   "is_auth": false,
@@ -1068,8 +1068,8 @@
                   "author": "Jim1874",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1935",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
-                  "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
+                  "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
+                  "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
                   "age_days": 1.3,
                   "additions": 8,
                   "deletions": 1,
@@ -1079,7 +1079,7 @@
                   "sla_kind": null,
                   "cluster_id": "1869",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering."
+                  "cluster_pick_reason": "Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1869"
@@ -1088,7 +1088,7 @@
               "id": "1872",
               "kind": "issue",
               "pick": 1933,
-              "pick_reason": "Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
+              "pick_reason": "Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
               "members": [
                 {
                   "number": 1919,
@@ -1098,7 +1098,7 @@
                   "state": "duplicate-cluster-member",
                   "reason": "shares issue #1872; #1933 is the pick",
                   "short_reason": "shares issue #1872; #1933 is the pick",
-                  "age_days": 4.2,
+                  "age_days": 4.3,
                   "additions": 53,
                   "deletions": 12,
                   "is_auth": true,
@@ -1115,8 +1115,8 @@
                   "author": "Jim1874",
                   "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1933",
                   "state": "duplicate-cluster",
-                  "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
-                  "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
+                  "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
+                  "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
                   "age_days": 1.3,
                   "additions": 9,
                   "deletions": 2,
@@ -1126,7 +1126,7 @@
                   "sla_kind": null,
                   "cluster_id": "1872",
                   "cluster_pick": true,
-                  "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage."
+                  "cluster_pick_reason": "Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick."
                 }
               ],
               "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1872"
@@ -1146,7 +1146,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 20.9,
+              "age_days": 21.0,
               "additions": 122,
               "deletions": 59,
               "is_auth": true,
@@ -1165,7 +1165,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 69.7,
+              "age_days": 69.8,
               "additions": 49,
               "deletions": 2,
               "is_auth": false,
@@ -1184,7 +1184,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 32.6,
+              "age_days": 32.7,
               "additions": 383,
               "deletions": 1,
               "is_auth": false,
@@ -1302,7 +1302,7 @@
               "state": "needs-first-review",
               "reason": "13d since open (SLA breach)",
               "short_reason": "13d",
-              "age_days": 13.1,
+              "age_days": 13.2,
               "additions": 362,
               "deletions": 7,
               "is_auth": false,
@@ -1397,7 +1397,7 @@
               "state": "needs-first-review",
               "reason": "4d since open",
               "short_reason": "4d",
-              "age_days": 4.2,
+              "age_days": 4.3,
               "additions": 44,
               "deletions": 6,
               "is_auth": true,
@@ -1416,7 +1416,7 @@
               "state": "needs-first-review",
               "reason": "4d since open",
               "short_reason": "4d",
-              "age_days": 3.9,
+              "age_days": 4.0,
               "additions": 1,
               "deletions": 1,
               "is_auth": true,
@@ -1492,7 +1492,7 @@
               "state": "needs-first-review",
               "reason": "1d since open",
               "short_reason": "1d",
-              "age_days": 0.6,
+              "age_days": 0.7,
               "additions": 102,
               "deletions": 4,
               "is_auth": false,
@@ -1743,7 +1743,7 @@
               "state": "stale-awaiting-author",
               "reason": "22d since feedback, no response",
               "short_reason": "22d since feedback",
-              "age_days": 40.1,
+              "age_days": 40.2,
               "additions": 122,
               "deletions": 6,
               "is_auth": true,
@@ -1949,7 +1949,7 @@
           "state": "stale-draft",
           "reason": "draft idle 90d",
           "short_reason": "draft idle 90d",
-          "age_days": 89.7,
+          "age_days": 89.8,
           "additions": 68,
           "deletions": 41,
           "is_auth": false,
@@ -2044,7 +2044,7 @@
           "state": "stale-draft",
           "reason": "draft idle 8d",
           "short_reason": "draft idle 8d",
-          "age_days": 7.8,
+          "age_days": 7.9,
           "additions": 282,
           "deletions": 74,
           "is_auth": false,
@@ -2069,7 +2069,7 @@
           "state": "parked",
           "reason": "maintainer draft, 130d",
           "short_reason": "maintainer draft, 130d",
-          "age_days": 129.7,
+          "age_days": 129.8,
           "additions": 9663,
           "deletions": 3551,
           "is_auth": false,
@@ -2107,7 +2107,7 @@
           "state": "parked",
           "reason": "maintainer draft, 74d",
           "short_reason": "maintainer draft, 74d",
-          "age_days": 73.6,
+          "age_days": 73.7,
           "additions": 1253,
           "deletions": 10,
           "is_auth": false,
@@ -2126,7 +2126,7 @@
           "state": "parked",
           "reason": "maintainer draft, 67d",
           "short_reason": "maintainer draft, 67d",
-          "age_days": 66.9,
+          "age_days": 67.0,
           "additions": 441,
           "deletions": 140,
           "is_auth": true,
@@ -2366,7 +2366,7 @@
           "state": "awaiting-author",
           "reason": "11d since feedback",
           "short_reason": "11d since feedback",
-          "age_days": 12.4,
+          "age_days": 12.5,
           "additions": 246,
           "deletions": 0,
           "is_auth": false,
@@ -2385,7 +2385,7 @@
           "state": "awaiting-author",
           "reason": "1d since feedback",
           "short_reason": "1d since feedback",
-          "age_days": 6.8,
+          "age_days": 6.9,
           "additions": 629,
           "deletions": 96,
           "is_auth": false,
@@ -2429,7 +2429,7 @@
           "state": "bot-release",
           "reason": "release bot PR",
           "short_reason": "release bot PR",
-          "age_days": 18.9,
+          "age_days": 19.0,
           "additions": 43,
           "deletions": 4,
           "is_auth": false,
@@ -2473,7 +2473,7 @@
       "id": "1079",
       "kind": "issue",
       "pick": 1785,
-      "pick_reason": "All three PRs are tied on CI (unknown) and file count (3). Falling back to tiebreakers: #1785 is the oldest by a significant margin (PRs #1920 and #1929 were opened much later against the same issue). Additionally, #1785's title is the only one that explicitly names all three fix dimensions \u2014 optional, out-of-order, and encoded query parameters \u2014 which aligns most completely with the RFC 6570 scope of issue #1079. #1920 and #1929 omit encoding from their descriptions, suggesting they may not cover the full fix surface.",
+      "pick_reason": "All three PRs have unknown CI status and each touches 3 files, so the tiebreaker chain falls to \"oldest.\" PR #1785 is the earliest by PR number. Its title also explicitly names a third case \u2014 \"encoded query parameters\" \u2014 that the other two titles omit, suggesting broader test coverage of the parameter-parsing edge cases. Without access to the actual diffs or CI results, no further differentiation between #1920 and #1929 is possible, and neither has a seniority advantage over #1785.",
       "members": [
         {
           "number": 1785,
@@ -2483,7 +2483,7 @@
           "state": "duplicate-cluster",
           "reason": "cluster primary for issue #1079 (3 PRs)",
           "short_reason": "cluster primary for issue #1079 (3 PRs)",
-          "age_days": 24.9,
+          "age_days": 25.0,
           "additions": 162,
           "deletions": 7,
           "is_auth": false,
@@ -2492,7 +2492,7 @@
           "sla_kind": "maintainer",
           "cluster_id": "1079",
           "cluster_pick": true,
-          "cluster_pick_reason": "All three PRs are tied on CI (unknown) and file count (3). Falling back to tiebreakers: #1785 is the oldest by a significant margin (PRs #1920 and #1929 were opened much later against the same issue). Additionally, #1785's title is the only one that explicitly names all three fix dimensions \u2014 optional, out-of-order, and encoded query parameters \u2014 which aligns most completely with the RFC 6570 scope of issue #1079. #1920 and #1929 omit encoding from their descriptions, suggesting they may not cover the full fix surface."
+          "cluster_pick_reason": "All three PRs have unknown CI status and each touches 3 files, so the tiebreaker chain falls to \"oldest.\" PR #1785 is the earliest by PR number. Its title also explicitly names a third case \u2014 \"encoded query parameters\" \u2014 that the other two titles omit, suggesting broader test coverage of the parameter-parsing edge cases. Without access to the actual diffs or CI results, no further differentiation between #1920 and #1929 is possible, and neither has a seniority advantage over #1785."
         },
         {
           "number": 1920,
@@ -2502,7 +2502,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1079 with #1785",
           "short_reason": "shares linked issue #1079 with #1785",
-          "age_days": 4.2,
+          "age_days": 4.3,
           "additions": 99,
           "deletions": 9,
           "is_auth": false,
@@ -2521,7 +2521,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1079 with #1785",
           "short_reason": "shares linked issue #1079 with #1785",
-          "age_days": 2.1,
+          "age_days": 2.2,
           "additions": 76,
           "deletions": 9,
           "is_auth": false,
@@ -2539,7 +2539,7 @@
       "id": "1397",
       "kind": "issue",
       "pick": 1855,
-      "pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
+      "pick_reason": "Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
       "members": [
         {
           "number": 1821,
@@ -2549,7 +2549,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1397; #1855 is the pick",
           "short_reason": "shares issue #1397; #1855 is the pick",
-          "age_days": 21.7,
+          "age_days": 21.8,
           "additions": 534,
           "deletions": 485,
           "is_auth": false,
@@ -2566,8 +2566,8 @@
           "author": "Christian-Sidak",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1855",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
-          "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed.",
+          "reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
+          "short_reason": "[llm pick] cluster primary for issue #1397: Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order.",
           "age_days": 15.3,
           "additions": 14,
           "deletions": 7,
@@ -2577,7 +2577,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1397",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status. #1855 changes 3 files with a targeted fix (adding `| undefined` to transport option callbacks), while #1821 touches 30 files and is self-described as a \"PoC\" \u2014 indicating exploratory scope rather than a production-ready targeted fix. Per the tiebreaker criteria, the smallest focused diff is preferred, and #1855's narrow change is lower-risk and easier to review and revert if needed."
+          "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker is diff size. #1855 changes 3 files versus #1821's 30 files \u2014 a 10\u00d7 smaller surface area. #1855's title and scope indicate a targeted fix (adding `| undefined` to the specific transport option callbacks that require it), while #1821 is explicitly a \"PoC\" touching far more of the codebase. A narrower diff means less review burden, lower risk of unintended side effects, and easier revert if needed. #1821's age advantage does not outweigh the focused-diff criterion, which ranks higher in the selection order."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1397"
@@ -2586,7 +2586,7 @@
       "id": "1658",
       "kind": "issue",
       "pick": 1912,
-      "pick_reason": "Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
+      "pick_reason": "Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
       "members": [
         {
           "number": 1786,
@@ -2613,8 +2613,8 @@
           "author": "kev-flex",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1912",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
-          "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author.",
+          "reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
+          "short_reason": "[llm pick] cluster primary for issue #1658: Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep.",
           "age_days": 5.2,
           "additions": 535,
           "deletions": 9,
@@ -2624,7 +2624,7 @@
           "sla_kind": null,
           "cluster_id": "1658",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status (tied on criterion 1). The deciding factor is test coverage: #1912 touches 7 files (+535/\u22129 lines) versus #1786's 4 files (+268/\u221211 lines), making it more likely that #1912 includes test files alongside the implementation. Additionally, #1786 carries an [RFC] prefix explicitly marking it as a draft/Request for Comments not ready for merge as-is; #1912 uses a standard feat(server): prefix indicating a finished implementation. While #1786 has a smaller diff (279 lines vs. 544) and is older (~24 days vs. ~5 days), those tiebreakers rank below test coverage in the stated priority order, and the RFC designation independently disqualifies #1786 without further revision by its author."
+          "cluster_pick_reason": "Both PRs have unknown CI, so that criterion is a tie. Moving to the remaining criteria:\n\n**Tests / completeness:** #1912 touches 7 files vs #1786's 4. The larger file count in a focused feature PR typically reflects included test coverage, while the smaller count in #1786 suggests a more skeletal implementation \u2014 consistent with its \"[RFC]\" prefix, which signals the author explicitly framed it as a discussion draft rather than a merge-ready change.\n\n**Diff focus:** #1786 wins on raw file count (4 vs 7), but an RFC-labeled PR carries an explicit authorial signal that the approach is not settled. A diff that is small because it is incomplete is not the same as a small, focused diff.\n\n**Age:** #1786 is older (lower PR number), so it would win this tiebreaker \u2014 but only if the above criteria are otherwise tied, which they are not.\n\nThe concrete deciding factor: #1786's \"[RFC]\" designation is a self-described proposal/exploratory state, while #1912 presents a named, scoped implementation (`replayInitialization`) with more files suggesting fuller coverage. On the criteria ordering given, #1912 is the stronger candidate to keep."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1658"
@@ -2633,7 +2633,7 @@
       "id": "1864",
       "kind": "issue",
       "pick": 1879,
-      "pick_reason": "All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
+      "pick_reason": "All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
       "members": [
         {
           "number": 1873,
@@ -2643,7 +2643,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1864; #1879 is the pick",
           "short_reason": "shares issue #1864; #1879 is the pick",
-          "age_days": 11.1,
+          "age_days": 11.2,
           "additions": 21,
           "deletions": 2,
           "is_auth": false,
@@ -2660,8 +2660,8 @@
           "author": "Yanhu007",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1879",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
-          "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead.",
+          "reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
+          "short_reason": "[llm pick] cluster primary for issue #1864: All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff.",
           "age_days": 9.4,
           "additions": 14,
           "deletions": 3,
@@ -2671,7 +2671,7 @@
           "sla_kind": "1st-review",
           "cluster_id": "1864",
           "cluster_pick": true,
-          "cluster_pick_reason": "All five PRs have unknown CI status, so the tiebreaker falls to diff size. #1879 touches only 2 files \u2014 the smallest footprint of the group \u2014 indicating the most focused change. #1881 and #1885 each touch 4 files; #1873 and #1934 touch 3. #1934 is additionally narrower in scope (title omits registerToolTask, suggesting an incomplete fix). #1873 and #1881 share an identical title but #1881 has more files for no stated reason. Without visible diffs to confirm test coverage in any PR, the smallest-diff criterion puts #1879 ahead."
+          "cluster_pick_reason": "All five PRs have unknown CI status, so that criterion does not differentiate. Test coverage cannot be confirmed from file counts alone. On the next tiebreaker \u2014 smallest focused diff \u2014 #1879 wins with 2 files changed versus 3 files for #1873/#1934 and 4 files for #1881/#1885. It also uses the correct `fix` commit-type prefix (unlike #1934 which uses `feat` for a bug fix), and its title explicitly covers both the registerTool config side and the tools/list response side of the fix. Among the two smallest PRs (#1873 at 3 files, #1879 at 2 files), #1879 has the tighter diff."
         },
         {
           "number": 1881,
@@ -2681,7 +2681,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares linked issue #1864 with #1873",
           "short_reason": "shares linked issue #1864 with #1873",
-          "age_days": 9.3,
+          "age_days": 9.4,
           "additions": 168,
           "deletions": 2,
           "is_auth": false,
@@ -2737,7 +2737,7 @@
       "id": "1869",
       "kind": "issue",
       "pick": 1935,
-      "pick_reason": "Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
+      "pick_reason": "Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
       "members": [
         {
           "number": 1921,
@@ -2747,7 +2747,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1869; #1935 is the pick",
           "short_reason": "shares issue #1869; #1935 is the pick",
-          "age_days": 4.2,
+          "age_days": 4.3,
           "additions": 54,
           "deletions": 1,
           "is_auth": false,
@@ -2764,8 +2764,8 @@
           "author": "Jim1874",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1935",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
-          "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering.",
+          "reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
+          "short_reason": "[llm pick] cluster primary for issue #1869: Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix.",
           "age_days": 1.3,
           "additions": 8,
           "deletions": 1,
@@ -2775,7 +2775,7 @@
           "sla_kind": null,
           "cluster_id": "1869",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status and neither adds tests, so the deciding criterion is diff size. #1935 touches 2 files vs #1921's 3 files, making it the smaller, more focused change. #1935's scope is also more precise: it fixes the undefined-args case directly inside the server's prompts handler (the exact call site where the bug manifests), whereas #1921 defaults arguments to an empty object across more call sites, which is a broader change with a higher surface area for unintended side effects. Smaller focused diff edges out #1921's earlier submission date per the stated preference ordering."
+          "cluster_pick_reason": "Both PRs have unknown CI status. Moving to the next tiebreaker: #1935 changes 2 files versus #1921's 3 files, making it the smaller, more focused diff. Its approach \u2014 handling undefined args directly inside the prompts handler \u2014 is also more surgical than #1921's broader upstream defaulting strategy, which touches more code paths for the same targeted fix."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1869"
@@ -2784,7 +2784,7 @@
       "id": "1872",
       "kind": "issue",
       "pick": 1933,
-      "pick_reason": "Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
+      "pick_reason": "Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
       "members": [
         {
           "number": 1919,
@@ -2794,7 +2794,7 @@
           "state": "duplicate-cluster-member",
           "reason": "shares issue #1872; #1933 is the pick",
           "short_reason": "shares issue #1872; #1933 is the pick",
-          "age_days": 4.2,
+          "age_days": 4.3,
           "additions": 53,
           "deletions": 12,
           "is_auth": true,
@@ -2811,8 +2811,8 @@
           "author": "Jim1874",
           "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1933",
           "state": "duplicate-cluster",
-          "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
-          "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage.",
+          "reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
+          "short_reason": "[llm pick] cluster primary for issue #1872: Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick.",
           "age_days": 1.3,
           "additions": 9,
           "deletions": 2,
@@ -2822,14 +2822,14 @@
           "sla_kind": null,
           "cluster_id": "1872",
           "cluster_pick": true,
-          "cluster_pick_reason": "Both PRs have unknown CI status, so the tiebreaker falls to diff size: #1933 touches 2 files versus #1919's 3 files, making it the more focused, minimal change. Both target the same root cause (duplicate Authorization headers in SSE transport), but a smaller changeset reduces the risk of unintended side effects. #1919's extra file change was not offset by any confirmed test coverage or CI advantage."
+          "cluster_pick_reason": "Both PRs have unknown CI status. On diff size \u2014 the next applicable criterion \u2014 #1933 touches 2 files vs #1919's 3 files, making it the more focused fix. #1919 has the age advantage, but age ranks below diff size in the stated criteria. Note: if the third file in #1919 turns out to be a test and #1933 has no tests, the \"has tests\" criterion outranks diff size and #1919 would be the better pick."
         }
       ],
       "issue_url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1872"
     }
   ],
   "llm_cost": {
-    "total_usd": 1.9126,
+    "total_usd": 2.7911,
     "total_calls": 11,
     "by_purpose": {
       "author-intent": {
@@ -2838,11 +2838,11 @@
       },
       "semantic-cluster": {
         "count": 4,
-        "cost": 0.361
+        "cost": 0.3588
       },
       "cluster-pick": {
         "count": 6,
-        "cost": 1.5249
+        "cost": 2.4057
       }
     }
   }
