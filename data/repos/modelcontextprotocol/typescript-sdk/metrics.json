@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-02T13:02:18.073Z",
+  "timestamp": "2026-05-02T14:47:11.383Z",
   "repository": {
     "stars": 12326,
     "forks": 1809
@@ -10,7 +10,7 @@
     "closed_30d": 9,
     "closed_90d": 76,
     "opened_7d": 8,
-    "opened_30d": 32,
+    "opened_30d": 31,
     "opened_90d": 85,
     "without_response_24h": 86,
     "without_response_7d": 81,
@@ -48,7 +48,7 @@
         "title": "Add ways for server processes to self-terminate when host is gone",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/208",
         "createdAt": "2025-03-19T14:17:08Z",
-        "daysWaiting": 408,
+        "daysWaiting": 409,
         "labels": [
           "enhancement",
           "P3",
@@ -104,7 +104,7 @@
         "title": "Allow receiving messages per stream in client sdk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/387",
         "createdAt": "2025-04-23T14:12:31Z",
-        "daysWaiting": 373,
+        "daysWaiting": 374,
         "labels": [
           "enhancement",
           "P3",
@@ -628,7 +628,7 @@
         "title": "Do not return and expose internal errors to the client as this is a security risk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1429",
         "createdAt": "2026-01-28T14:30:53Z",
-        "daysWaiting": 93,
+        "daysWaiting": 94,
         "labels": [
           "bug",
           "ready for work",
@@ -762,7 +762,7 @@
         "title": "Hono Package is not under @modelcontextprotocol",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1639",
         "createdAt": "2026-03-06T13:11:01Z",
-        "daysWaiting": 56,
+        "daysWaiting": 57,
         "labels": [
           "bug",
           "potentially close"
@@ -1007,13 +1007,26 @@
         "title": "Client transport: HTTP 429 responses are not retried with Retry-After",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1892",
         "createdAt": "2026-04-15T13:39:41Z",
-        "daysWaiting": 16,
+        "daysWaiting": 17,
         "labels": [
           "enhancement",
           "P3",
           "needs decision"
         ],
         "commentCount": 0
+      },
+      {
+        "number": 1924,
+        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
+        "createdAt": "2026-04-17T14:15:23Z",
+        "daysWaiting": 15,
+        "labels": [
+          "enhancement",
+          "P3",
+          "needs decision"
+        ],
+        "commentCount": 1
       },
       {
         "number": 1914,
@@ -1031,19 +1044,6 @@
         "commentCount": 4
       },
       {
-        "number": 1924,
-        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
-        "createdAt": "2026-04-17T14:15:23Z",
-        "daysWaiting": 14,
-        "labels": [
-          "enhancement",
-          "P3",
-          "needs decision"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 1928,
         "title": "McpServer: add tool lifecycle hooks (beforeToolCall, afterToolCall)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1928",
@@ -1055,6 +1055,19 @@
           "needs decision"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 1946,
+        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
+        "createdAt": "2026-04-22T14:19:36Z",
+        "daysWaiting": 10,
+        "labels": [
+          "bug",
+          "needs repro",
+          "auth"
+        ],
+        "commentCount": 2
       },
       {
         "number": 1941,
@@ -1084,17 +1097,13 @@
         "commentCount": 1
       },
       {
-        "number": 1946,
-        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
-        "createdAt": "2026-04-22T14:19:36Z",
-        "daysWaiting": 9,
-        "labels": [
-          "bug",
-          "needs repro",
-          "auth"
-        ],
-        "commentCount": 2
+        "number": 1956,
+        "title": "SEP-1303: Input validation errors should return Tool Execution Errors, not Protocol Errors",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1956",
+        "createdAt": "2026-04-24T13:12:58Z",
+        "daysWaiting": 8,
+        "labels": [],
+        "commentCount": 1
       },
       {
         "number": 1954,
@@ -1109,15 +1118,6 @@
           "auth"
         ],
         "commentCount": 2
-      },
-      {
-        "number": 1956,
-        "title": "SEP-1303: Input validation errors should return Tool Execution Errors, not Protocol Errors",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1956",
-        "createdAt": "2026-04-24T13:12:58Z",
-        "daysWaiting": 7,
-        "labels": [],
-        "commentCount": 1
       },
       {
         "number": 1959,
@@ -1149,6 +1149,15 @@
         "commentCount": 0
       },
       {
+        "number": 1994,
+        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
+        "createdAt": "2026-04-30T14:07:04Z",
+        "daysWaiting": 2,
+        "labels": [],
+        "commentCount": 0
+      },
+      {
         "number": 1987,
         "title": "`registerTool` type error with zod 4.4.x — `ZodString` not assignable to `AnySchema`",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1987",
@@ -1165,15 +1174,6 @@
         "daysWaiting": 1,
         "labels": [],
         "commentCount": 1
-      },
-      {
-        "number": 1994,
-        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
-        "createdAt": "2026-04-30T14:07:04Z",
-        "daysWaiting": 1,
-        "labels": [],
-        "commentCount": 0
       },
       {
         "number": 2012,
@@ -1309,7 +1309,7 @@
         "title": "feat(server): OAuth scope challenge support (step-up auth)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1624",
         "createdAt": "2026-03-04T13:10:38Z",
-        "daysWaiting": 58,
+        "daysWaiting": 59,
         "labels": [],
         "isDraft": true,
         "additions": 1243,
@@ -2270,7 +2270,7 @@
     }
   },
   "contributors": {
-    "total_known": 613,
+    "total_known": 614,
     "active_30d": 66,
     "first_time_30d": 58,
     "retention_rate_pct": 9.4,
@@ -2285,8 +2285,8 @@
       1,
       27,
       33,
-      0,
-      8,
+      1,
+      7,
       2,
       12
     ],
@@ -2384,6 +2384,7 @@
       "Palaxx",
       "Pdash-exceeds",
       "PederHP",
+      "Phil-Browne",
       "PhilBrowneDev",
       "Postmanplayx",
       "Rajesh-Narayanappa87",
@@ -2921,7 +2922,7 @@
       "KKonstantinov",
       "MMoMM-org",
       "MukundaKatta",
-      "PhilBrowneDev",
+      "Phil-Browne",
       "Yanhu007",
       "Zelys-DFKH",
       "aayushbaluni",
