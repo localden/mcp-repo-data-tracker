@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-08T13:24:20.774Z",
+  "timestamp": "2026-05-08T15:22:14.021Z",
   "repository": {
     "stars": 12377,
     "forks": 1825
@@ -48,7 +48,7 @@
         "title": "Add ways for server processes to self-terminate when host is gone",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/208",
         "createdAt": "2025-03-19T14:17:08Z",
-        "daysWaiting": 414,
+        "daysWaiting": 415,
         "labels": [
           "enhancement",
           "P3",
@@ -104,7 +104,7 @@
         "title": "Allow receiving messages per stream in client sdk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/387",
         "createdAt": "2025-04-23T14:12:31Z",
-        "daysWaiting": 379,
+        "daysWaiting": 380,
         "labels": [
           "enhancement",
           "P3",
@@ -530,7 +530,7 @@
         "title": "[MCP-SDK] stdio client crashes with \"MCP error -32000: Connection closed\" when spawned server exits unexpectedly",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1049",
         "createdAt": "2025-10-28T14:55:41Z",
-        "daysWaiting": 191,
+        "daysWaiting": 192,
         "labels": [
           "bug",
           "ready for work",
@@ -628,7 +628,7 @@
         "title": "Do not return and expose internal errors to the client as this is a security risk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1429",
         "createdAt": "2026-01-28T14:30:53Z",
-        "daysWaiting": 99,
+        "daysWaiting": 100,
         "labels": [
           "bug",
           "ready for work",
@@ -908,6 +908,20 @@
         "commentCount": 0
       },
       {
+        "number": 1869,
+        "title": "prompts/get rejects omitted `arguments` when all argsSchema fields are optional; tools fix (#1404) not in 1.x",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1869",
+        "createdAt": "2026-04-09T14:50:41Z",
+        "daysWaiting": 29,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P2",
+          "fix proposed"
+        ],
+        "commentCount": 2
+      },
+      {
         "number": 1863,
         "title": "Add MCP_TOOL_TIMEOUT_MSEC default value only for tool calls.",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1863",
@@ -933,20 +947,6 @@
           "fix proposed"
         ],
         "commentCount": 4
-      },
-      {
-        "number": 1869,
-        "title": "prompts/get rejects omitted `arguments` when all argsSchema fields are optional; tools fix (#1404) not in 1.x",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1869",
-        "createdAt": "2026-04-09T14:50:41Z",
-        "daysWaiting": 28,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P2",
-          "fix proposed"
-        ],
-        "commentCount": 2
       },
       {
         "number": 1872,
@@ -1007,13 +1007,26 @@
         "title": "Client transport: HTTP 429 responses are not retried with Retry-After",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1892",
         "createdAt": "2026-04-15T13:39:41Z",
-        "daysWaiting": 22,
+        "daysWaiting": 23,
         "labels": [
           "enhancement",
           "P3",
           "needs decision"
         ],
         "commentCount": 0
+      },
+      {
+        "number": 1924,
+        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
+        "createdAt": "2026-04-17T14:15:23Z",
+        "daysWaiting": 21,
+        "labels": [
+          "enhancement",
+          "P3",
+          "needs decision"
+        ],
+        "commentCount": 1
       },
       {
         "number": 1914,
@@ -1031,19 +1044,6 @@
         "commentCount": 4
       },
       {
-        "number": 1924,
-        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
-        "createdAt": "2026-04-17T14:15:23Z",
-        "daysWaiting": 20,
-        "labels": [
-          "enhancement",
-          "P3",
-          "needs decision"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 1928,
         "title": "McpServer: add tool lifecycle hooks (beforeToolCall, afterToolCall)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1928",
@@ -1055,6 +1055,19 @@
           "needs decision"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 1946,
+        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
+        "createdAt": "2026-04-22T14:19:36Z",
+        "daysWaiting": 16,
+        "labels": [
+          "bug",
+          "needs repro",
+          "auth"
+        ],
+        "commentCount": 2
       },
       {
         "number": 1941,
@@ -1082,19 +1095,6 @@
           "fix proposed"
         ],
         "commentCount": 1
-      },
-      {
-        "number": 1946,
-        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
-        "createdAt": "2026-04-22T14:19:36Z",
-        "daysWaiting": 15,
-        "labels": [
-          "bug",
-          "needs repro",
-          "auth"
-        ],
-        "commentCount": 2
       },
       {
         "number": 1956,
@@ -1149,6 +1149,15 @@
         "commentCount": 0
       },
       {
+        "number": 1994,
+        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
+        "createdAt": "2026-04-30T14:07:04Z",
+        "daysWaiting": 8,
+        "labels": [],
+        "commentCount": 0
+      },
+      {
         "number": 2002,
         "title": "Bug: StdioServerTransport doesn't handle stdin close/end — causes zombie process accumulation",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2002",
@@ -1156,15 +1165,6 @@
         "daysWaiting": 7,
         "labels": [],
         "commentCount": 1
-      },
-      {
-        "number": 1994,
-        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
-        "createdAt": "2026-04-30T14:07:04Z",
-        "daysWaiting": 7,
-        "labels": [],
-        "commentCount": 0
       },
       {
         "number": 2012,
@@ -1231,7 +1231,7 @@
         "createdAt": "2026-05-08T10:49:05Z",
         "daysWaiting": 0,
         "labels": [],
-        "commentCount": 1
+        "commentCount": 2
       },
       {
         "number": 2032,
@@ -1300,12 +1300,12 @@
     "reopen_rate": 0.99
   },
   "pulls": {
-    "open_count": 145,
+    "open_count": 146,
     "merged_7d": 1,
     "merged_30d": 24,
     "merged_90d": 158,
-    "opened_7d": 20,
-    "opened_30d": 136,
+    "opened_7d": 16,
+    "opened_30d": 137,
     "opened_90d": 442,
     "closed_not_merged_90d": 242,
     "draft_count": 20,
@@ -1391,6 +1391,19 @@
         "author": "ravyg"
       },
       {
+        "number": 1870,
+        "title": "fix: inject progressToken when resetTimeoutOnProgress is set (not only onprogress)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1870",
+        "createdAt": "2026-04-09T15:14:53Z",
+        "daysWaiting": 29,
+        "labels": [],
+        "isDraft": false,
+        "additions": 4,
+        "deletions": 2,
+        "reviewCount": 1,
+        "author": "techtoboggan"
+      },
+      {
         "number": 1876,
         "title": "fix: use getLiteralValue for Zod v3 method literal extraction",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1876",
@@ -1415,19 +1428,6 @@
         "deletions": 2,
         "reviewCount": 0,
         "author": "nielskaspers"
-      },
-      {
-        "number": 1870,
-        "title": "fix: inject progressToken when resetTimeoutOnProgress is set (not only onprogress)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1870",
-        "createdAt": "2026-04-09T15:14:53Z",
-        "daysWaiting": 28,
-        "labels": [],
-        "isDraft": false,
-        "additions": 4,
-        "deletions": 2,
-        "reviewCount": 1,
-        "author": "techtoboggan"
       },
       {
         "number": 1881,
@@ -2401,6 +2401,19 @@
         "author": "JoannaaKL"
       },
       {
+        "number": 2033,
+        "title": "build: configure tsdown to output both ESM and CJS",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2033",
+        "createdAt": "2026-05-08T13:23:31Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 262,
+        "deletions": 64,
+        "reviewCount": 0,
+        "author": "lppedd"
+      },
+      {
         "number": 2030,
         "title": "fix: add root package export barrel",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2030",
@@ -2429,14 +2442,14 @@
     "avg_reviews_per_pr": 3.9,
     "by_size": {
       "small": 64,
-      "medium": 60,
+      "medium": 61,
       "large": 21
     }
   },
   "contributors": {
-    "total_known": 623,
-    "active_30d": 68,
-    "first_time_30d": 58,
+    "total_known": 624,
+    "active_30d": 69,
+    "first_time_30d": 59,
     "retention_rate_pct": 13.2,
     "churned_30d": 66,
     "commits_per_week_avg": 10.1,
@@ -2444,10 +2457,10 @@
       14,
       8,
       11,
-      3,
-      2,
-      18,
-      41,
+      4,
+      1,
+      20,
+      39,
       1,
       8,
       2,
@@ -2455,7 +2468,7 @@
       1
     ],
     "active_maintainers_30d": 4,
-    "active_community_30d": 64,
+    "active_community_30d": 65,
     "allContributors": [
       "010gvr",
       "02zonpattaya-debug",
@@ -2844,6 +2857,7 @@
       "logan272",
       "lokendra-ss",
       "lokendra-ss-18283",
+      "lppedd",
       "lraveri",
       "lucaalbinati",
       "lucfranken",
@@ -3126,6 +3140,7 @@
       "klodr",
       "langverse2023",
       "lawrence3699",
+      "lppedd",
       "mcp-advisory-reader",
       "mddaud",
       "mhegazy",
