@@ -1,22 +1,30 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-05-14T20:09:09.474879+00:00",
+  "lastUpdated": "2026-05-14T21:32:48.619762+00:00",
   "summary": {
-    "actionable_count": 24,
+    "actionable_count": 25,
     "auth_count": 10,
     "maint_count": 5,
-    "effort_hours": 9.3,
+    "effort_hours": 9.5,
     "cluster_count": 0,
     "cluster_member_count": 0,
-    "not_our_move_count": 5,
+    "not_our_move_count": 4,
     "by_tier": [
+      {
+        "idx": 0,
+        "name": "Press a button",
+        "count": 1,
+        "auth": 1,
+        "maint": 0,
+        "mins": 1
+      },
       {
         "idx": 1,
         "name": "We're blocking someone",
-        "count": 5,
+        "count": 6,
         "auth": 2,
         "maint": 5,
-        "mins": 100
+        "mins": 120
       },
       {
         "idx": 2,
@@ -37,10 +45,10 @@
       {
         "idx": 4,
         "name": "Hygiene",
-        "count": 2,
-        "auth": 2,
+        "count": 1,
+        "auth": 1,
         "maint": 0,
-        "mins": 15
+        "mins": 5
       },
       {
         "idx": 5,
@@ -52,38 +60,100 @@
       }
     ],
     "by_state": {
-      "approved-rotted": 1,
-      "awaiting-author": 2,
+      "awaiting-author": 1,
       "community-reviewed": 3,
       "draft-active": 1,
       "maintainer-intake": 5,
       "needs-decision": 2,
       "needs-first-review": 11,
+      "needs-merge": 1,
+      "needs-re-review": 1,
       "parked": 2,
       "pre-ci-ghost": 1,
       "stale-awaiting-author": 1
     },
     "sla": {
-      "first_review_7d_breach": 13,
-      "first_review_eligible": 14,
+      "first_review_7d_breach": 14,
+      "first_review_eligible": 15,
       "re_review_24h_breach": 2,
-      "re_review_eligible": 2,
+      "re_review_eligible": 3,
       "maint_24h_breach": 5,
       "maint_eligible": 5,
       "actionable_target": 25,
       "actionable_over_target": false
     },
-    "actioned_7d": 3,
-    "actioned_30d": 23
+    "actioned_7d": 2,
+    "actioned_30d": 22
   },
   "tiers": [
+    {
+      "idx": 0,
+      "name": "Press a button",
+      "blurb": "Already approved or already decided \u2014 ready for action.",
+      "count": 1,
+      "mins": 1,
+      "states": [
+        {
+          "name": "needs-merge",
+          "desc": "Approved and CI-green \u2014 ready to merge.",
+          "effort_min": 1,
+          "prs": [
+            {
+              "number": 227,
+              "title": "feat: scenario option for authorization server test",
+              "author": "tnorimat",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/227",
+              "state": "needs-merge",
+              "reason": "approved 23d ago, green",
+              "short_reason": "approved 23d ago, green",
+              "age_days": 29.6,
+              "additions": 216,
+              "deletions": 3,
+              "is_auth": true,
+              "is_maintainer": false,
+              "sla_breach": true,
+              "sla_kind": "1st-review",
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            }
+          ]
+        }
+      ]
+    },
     {
       "idx": 1,
       "name": "We're blocking someone",
       "blurb": "Author did what we asked and is waiting on us. Longest-waiting first.",
-      "count": 5,
-      "mins": 100,
+      "count": 6,
+      "mins": 120,
       "states": [
+        {
+          "name": "needs-re-review",
+          "desc": "Author pushed changes after review feedback \u2014 needs re-review.",
+          "effort_min": 20,
+          "prs": [
+            {
+              "number": 259,
+              "title": "Add conformance tests for SEP-2243 HTTP Standardization",
+              "author": "mikekistler",
+              "url": "https://github.com/modelcontextprotocol/conformance/pull/259",
+              "state": "needs-re-review",
+              "reason": "author pushed after CHANGES_REQUESTED (0d waiting)",
+              "short_reason": "author pushed after CHANGES_REQUESTED (0d waiting)",
+              "age_days": 13.3,
+              "additions": 2496,
+              "deletions": 4,
+              "is_auth": false,
+              "is_maintainer": false,
+              "sla_breach": false,
+              "sla_kind": null,
+              "cluster_id": null,
+              "cluster_pick": false,
+              "cluster_pick_reason": ""
+            }
+          ]
+        },
         {
           "name": "maintainer-intake",
           "desc": "Maintainer-authored PR awaiting review from another maintainer.",
@@ -97,7 +167,7 @@
               "state": "maintainer-intake",
               "reason": "163d, no maintainer has looked yet",
               "short_reason": "163d, no maintainer has looked yet",
-              "age_days": 163.3,
+              "age_days": 163.4,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -116,7 +186,7 @@
               "state": "maintainer-intake",
               "reason": "120d, no maintainer has looked yet",
               "short_reason": "120d, no maintainer has looked yet",
-              "age_days": 120.3,
+              "age_days": 120.4,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -135,7 +205,7 @@
               "state": "maintainer-intake",
               "reason": "45d, no maintainer has looked yet",
               "short_reason": "45d, no maintainer has looked yet",
-              "age_days": 45.0,
+              "age_days": 45.1,
               "additions": 150,
               "deletions": 20,
               "is_auth": true,
@@ -173,7 +243,7 @@
               "state": "maintainer-intake",
               "reason": "1d, no maintainer has looked yet",
               "short_reason": "1d, no maintainer has looked yet",
-              "age_days": 1.0,
+              "age_days": 1.1,
               "additions": 104,
               "deletions": 0,
               "is_auth": false,
@@ -208,7 +278,7 @@
               "state": "needs-decision",
               "reason": "maintainer COMMENTED but took no stance",
               "short_reason": "maintainer COMMENTED but took no stance",
-              "age_days": 79.8,
+              "age_days": 79.9,
               "additions": 10,
               "deletions": 2,
               "is_auth": false,
@@ -319,7 +389,7 @@
               "state": "needs-first-review",
               "reason": "34d since open (SLA breach)",
               "short_reason": "34d",
-              "age_days": 34.4,
+              "age_days": 34.5,
               "additions": 609,
               "deletions": 1,
               "is_auth": false,
@@ -338,7 +408,7 @@
               "state": "needs-first-review",
               "reason": "32d since open (SLA breach)",
               "short_reason": "32d",
-              "age_days": 31.6,
+              "age_days": 31.7,
               "additions": 1210,
               "deletions": 0,
               "is_auth": false,
@@ -355,9 +425,9 @@
               "author": "Michito-Okai",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/228",
               "state": "needs-first-review",
-              "reason": "29d since open (SLA breach)",
-              "short_reason": "29d",
-              "age_days": 29.5,
+              "reason": "30d since open (SLA breach)",
+              "short_reason": "30d",
+              "age_days": 29.6,
               "additions": 63,
               "deletions": 5,
               "is_auth": true,
@@ -395,7 +465,7 @@
               "state": "needs-first-review",
               "reason": "28d since open (SLA breach)",
               "short_reason": "28d",
-              "age_days": 27.5,
+              "age_days": 27.6,
               "additions": 573,
               "deletions": 138,
               "is_auth": false,
@@ -414,7 +484,7 @@
               "state": "needs-first-review",
               "reason": "18d since open (SLA breach)",
               "short_reason": "18d",
-              "age_days": 18.3,
+              "age_days": 18.4,
               "additions": 86,
               "deletions": 0,
               "is_auth": false,
@@ -478,7 +548,7 @@
               "state": "community-reviewed",
               "reason": "36d, reviewed by nbarbettini (SLA breach)",
               "short_reason": "36d, reviewed by nbarbettini (SLA breach)",
-              "age_days": 35.7,
+              "age_days": 35.8,
               "additions": 18,
               "deletions": 4,
               "is_auth": false,
@@ -516,7 +586,7 @@
               "state": "community-reviewed",
               "reason": "3d, reviewed by tnorimat",
               "short_reason": "3d, reviewed by tnorimat",
-              "age_days": 2.6,
+              "age_days": 2.7,
               "additions": 722,
               "deletions": 23,
               "is_auth": true,
@@ -535,8 +605,8 @@
       "idx": 4,
       "name": "Hygiene",
       "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 2,
-      "mins": 15,
+      "count": 1,
+      "mins": 5,
       "states": [
         {
           "name": "stale-awaiting-author",
@@ -554,32 +624,6 @@
               "age_days": 94.6,
               "additions": 612,
               "deletions": 47,
-              "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            }
-          ]
-        },
-        {
-          "name": "approved-rotted",
-          "desc": "Was approved, now conflicting. Rebase or ask author.",
-          "effort_min": 10,
-          "prs": [
-            {
-              "number": 227,
-              "title": "feat: scenario option for authorization server test",
-              "author": "tnorimat",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/227",
-              "state": "approved-rotted",
-              "reason": "[llm] PR has a maintainer approval (pcarleton, 2026-04-21) and green CI, but it has been sitting unmerged for 29.5 days and the mergeable state is UNKNOWN \u2014 indicating likely merge conflicts have developed since approval.",
-              "short_reason": "[llm] PR has a maintainer approval (pcarleton, 2026-04-21) and green CI, but it has been sitting unmerged for 29.5 days and the mergeable state is UNKNOWN \u2014 indicating likely merge conflicts have developed since approval.",
-              "age_days": 29.5,
-              "additions": 216,
-              "deletions": 3,
               "is_auth": true,
               "is_maintainer": false,
               "sla_breach": false,
@@ -612,7 +656,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 169d old",
               "short_reason": "CI never ran, 169d old",
-              "age_days": 169.1,
+              "age_days": 169.2,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -631,50 +675,6 @@
   "bot_corner": [],
   "untriaged": [],
   "not_our_move": [
-    {
-      "name": "awaiting-author",
-      "desc": "Changes requested; waiting for author response.",
-      "prs": [
-        {
-          "number": 259,
-          "title": "Add conformance tests for SEP-2243 HTTP Standardization",
-          "author": "mikekistler",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/259",
-          "state": "awaiting-author",
-          "reason": "0d since feedback",
-          "short_reason": "0d since feedback",
-          "age_days": 13.2,
-          "additions": 2499,
-          "deletions": 4,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        },
-        {
-          "number": 270,
-          "title": "feat: add client conformance tests for SEP-2575",
-          "author": "anubhav756",
-          "url": "https://github.com/modelcontextprotocol/conformance/pull/270",
-          "state": "awaiting-author",
-          "reason": "1d since feedback",
-          "short_reason": "1d since feedback",
-          "age_days": 2.2,
-          "additions": 457,
-          "deletions": 0,
-          "is_auth": false,
-          "is_maintainer": false,
-          "sla_breach": false,
-          "sla_kind": null,
-          "cluster_id": null,
-          "cluster_pick": false,
-          "cluster_pick_reason": ""
-        }
-      ]
-    },
     {
       "name": "parked",
       "desc": "Maintainer draft >30d, intentionally shelved.",
@@ -720,6 +720,31 @@
       ]
     },
     {
+      "name": "awaiting-author",
+      "desc": "Changes requested; waiting for author response.",
+      "prs": [
+        {
+          "number": 270,
+          "title": "feat: add client conformance tests for SEP-2575",
+          "author": "anubhav756",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/270",
+          "state": "awaiting-author",
+          "reason": "1d since feedback",
+          "short_reason": "1d since feedback",
+          "age_days": 2.3,
+          "additions": 457,
+          "deletions": 0,
+          "is_auth": false,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": null,
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        }
+      ]
+    },
+    {
       "name": "draft-active",
       "desc": "Author is still working. Fresh draft.",
       "prs": [
@@ -731,7 +756,7 @@
           "state": "draft-active",
           "reason": "2d old",
           "short_reason": "2d old",
-          "age_days": 2.4,
+          "age_days": 2.5,
           "additions": 278,
           "deletions": 2,
           "is_auth": true,
@@ -747,16 +772,12 @@
   ],
   "clusters": [],
   "llm_cost": {
-    "total_usd": 0.1242,
-    "total_calls": 2,
+    "total_usd": 0.0271,
+    "total_calls": 1,
     "by_purpose": {
       "author-intent": {
         "count": 1,
-        "cost": 0.0272
-      },
-      "unknown-fallback": {
-        "count": 1,
-        "cost": 0.097
+        "cost": 0.0271
       }
     }
   }
