@@ -1,23 +1,15 @@
 {
   "repo": "conformance",
-  "lastUpdated": "2026-05-26T15:30:02.195222+00:00",
+  "lastUpdated": "2026-05-26T18:41:20.186706+00:00",
   "summary": {
-    "actionable_count": 27,
+    "actionable_count": 26,
     "auth_count": 11,
-    "maint_count": 6,
-    "effort_hours": 9.2,
+    "maint_count": 5,
+    "effort_hours": 9.6,
     "cluster_count": 0,
     "cluster_member_count": 0,
     "not_our_move_count": 3,
     "by_tier": [
-      {
-        "idx": 0,
-        "name": "Press a button",
-        "count": 1,
-        "auth": 1,
-        "maint": 0,
-        "mins": 1
-      },
       {
         "idx": 1,
         "name": "We're blocking someone",
@@ -35,37 +27,35 @@
         "mins": 435
       },
       {
-        "idx": 4,
-        "name": "Hygiene",
-        "count": 2,
-        "auth": 1,
-        "maint": 1,
-        "mins": 6
-      },
-      {
         "idx": 5,
         "name": "Close candidates",
         "count": 3,
         "auth": 2,
         "maint": 0,
         "mins": 3
+      },
+      {
+        "idx": -1,
+        "name": "untriaged",
+        "count": 2,
+        "auth": 2,
+        "maint": 0,
+        "mins": 30
       }
     ],
     "by_state": {
       "author-pinged-after-procedural": 1,
-      "ci-red-silent": 1,
       "community-reviewed": 3,
       "draft-active": 1,
       "maintainer-intake": 5,
       "needs-first-review": 12,
-      "needs-merge": 1,
       "parked": 2,
       "pre-ci-ghost": 3,
-      "stale-awaiting-author": 1
+      "unknown": 2
     },
     "sla": {
-      "first_review_7d_breach": 11,
-      "first_review_eligible": 16,
+      "first_review_7d_breach": 10,
+      "first_review_eligible": 15,
       "re_review_24h_breach": 1,
       "re_review_eligible": 1,
       "maint_24h_breach": 4,
@@ -73,45 +63,10 @@
       "actionable_target": 25,
       "actionable_over_target": true
     },
-    "actioned_7d": 5,
-    "actioned_30d": 18
+    "actioned_7d": 7,
+    "actioned_30d": 20
   },
   "tiers": [
-    {
-      "idx": 0,
-      "name": "Press a button",
-      "blurb": "Already approved or already decided \u2014 ready for action.",
-      "count": 1,
-      "mins": 1,
-      "states": [
-        {
-          "name": "needs-merge",
-          "desc": "Approved and CI-green \u2014 ready to merge.",
-          "effort_min": 1,
-          "prs": [
-            {
-              "number": 227,
-              "title": "feat: scenario option for authorization server test",
-              "author": "tnorimat",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/227",
-              "state": "needs-merge",
-              "reason": "approved 35d ago, green",
-              "short_reason": "approved 35d ago, green",
-              "age_days": 41.3,
-              "additions": 216,
-              "deletions": 3,
-              "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": true,
-              "sla_kind": "1st-review",
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            }
-          ]
-        }
-      ]
-    },
     {
       "idx": 1,
       "name": "We're blocking someone",
@@ -132,7 +87,7 @@
               "state": "author-pinged-after-procedural",
               "reason": "author pinged @pcarleton 14d ago, no response",
               "short_reason": "author pinged @pcarleton 14d ago",
-              "age_days": 30.1,
+              "age_days": 30.2,
               "additions": 86,
               "deletions": 0,
               "is_auth": false,
@@ -158,7 +113,7 @@
               "state": "maintainer-intake",
               "reason": "175d, no maintainer has looked yet",
               "short_reason": "175d, no maintainer has looked yet",
-              "age_days": 175.1,
+              "age_days": 175.2,
               "additions": 691,
               "deletions": 1,
               "is_auth": false,
@@ -177,7 +132,7 @@
               "state": "maintainer-intake",
               "reason": "132d, no maintainer has looked yet",
               "short_reason": "132d, no maintainer has looked yet",
-              "age_days": 132.1,
+              "age_days": 132.3,
               "additions": 346,
               "deletions": 1,
               "is_auth": true,
@@ -196,7 +151,7 @@
               "state": "maintainer-intake",
               "reason": "57d, no maintainer has looked yet",
               "short_reason": "57d, no maintainer has looked yet",
-              "age_days": 56.8,
+              "age_days": 56.9,
               "additions": 150,
               "deletions": 20,
               "is_auth": true,
@@ -215,7 +170,7 @@
               "state": "maintainer-intake",
               "reason": "34d, no maintainer has looked yet",
               "short_reason": "34d, no maintainer has looked yet",
-              "age_days": 33.7,
+              "age_days": 33.8,
               "additions": 461,
               "deletions": 0,
               "is_auth": false,
@@ -234,9 +189,9 @@
               "state": "maintainer-intake",
               "reason": "0d, no maintainer has looked yet",
               "short_reason": "0d, no maintainer has looked yet",
-              "age_days": 0.0,
-              "additions": 9436,
-              "deletions": 291,
+              "age_days": 0.2,
+              "additions": 9569,
+              "deletions": 324,
               "is_auth": false,
               "is_maintainer": true,
               "sla_breach": false,
@@ -269,7 +224,7 @@
               "state": "needs-first-review",
               "reason": "46d since open (SLA breach)",
               "short_reason": "46d",
-              "age_days": 46.2,
+              "age_days": 46.4,
               "additions": 609,
               "deletions": 1,
               "is_auth": false,
@@ -286,9 +241,9 @@
               "author": "alexdoroshevich",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/224",
               "state": "needs-first-review",
-              "reason": "43d since open (SLA breach)",
-              "short_reason": "43d",
-              "age_days": 43.4,
+              "reason": "44d since open (SLA breach)",
+              "short_reason": "44d",
+              "age_days": 43.6,
               "additions": 1210,
               "deletions": 0,
               "is_auth": false,
@@ -307,7 +262,7 @@
               "state": "needs-first-review",
               "reason": "41d since open (SLA breach)",
               "short_reason": "41d",
-              "age_days": 41.3,
+              "age_days": 41.4,
               "additions": 63,
               "deletions": 5,
               "is_auth": true,
@@ -326,7 +281,7 @@
               "state": "needs-first-review",
               "reason": "40d since open (SLA breach)",
               "short_reason": "40d",
-              "age_days": 39.6,
+              "age_days": 39.7,
               "additions": 138,
               "deletions": 17,
               "is_auth": true,
@@ -345,7 +300,7 @@
               "state": "needs-first-review",
               "reason": "39d since open (SLA breach)",
               "short_reason": "39d",
-              "age_days": 39.3,
+              "age_days": 39.5,
               "additions": 573,
               "deletions": 138,
               "is_auth": false,
@@ -364,7 +319,7 @@
               "state": "needs-first-review",
               "reason": "20d since open (SLA breach)",
               "short_reason": "20d",
-              "age_days": 20.4,
+              "age_days": 20.5,
               "additions": 7,
               "deletions": 7,
               "is_auth": false,
@@ -383,7 +338,7 @@
               "state": "needs-first-review",
               "reason": "20d since open (SLA breach)",
               "short_reason": "20d",
-              "age_days": 19.6,
+              "age_days": 19.7,
               "additions": 14,
               "deletions": 14,
               "is_auth": false,
@@ -402,7 +357,7 @@
               "state": "needs-first-review",
               "reason": "14d since open (SLA breach)",
               "short_reason": "14d",
-              "age_days": 14.2,
+              "age_days": 14.4,
               "additions": 1216,
               "deletions": 4,
               "is_auth": true,
@@ -421,7 +376,7 @@
               "state": "needs-first-review",
               "reason": "5d since open",
               "short_reason": "5d",
-              "age_days": 4.8,
+              "age_days": 4.9,
               "additions": 2,
               "deletions": 2,
               "is_auth": false,
@@ -440,7 +395,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.9,
+              "age_days": 3.0,
               "additions": 220,
               "deletions": 0,
               "is_auth": false,
@@ -459,7 +414,7 @@
               "state": "needs-first-review",
               "reason": "3d since open",
               "short_reason": "3d",
-              "age_days": 2.8,
+              "age_days": 3.0,
               "additions": 2,
               "deletions": 2,
               "is_auth": true,
@@ -478,7 +433,7 @@
               "state": "needs-first-review",
               "reason": "2d since open",
               "short_reason": "2d",
-              "age_days": 1.6,
+              "age_days": 1.7,
               "additions": 115,
               "deletions": 8,
               "is_auth": false,
@@ -504,7 +459,7 @@
               "state": "community-reviewed",
               "reason": "21d, reviewed by LucaButBoring (SLA breach)",
               "short_reason": "21d, reviewed by LucaButBoring (SLA breach)",
-              "age_days": 20.7,
+              "age_days": 20.8,
               "additions": 4520,
               "deletions": 2,
               "is_auth": false,
@@ -521,9 +476,9 @@
               "author": "Michito-Okai",
               "url": "https://github.com/modelcontextprotocol/conformance/pull/267",
               "state": "community-reviewed",
-              "reason": "14d, reviewed by tnorimat (SLA breach)",
-              "short_reason": "14d, reviewed by tnorimat (SLA breach)",
-              "age_days": 14.4,
+              "reason": "15d, reviewed by tnorimat (SLA breach)",
+              "short_reason": "15d, reviewed by tnorimat (SLA breach)",
+              "age_days": 14.6,
               "additions": 733,
               "deletions": 23,
               "is_auth": true,
@@ -542,72 +497,11 @@
               "state": "community-reviewed",
               "reason": "5d, reviewed by nbarbettini",
               "short_reason": "5d, reviewed by nbarbettini",
-              "age_days": 4.7,
+              "age_days": 4.9,
               "additions": 6,
               "deletions": 0,
               "is_auth": false,
               "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "idx": 4,
-      "name": "Hygiene",
-      "blurb": "Batchable procedural ops \u2014 pings, rebases, peer reviews.",
-      "count": 2,
-      "mins": 6,
-      "states": [
-        {
-          "name": "stale-awaiting-author",
-          "desc": "Changes requested over two weeks ago with no author response.",
-          "effort_min": 5,
-          "prs": [
-            {
-              "number": 139,
-              "title": "feat: add token refresh and rotation conformance scenarios",
-              "author": "jdmaturen",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/139",
-              "state": "stale-awaiting-author",
-              "reason": "102d since feedback, no response",
-              "short_reason": "102d since feedback",
-              "age_days": 106.4,
-              "additions": 612,
-              "deletions": 47,
-              "is_auth": true,
-              "is_maintainer": false,
-              "sla_breach": false,
-              "sla_kind": null,
-              "cluster_id": null,
-              "cluster_pick": false,
-              "cluster_pick_reason": ""
-            }
-          ]
-        },
-        {
-          "name": "ci-red-silent",
-          "desc": "CI failing, not yet flagged to the author.",
-          "effort_min": 1,
-          "prs": [
-            {
-              "number": 317,
-              "title": "Split draft-spec scenarios into their own suite",
-              "author": "pcarleton",
-              "url": "https://github.com/modelcontextprotocol/conformance/pull/317",
-              "state": "ci-red-silent",
-              "reason": "red CI 0d, nobody's mentioned it",
-              "short_reason": "red CI 0d",
-              "age_days": 0.1,
-              "additions": 117,
-              "deletions": 14,
-              "is_auth": false,
-              "is_maintainer": true,
               "sla_breach": false,
               "sla_kind": null,
               "cluster_id": null,
@@ -638,7 +532,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 181d old",
               "short_reason": "CI never ran, 181d old",
-              "age_days": 180.9,
+              "age_days": 181.1,
               "additions": 4101,
               "deletions": 9,
               "is_auth": true,
@@ -657,7 +551,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 96d old",
               "short_reason": "CI never ran, 96d old",
-              "age_days": 95.7,
+              "age_days": 95.8,
               "additions": 8122,
               "deletions": 2049,
               "is_auth": true,
@@ -676,7 +570,7 @@
               "state": "pre-ci-ghost",
               "reason": "CI never ran, 92d old",
               "short_reason": "CI never ran, 92d old",
-              "age_days": 91.6,
+              "age_days": 91.7,
               "additions": 10,
               "deletions": 2,
               "is_auth": false,
@@ -693,7 +587,52 @@
     }
   ],
   "bot_corner": [],
-  "untriaged": [],
+  "untriaged": [
+    {
+      "name": "unknown",
+      "desc": "Classifier couldn't decide. Investigate.",
+      "prs": [
+        {
+          "number": 139,
+          "title": "feat: add token refresh and rotation conformance scenarios",
+          "author": "jdmaturen",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/139",
+          "state": "unknown",
+          "reason": "fetch failed: Command '['claude', '-p', \"A maintainer requested changes on a PR. The author replied.\\nClassify the author's reply as exactly one of: question, disagreement, promise, noise.\\n\\n- question: author is asking the reviewer to clarify (ball moves to maintainer)\\n- disagreement: author disputes the feedback, wants reconsideration (ball moves to maintainer)\\n- promise: author agrees, will fix (ball stays with author, clock resets)\\n- noise: nothing substantive (clock keeps running)\\n\\nReviewer feedback:\\nThis generally looks great, thanks for adding this.\\n\\nMy one big note is let's just do the rotation example.  I don't see a ton of value of a client that passes the first one but not the second one. Progress on making the client better can be gained by passing more checks out of the single scenario (e.g. pass the first set of checks, fail the 2nd one when they re-use the old token).\\n\\nReasons for fewer tests:\\n* less code to maintain & update\\n* these suites will often run in CI, in some cases on ev\\n\\nAuthor reply:\\nThat's great feedback. I'll update it. May be early next week behind a few other things. \\n\\nOutput ONLY the single word: question, disagreement, promise, or noise.\", '--model', 'sonnet', '--output-format', 'json']' returned non-zero exit status 1.",
+          "short_reason": "fetch failed: Command '['claude', '-p', \"A maintainer requested changes on a PR. The author replied.\\nClassify the author's reply as exactly one of: question, disagreement, promise, noise.\\n\\n- question: author is asking the reviewer to clarify (ball moves to maintainer)\\n- disagreement: author disputes the feedback, wants reconsideration (ball moves to maintainer)\\n- promise: author agrees, will fix (ball stays with author, clock resets)\\n- noise: nothing substantive (clock keeps running)\\n\\nReviewer feedback:\\nThis generally looks great, thanks for adding this.\\n\\nMy one big note is let's just do the rotation example.  I don't see a ton of value of a client that passes the first one but not the second one. Progress on making the client better can be gained by passing more checks out of the single scenario (e.g. pass the first set of checks, fail the 2nd one when they re-use the old token).\\n\\nReasons for fewer tests:\\n* less code to maintain & update\\n* these suites will often run in CI, in some cases on ev\\n\\nAuthor reply:\\nThat's great feedback. I'll update it. May be early next week behind a few other things. \\n\\nOutput ONLY the single word: question, disagreement, promise, or noise.\", '--model', 'sonnet', '--output-format', 'json']' returned non-zero exit status 1.",
+          "age_days": 106.5,
+          "additions": 612,
+          "deletions": 47,
+          "is_auth": true,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": null,
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        },
+        {
+          "number": 227,
+          "title": "feat: scenario option for authorization server test",
+          "author": "tnorimat",
+          "url": "https://github.com/modelcontextprotocol/conformance/pull/227",
+          "state": "unknown",
+          "reason": "[llm] call failed",
+          "short_reason": "[llm] call failed",
+          "age_days": 41.5,
+          "additions": 216,
+          "deletions": 3,
+          "is_auth": true,
+          "is_maintainer": false,
+          "sla_breach": false,
+          "sla_kind": null,
+          "cluster_id": null,
+          "cluster_pick": false,
+          "cluster_pick_reason": ""
+        }
+      ]
+    }
+  ],
   "not_our_move": [
     {
       "name": "parked",
@@ -707,7 +646,7 @@
           "state": "parked",
           "reason": "maintainer draft, 132d",
           "short_reason": "maintainer draft, 132d",
-          "age_days": 132.2,
+          "age_days": 132.3,
           "additions": 1756,
           "deletions": 55,
           "is_auth": true,
@@ -726,7 +665,7 @@
           "state": "parked",
           "reason": "maintainer draft, 110d",
           "short_reason": "maintainer draft, 110d",
-          "age_days": 110.0,
+          "age_days": 110.1,
           "additions": 1607,
           "deletions": 19,
           "is_auth": false,
@@ -751,7 +690,7 @@
           "state": "draft-active",
           "reason": "4d old",
           "short_reason": "4d old",
-          "age_days": 3.5,
+          "age_days": 3.7,
           "additions": 679,
           "deletions": 0,
           "is_auth": false,
@@ -767,13 +706,8 @@
   ],
   "clusters": [],
   "llm_cost": {
-    "total_usd": 0.028,
-    "total_calls": 1,
-    "by_purpose": {
-      "author-intent": {
-        "count": 1,
-        "cost": 0.028
-      }
-    }
+    "total_usd": 0,
+    "total_calls": 0,
+    "by_purpose": {}
   }
 }
