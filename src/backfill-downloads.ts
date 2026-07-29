@@ -3,6 +3,11 @@
  * for npm) from registry range APIs. NuGet has no history API and is skipped.
  *
  * Run: npm run build && npm run backfill
+ *
+ * --gap-only: only create download-only stubs for dates inside the existing
+ * snapshot range that have no file (e.g. after a CI outage). Each stub's
+ * `total` is carried forward from the nearest earlier stored snapshot.
+ * Existing snapshots are never rewritten in this mode.
  */
 
 import { readdir, readFile, writeFile } from 'fs/promises';
@@ -27,7 +32,8 @@ function rollingWeekly(daily: Map<string, number>): Map<string, number> {
 async function fetchHistory(
   pkg: PackageConfig,
   earliest: string,
-  today: string
+  today: string,
+  wantCumulative = true
 ): Promise<{ daily: Map<string, number>; cumulative?: Map<string, number>; weekly?: Map<string, number> }> {
   switch (pkg.registry) {
     case 'npm': {
@@ -37,6 +43,7 @@ async function fetchHistory(
       const lead = new Date(new Date(earliest).getTime() - 6 * 86400000).toISOString().split('T')[0];
       const daily = await fetchNpmRange(pkg.name, lead, today);
       const weekly = rollingWeekly(daily);
+      if (!wantCumulative) return { daily, weekly };
       let running = 0;
       const cumulative = new Map<string, number>();
       for (const date of [...daily.keys()].sort()) {
@@ -75,6 +82,7 @@ async function main() {
   // earliest existing snapshot, so the download charts show full history even
   // if the tracker started recently.
   const sinceArg = process.argv.find((a) => a.startsWith('--since='))?.split('=')[1];
+  const gapOnly = process.argv.includes('--gap-only');
 
   for (const repo of config.repositories) {
     if (!repo.package) continue;
@@ -90,11 +98,18 @@ async function main() {
     if (files.length === 0) continue;
 
     const earliestExisting = files[0].replace('.json', '');
-    const earliest = sinceArg && sinceArg < earliestExisting ? sinceArg : earliestExisting;
+    const earliest = !gapOnly && sinceArg && sinceArg < earliestExisting ? sinceArg : earliestExisting;
     console.log(`[${repo.repo}] fetching ${repo.package.registry} history ${earliest}..${today}`);
 
-    const { daily, cumulative, weekly } = await fetchHistory(repo.package, earliest, today);
+    const { daily, cumulative, weekly } = await fetchHistory(repo.package, earliest, today, !gapOnly);
     const existingDates = new Set(files.map((f) => f.replace('.json', '')));
+
+    // Gap mode carries the running total forward from the nearest earlier
+    // stored snapshot so stubs continue the true all-time series instead of a
+    // registry-window sum. `through` is the last date already counted (npm
+    // stores total_through, which lags the snapshot date).
+    let running: number | undefined;
+    let through: string | undefined;
 
     // Trailing zeros from the range API mean "not posted yet" (npm lags ~1-2
     // days). Trim them so we don't plot a cliff-dive while waiting.
@@ -114,14 +129,32 @@ async function main() {
       const path = join(snapDir, `${date}.json`);
       let snap: Partial<DailySnapshot>;
       if (existingDates.has(date)) {
+        if (gapOnly) {
+          const existing: DailySnapshot = JSON.parse(await readFile(path, 'utf-8'));
+          if (existing.downloads?.total !== undefined) {
+            running = existing.downloads.total;
+            through = existing.downloads.total_through ?? date;
+          }
+          continue;
+        }
         snap = JSON.parse(await readFile(path, 'utf-8'));
         patched++;
       } else {
+        if (gapOnly && running === undefined) continue; // nothing to anchor on yet
         snap = { date };
         created++;
       }
       snap.downloads = { daily: dl };
-      const cum = cumulative?.get(date);
+      let cum: number | undefined;
+      if (gapOnly && running !== undefined && through !== undefined) {
+        for (const d of sortedDates) {
+          if (d > through && d <= date) running += daily.get(d) ?? 0;
+        }
+        through = date;
+        cum = running;
+      } else if (!gapOnly) {
+        cum = cumulative?.get(date);
+      }
       if (cum !== undefined) {
         snap.downloads.total = cum;
         snap.downloads.total_through = date;
