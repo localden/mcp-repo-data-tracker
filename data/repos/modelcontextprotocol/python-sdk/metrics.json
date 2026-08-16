@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-16T03:03:51.174Z",
+  "timestamp": "2026-08-16T04:39:28.609Z",
   "repository": {
-    "stars": 24015,
+    "stars": 24016,
     "forks": 3790
   },
   "issues": {
@@ -208,7 +208,7 @@
         "title": "Lazy HTTP connections seem to make error handling difficult.",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1393",
         "createdAt": "2025-09-24T03:58:14Z",
-        "daysWaiting": 325,
+        "daysWaiting": 326,
         "labels": [
           "enhancement",
           "P2",
@@ -700,7 +700,7 @@
         "title": "Expose `schema_generator` on `FastMCP` for tool params schema generation",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2582",
         "createdAt": "2026-05-13T03:48:30Z",
-        "daysWaiting": 94,
+        "daysWaiting": 95,
         "labels": [
           "enhancement",
           "P3",
@@ -823,7 +823,7 @@
         "title": "ClientSession receive loop swallows callback exceptions, replying \"Invalid request parameters\" to the server instead of propagating to the call_tool awaiter",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2673",
         "createdAt": "2026-05-24T03:45:45Z",
-        "daysWaiting": 83,
+        "daysWaiting": 84,
         "labels": [
           "enhancement",
           "P3",
@@ -1211,7 +1211,7 @@
         "title": "[v2] JSON-RPC error responses leave client OpenTelemetry spans UNSET",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3174",
         "createdAt": "2026-07-26T04:29:12Z",
-        "daysWaiting": 20,
+        "daysWaiting": 21,
         "labels": [
           "bug",
           "needs confirmation",
@@ -1527,10 +1527,11 @@
     ],
     "by_label": {
       "bug": 96,
+      "improves spec compliance": 8,
+      "ready for work": 59,
+      "P2": 90,
       "P3": 49,
       "needs confirmation": 26,
-      "P2": 90,
-      "ready for work": 59,
       "enhancement": 73,
       "needs decision": 43,
       "needs repro": 4,
@@ -1541,7 +1542,6 @@
       "documentation": 6,
       "spec-2026-07-28": 1,
       "pending SEP approval": 3,
-      "improves spec compliance": 8,
       "question": 2,
       "fix proposed": 16,
       "good first issue": 6,
@@ -1563,9 +1563,9 @@
     },
     "label_coverage_pct": 99.5,
     "unlabeled_count": 1,
-    "stale_30d": 102,
-    "stale_60d": 86,
-    "stale_90d": 62,
+    "stale_30d": 101,
+    "stale_60d": 85,
+    "stale_90d": 61,
     "reopen_rate": 1
   },
   "pulls": {
@@ -1573,8 +1573,8 @@
     "merged_7d": 4,
     "merged_30d": 41,
     "merged_90d": 193,
-    "opened_7d": 27,
-    "opened_30d": 145,
+    "opened_7d": 26,
+    "opened_30d": 143,
     "opened_90d": 548,
     "closed_not_merged_90d": 402,
     "draft_count": 36,
@@ -1679,7 +1679,7 @@
         "title": "fix: Fix logic that determines standard resource vs. resource template to account for context param (#1635)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1666",
         "createdAt": "2025-11-25T03:17:24Z",
-        "daysWaiting": 263,
+        "daysWaiting": 264,
         "labels": [
           "bug",
           "breaking change",
@@ -1763,7 +1763,7 @@
         "title": "fix: auto-reinitialize client session on HTTP 404",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1818",
         "createdAt": "2025-12-31T03:20:15Z",
-        "daysWaiting": 227,
+        "daysWaiting": 228,
         "labels": [
           "bug",
           "improves spec compliance",
@@ -1853,7 +1853,7 @@
         "title": "fix: skip JSON pre-parsing for str union annotations in pre_parse_json",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2032",
         "createdAt": "2026-02-11T04:03:00Z",
-        "daysWaiting": 185,
+        "daysWaiting": 186,
         "labels": [
           "bug",
           "P2"
@@ -2176,7 +2176,7 @@
         "title": "fix: silence respond() when concurrent cancellation already completed request",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2418",
         "createdAt": "2026-04-10T03:03:54Z",
-        "daysWaiting": 127,
+        "daysWaiting": 128,
         "labels": [],
         "isDraft": false,
         "additions": 108,
@@ -2202,7 +2202,7 @@
         "title": "fix: invalidate tool schema cache on ToolListChangedNotification; paginate all pages in _validate_tool_result",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2441",
         "createdAt": "2026-04-14T04:34:21Z",
-        "daysWaiting": 123,
+        "daysWaiting": 124,
         "labels": [],
         "isDraft": false,
         "additions": 121,
@@ -2523,6 +2523,19 @@
         "author": "MukundaKatta"
       },
       {
+        "number": 2623,
+        "title": "fix: detect context on callable tool instances",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2623",
+        "createdAt": "2026-05-17T03:47:21Z",
+        "daysWaiting": 91,
+        "labels": [],
+        "isDraft": false,
+        "additions": 26,
+        "deletions": 1,
+        "reviewCount": 1,
+        "author": "pragnyanramtha"
+      },
+      {
         "number": 2616,
         "title": "[v1.x] fix(auth): request JSON token responses",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2616",
@@ -2547,19 +2560,6 @@
         "deletions": 2,
         "reviewCount": 0,
         "author": "FU-max-boop"
-      },
-      {
-        "number": 2623,
-        "title": "fix: detect context on callable tool instances",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2623",
-        "createdAt": "2026-05-17T03:47:21Z",
-        "daysWaiting": 90,
-        "labels": [],
-        "isDraft": false,
-        "additions": 26,
-        "deletions": 1,
-        "reviewCount": 1,
-        "author": "pragnyanramtha"
       },
       {
         "number": 2633,
@@ -2813,7 +2813,7 @@
         "title": "fix(auth): normalize redirect URI URL subclasses",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2808",
         "createdAt": "2026-06-07T04:19:36Z",
-        "daysWaiting": 69,
+        "daysWaiting": 70,
         "labels": [],
         "isDraft": false,
         "additions": 38,
@@ -3112,7 +3112,7 @@
         "title": "fix(dispatcher): reject duplicate in-flight request ids",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3064",
         "createdAt": "2026-07-05T03:24:13Z",
-        "daysWaiting": 41,
+        "daysWaiting": 42,
         "labels": [],
         "isDraft": false,
         "additions": 110,
@@ -3268,7 +3268,7 @@
         "title": "fix(server): forward tool args under the real parameter name, not the…",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3119",
         "createdAt": "2026-07-17T04:13:47Z",
-        "daysWaiting": 29,
+        "daysWaiting": 30,
         "labels": [],
         "isDraft": true,
         "additions": 43,
@@ -3281,7 +3281,7 @@
         "title": "fix(server): generate tool output schema in serialization mode",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3118",
         "createdAt": "2026-07-17T03:53:10Z",
-        "daysWaiting": 29,
+        "daysWaiting": 30,
         "labels": [],
         "isDraft": false,
         "additions": 78,
@@ -3654,6 +3654,19 @@
         "author": "jstar0"
       },
       {
+        "number": 3259,
+        "title": "fix(auth): preserve root protected resource URI",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3259",
+        "createdAt": "2026-08-06T04:25:41Z",
+        "daysWaiting": 10,
+        "labels": [],
+        "isDraft": true,
+        "additions": 48,
+        "deletions": 4,
+        "reviewCount": 0,
+        "author": "daleselaji-dev"
+      },
+      {
         "number": 3258,
         "title": "fix(client): bound empty GET stream retries",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3258",
@@ -3664,6 +3677,19 @@
         "additions": 32,
         "deletions": 3,
         "reviewCount": 1,
+        "author": "daleselaji-dev"
+      },
+      {
+        "number": 3261,
+        "title": "fix(auth): preserve explicitly configured OAuth scopes",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3261",
+        "createdAt": "2026-08-06T04:37:12Z",
+        "daysWaiting": 10,
+        "labels": [],
+        "isDraft": true,
+        "additions": 68,
+        "deletions": 9,
+        "reviewCount": 0,
         "author": "daleselaji-dev"
       },
       {
@@ -3680,19 +3706,6 @@
         "author": "Hamjaster"
       },
       {
-        "number": 3259,
-        "title": "fix(auth): preserve root protected resource URI",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3259",
-        "createdAt": "2026-08-06T04:25:41Z",
-        "daysWaiting": 9,
-        "labels": [],
-        "isDraft": true,
-        "additions": 48,
-        "deletions": 4,
-        "reviewCount": 0,
-        "author": "daleselaji-dev"
-      },
-      {
         "number": 3262,
         "title": "fix(shared): make UrlElicitationRequiredError pickle-safe",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3262",
@@ -3704,19 +3717,6 @@
         "deletions": 1,
         "reviewCount": 1,
         "author": "ulofiai"
-      },
-      {
-        "number": 3261,
-        "title": "fix(auth): preserve explicitly configured OAuth scopes",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3261",
-        "createdAt": "2026-08-06T04:37:12Z",
-        "daysWaiting": 9,
-        "labels": [],
-        "isDraft": true,
-        "additions": 68,
-        "deletions": 9,
-        "reviewCount": 0,
-        "author": "daleselaji-dev"
       },
       {
         "number": 3268,
@@ -4043,8 +4043,8 @@
   "contributors": {
     "total_known": 912,
     "active_30d": 91,
-    "first_time_30d": 84,
-    "retention_rate_pct": 8.1,
+    "first_time_30d": 83,
+    "retention_rate_pct": 9.5,
     "churned_30d": 57,
     "commits_per_week_avg": 14,
     "commits_per_week_trend": [
@@ -5229,9 +5229,9 @@
     "top_n": 20
   },
   "downloads": {
-    "daily": 1130829,
-    "last_week": 81247293,
-    "last_month": 338462519,
-    "total": 1933398878
+    "daily": 1762986,
+    "last_week": 81879450,
+    "last_month": 339094676,
+    "total": 1934031035
   }
 }
