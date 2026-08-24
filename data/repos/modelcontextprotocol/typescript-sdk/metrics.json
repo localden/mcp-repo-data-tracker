@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-08-24T12:42:24.143Z",
+  "timestamp": "2026-08-24T14:42:20.635Z",
   "repository": {
-    "stars": 13241,
-    "forks": 2113
+    "stars": 13242,
+    "forks": 2114
   },
   "issues": {
     "open_count": 290,
@@ -48,7 +48,7 @@
         "title": "Add ways for server processes to self-terminate when host is gone",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/208",
         "createdAt": "2025-03-19T14:17:08Z",
-        "daysWaiting": 522,
+        "daysWaiting": 523,
         "labels": [
           "enhancement",
           "P3",
@@ -89,7 +89,7 @@
         "title": "Allow receiving messages per stream in client sdk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/387",
         "createdAt": "2025-04-23T14:12:31Z",
-        "daysWaiting": 487,
+        "daysWaiting": 488,
         "labels": [
           "enhancement",
           "P3",
@@ -584,7 +584,7 @@
         "title": "Do not return and expose internal errors to the client as this is a security risk",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1429",
         "createdAt": "2026-01-28T14:30:53Z",
-        "daysWaiting": 207,
+        "daysWaiting": 208,
         "labels": [
           "bug",
           "ready for work",
@@ -704,7 +704,7 @@
         "title": "Hono Package is not under @modelcontextprotocol",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1639",
         "createdAt": "2026-03-06T13:11:01Z",
-        "daysWaiting": 170,
+        "daysWaiting": 171,
         "labels": [
           "bug",
           "potentially close"
@@ -922,13 +922,26 @@
         "title": "Client transport: HTTP 429 responses are not retried with Retry-After",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1892",
         "createdAt": "2026-04-15T13:39:41Z",
-        "daysWaiting": 130,
+        "daysWaiting": 131,
         "labels": [
           "enhancement",
           "P3",
           "needs decision"
         ],
         "commentCount": 0
+      },
+      {
+        "number": 1924,
+        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
+        "createdAt": "2026-04-17T14:15:23Z",
+        "daysWaiting": 129,
+        "labels": [
+          "enhancement",
+          "P3",
+          "needs decision"
+        ],
+        "commentCount": 2
       },
       {
         "number": 1914,
@@ -946,19 +959,6 @@
         "commentCount": 4
       },
       {
-        "number": 1924,
-        "title": "Optional install of HTTP/SSE transport deps (express, hono) for stdio-only servers",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1924",
-        "createdAt": "2026-04-17T14:15:23Z",
-        "daysWaiting": 128,
-        "labels": [
-          "enhancement",
-          "P3",
-          "needs decision"
-        ],
-        "commentCount": 2
-      },
-      {
         "number": 1928,
         "title": "McpServer: add tool lifecycle hooks (beforeToolCall, afterToolCall)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1928",
@@ -970,6 +970,19 @@
           "needs decision"
         ],
         "commentCount": 2
+      },
+      {
+        "number": 1946,
+        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
+        "createdAt": "2026-04-22T14:19:36Z",
+        "daysWaiting": 124,
+        "labels": [
+          "bug",
+          "needs repro",
+          "auth"
+        ],
+        "commentCount": 3
       },
       {
         "number": 1944,
@@ -999,19 +1012,6 @@
         "commentCount": 0
       },
       {
-        "number": 1946,
-        "title": "OAuth discovery does not fall back to well-known URI when 401 carries a non-Bearer WWW-Authenticate (e.g. Negotiate)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1946",
-        "createdAt": "2026-04-22T14:19:36Z",
-        "daysWaiting": 123,
-        "labels": [
-          "bug",
-          "needs repro",
-          "auth"
-        ],
-        "commentCount": 3
-      },
-      {
         "number": 1954,
         "title": "adaptOAuthProvider returns expired tokens without checking expiry, breaking long-running StreamableHTTP connections",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1954",
@@ -1030,7 +1030,7 @@
         "title": "SEP-1303: Input validation errors should return Tool Execution Errors, not Protocol Errors",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1956",
         "createdAt": "2026-04-24T13:12:58Z",
-        "daysWaiting": 121,
+        "daysWaiting": 122,
         "labels": [
           "potentially close"
         ],
@@ -1077,6 +1077,20 @@
         "commentCount": 2
       },
       {
+        "number": 1994,
+        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
+        "createdAt": "2026-04-30T14:07:04Z",
+        "daysWaiting": 116,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P2",
+          "fix proposed"
+        ],
+        "commentCount": 2
+      },
+      {
         "number": 2002,
         "title": "Bug: StdioServerTransport doesn't handle stdin close/end — causes zombie process accumulation",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2002",
@@ -1089,20 +1103,6 @@
           "fix proposed"
         ],
         "commentCount": 8
-      },
-      {
-        "number": 1994,
-        "title": "Stateless StreamableHTTPServerTransport: non-initialize requests return 500 with empty body when transport is reused (regression vs 1.24.3)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/1994",
-        "createdAt": "2026-04-30T14:07:04Z",
-        "daysWaiting": 115,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P2",
-          "fix proposed"
-        ],
-        "commentCount": 2
       },
       {
         "number": 2011,
@@ -1229,7 +1229,7 @@
         "title": "DEFAULT_INHERITED_ENV_VARS",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2037",
         "createdAt": "2026-05-09T14:37:26Z",
-        "daysWaiting": 106,
+        "daysWaiting": 107,
         "labels": [
           "bug",
           "ready for work",
@@ -1248,6 +1248,20 @@
           "potentially close"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 2076,
+        "title": "`resetTimeoutOnProgress` on low-level `request()` only works when `onprogress` is explicitly provided",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2076",
+        "createdAt": "2026-05-12T13:57:04Z",
+        "daysWaiting": 104,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P2",
+          "fix proposed"
+        ],
+        "commentCount": 3
       },
       {
         "number": 2048,
@@ -1283,20 +1297,6 @@
           "needs maintainer"
         ],
         "commentCount": 2
-      },
-      {
-        "number": 2076,
-        "title": "`resetTimeoutOnProgress` on low-level `request()` only works when `onprogress` is explicitly provided",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2076",
-        "createdAt": "2026-05-12T13:57:04Z",
-        "daysWaiting": 103,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P2",
-          "fix proposed"
-        ],
-        "commentCount": 3
       },
       {
         "number": 2077,
@@ -1441,6 +1441,20 @@
         "commentCount": 2
       },
       {
+        "number": 2145,
+        "title": "tools/list returns empty inputSchema for ZodEffects-wrapped schemas (Zod .superRefine / .refine / .transform / .pipe)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2145",
+        "createdAt": "2026-05-22T13:26:05Z",
+        "daysWaiting": 94,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P2",
+          "fix proposed"
+        ],
+        "commentCount": 5
+      },
+      {
         "number": 2143,
         "title": "@modelcontextprotocol/client 2.0.0-alpha.2 is missing peer dependency declaration for @cfworker/json-schema",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2143",
@@ -1451,20 +1465,6 @@
           "potentially close"
         ],
         "commentCount": 3
-      },
-      {
-        "number": 2145,
-        "title": "tools/list returns empty inputSchema for ZodEffects-wrapped schemas (Zod .superRefine / .refine / .transform / .pipe)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2145",
-        "createdAt": "2026-05-22T13:26:05Z",
-        "daysWaiting": 93,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P2",
-          "fix proposed"
-        ],
-        "commentCount": 5
       },
       {
         "number": 2146,
@@ -1505,6 +1505,20 @@
         "commentCount": 3
       },
       {
+        "number": 2165,
+        "title": "AbortSignal cancellation throws `SdkErrorCode.RequestTimeout` instead of a distinct abort error",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2165",
+        "createdAt": "2026-05-28T12:47:07Z",
+        "daysWaiting": 88,
+        "labels": [
+          "bug",
+          "good first issue",
+          "P2",
+          "fix proposed"
+        ],
+        "commentCount": 4
+      },
+      {
         "number": 2162,
         "title": "invalid argument should throw protocol error, rather than tool execution error",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2162",
@@ -1517,25 +1531,11 @@
         "commentCount": 2
       },
       {
-        "number": 2165,
-        "title": "AbortSignal cancellation throws `SdkErrorCode.RequestTimeout` instead of a distinct abort error",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2165",
-        "createdAt": "2026-05-28T12:47:07Z",
-        "daysWaiting": 87,
-        "labels": [
-          "bug",
-          "good first issue",
-          "P2",
-          "fix proposed"
-        ],
-        "commentCount": 4
-      },
-      {
         "number": 2166,
         "title": "`UriTemplate.match()` returns `null` for multi-variable path expressions like `{userId,format}`",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2166",
         "createdAt": "2026-05-28T12:47:53Z",
-        "daysWaiting": 87,
+        "daysWaiting": 88,
         "labels": [
           "bug",
           "ready for work",
@@ -1642,7 +1642,7 @@
         "title": "Step-up authorization (403 insufficient_scope) dead-ends with SdkHttpError when a refresh_token is present",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2255",
         "createdAt": "2026-06-05T13:26:03Z",
-        "daysWaiting": 79,
+        "daysWaiting": 80,
         "labels": [
           "bug",
           "auth",
@@ -1722,7 +1722,7 @@
         "title": "zod v4: toJSONSchema options are hardcoded — z.date() breaks tools/list; output schemas advertise required/closed shapes the raw structuredContent can't satisfy",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2464",
         "createdAt": "2026-07-08T13:28:05Z",
-        "daysWaiting": 46,
+        "daysWaiting": 47,
         "labels": [
           "bug",
           "ready for work",
@@ -2098,7 +2098,7 @@
         "title": "Client.listTools() corrupts its cached tool metadata when an output schema fails to compile",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2614",
         "createdAt": "2026-08-04T14:40:01Z",
-        "daysWaiting": 19,
+        "daysWaiting": 20,
         "labels": [
           "bug",
           "ready for work",
@@ -2132,6 +2132,20 @@
         "commentCount": 0
       },
       {
+        "number": 2622,
+        "title": "McpServer constructor capabilities.tools.listChanged is silently overridden by setToolRequestHandlers()",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2622",
+        "createdAt": "2026-08-07T14:23:44Z",
+        "daysWaiting": 17,
+        "labels": [
+          "bug",
+          "ready for work",
+          "P3",
+          "v1"
+        ],
+        "commentCount": 1
+      },
+      {
         "number": 2623,
         "title": "oauthMetadataResponse requires a full AS metadata document to read one field from it",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2623",
@@ -2148,25 +2162,11 @@
         "commentCount": 0
       },
       {
-        "number": 2622,
-        "title": "McpServer constructor capabilities.tools.listChanged is silently overridden by setToolRequestHandlers()",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2622",
-        "createdAt": "2026-08-07T14:23:44Z",
-        "daysWaiting": 16,
-        "labels": [
-          "bug",
-          "ready for work",
-          "P3",
-          "v1"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 2627,
         "title": "Docs: passing z.object() as inputSchema on v1 fails silently (empty schema) or cryptically (tools/list crash) — not covered in troubleshooting or migration guide",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2627",
         "createdAt": "2026-08-09T14:04:19Z",
-        "daysWaiting": 14,
+        "daysWaiting": 15,
         "labels": [
           "documentation",
           "enhancement",
@@ -2284,6 +2284,21 @@
         "commentCount": 0
       },
       {
+        "number": 2657,
+        "title": "[v2] classifyNetworkError passes { cause } into SdkError's data slot, so the underlying network error never reaches Error.cause",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2657",
+        "createdAt": "2026-08-13T14:40:07Z",
+        "daysWaiting": 11,
+        "labels": [
+          "bug",
+          "good first issue",
+          "P2",
+          "v2",
+          "spec-2026-07-28"
+        ],
+        "commentCount": 1
+      },
+      {
         "number": 2656,
         "title": "tools/call has no path to a protocol-level \"Server errors\" response, even for unhandled exceptions",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2656",
@@ -2294,21 +2309,6 @@
           "v2",
           "needs design",
           "v1"
-        ],
-        "commentCount": 1
-      },
-      {
-        "number": 2657,
-        "title": "[v2] classifyNetworkError passes { cause } into SdkError's data slot, so the underlying network error never reaches Error.cause",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2657",
-        "createdAt": "2026-08-13T14:40:07Z",
-        "daysWaiting": 10,
-        "labels": [
-          "bug",
-          "good first issue",
-          "P2",
-          "v2",
-          "spec-2026-07-28"
         ],
         "commentCount": 1
       },
@@ -2439,18 +2439,6 @@
         "commentCount": 0
       },
       {
-        "number": 2705,
-        "title": "registerTool with zod raw shape: refine/superRefine/transform are silently dropped from validation",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2705",
-        "createdAt": "2026-08-23T17:32:34Z",
-        "daysWaiting": 0,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 2704,
         "title": "Stateless StreamableHTTPServerTransport: per-request requirement is invisible through the Node wrapper (500 with empty body)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2704",
@@ -2461,18 +2449,30 @@
           "v1"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 2705,
+        "title": "registerTool with zod raw shape: refine/superRefine/transform are silently dropped from validation",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/issues/2705",
+        "createdAt": "2026-08-23T17:32:34Z",
+        "daysWaiting": 0,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 1
       }
     ],
     "by_label": {
+      "v2": 94,
+      "v1": 46,
       "needs maintainer": 5,
       "enhancement": 107,
       "P3": 88,
       "needs decision": 71,
       "auth": 45,
-      "v2": 94,
       "documentation": 13,
       "good first issue": 9,
-      "v1": 46,
       "bug": 154,
       "P2": 114,
       "spec-2026-07-28": 14,
@@ -2509,13 +2509,13 @@
     "reopen_rate": 1
   },
   "pulls": {
-    "open_count": 285,
+    "open_count": 286,
     "merged_7d": 4,
     "merged_30d": 18,
     "merged_90d": 194,
-    "opened_7d": 19,
-    "opened_30d": 107,
-    "opened_90d": 426,
+    "opened_7d": 20,
+    "opened_30d": 108,
+    "opened_90d": 427,
     "closed_not_merged_90d": 152,
     "draft_count": 42,
     "without_review_24h": 202,
@@ -2565,7 +2565,7 @@
         "title": "feat(server): add request-time OAuth scope challenges",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1624",
         "createdAt": "2026-03-04T13:10:38Z",
-        "daysWaiting": 172,
+        "daysWaiting": 173,
         "labels": [],
         "isDraft": false,
         "additions": 697,
@@ -2788,6 +2788,19 @@
         "author": "bokelley"
       },
       {
+        "number": 1948,
+        "title": "fix: respect disabled listChanged capabilities on v1.x",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1948",
+        "createdAt": "2026-04-23T12:51:58Z",
+        "daysWaiting": 123,
+        "labels": [],
+        "isDraft": false,
+        "additions": 221,
+        "deletions": 9,
+        "reviewCount": 0,
+        "author": "paulelliotco"
+      },
+      {
         "number": 1951,
         "title": "fix(client): preserve resource_metadata URL across non-Bearer WWW-Authenticate challenges",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1951",
@@ -2851,19 +2864,6 @@
         "deletions": 25,
         "reviewCount": 0,
         "author": "Zelys-DFKH"
-      },
-      {
-        "number": 1948,
-        "title": "fix: respect disabled listChanged capabilities on v1.x",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/1948",
-        "createdAt": "2026-04-23T12:51:58Z",
-        "daysWaiting": 122,
-        "labels": [],
-        "isDraft": false,
-        "additions": 221,
-        "deletions": 9,
-        "reviewCount": 0,
-        "author": "paulelliotco"
       },
       {
         "number": 1958,
@@ -3403,7 +3403,7 @@
         "title": "fix(client): add missing Windows env vars to DEFAULT_INHERITED_ENV_VARS",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2043",
         "createdAt": "2026-05-11T13:55:48Z",
-        "daysWaiting": 104,
+        "daysWaiting": 105,
         "labels": [],
         "isDraft": false,
         "additions": 42,
@@ -3919,6 +3919,19 @@
         "author": "FU-max-boop"
       },
       {
+        "number": 2204,
+        "title": "fix: treat parsedBody = null as no pre-parsed body (v1.x)",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2204",
+        "createdAt": "2026-05-29T13:01:17Z",
+        "daysWaiting": 87,
+        "labels": [],
+        "isDraft": false,
+        "additions": 47,
+        "deletions": 1,
+        "reviewCount": 0,
+        "author": "aicayzer"
+      },
+      {
         "number": 2178,
         "title": "fix(client): send MCP standard POST headers",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2178",
@@ -3956,19 +3969,6 @@
         "deletions": 0,
         "reviewCount": 0,
         "author": "jstar0"
-      },
-      {
-        "number": 2204,
-        "title": "fix: treat parsedBody = null as no pre-parsed body (v1.x)",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2204",
-        "createdAt": "2026-05-29T13:01:17Z",
-        "daysWaiting": 86,
-        "labels": [],
-        "isDraft": false,
-        "additions": 47,
-        "deletions": 1,
-        "reviewCount": 0,
-        "author": "aicayzer"
       },
       {
         "number": 2215,
@@ -4095,7 +4095,7 @@
         "title": "fix(client): fire onerror only once when the standalone GET stream fails",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2418",
         "createdAt": "2026-07-02T14:19:43Z",
-        "daysWaiting": 52,
+        "daysWaiting": 53,
         "labels": [
           "v2"
         ],
@@ -4170,7 +4170,7 @@
         "title": "fix: type registerTool output from outputSchema",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2438",
         "createdAt": "2026-07-06T14:36:32Z",
-        "daysWaiting": 48,
+        "daysWaiting": 49,
         "labels": [
           "v2"
         ],
@@ -4335,7 +4335,7 @@
         "title": "fix: stop shipping declaration source maps that reference unshipped src/",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2495",
         "createdAt": "2026-07-14T14:04:42Z",
-        "daysWaiting": 40,
+        "daysWaiting": 41,
         "labels": [
           "v2"
         ],
@@ -4350,7 +4350,7 @@
         "title": "fix(server): close StdioServerTransport when stdin ends or closes",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2494",
         "createdAt": "2026-07-14T13:56:06Z",
-        "daysWaiting": 40,
+        "daysWaiting": 41,
         "labels": [
           "v2"
         ],
@@ -4365,7 +4365,7 @@
         "title": "docs: add fastify middleware to top-level README listing",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2497",
         "createdAt": "2026-07-14T14:34:48Z",
-        "daysWaiting": 40,
+        "daysWaiting": 41,
         "labels": [
           "v2"
         ],
@@ -4410,7 +4410,7 @@
         "title": "fix(packaging): exclude examples from v1 package artifacts",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2506",
         "createdAt": "2026-07-16T14:13:39Z",
-        "daysWaiting": 38,
+        "daysWaiting": 39,
         "labels": [
           "v1"
         ],
@@ -4603,6 +4603,21 @@
         "author": "tylergibbs1"
       },
       {
+        "number": 2546,
+        "title": "docs: validate input-required wipe-cache responses",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2546",
+        "createdAt": "2026-07-24T14:17:57Z",
+        "daysWaiting": 31,
+        "labels": [
+          "v2"
+        ],
+        "isDraft": false,
+        "additions": 45,
+        "deletions": 26,
+        "reviewCount": 0,
+        "author": "mturac"
+      },
+      {
         "number": 2540,
         "title": "fix(stdio): release ReadBuffer backing after final byte",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2540",
@@ -4631,21 +4646,6 @@
         "deletions": 127,
         "reviewCount": 2,
         "author": "GhagSagar23"
-      },
-      {
-        "number": 2546,
-        "title": "docs: validate input-required wipe-cache responses",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2546",
-        "createdAt": "2026-07-24T14:17:57Z",
-        "daysWaiting": 30,
-        "labels": [
-          "v2"
-        ],
-        "isDraft": false,
-        "additions": 45,
-        "deletions": 26,
-        "reviewCount": 0,
-        "author": "mturac"
       },
       {
         "number": 2550,
@@ -4697,7 +4697,7 @@
         "title": "fix(core-internal): make zod toJSONSchema conversion wire-truthful for tool schemas",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2556",
         "createdAt": "2026-07-27T13:25:46Z",
-        "daysWaiting": 27,
+        "daysWaiting": 28,
         "labels": [
           "v2"
         ],
@@ -4832,7 +4832,7 @@
         "title": "fix(server): fire onsessionclosed once when DELETEs overlap",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2583",
         "createdAt": "2026-07-30T13:42:33Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v2"
         ],
@@ -4847,7 +4847,7 @@
         "title": "fix(codemod): keep a file's leading comment block above rewritten imports",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2582",
         "createdAt": "2026-07-30T13:22:31Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v2"
         ],
@@ -4862,7 +4862,7 @@
         "title": "fix(server): settle in-flight JSON-mode requests on transport close",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2584",
         "createdAt": "2026-07-30T13:51:13Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v2"
         ],
@@ -4877,7 +4877,7 @@
         "title": "docs(core): note that the protocol version constants are legacy-era only",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2585",
         "createdAt": "2026-07-30T13:56:19Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v2"
         ],
@@ -4892,7 +4892,7 @@
         "title": "fix(protocol): ignore late progress for recently completed tokens",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2586",
         "createdAt": "2026-07-30T14:10:16Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v1"
         ],
@@ -4907,7 +4907,7 @@
         "title": "fix(server): fire onsessionclosed once when DELETEs overlap (v1.x)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2587",
         "createdAt": "2026-07-30T14:37:53Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v1"
         ],
@@ -5494,7 +5494,7 @@
         "title": "fix(server): reject DELETE requests in stateless streamable HTTP mode",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2669",
         "createdAt": "2026-08-16T14:21:19Z",
-        "daysWaiting": 7,
+        "daysWaiting": 8,
         "labels": [
           "v2"
         ],
@@ -5672,6 +5672,21 @@
         "author": "claude"
       },
       {
+        "number": 2688,
+        "title": "fix(client): serialize response cache invalidation",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2688",
+        "createdAt": "2026-08-19T14:21:55Z",
+        "daysWaiting": 5,
+        "labels": [
+          "v2"
+        ],
+        "isDraft": false,
+        "additions": 137,
+        "deletions": 22,
+        "reviewCount": 0,
+        "author": "tandede"
+      },
+      {
         "number": 2687,
         "title": "fix(core): merge request headers case-insensitively",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2687",
@@ -5700,21 +5715,6 @@
         "deletions": 8,
         "reviewCount": 0,
         "author": "mrpmohiburrahman"
-      },
-      {
-        "number": 2688,
-        "title": "fix(client): serialize response cache invalidation",
-        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2688",
-        "createdAt": "2026-08-19T14:21:55Z",
-        "daysWaiting": 4,
-        "labels": [
-          "v2"
-        ],
-        "isDraft": false,
-        "additions": 137,
-        "deletions": 22,
-        "reviewCount": 0,
-        "author": "tandede"
       },
       {
         "number": 2694,
@@ -5792,6 +5792,19 @@
         "author": "johnhenry"
       },
       {
+        "number": 2709,
+        "title": "docs: NodeStreamableHTTPServerTransport's own examples now show DNS rebinding protection",
+        "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2709",
+        "createdAt": "2026-08-24T13:08:50Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 64,
+        "deletions": 0,
+        "reviewCount": 0,
+        "author": "BerkantACUN"
+      },
+      {
         "number": 2708,
         "title": "fix(client): pin output schema for in-flight tool calls (v1.x)",
         "url": "https://github.com/modelcontextprotocol/typescript-sdk/pull/2708",
@@ -5851,34 +5864,34 @@
     "rejection_rate_pct": 43.9,
     "avg_reviews_per_pr": 4.7,
     "by_size": {
-      "small": 148,
+      "small": 149,
       "medium": 104,
       "large": 33
     }
   },
   "contributors": {
-    "total_known": 844,
-    "active_30d": 100,
-    "first_time_30d": 89,
+    "total_known": 845,
+    "active_30d": 101,
+    "first_time_30d": 90,
     "retention_rate_pct": 14.5,
     "churned_30d": 53,
-    "commits_per_week_avg": 9.3,
+    "commits_per_week_avg": 9.2,
     "commits_per_week_trend": [
-      8,
+      7,
       12,
       1,
-      7,
-      38,
-      18,
+      11,
+      36,
+      16,
       9,
-      3,
-      7,
+      5,
+      5,
       0,
       4,
       4
     ],
     "active_maintainers_30d": 6,
-    "active_community_30d": 94,
+    "active_community_30d": 95,
     "allContributors": [
       "010gvr",
       "02zonpattaya-debug",
@@ -5902,6 +5915,7 @@
       "Autumnal-Joy",
       "Azazi",
       "Bacra",
+      "BerkantACUN",
       "BestOwl",
       "Bortlesboat",
       "Br1an67",
@@ -6730,6 +6744,7 @@
       "Ahmad-Faraj",
       "AndresSaa",
       "Azazi",
+      "BerkantACUN",
       "Erli-ms",
       "FelixBaum",
       "Grit03",
