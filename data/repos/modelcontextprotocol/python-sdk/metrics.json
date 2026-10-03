@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-10-03T01:01:18.037Z",
+  "timestamp": "2026-10-03T07:35:33.586Z",
   "repository": {
-    "stars": 24461,
-    "forks": 4003
+    "stars": 24469,
+    "forks": 4005
   },
   "issues": {
-    "open_count": 244,
+    "open_count": 246,
     "closed_7d": 30,
     "closed_30d": 31,
     "closed_90d": 158,
-    "opened_7d": 15,
-    "opened_30d": 69,
-    "opened_90d": 154,
-    "without_response_24h": 162,
-    "without_response_7d": 156,
+    "opened_7d": 16,
+    "opened_30d": 70,
+    "opened_90d": 156,
+    "without_response_24h": 164,
+    "without_response_7d": 157,
     "without_response_30d": 112,
     "issues_without_maintainer_response": [
       {
@@ -73,7 +73,7 @@
         "title": "Don’t use shell=True in mcp dev subprocess on Windows (command injection risk)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1257",
         "createdAt": "2025-08-10T06:33:53Z",
-        "daysWaiting": 418,
+        "daysWaiting": 419,
         "labels": [
           "bug",
           "ready for work",
@@ -208,7 +208,7 @@
         "title": "Lazy HTTP connections seem to make error handling difficult.",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1393",
         "createdAt": "2025-09-24T03:58:14Z",
-        "daysWaiting": 373,
+        "daysWaiting": 374,
         "labels": [
           "enhancement",
           "P2",
@@ -248,7 +248,7 @@
         "title": "Client tool call hangs forever if server crashes or connection dies when using streamable-http",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1577",
         "createdAt": "2025-11-05T02:57:42Z",
-        "daysWaiting": 331,
+        "daysWaiting": 332,
         "labels": [
           "bug",
           "ready for work",
@@ -355,7 +355,7 @@
         "title": "client's `read_stream_writer` open after SSE disconnection hanging `.receive()`",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1811",
         "createdAt": "2025-12-21T04:41:07Z",
-        "daysWaiting": 285,
+        "daysWaiting": 286,
         "labels": [
           "bug",
           "ready for work",
@@ -435,7 +435,7 @@
         "title": "Add wildcard pattern support for `allowed_hosts` in transport security",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2141",
         "createdAt": "2026-02-25T05:08:50Z",
-        "daysWaiting": 219,
+        "daysWaiting": 220,
         "labels": [
           "needs confirmation",
           "enhancement"
@@ -487,7 +487,7 @@
         "title": "Don't override client_metadata.scopes if they are already set",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2317",
         "createdAt": "2026-03-20T01:33:23Z",
-        "daysWaiting": 196,
+        "daysWaiting": 197,
         "labels": [
           "auth",
           "enhancement",
@@ -658,7 +658,7 @@
         "title": "OAuth token refresh sends RFC 8707 resource parameter that Entra ID v2.0 rejects (AADSTS9010010)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2578",
         "createdAt": "2026-05-12T05:22:27Z",
-        "daysWaiting": 143,
+        "daysWaiting": 144,
         "labels": [
           "bug",
           "auth",
@@ -673,7 +673,7 @@
         "title": "Expose `schema_generator` on `FastMCP` for tool params schema generation",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2582",
         "createdAt": "2026-05-13T03:48:30Z",
-        "daysWaiting": 142,
+        "daysWaiting": 143,
         "labels": [
           "enhancement",
           "P3",
@@ -796,7 +796,7 @@
         "title": "ClientSession receive loop swallows callback exceptions, replying \"Invalid request parameters\" to the server instead of propagating to the call_tool awaiter",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2673",
         "createdAt": "2026-05-24T03:45:45Z",
-        "daysWaiting": 131,
+        "daysWaiting": 132,
         "labels": [
           "enhancement",
           "P3",
@@ -851,7 +851,7 @@
         "title": "streamable_http client does not send `Origin` header → rejected with 403 by spec-compliant servers (e.g. go-sdk `CrossOriginProtection`)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2727",
         "createdAt": "2026-05-30T02:44:31Z",
-        "daysWaiting": 125,
+        "daysWaiting": 126,
         "labels": [
           "enhancement",
           "P3",
@@ -956,7 +956,7 @@
         "title": "StreamableHTTP server accumulates CLOSE_WAIT sockets behind reverse proxy due to missing disconnect cleanup",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2958",
         "createdAt": "2026-06-24T06:53:25Z",
-        "daysWaiting": 100,
+        "daysWaiting": 101,
         "labels": [
           "bug",
           "needs confirmation",
@@ -1072,7 +1072,7 @@
         "title": "Field alias is published in the tool schema but forwarded as an invalid Python keyword",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3099",
         "createdAt": "2026-07-16T02:31:00Z",
-        "daysWaiting": 78,
+        "daysWaiting": 79,
         "labels": [
           "bug",
           "needs confirmation",
@@ -1081,6 +1081,21 @@
           "v1"
         ],
         "commentCount": 7
+      },
+      {
+        "number": 3100,
+        "title": "Generated output schema uses Pydantic's validation shape while structured output uses its serialization shape",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3100",
+        "createdAt": "2026-07-16T05:06:47Z",
+        "daysWaiting": 79,
+        "labels": [
+          "bug",
+          "needs confirmation",
+          "v2",
+          "P2",
+          "v1"
+        ],
+        "commentCount": 2
       },
       {
         "number": 3103,
@@ -1112,21 +1127,6 @@
           "v1"
         ],
         "commentCount": 5
-      },
-      {
-        "number": 3100,
-        "title": "Generated output schema uses Pydantic's validation shape while structured output uses its serialization shape",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3100",
-        "createdAt": "2026-07-16T05:06:47Z",
-        "daysWaiting": 78,
-        "labels": [
-          "bug",
-          "needs confirmation",
-          "v2",
-          "P2",
-          "v1"
-        ],
-        "commentCount": 2
       },
       {
         "number": 3136,
@@ -1325,6 +1325,21 @@
         "commentCount": 4
       },
       {
+        "number": 3307,
+        "title": "Streamable HTTP clean EOF reconnects can exceed the request retry budget",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3307",
+        "createdAt": "2026-08-14T06:25:43Z",
+        "daysWaiting": 50,
+        "labels": [
+          "bug",
+          "needs confirmation",
+          "v2",
+          "P2",
+          "v1"
+        ],
+        "commentCount": 5
+      },
+      {
         "number": 3305,
         "title": "A tool returning an empty list produces a CallToolResult with zero content blocks",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3305",
@@ -1340,19 +1355,28 @@
         "commentCount": 1
       },
       {
-        "number": 3307,
-        "title": "Streamable HTTP clean EOF reconnects can exceed the request retry budget",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3307",
-        "createdAt": "2026-08-14T06:25:43Z",
-        "daysWaiting": 49,
+        "number": 3333,
+        "title": "Add add_resource_template() to MCPServer",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3333",
+        "createdAt": "2026-08-19T02:10:55Z",
+        "daysWaiting": 45,
         "labels": [
-          "bug",
-          "needs confirmation",
           "v2",
-          "P2",
           "v1"
         ],
-        "commentCount": 5
+        "commentCount": 1
+      },
+      {
+        "number": 3335,
+        "title": "Windows MCP SSH stdio transport closes after initialize when PROGRAMDATA is missing from inherited environment",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3335",
+        "createdAt": "2026-08-19T06:17:17Z",
+        "daysWaiting": 45,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 2
       },
       {
         "number": 3330,
@@ -1367,22 +1391,10 @@
         "commentCount": 2
       },
       {
-        "number": 3333,
-        "title": "Add add_resource_template() to MCPServer",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3333",
-        "createdAt": "2026-08-19T02:10:55Z",
-        "daysWaiting": 44,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 1
-      },
-      {
-        "number": 3335,
-        "title": "Windows MCP SSH stdio transport closes after initialize when PROGRAMDATA is missing from inherited environment",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3335",
-        "createdAt": "2026-08-19T06:17:17Z",
+        "number": 3341,
+        "title": "A tool returning a non-finite float fails on the client with an error naming the tool",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3341",
+        "createdAt": "2026-08-20T07:04:18Z",
         "daysWaiting": 44,
         "labels": [
           "v2",
@@ -1395,18 +1407,6 @@
         "title": "Prompt validation errors are logged with an unnecessary traceback",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3342",
         "createdAt": "2026-08-20T09:16:21Z",
-        "daysWaiting": 43,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 2
-      },
-      {
-        "number": 3341,
-        "title": "A tool returning a non-finite float fails on the client with an error naming the tool",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3341",
-        "createdAt": "2026-08-20T07:04:18Z",
         "daysWaiting": 43,
         "labels": [
           "v2",
@@ -1475,23 +1475,11 @@
         "commentCount": 4
       },
       {
-        "number": 3391,
-        "title": "Tool input schemas carry a pydantic-derived title on every property",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3391",
-        "createdAt": "2026-08-25T21:39:55Z",
-        "daysWaiting": 38,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 5
-      },
-      {
         "number": 3384,
         "title": "ClientSessionGroup raises KeyError when a server exposes no tools, resources or prompts",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3384",
         "createdAt": "2026-08-25T04:47:21Z",
-        "daysWaiting": 38,
+        "daysWaiting": 39,
         "labels": [
           "v2",
           "v1"
@@ -1503,12 +1491,24 @@
         "title": "A tool returning a non-finite float puts invalid JSON in the text content block",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3385",
         "createdAt": "2026-08-25T04:47:41Z",
-        "daysWaiting": 38,
+        "daysWaiting": 39,
         "labels": [
           "v2",
           "v1"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 3391,
+        "title": "Tool input schemas carry a pydantic-derived title on every property",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3391",
+        "createdAt": "2026-08-25T21:39:55Z",
+        "daysWaiting": 38,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 5
       },
       {
         "number": 3432,
@@ -1591,6 +1591,15 @@
         "commentCount": 3
       },
       {
+        "number": 3471,
+        "title": "# TypeScript npm install @modelcontextprotocol/sdk zod  # Python pip install mcp",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3471",
+        "createdAt": "2026-09-08T02:15:32Z",
+        "daysWaiting": 25,
+        "labels": [],
+        "commentCount": 1
+      },
+      {
         "number": 3467,
         "title": "CallToolResult structuredContent is not alias-normalized to match outputSchema",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3467",
@@ -1603,20 +1612,11 @@
         "commentCount": 2
       },
       {
-        "number": 3471,
-        "title": "# TypeScript npm install @modelcontextprotocol/sdk zod  # Python pip install mcp",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3471",
-        "createdAt": "2026-09-08T02:15:32Z",
-        "daysWaiting": 24,
-        "labels": [],
-        "commentCount": 1
-      },
-      {
         "number": 3472,
         "title": "[v2] Add an end-to-end public-client PKCE server contract",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3472",
         "createdAt": "2026-09-08T04:12:10Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "v2",
           "v1"
@@ -1686,6 +1686,18 @@
         "commentCount": 3
       },
       {
+        "number": 3492,
+        "title": "Streamable HTTP stateless servers hang clients on the listen-mode GET (_handle_get_request opens a hold-open SSE stream)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3492",
+        "createdAt": "2026-09-11T02:50:59Z",
+        "daysWaiting": 22,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 1
+      },
+      {
         "number": 3494,
         "title": "Streamable HTTP: ASGI application returns before the full SSE body is sent",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3494",
@@ -1698,16 +1710,13 @@
         "commentCount": 3
       },
       {
-        "number": 3492,
-        "title": "Streamable HTTP stateless servers hang clients on the listen-mode GET (_handle_get_request opens a hold-open SSE stream)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3492",
-        "createdAt": "2026-09-11T02:50:59Z",
-        "daysWaiting": 21,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 1
+        "number": 3504,
+        "title": "Does same-origin redirect enforcement break MCP servers behind a reverse proxy?",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3504",
+        "createdAt": "2026-09-15T02:47:19Z",
+        "daysWaiting": 18,
+        "labels": [],
+        "commentCount": 0
       },
       {
         "number": 3503,
@@ -1744,15 +1753,6 @@
           "v1"
         ],
         "commentCount": 4
-      },
-      {
-        "number": 3504,
-        "title": "Does same-origin redirect enforcement break MCP servers behind a reverse proxy?",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3504",
-        "createdAt": "2026-09-15T02:47:19Z",
-        "daysWaiting": 17,
-        "labels": [],
-        "commentCount": 0
       },
       {
         "number": 3513,
@@ -1815,6 +1815,18 @@
         "commentCount": 2
       },
       {
+        "number": 3546,
+        "title": "Streamable HTTP client logs a WARNING for valid 202 Accepted on session termination (DELETE)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3546",
+        "createdAt": "2026-09-19T01:35:38Z",
+        "daysWaiting": 14,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 5
+      },
+      {
         "number": 3531,
         "title": "OAuth client sends discovery/registration requests with no User-Agent, so WAF-fronted servers (Cloudflare) 403 the whole flow",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3531",
@@ -1827,16 +1839,13 @@
         "commentCount": 1
       },
       {
-        "number": 3546,
-        "title": "Streamable HTTP client logs a WARNING for valid 202 Accepted on session termination (DELETE)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3546",
-        "createdAt": "2026-09-19T01:35:38Z",
+        "number": 3549,
+        "title": "How can I manage resource across multiple tool calls during one session?",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3549",
+        "createdAt": "2026-09-20T05:08:11Z",
         "daysWaiting": 13,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 5
+        "labels": [],
+        "commentCount": 1
       },
       {
         "number": 3551,
@@ -1851,13 +1860,16 @@
         "commentCount": 3
       },
       {
-        "number": 3549,
-        "title": "How can I manage resource across multiple tool calls during one session?",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3549",
-        "createdAt": "2026-09-20T05:08:11Z",
+        "number": 3554,
+        "title": "Structured tool output: `-> bytes` return crashes with a generic error on non-UTF-8 payloads instead of returning the advertised base64/binary string",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3554",
+        "createdAt": "2026-09-21T01:45:22Z",
         "daysWaiting": 12,
-        "labels": [],
-        "commentCount": 1
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 3
       },
       {
         "number": 3556,
@@ -1882,18 +1894,6 @@
           "v1"
         ],
         "commentCount": 1
-      },
-      {
-        "number": 3554,
-        "title": "Structured tool output: `-> bytes` return crashes with a generic error on non-UTF-8 payloads instead of returning the advertised base64/binary string",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3554",
-        "createdAt": "2026-09-21T01:45:22Z",
-        "daysWaiting": 11,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 3
       },
       {
         "number": 3562,
@@ -1941,6 +1941,24 @@
         "commentCount": 0
       },
       {
+        "number": 3579,
+        "title": "`ClientSessionGroup` has no routed `read_resource` / `get_prompt` (only `call_tool`)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3579",
+        "createdAt": "2026-09-24T05:58:22Z",
+        "daysWaiting": 9,
+        "labels": [],
+        "commentCount": 3
+      },
+      {
+        "number": 3576,
+        "title": "Make Origin validation opt-in in the app factories (keep Host validation on for localhost)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3576",
+        "createdAt": "2026-09-24T05:25:41Z",
+        "daysWaiting": 9,
+        "labels": [],
+        "commentCount": 1
+      },
+      {
         "number": 3573,
         "title": "func_metadata raises uncaught PydanticSchemaGenerationError for Iterator/AsyncIterator tool return annotations instead of the unstructured fallback",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3573",
@@ -1962,6 +1980,18 @@
         "commentCount": 7
       },
       {
+        "number": 3578,
+        "title": "ClientSessionGroup raises KeyError when connecting a server that exposes no components",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3578",
+        "createdAt": "2026-09-24T05:55:26Z",
+        "daysWaiting": 9,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 1
+      },
+      {
         "number": 3570,
         "title": "OAuthClientProvider: no supported way to override endpoints or customize authorization state generation",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3570",
@@ -1980,41 +2010,11 @@
         "commentCount": 0
       },
       {
-        "number": 3579,
-        "title": "`ClientSessionGroup` has no routed `read_resource` / `get_prompt` (only `call_tool`)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3579",
-        "createdAt": "2026-09-24T05:58:22Z",
-        "daysWaiting": 8,
-        "labels": [],
-        "commentCount": 3
-      },
-      {
-        "number": 3576,
-        "title": "Make Origin validation opt-in in the app factories (keep Host validation on for localhost)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3576",
-        "createdAt": "2026-09-24T05:25:41Z",
-        "daysWaiting": 8,
-        "labels": [],
-        "commentCount": 1
-      },
-      {
-        "number": 3578,
-        "title": "ClientSessionGroup raises KeyError when connecting a server that exposes no components",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3578",
-        "createdAt": "2026-09-24T05:55:26Z",
-        "daysWaiting": 8,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 3585,
         "title": "Image/Audio `format=` emits image/jpg, audio/mp3, audio/m4a — unregistered MIME types that disagree with the `path=` suffix table",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3585",
         "createdAt": "2026-09-26T03:21:38Z",
-        "daysWaiting": 6,
+        "daysWaiting": 7,
         "labels": [
           "v2",
           "v1"
@@ -2070,11 +2070,53 @@
         "title": "Streamable HTTP session lifecycle can retain unreachable sessions and serialize session creation behind slow requests",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3605",
         "createdAt": "2026-10-01T05:10:32Z",
+        "daysWaiting": 2,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 1
+      },
+      {
+        "number": 3617,
+        "title": "Client example proposal: host-side bounded retrieval over large tools/list catalogs",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3617",
+        "createdAt": "2026-10-02T07:22:09Z",
+        "daysWaiting": 1,
+        "labels": [],
+        "commentCount": 0
+      },
+      {
+        "number": 3616,
+        "title": "SSE: a POST blocks forever (and SIGTERM hangs) when the server lifespan raises after an await",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3616",
+        "createdAt": "2026-10-02T05:18:44Z",
         "daysWaiting": 1,
         "labels": [
           "v2",
           "v1"
         ],
+        "commentCount": 1
+      },
+      {
+        "number": 3639,
+        "title": "Streamable HTTP client hangs on a null-id JSON-RPC error in a 200 JSON response",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3639",
+        "createdAt": "2026-10-03T04:03:31Z",
+        "daysWaiting": 0,
+        "labels": [
+          "v2",
+          "v1"
+        ],
+        "commentCount": 0
+      },
+      {
+        "number": 3637,
+        "title": "Pydantic model parameter not flattened in MCP tool schema — breaks SDK clients that send flat argument dicts",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3637",
+        "createdAt": "2026-10-03T03:02:01Z",
+        "daysWaiting": 0,
+        "labels": [],
         "commentCount": 1
       },
       {
@@ -2088,45 +2130,24 @@
           "v1"
         ],
         "commentCount": 0
-      },
-      {
-        "number": 3617,
-        "title": "Client example proposal: host-side bounded retrieval over large tools/list catalogs",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3617",
-        "createdAt": "2026-10-02T07:22:09Z",
-        "daysWaiting": 0,
-        "labels": [],
-        "commentCount": 0
-      },
-      {
-        "number": 3616,
-        "title": "SSE: a POST blocks forever (and SIGTERM hangs) when the server lifespan raises after an await",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3616",
-        "createdAt": "2026-10-02T05:18:44Z",
-        "daysWaiting": 0,
-        "labels": [
-          "v2",
-          "v1"
-        ],
-        "commentCount": 1
       }
     ],
     "by_label": {
-      "v2": 113,
-      "v1": 77,
+      "v2": 114,
+      "v1": 78,
+      "bug": 90,
+      "needs repro": 4,
       "P3": 43,
       "auth": 33,
       "enhancement": 73,
       "P2": 84,
       "needs decision": 43,
-      "bug": 90,
       "good first issue": 6,
       "ready for work": 57,
       "P1": 35,
       "documentation": 5,
       "fix proposed": 15,
       "improves spec compliance": 7,
-      "needs repro": 4,
       "potentially close": 2,
       "needs confirmation": 23,
       "help wanted": 1,
@@ -2147,10 +2168,10 @@
       "median_days": 114,
       "p90_days": 438.1
     },
-    "label_coverage_pct": 93.9,
-    "unlabeled_count": 15,
-    "stale_30d": 150,
-    "stale_60d": 89,
+    "label_coverage_pct": 93.5,
+    "unlabeled_count": 16,
+    "stale_30d": 149,
+    "stale_60d": 88,
     "stale_90d": 78,
     "reopen_rate": 1
   },
@@ -2159,10 +2180,10 @@
     "merged_7d": 31,
     "merged_30d": 50,
     "merged_90d": 136,
-    "opened_7d": 37,
+    "opened_7d": 38,
     "opened_30d": 134,
     "opened_90d": 418,
-    "closed_not_merged_90d": 373,
+    "closed_not_merged_90d": 374,
     "draft_count": 27,
     "without_review_24h": 128,
     "without_review_7d": 128,
@@ -2172,7 +2193,7 @@
         "title": "feat: Add support for specifying NotificationOptions ",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1486",
         "createdAt": "2025-10-16T05:47:13Z",
-        "daysWaiting": 351,
+        "daysWaiting": 352,
         "labels": [
           "enhancement"
         ],
@@ -2187,7 +2208,7 @@
         "title": "fix: Add accept json headers for token request",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1531",
         "createdAt": "2025-10-29T06:25:35Z",
-        "daysWaiting": 338,
+        "daysWaiting": 339,
         "labels": [
           "bug",
           "auth"
@@ -2265,7 +2286,7 @@
         "title": "fix: Fix logic that determines standard resource vs. resource template to account for context param (#1635)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1666",
         "createdAt": "2025-11-25T03:17:24Z",
-        "daysWaiting": 311,
+        "daysWaiting": 312,
         "labels": [
           "bug",
           "breaking change",
@@ -2333,7 +2354,7 @@
         "title": "fix: cleanup resources properly on `BaseSession::_receive_loop` cleanup",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1817",
         "createdAt": "2025-12-26T04:44:29Z",
-        "daysWaiting": 280,
+        "daysWaiting": 281,
         "labels": [
           "bug",
           "P1"
@@ -2406,7 +2427,7 @@
         "title": "fix: skip JSON pre-parsing for str union annotations in pre_parse_json",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2032",
         "createdAt": "2026-02-11T04:03:00Z",
-        "daysWaiting": 233,
+        "daysWaiting": 234,
         "labels": [
           "bug",
           "P2"
@@ -2422,7 +2443,7 @@
         "title": "feat: expose progress_callback in ServerSession methods",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2041",
         "createdAt": "2026-02-12T05:48:19Z",
-        "daysWaiting": 232,
+        "daysWaiting": 233,
         "labels": [],
         "isDraft": false,
         "additions": 148,
@@ -2729,7 +2750,7 @@
         "title": "fix: silence respond() when concurrent cancellation already completed request",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2418",
         "createdAt": "2026-04-10T03:03:54Z",
-        "daysWaiting": 175,
+        "daysWaiting": 176,
         "labels": [],
         "isDraft": false,
         "additions": 108,
@@ -2755,7 +2776,7 @@
         "title": "fix: invalidate tool schema cache on ToolListChangedNotification; paginate all pages in _validate_tool_result",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2441",
         "createdAt": "2026-04-14T04:34:21Z",
-        "daysWaiting": 171,
+        "daysWaiting": 172,
         "labels": [],
         "isDraft": false,
         "additions": 121,
@@ -2768,7 +2789,7 @@
         "title": "feat(tools): inline local $ref in tool inputSchema (#2384)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2448",
         "createdAt": "2026-04-15T06:38:17Z",
-        "daysWaiting": 170,
+        "daysWaiting": 171,
         "labels": [],
         "isDraft": false,
         "additions": 328,
@@ -2781,7 +2802,7 @@
         "title": "fix(server): allow tools with outputSchema to surface errors via unstructured content",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2447",
         "createdAt": "2026-04-15T06:08:11Z",
-        "daysWaiting": 170,
+        "daysWaiting": 171,
         "labels": [],
         "isDraft": false,
         "additions": 31,
@@ -2898,13 +2919,26 @@
         "title": "[v1.x] Drop responses/notifications when write stream is already closed",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2502",
         "createdAt": "2026-04-24T06:43:00Z",
-        "daysWaiting": 161,
+        "daysWaiting": 162,
         "labels": [],
         "isDraft": false,
         "additions": 98,
         "deletions": 4,
         "reviewCount": 0,
         "author": "bobbyo"
+      },
+      {
+        "number": 2506,
+        "title": "feat(cli): support env vars in `mcp dev` (#339)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2506",
+        "createdAt": "2026-04-26T05:29:55Z",
+        "daysWaiting": 160,
+        "labels": [],
+        "isDraft": false,
+        "additions": 130,
+        "deletions": 22,
+        "reviewCount": 0,
+        "author": "GitAashishG"
       },
       {
         "number": 2503,
@@ -2920,24 +2954,11 @@
         "author": "fungi8"
       },
       {
-        "number": 2506,
-        "title": "feat(cli): support env vars in `mcp dev` (#339)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2506",
-        "createdAt": "2026-04-26T05:29:55Z",
-        "daysWaiting": 159,
-        "labels": [],
-        "isDraft": false,
-        "additions": 130,
-        "deletions": 22,
-        "reviewCount": 0,
-        "author": "GitAashishG"
-      },
-      {
         "number": 2509,
         "title": "fix(server): return 405 on GET/DELETE in stateless HTTP mode",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2509",
         "createdAt": "2026-04-27T01:11:01Z",
-        "daysWaiting": 158,
+        "daysWaiting": 159,
         "labels": [],
         "isDraft": true,
         "additions": 136,
@@ -3076,6 +3097,19 @@
         "author": "MukundaKatta"
       },
       {
+        "number": 2623,
+        "title": "fix: detect context on callable tool instances",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2623",
+        "createdAt": "2026-05-17T03:47:21Z",
+        "daysWaiting": 139,
+        "labels": [],
+        "isDraft": false,
+        "additions": 26,
+        "deletions": 1,
+        "reviewCount": 1,
+        "author": "pragnyanramtha"
+      },
+      {
         "number": 2616,
         "title": "[v1.x] fix(auth): request JSON token responses",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2616",
@@ -3100,19 +3134,6 @@
         "deletions": 2,
         "reviewCount": 0,
         "author": "FU-max-boop"
-      },
-      {
-        "number": 2623,
-        "title": "fix: detect context on callable tool instances",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2623",
-        "createdAt": "2026-05-17T03:47:21Z",
-        "daysWaiting": 138,
-        "labels": [],
-        "isDraft": false,
-        "additions": 26,
-        "deletions": 1,
-        "reviewCount": 1,
-        "author": "pragnyanramtha"
       },
       {
         "number": 2633,
@@ -3141,6 +3162,19 @@
         "author": "Epochex"
       },
       {
+        "number": 2652,
+        "title": "feat: add protocol version override support for client session initialization",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2652",
+        "createdAt": "2026-05-21T06:07:52Z",
+        "daysWaiting": 135,
+        "labels": [],
+        "isDraft": false,
+        "additions": 272,
+        "deletions": 14,
+        "reviewCount": 3,
+        "author": "STiFLeR7"
+      },
+      {
         "number": 2651,
         "title": "fix(auth): avoid SSE OAuth refresh deadlock",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2651",
@@ -3152,19 +3186,6 @@
         "deletions": 0,
         "reviewCount": 5,
         "author": "pragnyanramtha"
-      },
-      {
-        "number": 2652,
-        "title": "feat: add protocol version override support for client session initialization",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2652",
-        "createdAt": "2026-05-21T06:07:52Z",
-        "daysWaiting": 134,
-        "labels": [],
-        "isDraft": false,
-        "additions": 272,
-        "deletions": 14,
-        "reviewCount": 3,
-        "author": "STiFLeR7"
       },
       {
         "number": 2657,
@@ -3249,13 +3270,26 @@
         "title": "fix(streamable-http): drain SSE response to EOF instead of closing early",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2712",
         "createdAt": "2026-05-29T02:10:45Z",
-        "daysWaiting": 126,
+        "daysWaiting": 127,
         "labels": [],
         "isDraft": false,
         "additions": 24,
         "deletions": 12,
         "reviewCount": 0,
         "author": "whocareyw"
+      },
+      {
+        "number": 2729,
+        "title": "fix(client): send same-origin Origin header from streamable HTTP client",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2729",
+        "createdAt": "2026-05-30T06:03:58Z",
+        "daysWaiting": 126,
+        "labels": [],
+        "isDraft": false,
+        "additions": 43,
+        "deletions": 2,
+        "reviewCount": 0,
+        "author": "Bartok9"
       },
       {
         "number": 2732,
@@ -3269,19 +3303,6 @@
         "deletions": 8,
         "reviewCount": 1,
         "author": "Epochex"
-      },
-      {
-        "number": 2729,
-        "title": "fix(client): send same-origin Origin header from streamable HTTP client",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2729",
-        "createdAt": "2026-05-30T06:03:58Z",
-        "daysWaiting": 125,
-        "labels": [],
-        "isDraft": false,
-        "additions": 43,
-        "deletions": 2,
-        "reviewCount": 0,
-        "author": "Bartok9"
       },
       {
         "number": 2745,
@@ -3301,7 +3322,7 @@
         "title": "fix(resources): escape literal regex metacharacters in ResourceTemplate.matches",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2749",
         "createdAt": "2026-06-01T05:28:26Z",
-        "daysWaiting": 123,
+        "daysWaiting": 124,
         "labels": [],
         "isDraft": false,
         "additions": 41,
@@ -3327,7 +3348,7 @@
         "title": "fix(client): preserve existing query params on OAuth authorization_endpoint",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2779",
         "createdAt": "2026-06-04T06:04:27Z",
-        "daysWaiting": 120,
+        "daysWaiting": 121,
         "labels": [],
         "isDraft": false,
         "additions": 293,
@@ -3414,6 +3435,19 @@
         "author": "beraterkanelcelik"
       },
       {
+        "number": 2939,
+        "title": "fix(mcpserver): preserve Annotated/Field metadata for dict[str, T] return types",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2939",
+        "createdAt": "2026-06-21T02:35:35Z",
+        "daysWaiting": 104,
+        "labels": [],
+        "isDraft": false,
+        "additions": 30,
+        "deletions": 3,
+        "reviewCount": 0,
+        "author": "anneheartrecord"
+      },
+      {
         "number": 2918,
         "title": "fix(server): treat text/* mime types case-insensitively for FileResource",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2918",
@@ -3440,17 +3474,17 @@
         "author": "ly-wang19"
       },
       {
-        "number": 2939,
-        "title": "fix(mcpserver): preserve Annotated/Field metadata for dict[str, T] return types",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2939",
-        "createdAt": "2026-06-21T02:35:35Z",
-        "daysWaiting": 103,
+        "number": 2962,
+        "title": "fix(server): don't raise when tool_use is not followed by tool_result",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2962",
+        "createdAt": "2026-06-25T06:03:11Z",
+        "daysWaiting": 100,
         "labels": [],
         "isDraft": false,
-        "additions": 30,
-        "deletions": 3,
-        "reviewCount": 0,
-        "author": "anneheartrecord"
+        "additions": 25,
+        "deletions": 1,
+        "reviewCount": 1,
+        "author": "Bartok9"
       },
       {
         "number": 2959,
@@ -3466,30 +3500,30 @@
         "author": "nZiben"
       },
       {
-        "number": 2962,
-        "title": "fix(server): don't raise when tool_use is not followed by tool_result",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2962",
-        "createdAt": "2026-06-25T06:03:11Z",
-        "daysWaiting": 99,
-        "labels": [],
-        "isDraft": false,
-        "additions": 25,
-        "deletions": 1,
-        "reviewCount": 1,
-        "author": "Bartok9"
-      },
-      {
         "number": 2983,
         "title": "fix(server): guard error-path send into closed session stream",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2983",
         "createdAt": "2026-06-26T06:03:46Z",
-        "daysWaiting": 98,
+        "daysWaiting": 99,
         "labels": [],
         "isDraft": false,
         "additions": 61,
         "deletions": 44,
         "reviewCount": 1,
         "author": "Bartok9"
+      },
+      {
+        "number": 2979,
+        "title": "fix(server): validate elicitation form/url sub-capabilities in check_capability",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2979",
+        "createdAt": "2026-06-26T01:33:41Z",
+        "daysWaiting": 99,
+        "labels": [],
+        "isDraft": false,
+        "additions": 39,
+        "deletions": 2,
+        "reviewCount": 1,
+        "author": "syf2211"
       },
       {
         "number": 2984,
@@ -3503,19 +3537,6 @@
         "deletions": 3,
         "reviewCount": 2,
         "author": "RaidLZ"
-      },
-      {
-        "number": 2979,
-        "title": "fix(server): validate elicitation form/url sub-capabilities in check_capability",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2979",
-        "createdAt": "2026-06-26T01:33:41Z",
-        "daysWaiting": 98,
-        "labels": [],
-        "isDraft": false,
-        "additions": 39,
-        "deletions": 2,
-        "reviewCount": 1,
-        "author": "syf2211"
       },
       {
         "number": 3013,
@@ -3561,7 +3582,7 @@
         "title": "fix(client): catch httpx transport errors in streamable HTTP post_writer",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3025",
         "createdAt": "2026-06-30T02:36:39Z",
-        "daysWaiting": 94,
+        "daysWaiting": 95,
         "labels": [],
         "isDraft": false,
         "additions": 48,
@@ -3609,6 +3630,19 @@
         "author": "vientooscuro"
       },
       {
+        "number": 3063,
+        "title": "fix(streamable-http): reject duplicate in-flight request ids",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3063",
+        "createdAt": "2026-07-04T05:12:42Z",
+        "daysWaiting": 91,
+        "labels": [],
+        "isDraft": false,
+        "additions": 258,
+        "deletions": 10,
+        "reviewCount": 1,
+        "author": "Sammy-Dabbas"
+      },
+      {
         "number": 3059,
         "title": "fix: prevent session + task leak on GET/DELETE without session-id",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3059",
@@ -3622,24 +3656,11 @@
         "author": "raphaelOhana"
       },
       {
-        "number": 3063,
-        "title": "fix(streamable-http): reject duplicate in-flight request ids",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3063",
-        "createdAt": "2026-07-04T05:12:42Z",
-        "daysWaiting": 90,
-        "labels": [],
-        "isDraft": false,
-        "additions": 258,
-        "deletions": 10,
-        "reviewCount": 1,
-        "author": "Sammy-Dabbas"
-      },
-      {
         "number": 3064,
         "title": "fix(dispatcher): reject duplicate in-flight request ids",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3064",
         "createdAt": "2026-07-05T03:24:13Z",
-        "daysWaiting": 89,
+        "daysWaiting": 90,
         "labels": [],
         "isDraft": false,
         "additions": 110,
@@ -3795,7 +3816,7 @@
         "title": "fix(server): forward tool args under the real parameter name, not the…",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3119",
         "createdAt": "2026-07-17T04:13:47Z",
-        "daysWaiting": 77,
+        "daysWaiting": 78,
         "labels": [],
         "isDraft": true,
         "additions": 42,
@@ -3808,7 +3829,7 @@
         "title": "fix(server): generate tool output schema in serialization mode",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3118",
         "createdAt": "2026-07-17T03:53:10Z",
-        "daysWaiting": 77,
+        "daysWaiting": 78,
         "labels": [],
         "isDraft": false,
         "additions": 82,
@@ -3951,7 +3972,7 @@
         "title": "fix(client/auth): discard stored client registrations whose secret has expired",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3264",
         "createdAt": "2026-08-07T05:33:04Z",
-        "daysWaiting": 56,
+        "daysWaiting": 57,
         "labels": [],
         "isDraft": false,
         "additions": 1191,
@@ -3964,7 +3985,7 @@
         "title": "fix(client/auth): discover AS metadata before cold-start token refresh, with issuer-binding check",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3263",
         "createdAt": "2026-08-07T05:28:04Z",
-        "daysWaiting": 56,
+        "daysWaiting": 57,
         "labels": [],
         "isDraft": false,
         "additions": 596,
@@ -3977,7 +3998,7 @@
         "title": "fix(client): surface HTTP errors on resumption GET and SSE message POST",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3278",
         "createdAt": "2026-08-11T05:29:50Z",
-        "daysWaiting": 52,
+        "daysWaiting": 53,
         "labels": [],
         "isDraft": false,
         "additions": 585,
@@ -3990,7 +4011,7 @@
         "title": "fix(auth): include RFC 6750 scope attribute in WWW-Authenticate challenges",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3277",
         "createdAt": "2026-08-11T05:29:45Z",
-        "daysWaiting": 52,
+        "daysWaiting": 53,
         "labels": [],
         "isDraft": false,
         "additions": 210,
@@ -4032,10 +4053,10 @@
     }
   },
   "contributors": {
-    "total_known": 1067,
-    "active_30d": 110,
-    "first_time_30d": 102,
-    "retention_rate_pct": 5.9,
+    "total_known": 1070,
+    "active_30d": 112,
+    "first_time_30d": 103,
+    "retention_rate_pct": 6.9,
     "churned_30d": 95,
     "commits_per_week_avg": 9.3,
     "commits_per_week_trend": [
@@ -4046,14 +4067,14 @@
       4,
       13,
       9,
-      10,
-      5,
+      12,
+      3,
       1,
       1,
       29
     ],
     "active_maintainers_30d": 3,
-    "active_community_30d": 107,
+    "active_community_30d": 109,
     "allContributors": [
       "00200200",
       "0717376",
@@ -4387,6 +4408,7 @@
       "akshan-main",
       "akshay-kumar-bm",
       "akshaykumarbedre",
+      "alan-atkinson",
       "alejandro5042",
       "alex-feel",
       "alexanderreiff",
@@ -4418,6 +4440,7 @@
       "archever",
       "arcivanov",
       "arimu1",
+      "aritejhg",
       "arkh-node",
       "arpankernel",
       "artdent",
@@ -4658,6 +4681,7 @@
       "howardjohn",
       "huang-sh",
       "hubbard-zlee",
+      "hyeonsang010716",
       "hyn0027",
       "hyoseop1231",
       "hzeus",
@@ -5161,9 +5185,11 @@
       "Yara-hneif",
       "Yasser-Ameur",
       "adk47",
+      "alan-atkinson",
       "amasen02",
       "andrewmaturo",
       "anilloutombam",
+      "aritejhg",
       "arpankernel",
       "astro-angelfish",
       "atsuki-shirasawa",
@@ -5191,6 +5217,7 @@
       "godwinbw-egm",
       "gongx030",
       "gyanu2507",
+      "hyeonsang010716",
       "ikeniborn",
       "j-brumback",
       "jonpspri",
@@ -5229,7 +5256,6 @@
       "tiagovilasboas",
       "tomoki-takahashi-oisix",
       "vijaydeepsinha",
-      "w1977-0",
       "wanadzhar913",
       "wang1408",
       "weijie-tan3",
@@ -5394,9 +5420,9 @@
     "top_n": 20
   },
   "downloads": {
-    "daily": 242268,
-    "last_week": 53170644,
-    "last_month": 227765854,
-    "total": 2333708069
+    "daily": 1868191,
+    "last_week": 54796567,
+    "last_month": 229391777,
+    "total": 2335333992
   }
 }
