@@ -1,0 +1,68 @@
+name: Backfill Download Gap
+
+# One-time: fill missing daily snapshots with download-only stubs after a CI
+# outage. Delete this workflow and scripts/backfill-download-gap once it has run.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print planned stubs without committing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: aggregate-data
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Backfill downloads
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.commit.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      # versions.json stopped advancing during the outage; refresh it from
+      # BigQuery so the PyPI stubs cover the whole gap.
+      - name: Write BigQuery credentials
+        run: |
+          echo '${{ secrets.BQ_KEY }}' > /tmp/bq-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq-key.json" >> $GITHUB_ENV
+      - run: npm run aggregate -- --only=bigquery
+      - name: Backfill gap
+        run: python3 scripts/backfill-download-gap ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Commit and push data changes
+        id: commit
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/repos/*/*/snapshots/ data/repos/*/*/versions.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Backfill download gap in daily snapshots"
+            for attempt in 1 2 3; do
+              git pull --rebase -X theirs origin main
+              git push && break
+              [ $attempt -eq 3 ] && exit 1
+              sleep 2
+            done
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: backfill
+    if: needs.backfill.outputs.changes == 'true'
+    uses: ./.github/workflows/deploy.yml
