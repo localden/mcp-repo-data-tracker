@@ -49,10 +49,10 @@ export function parseArgs(): CliArgs {
       }
     } else if (arg.startsWith('--registry=')) {
       const reg = arg.slice('--registry='.length);
-      if (reg === 'npm' || reg === 'pypi' || reg === 'nuget') {
+      if (reg === 'npm' || reg === 'pypi' || reg === 'nuget' || reg === 'crates' || reg === 'rubygems') {
         result.registry = reg;
       } else {
-        console.error(`Unknown --registry: ${reg} (expected npm|pypi|nuget)`);
+        console.error(`Unknown --registry: ${reg} (expected npm|pypi|nuget|crates|rubygems)`);
         process.exit(1);
       }
     } else if ((arg === '--config' || arg === '-c') && args[i + 1]) {
@@ -90,7 +90,7 @@ Options:
   --verbose, -v        Enable verbose logging
   --sep                Only aggregate SEP data (modelcontextprotocol/modelcontextprotocol only)
   --only=<mode>        Run a single slice: github | downloads | bigquery
-  --registry=<reg>     Filter --only=downloads to one registry: npm | pypi | nuget
+  --registry=<reg>     Filter --only=downloads to one registry: npm | pypi | nuget | crates | rubygems
   --help, -h           Show this help message
 
 Legacy Options (deprecated, use config file instead):

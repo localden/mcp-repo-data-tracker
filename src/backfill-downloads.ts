@@ -15,6 +15,7 @@ import { join } from 'path';
 import { loadConfig } from './config/loader.js';
 import { fetchNpmRange } from './downloads/npm.js';
 import { fetchPypiRange } from './downloads/pypi.js';
+import { fetchCratesRange } from './downloads/crates.js';
 import type { DailySnapshot, PackageConfig } from './types/index.js';
 
 /** Rolling 7-day sum ending on each date. */
@@ -70,7 +71,14 @@ async function fetchHistory(
       }
       return { daily, cumulative, weekly: rollingWeekly(daily) };
     }
+    case 'crates': {
+      // 90-day window only. No cumulative: the native total comes from the
+      // live API each run, so stubs don't need to seed a running sum.
+      const daily = await fetchCratesRange(pkg.name);
+      return { daily, weekly: rollingWeekly(daily) };
+    }
     case 'nuget':
+    case 'rubygems':
       return { daily: new Map() };
   }
 }

@@ -15,6 +15,8 @@ import { fetchPypiVersions, mergeVersionData, deriveDownloadMetrics } from './do
 import { fetchPypiFirstPublished } from './downloads/pypi.js';
 import { fetchNpmVersions } from './downloads/npm.js';
 import { fetchNugetVersions } from './downloads/nuget.js';
+import { fetchCratesVersions } from './downloads/crates.js';
+import { fetchRubygemsVersions } from './downloads/rubygems.js';
 import { calculateIssueMetrics } from './metrics/issues.js';
 import { buildIssueTiers } from './metrics/issueTiers.js';
 import { calculatePRMetrics } from './metrics/pulls.js';
@@ -35,7 +37,7 @@ import {
   loadVersionDownloads,
 } from './data/writers.js';
 import { loadConfig, createDefaultConfig } from './config/loader.js';
-import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics, VersionDownloadsData } from './types/index.js';
+import type { Metrics, RepoConfig, ReposConfig, DownloadMetrics, VersionDownloadsData, PackageRegistry } from './types/index.js';
 import {
   spinner,
   header,
@@ -363,13 +365,15 @@ async function aggregateDownloadsOnly(args: CliArgs): Promise<void> {
       }
       if (!dryRun) await writeDownloadsSidecar(downloads, repoConfig);
 
-      // Per-version snapshot: npm/nuget don't expose daily history, so we
-      // build our own by storing today's API response in versions.json.
-      const byVersion = repoConfig.package.registry === 'npm'
-        ? await fetchNpmVersions(repoConfig.package.name)
-        : repoConfig.package.registry === 'nuget'
-          ? await fetchNugetVersions(repoConfig.package.name)
-          : null;
+      // Per-version snapshot: these registries don't expose per-version daily
+      // history, so we build our own by storing today's API response in versions.json.
+      const versionFetchers: Partial<Record<PackageRegistry, (pkg: string) => Promise<Record<string, number>>>> = {
+        npm: fetchNpmVersions,
+        nuget: fetchNugetVersions,
+        crates: fetchCratesVersions,
+        rubygems: fetchRubygemsVersions,
+      };
+      const byVersion = await versionFetchers[repoConfig.package.registry]?.(repoConfig.package.name) ?? null;
       if (byVersion) {
         const existing = await loadVersionDownloads(repoConfig);
         const today = new Date().toISOString().split('T')[0];

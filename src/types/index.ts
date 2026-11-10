@@ -569,7 +569,7 @@ export interface SEPMetrics {
 // Package Downloads
 // =============================================================================
 
-export type PackageRegistry = 'npm' | 'pypi' | 'nuget';
+export type PackageRegistry = 'npm' | 'pypi' | 'nuget' | 'crates' | 'rubygems';
 
 export interface PackageConfig {
   registry: PackageRegistry;
@@ -577,13 +577,13 @@ export interface PackageConfig {
 }
 
 export interface DownloadMetrics {
-  /** Yesterday's downloads. npm/pypi native; nuget derived from consecutive total diff. */
+  /** Yesterday's downloads. npm/pypi/crates native; nuget/rubygems derived from consecutive total diff. */
   daily?: number;
-  /** Last 7 days sum. pypi native; others summed from snapshots at render time. */
+  /** Last 7 days sum. pypi/crates native; others summed from snapshots at render time. */
   last_week?: number;
-  /** Last 30 days sum. pypi native only. */
+  /** Last 30 days sum. pypi/crates native only. */
   last_month?: number;
-  /** All-time cumulative. nuget native; npm maintained as running sum; pypi omitted (pypistats caps at 6mo). */
+  /** All-time cumulative. nuget/crates/rubygems native; npm maintained as running sum; pypi omitted (pypistats caps at 6mo). */
   total?: number;
   /** YYYY-MM-DD the running-sum `total` is valid through. npm lags ~1-2d, so this trails the snapshot date; the next run resumes from here, not the snapshot date. */
   total_through?: string;
@@ -591,8 +591,8 @@ export interface DownloadMetrics {
 
 /**
  * Per-version download breakdown. Written to data/repos/<owner>/<repo>/versions.json.
- * PyPI via BigQuery gives true daily; npm and NuGet snapshot their own APIs
- * each run and accumulate history over time.
+ * PyPI via BigQuery gives true daily; npm, NuGet, crates.io and RubyGems
+ * snapshot their own APIs each run and accumulate history over time.
  */
 export interface VersionDownloadsData {
   lastUpdated: string;
@@ -601,7 +601,7 @@ export interface VersionDownloadsData {
    * different granularities:
    *   - daily:      true per-day count (PyPI via BigQuery)
    *   - last_week:  7-day rolling sum (npm /versions/{pkg}/last-week)
-   *   - cumulative: all-time running total (NuGet search API)
+   *   - cumulative: all-time running total (NuGet search API, crates.io, RubyGems)
    */
   unit: 'daily' | 'last_week' | 'cumulative';
   /** version -> cumulative count within the tracked window */

@@ -226,7 +226,7 @@
 {{ if $versions }}
 {{ $unit := $versions.unit | default "daily" }}
 {{ $unitLabel := cond (eq $unit "last_week") "7-day rolling" (cond (eq $unit "cumulative") "Cumulative" "Daily") }}
-{{ $unitBlurb := cond (eq $unit "last_week") "7-day rolling downloads per version (npm /versions API)" (cond (eq $unit "cumulative") "All-time cumulative downloads per version (NuGet search API)" "Per-version daily downloads via BigQuery") }}
+{{ $unitBlurb := cond (eq $unit "last_week") "7-day rolling downloads per version (npm /versions API)" (cond (eq $unit "cumulative") "All-time cumulative downloads per version (NuGet, crates.io, RubyGems APIs)" "Per-version daily downloads via BigQuery") }}
 <section class="mb-6">
   <h2 class="text-sm font-semibold mb-1">Downloads by Version</h2>
   <p class="text-[10px] text-base-content/40 mb-3">

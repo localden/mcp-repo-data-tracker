@@ -80,6 +80,48 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
+  crates:
+    name: crates downloads
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - run: npm run aggregate -- --only=downloads --registry=crates
+      - uses: actions/upload-artifact@v4
+        with:
+          name: downloads-crates
+          path: |
+            data/repos/**/downloads.json
+            data/repos/**/versions.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  rubygems:
+    name: rubygems downloads
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - run: npm run aggregate -- --only=downloads --registry=rubygems
+      - uses: actions/upload-artifact@v4
+        with:
+          name: downloads-rubygems
+          path: |
+            data/repos/**/downloads.json
+            data/repos/**/versions.json
+          retention-days: 1
+          if-no-files-found: ignore
+
   pypi:
     name: pypi downloads
     runs-on: ubuntu-latest
@@ -139,7 +181,7 @@ jobs:
   commit:
     name: Merge & commit
     runs-on: ubuntu-latest
-    needs: [github, npm, nuget, pypi, classifier]
+    needs: [github, npm, nuget, crates, rubygems, pypi, classifier]
     if: always() && needs.github.result == 'success'
     outputs:
       changes: ${{ steps.commit.outputs.changes }}

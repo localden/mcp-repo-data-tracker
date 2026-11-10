@@ -1,15 +1,19 @@
 /**
  * Package download metrics dispatcher.
  * Registry quirks:
- *   - npm/PyPI report daily natively; NuGet only cumulative → daily derived from prev-snapshot diff.
+ *   - npm/PyPI/crates.io report daily natively; NuGet/RubyGems only cumulative → daily derived
+ *     from prev-snapshot diff.
  *   - npm cumulative isn't an API field; we carry a running sum forward from the previous snapshot
  *     (seeded by the backfill script's full-range sum).
+ *   - crates.io reports both a native all-time total and 90 days of daily history.
  */
 
 import type { PackageConfig, DownloadMetrics, DailySnapshot } from '../types/index.js';
 import { fetchNpmDaily, fetchNpmRange } from './npm.js';
 import { fetchPypiRecent, fetchPypiRange } from './pypi.js';
 import { fetchNugetTotal } from './nuget.js';
+import { fetchCratesTotal, fetchCratesRange } from './crates.js';
+import { fetchRubygemsTotal } from './rubygems.js';
 
 const DAY_MS = 86400000;
 
@@ -74,8 +78,27 @@ export async function fetchDownloads(
       return recent;
     }
 
-    case 'nuget': {
-      const total = await fetchNugetTotal(config.name);
+    case 'crates': {
+      // Native total and native daily history — no running sum needed. Today's
+      // bucket is partial, so report complete days only.
+      const [total, range] = await Promise.all([fetchCratesTotal(config.name), fetchCratesRange(config.name)]);
+      const days = [...range.keys()].filter((d) => d < today).sort();
+      const sumLast = (n: number) =>
+        days.length >= n ? days.slice(-n).reduce((s, d) => s + (range.get(d) ?? 0), 0) : undefined;
+      const last = days[days.length - 1];
+      return {
+        daily: last ? range.get(last) : undefined,
+        last_week: sumLast(7),
+        last_month: sumLast(30),
+        total,
+      };
+    }
+
+    case 'nuget':
+    case 'rubygems': {
+      const total = config.registry === 'nuget'
+        ? await fetchNugetTotal(config.name)
+        : await fetchRubygemsTotal(config.name);
       if (prev?.total === undefined || !prevDate) return { total };
       const gap = daysBetween(prevDate, today);
       const delta = Math.max(0, total - prev.total);
