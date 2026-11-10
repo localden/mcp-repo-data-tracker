@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-11-10T16:49:06.765Z",
+  "timestamp": "2026-11-10T19:45:23.973Z",
   "repository": {
     "stars": 24822,
-    "forks": 4118
+    "forks": 4119
   },
   "issues": {
     "open_count": 293,
@@ -10,18 +10,18 @@
     "closed_30d": 23,
     "closed_90d": 110,
     "opened_7d": 9,
-    "opened_30d": 70,
+    "opened_30d": 69,
     "opened_90d": 195,
     "without_response_24h": 214,
     "without_response_7d": 205,
-    "without_response_30d": 154,
+    "without_response_30d": 155,
     "issues_without_maintainer_response": [
       {
         "number": 299,
         "title": "Low-level Server support for mcp dev and mcp run command",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/299",
         "createdAt": "2025-03-16T17:24:48Z",
-        "daysWaiting": 603,
+        "daysWaiting": 604,
         "labels": [
           "enhancement",
           "P1",
@@ -60,7 +60,7 @@
         "title": "Enable FastMCP to filter tools, prompts, resources using a fine grained policy",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1031",
         "createdAt": "2025-06-25T18:56:24Z",
-        "daysWaiting": 502,
+        "daysWaiting": 503,
         "labels": [
           "v2",
           "auth",
@@ -167,7 +167,7 @@
         "title": "`stdio_server` uses unbuffered memory streams which can cause server to block and become unresponsive",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1333",
         "createdAt": "2025-09-01T19:35:49Z",
-        "daysWaiting": 434,
+        "daysWaiting": 435,
         "labels": [
           "bug",
           "ready for work",
@@ -343,7 +343,7 @@
         "title": "ClientAuthenticator ignores token_endpoint_auth_method=\"none\" when client_secret is stored",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/1842",
         "createdAt": "2026-01-08T17:52:20Z",
-        "daysWaiting": 305,
+        "daysWaiting": 306,
         "labels": [
           "bug",
           "needs confirmation",
@@ -422,7 +422,7 @@
         "title": "Active Streamable HTTP sessions are not terminated during shutdown",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/2150",
         "createdAt": "2026-02-26T18:53:02Z",
-        "daysWaiting": 256,
+        "daysWaiting": 257,
         "labels": [
           "bug",
           "ready for work",
@@ -958,7 +958,7 @@
         "title": "streamable HTTP (stateful): concurrent requests with duplicate JSON-RPC ids cross-wire responses — one request receives another's payload, the other hangs",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3060",
         "createdAt": "2026-07-03T17:58:18Z",
-        "daysWaiting": 129,
+        "daysWaiting": 130,
         "labels": [
           "bug",
           "v2",
@@ -988,7 +988,7 @@
         "title": "Heavy sync init work (e.g. local ML models) starves stdio initialize/tool calls even with threadpool offload -- Windows GIL contention",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3089",
         "createdAt": "2026-07-12T18:08:58Z",
-        "daysWaiting": 120,
+        "daysWaiting": 121,
         "labels": [
           "documentation",
           "v2",
@@ -1139,7 +1139,7 @@
         "title": "OAuthClientProvider._initialize() breaks transparent refresh: missing update_token_expiry + missing oauth_metadata load",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3250",
         "createdAt": "2026-08-04T19:35:00Z",
-        "daysWaiting": 97,
+        "daysWaiting": 98,
         "labels": [
           "bug",
           "v2",
@@ -1177,6 +1177,20 @@
         "commentCount": 2
       },
       {
+        "number": 3287,
+        "title": "docs: clarify when Client(raise_exceptions=True) actually raises",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3287",
+        "createdAt": "2026-08-11T17:15:13Z",
+        "daysWaiting": 91,
+        "labels": [
+          "documentation",
+          "v2",
+          "P3",
+          "v1"
+        ],
+        "commentCount": 2
+      },
+      {
         "number": 3281,
         "title": "streamable_http (legacy mode): early response.aclose() discards a TCP connection per JSON-RPC exchange — deterministic reproduction for #2707",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3281",
@@ -1189,20 +1203,6 @@
           "v1"
         ],
         "commentCount": 3
-      },
-      {
-        "number": 3287,
-        "title": "docs: clarify when Client(raise_exceptions=True) actually raises",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3287",
-        "createdAt": "2026-08-11T17:15:13Z",
-        "daysWaiting": 90,
-        "labels": [
-          "documentation",
-          "v2",
-          "P3",
-          "v1"
-        ],
-        "commentCount": 2
       },
       {
         "number": 3297,
@@ -1532,6 +1532,19 @@
         "commentCount": 1
       },
       {
+        "number": 3503,
+        "title": "streamable HTTP client: the standalone GET stream advertises Accept: application/json but can only read text/event-stream, then gives up silently",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3503",
+        "createdAt": "2026-09-14T16:56:25Z",
+        "daysWaiting": 57,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 2
+      },
+      {
         "number": 3504,
         "title": "Does same-origin redirect enforcement break MCP servers behind a reverse proxy?",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3504",
@@ -1539,19 +1552,6 @@
         "daysWaiting": 56,
         "labels": [
           "question"
-        ],
-        "commentCount": 2
-      },
-      {
-        "number": 3503,
-        "title": "streamable HTTP client: the standalone GET stream advertises Accept: application/json but can only read text/event-stream, then gives up silently",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3503",
-        "createdAt": "2026-09-14T16:56:25Z",
-        "daysWaiting": 56,
-        "labels": [
-          "bug",
-          "v2",
-          "v1"
         ],
         "commentCount": 2
       },
@@ -1695,6 +1695,19 @@
         "commentCount": 2
       },
       {
+        "number": 3560,
+        "title": "POST failure identical to task cancellation in streamable HTTP client",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3560",
+        "createdAt": "2026-09-22T17:40:30Z",
+        "daysWaiting": 49,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 5
+      },
+      {
         "number": 3557,
         "title": "Malformed requests get -32602 where JSON-RPC 2.0 requires -32600 (non-Request body) and -32601 (unknown method)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3557",
@@ -1708,35 +1721,11 @@
         "commentCount": 2
       },
       {
-        "number": 3560,
-        "title": "POST failure identical to task cancellation in streamable HTTP client",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3560",
-        "createdAt": "2026-09-22T17:40:30Z",
-        "daysWaiting": 48,
-        "labels": [
-          "bug",
-          "v2",
-          "v1"
-        ],
-        "commentCount": 5
-      },
-      {
-        "number": 3570,
-        "title": "OAuthClientProvider: no supported way to override endpoints or customize authorization state generation",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3570",
-        "createdAt": "2026-09-23T16:00:01Z",
-        "daysWaiting": 48,
-        "labels": [
-          "enhancement"
-        ],
-        "commentCount": 1
-      },
-      {
         "number": 3573,
         "title": "func_metadata raises uncaught PydanticSchemaGenerationError for Iterator/AsyncIterator tool return annotations instead of the unstructured fallback",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3573",
         "createdAt": "2026-09-23T19:25:58Z",
-        "daysWaiting": 47,
+        "daysWaiting": 48,
         "labels": [
           "bug",
           "v2",
@@ -1749,11 +1738,22 @@
         "title": "Tool validation errors echo the rejected input value (input_value) — add a masking option or a public validation-error hook",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3572",
         "createdAt": "2026-09-23T18:44:34Z",
-        "daysWaiting": 47,
+        "daysWaiting": 48,
         "labels": [
           "enhancement"
         ],
         "commentCount": 8
+      },
+      {
+        "number": 3570,
+        "title": "OAuthClientProvider: no supported way to override endpoints or customize authorization state generation",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3570",
+        "createdAt": "2026-09-23T16:00:01Z",
+        "daysWaiting": 48,
+        "labels": [
+          "enhancement"
+        ],
+        "commentCount": 1
       },
       {
         "number": 3576,
@@ -1840,6 +1840,19 @@
         "commentCount": 2
       },
       {
+        "number": 3631,
+        "title": "Streamable HTTP notification triggers duplicate response after HTTP 202",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3631",
+        "createdAt": "2026-10-02T17:12:26Z",
+        "daysWaiting": 39,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 4
+      },
+      {
         "number": 3616,
         "title": "SSE: a POST blocks forever (and SIGTERM hangs) when the server lifespan raises after an await",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3616",
@@ -1853,17 +1866,17 @@
         "commentCount": 3
       },
       {
-        "number": 3631,
-        "title": "Streamable HTTP notification triggers duplicate response after HTTP 202",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3631",
-        "createdAt": "2026-10-02T17:12:26Z",
+        "number": 3640,
+        "title": "ServerCapabilities drops unknown keys, so a server can't advertise `events` for ChatGPT's MCP Events",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3640",
+        "createdAt": "2026-10-03T17:39:06Z",
         "daysWaiting": 38,
         "labels": [
           "bug",
           "v2",
-          "v1"
+          "spec-2026-07-28"
         ],
-        "commentCount": 4
+        "commentCount": 5
       },
       {
         "number": 3639,
@@ -1879,19 +1892,6 @@
         "commentCount": 3
       },
       {
-        "number": 3640,
-        "title": "ServerCapabilities drops unknown keys, so a server can't advertise `events` for ChatGPT's MCP Events",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3640",
-        "createdAt": "2026-10-03T17:39:06Z",
-        "daysWaiting": 37,
-        "labels": [
-          "bug",
-          "v2",
-          "spec-2026-07-28"
-        ],
-        "commentCount": 5
-      },
-      {
         "number": 3643,
         "title": "Prompt handlers returning UserList are rendered as one text message",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3643",
@@ -1901,6 +1901,19 @@
           "bug",
           "v2",
           "v1"
+        ],
+        "commentCount": 3
+      },
+      {
+        "number": 3649,
+        "title": "MCPServer completion handler returning more than 100 values fails on 2026-07-28 sessions and violates the 100-item limit on 2025-11-25 sessions",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3649",
+        "createdAt": "2026-10-06T17:10:46Z",
+        "daysWaiting": 35,
+        "labels": [
+          "bug",
+          "v2",
+          "spec-2026-07-28"
         ],
         "commentCount": 3
       },
@@ -1918,19 +1931,6 @@
         "commentCount": 4
       },
       {
-        "number": 3649,
-        "title": "MCPServer completion handler returning more than 100 values fails on 2026-07-28 sessions and violates the 100-item limit on 2025-11-25 sessions",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3649",
-        "createdAt": "2026-10-06T17:10:46Z",
-        "daysWaiting": 34,
-        "labels": [
-          "bug",
-          "v2",
-          "spec-2026-07-28"
-        ],
-        "commentCount": 3
-      },
-      {
         "number": 3655,
         "title": "Simple chatbot: consider removing cleanup lock from sequential lifecycle",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3655",
@@ -1940,6 +1940,19 @@
           "enhancement"
         ],
         "commentCount": 1
+      },
+      {
+        "number": 3659,
+        "title": "`MCPServer` answers an unknown tool with an `isError` result; the spec (and the TS SDK) use JSON-RPC `-32602`",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3659",
+        "createdAt": "2026-10-08T19:17:20Z",
+        "daysWaiting": 33,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 5
       },
       {
         "number": 3656,
@@ -1955,17 +1968,17 @@
         "commentCount": 2
       },
       {
-        "number": 3659,
-        "title": "`MCPServer` answers an unknown tool with an `isError` result; the spec (and the TS SDK) use JSON-RPC `-32602`",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3659",
-        "createdAt": "2026-10-08T19:17:20Z",
+        "number": 3668,
+        "title": "`@app.tool()` raises NameError for parameter/return types defined later in the module on Python 3.14+ (PEP 649/749 deferred annotations)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3668",
+        "createdAt": "2026-10-09T19:07:31Z",
         "daysWaiting": 32,
         "labels": [
           "bug",
           "v2",
           "v1"
         ],
-        "commentCount": 5
+        "commentCount": 3
       },
       {
         "number": 3661,
@@ -2005,28 +2018,26 @@
         "commentCount": 5
       },
       {
-        "number": 3668,
-        "title": "`@app.tool()` raises NameError for parameter/return types defined later in the module on Python 3.14+ (PEP 649/749 deferred annotations)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3668",
-        "createdAt": "2026-10-09T19:07:31Z",
-        "daysWaiting": 31,
-        "labels": [
-          "bug",
-          "v2",
-          "v1"
-        ],
-        "commentCount": 3
-      },
-      {
         "number": 3673,
         "title": "Type annotation gaps and unhandled FileNotFoundError in src/mcp/cli/cli.py",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3673",
         "createdAt": "2026-10-10T18:40:40Z",
-        "daysWaiting": 30,
+        "daysWaiting": 31,
         "labels": [
           "enhancement"
         ],
         "commentCount": 4
+      },
+      {
+        "number": 3683,
+        "title": "Add a filesystem backed provider for the Skills extension",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3683",
+        "createdAt": "2026-10-11T18:56:29Z",
+        "daysWaiting": 30,
+        "labels": [
+          "enhancement"
+        ],
+        "commentCount": 2
       },
       {
         "number": 3676,
@@ -2092,17 +2103,6 @@
         "commentCount": 2
       },
       {
-        "number": 3683,
-        "title": "Add a filesystem backed provider for the Skills extension",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3683",
-        "createdAt": "2026-10-11T18:56:29Z",
-        "daysWaiting": 29,
-        "labels": [
-          "enhancement"
-        ],
-        "commentCount": 2
-      },
-      {
         "number": 3685,
         "title": "Skills: URI traversal validation skips percent-encoded dot-segments",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3685",
@@ -2115,11 +2115,24 @@
         "commentCount": 3
       },
       {
+        "number": 3699,
+        "title": "stdio_client: receiving a large response takes quadratic time (buffer + chunk is re-copied for every chunk)",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3699",
+        "createdAt": "2026-10-13T19:24:26Z",
+        "daysWaiting": 28,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 5
+      },
+      {
         "number": 3698,
         "title": "Streamable HTTP: malformed requests return raw pydantic errors to the client",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3698",
         "createdAt": "2026-10-13T17:42:03Z",
-        "daysWaiting": 27,
+        "daysWaiting": 28,
         "labels": [
           "bug",
           "v2",
@@ -2139,19 +2152,6 @@
           "v1"
         ],
         "commentCount": 2
-      },
-      {
-        "number": 3699,
-        "title": "stdio_client: receiving a large response takes quadratic time (buffer + chunk is re-copied for every chunk)",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3699",
-        "createdAt": "2026-10-13T19:24:26Z",
-        "daysWaiting": 27,
-        "labels": [
-          "bug",
-          "v2",
-          "v1"
-        ],
-        "commentCount": 4
       },
       {
         "number": 3714,
@@ -2245,7 +2245,7 @@
         "title": "Token handler drops RFC 8707 resource on refresh_token (and authorization_code) grants; provider can't see it",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3720",
         "createdAt": "2026-10-16T17:01:43Z",
-        "daysWaiting": 24,
+        "daysWaiting": 25,
         "labels": [
           "bug",
           "v2",
@@ -2363,6 +2363,18 @@
         "commentCount": 3
       },
       {
+        "number": 3769,
+        "title": "401 and error for a request with no authorization header (for a request with no token) - as per spec no error should be added",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3769",
+        "createdAt": "2026-10-26T18:38:52Z",
+        "daysWaiting": 15,
+        "labels": [
+          "bug",
+          "v2"
+        ],
+        "commentCount": 6
+      },
+      {
         "number": 3767,
         "title": "Client 2026-07-28: missing resultType causes ValidationError despite required complete fallback",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3767",
@@ -2374,6 +2386,18 @@
           "spec-2026-07-28"
         ],
         "commentCount": 2
+      },
+      {
+        "number": 3768,
+        "title": " Issuers are compared after URL normalisation; partial CIMD client_id URL validation",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3768",
+        "createdAt": "2026-10-26T18:38:40Z",
+        "daysWaiting": 15,
+        "labels": [
+          "bug",
+          "v2"
+        ],
+        "commentCount": 3
       },
       {
         "number": 3762,
@@ -2402,18 +2426,6 @@
         "commentCount": 4
       },
       {
-        "number": 3769,
-        "title": "401 and error for a request with no authorization header (for a request with no token) - as per spec no error should be added",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3769",
-        "createdAt": "2026-10-26T18:38:52Z",
-        "daysWaiting": 14,
-        "labels": [
-          "bug",
-          "v2"
-        ],
-        "commentCount": 6
-      },
-      {
         "number": 3771,
         "title": "[Bug]: Inconsistent structured output wrapping and opt-out for typing.Dict and typing sequence generics in func_metadata",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3771",
@@ -2423,18 +2435,6 @@
           "bug",
           "v2",
           "v1"
-        ],
-        "commentCount": 3
-      },
-      {
-        "number": 3768,
-        "title": " Issuers are compared after URL normalisation; partial CIMD client_id URL validation",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3768",
-        "createdAt": "2026-10-26T18:38:40Z",
-        "daysWaiting": 14,
-        "labels": [
-          "bug",
-          "v2"
         ],
         "commentCount": 3
       },
@@ -2485,6 +2485,19 @@
         "commentCount": 1
       },
       {
+        "number": 3786,
+        "title": "streamable HTTP: integer and string request ids with the same text share one response stream; a string id can displace the GET stream",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3786",
+        "createdAt": "2026-10-29T19:43:17Z",
+        "daysWaiting": 12,
+        "labels": [
+          "bug",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 4
+      },
+      {
         "number": 3788,
         "title": "Windows stdio server: subprocess spawned inside a tool handler hangs forever when it inherits the server stdin (stdin=DEVNULL fixes)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3788",
@@ -2497,24 +2510,11 @@
         "commentCount": 5
       },
       {
-        "number": 3786,
-        "title": "streamable HTTP: integer and string request ids with the same text share one response stream; a string id can displace the GET stream",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3786",
-        "createdAt": "2026-10-29T19:43:17Z",
-        "daysWaiting": 11,
-        "labels": [
-          "bug",
-          "v2",
-          "v1"
-        ],
-        "commentCount": 4
-      },
-      {
         "number": 3791,
         "title": "Productive SSE reconnects accumulate stack frames and eventually fail",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3791",
         "createdAt": "2026-10-31T17:09:54Z",
-        "daysWaiting": 9,
+        "daysWaiting": 10,
         "labels": [
           "bug",
           "v2",
@@ -2527,13 +2527,26 @@
         "title": "ClientSessionGroup silently omits later pages of tools, resources, and prompts",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3792",
         "createdAt": "2026-10-31T17:36:31Z",
-        "daysWaiting": 9,
+        "daysWaiting": 10,
         "labels": [
           "bug",
           "v2",
           "v1"
         ],
         "commentCount": 3
+      },
+      {
+        "number": 3805,
+        "title": "images.py example returns raw pixels from tobytes() labelled image/png, so clients cannot decode the thumbnail",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3805",
+        "createdAt": "2026-11-02T18:26:54Z",
+        "daysWaiting": 8,
+        "labels": [
+          "documentation",
+          "v2",
+          "v1"
+        ],
+        "commentCount": 4
       },
       {
         "number": 3804,
@@ -2633,19 +2646,6 @@
         "commentCount": 6
       },
       {
-        "number": 3805,
-        "title": "images.py example returns raw pixels from tobytes() labelled image/png, so clients cannot decode the thumbnail",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3805",
-        "createdAt": "2026-11-02T18:26:54Z",
-        "daysWaiting": 7,
-        "labels": [
-          "documentation",
-          "v2",
-          "v1"
-        ],
-        "commentCount": 4
-      },
-      {
         "number": 3807,
         "title": "notifications/cancelled for request `7` cancels a concurrent request `\"7\"` (`_in_flight` keyed by `coerce_request_id`)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3807",
@@ -2708,6 +2708,17 @@
         "commentCount": 2
       },
       {
+        "number": 3836,
+        "title": "OTel client spans: add `server.address` (and other semconv client attributes) so tool calls can be attributed to a server",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3836",
+        "createdAt": "2026-11-08T11:15:38Z",
+        "daysWaiting": 2,
+        "labels": [
+          "enhancement"
+        ],
+        "commentCount": 2
+      },
+      {
         "number": 3833,
         "title": "v1.30.0: normal streamable-HTTP session close logs \"Error in standalone SSE writer\" (anyio.ClosedResourceError) at ERROR",
         "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3833",
@@ -2718,17 +2729,6 @@
           "v1"
         ],
         "commentCount": 2
-      },
-      {
-        "number": 3836,
-        "title": "OTel client spans: add `server.address` (and other semconv client attributes) so tool calls can be attributed to a server",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/issues/3836",
-        "createdAt": "2026-11-08T11:15:38Z",
-        "daysWaiting": 2,
-        "labels": [
-          "enhancement"
-        ],
-        "commentCount": 1
       },
       {
         "number": 3837,
@@ -2792,12 +2792,12 @@
       }
     ],
     "by_label": {
-      "documentation": 12,
       "bug": 182,
-      "v1": 97,
       "v2": 154,
-      "spec-2026-07-28": 8,
+      "v1": 97,
       "enhancement": 98,
+      "documentation": 12,
+      "spec-2026-07-28": 8,
       "auth": 32,
       "P2": 77,
       "needs decision": 42,
@@ -2965,7 +2965,7 @@
         "title": "feat(cmid-server): Implement Server-Side Support for Client ID Metadata Documents (CIMD)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/1810",
         "createdAt": "2025-12-20T19:29:51Z",
-        "daysWaiting": 324,
+        "daysWaiting": 325,
         "labels": [
           "auth",
           "enhancement",
@@ -3078,7 +3078,7 @@
         "title": "fix: reject unsupported HTTP methods early in session manager",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2191",
         "createdAt": "2026-03-01T17:21:00Z",
-        "daysWaiting": 253,
+        "daysWaiting": 254,
         "labels": [
           "bug",
           "P2"
@@ -3133,7 +3133,7 @@
         "title": "Fix infinite reconnection loop in StreamableHTTP client",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2395",
         "createdAt": "2026-04-05T18:49:59Z",
-        "daysWaiting": 218,
+        "daysWaiting": 219,
         "labels": [],
         "isDraft": false,
         "additions": 62,
@@ -3172,7 +3172,7 @@
         "title": "fix(client/stdio): allow FIFO cleanup of multiple transports on asyncio (#577)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2484",
         "createdAt": "2026-04-20T17:07:25Z",
-        "daysWaiting": 203,
+        "daysWaiting": 204,
         "labels": [],
         "isDraft": false,
         "additions": 272,
@@ -3337,6 +3337,19 @@
         "author": "he-yufeng"
       },
       {
+        "number": 2853,
+        "title": "fix: retry token refresh without RFC 8707 resource param when the AS rejects it",
+        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2853",
+        "createdAt": "2026-06-12T19:40:57Z",
+        "daysWaiting": 151,
+        "labels": [],
+        "isDraft": false,
+        "additions": 161,
+        "deletions": 3,
+        "reviewCount": 1,
+        "author": "fede-kamel"
+      },
+      {
         "number": 2858,
         "title": "fix(oauth): narrow context.lock scope in async_auth_flow (rebase of #2660 by @peisuke, closes #2847)",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2858",
@@ -3348,19 +3361,6 @@
         "deletions": 173,
         "reviewCount": 2,
         "author": "Bartok9"
-      },
-      {
-        "number": 2853,
-        "title": "fix: retry token refresh without RFC 8707 resource param when the AS rejects it",
-        "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2853",
-        "createdAt": "2026-06-12T19:40:57Z",
-        "daysWaiting": 150,
-        "labels": [],
-        "isDraft": false,
-        "additions": 161,
-        "deletions": 3,
-        "reviewCount": 1,
-        "author": "fede-kamel"
       },
       {
         "number": 2959,
@@ -3432,7 +3432,7 @@
         "title": "fix: stop the standalone GET stream reconnecting forever on empty connections",
         "url": "https://github.com/modelcontextprotocol/python-sdk/pull/3087",
         "createdAt": "2026-07-10T19:27:20Z",
-        "daysWaiting": 122,
+        "daysWaiting": 123,
         "labels": [],
         "isDraft": true,
         "additions": 44,
@@ -3642,8 +3642,8 @@
       15,
       0,
       1,
-      1,
-      30,
+      2,
+      29,
       8,
       2,
       6,
@@ -5098,9 +5098,9 @@
     "top_n": 20
   },
   "downloads": {
-    "daily": 8049651,
-    "last_week": 74590824,
-    "last_month": 306978855,
-    "total": 2714497324
+    "daily": 9866304,
+    "last_week": 76407477,
+    "last_month": 308795508,
+    "total": 2716313977
   }
 }
