@@ -1,325 +1,109 @@
-{{/* Health & Trends Page Content */}}
-{{/* Support both direct context and dict with context/repoKey */}}
-{{ $context := . }}
-{{ $repoKey := "" }}
-{{ if reflect.IsMap . }}
-  {{ with .context }}{{ $context = . }}{{ end }}
-  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
-{{ end }}
-{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
-{{ $m := $data.metrics }}
-{{ $snapshots := $data.snapshots }}
-{{ $versions := $data.versions }}
+{{- /* Trends page (spec 8.2). Called once per repo by single.html with (dict "context" $ "repoKey" "owner/repo"). */ -}}
+{{- $context := . }}{{ $repoKey := "" -}}
+{{- if reflect.IsMap . }}{{ with .context }}{{ $context = . }}{{ end }}{{ with .repoKey }}{{ $repoKey = . }}{{ end }}{{ end -}}
+{{- $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) -}}
+{{- if not $repoKey }}{{ $repoKey = $data.repoKey }}{{ end -}}
+{{- $m := $data.metrics }}{{ $snaps := $data.snapshots }}{{ $versions := $data.versions -}}
+{{- $p := printf "health-%s" (replace $repoKey "/" "-") -}}
+{{- $latest := partialCached "ui/latest-date.html" $context "latest" -}}
 
-{{ if not $m }}
-<div class="alert alert-warning">
-  <span>No data available. Run the aggregation script.</span>
+{{- /* repos.json entry (package) */ -}}
+{{- $cfg := dict -}}
+{{- with site.Data.repos }}{{ range .repositories }}{{ if eq (printf "%s/%s" .owner .repo) $repoKey }}{{ $cfg = . }}{{ end }}{{ end }}{{ end -}}
+{{- $regNames := dict "npm" "npm" "pypi" "PyPI" "nuget" "NuGet" "crates" "crates.io" "rubygems" "RubyGems" -}}
+{{- $registry := "" }}{{ $diffDerived := false -}}
+{{- with $cfg.package -}}
+  {{- $r := string .registry -}}
+  {{- $registry = index $regNames $r | default $r -}}
+  {{- $diffDerived = in (slice "nuget" "rubygems") $r -}}
+{{- end -}}
+
+{{- /* snapshot history: count of dated snapshots, first date, and the daily window (since the first snapshot, max 365 days) */ -}}
+{{- $nSnap := 0 }}{{ $first := "" -}}
+{{- with $snaps }}{{ range . }}{{ with .date }}{{ $nSnap = add $nSnap 1 }}{{ $d := string . }}{{ if or (eq $first "") (lt $d $first) }}{{ $first = $d }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- $days := 1 -}}
+{{- with $first }}{{ $days = int (add 1 (div (sub (time.AsTime $latest).Unix (time.AsTime .).Unix) 86400)) }}{{ end -}}
+{{- if gt $days 365 }}{{ $days = 365 }}{{ end }}{{ if lt $days 1 }}{{ $days = 1 }}{{ end -}}
+
+{{- $updated := "" }}{{ with $m }}{{ with .timestamp }}{{ $updated = . }}{{ end }}{{ end -}}
+
+{{- $backlog := slice
+  (dict "slug" "issues-open" "title" "Open issues" "path" "issues.open" "polarity" "down")
+  (dict "slug" "pulls-open" "title" "Open PRs" "path" "pulls.open" "polarity" "none")
+  (dict "slug" "awaiting-response" "title" "Awaiting response · 24h" "path" "issues.without_response_24h" "polarity" "down")
+  (dict "slug" "awaiting-review" "title" "Awaiting review · 24h" "path" "pulls.without_review_24h" "polarity" "down")
+  (dict "slug" "first-response" "title" "First response · median" "path" "issues.response_time.median_hours" "polarity" "down" "hours" true)
+  (dict "slug" "first-review" "title" "First review · median" "path" "pulls.review_time.median_hours" "polarity" "down" "hours" true)
+-}}
+{{- $reach := slice
+  (dict "slug" "stars" "title" "Stars" "path" "repository.stars" "polarity" "up")
+  (dict "slug" "forks" "title" "Forks" "path" "repository.forks" "polarity" "none")
+-}}
+{{- $reachMeta := "Daily · gaps are missing snapshots" -}}
+{{- if $diffDerived }}{{ $reachMeta = printf "%s · %s downloads derived from total changes" $reachMeta $registry }}{{ end -}}
+
+{{ partial "ui/page-head.html" (dict "title" "Trends" "repoKey" $repoKey "updated" $updated) }}
+<div class="v-sections">
+
+  <section aria-labelledby="{{ $p }}-backlog">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-backlog" $p) "title" "Backlog over time" "meta" "Daily · gaps are missing snapshots") }}
+    {{- if lt $nSnap 2 }}
+    {{ partial "ui/empty.html" (dict "title" "Not enough history yet" "body" "Trends appear once this repository has at least two daily snapshots.") }}
+    {{- else }}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {{- range $backlog }}
+      {{ partial "pages/health/trend-card.html" (dict "p" $p "slug" .slug "title" .title "path" .path "polarity" .polarity "hours" .hours "snapshots" $snaps "repoKey" $repoKey "latest" $latest "days" $days) }}
+      {{- end }}
+    </div>
+    {{- end }}
+  </section>
+
+  <section aria-labelledby="{{ $p }}-reach">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-reach" $p) "title" "Reach over time" "meta" $reachMeta) }}
+    {{- if lt $nSnap 2 }}
+    {{ partial "ui/empty.html" (dict "title" "Not enough history yet" "body" "Trends appear once this repository has at least two daily snapshots.") }}
+    {{- else }}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {{- range $reach }}
+      {{ partial "pages/health/trend-card.html" (dict "p" $p "slug" .slug "title" .title "path" .path "polarity" .polarity "hours" false "snapshots" $snaps "repoKey" $repoKey "latest" $latest "days" $days) }}
+      {{- end }}
+      {{- if $cfg.package }}
+      {{ partial "pages/health/downloads-card.html" (dict "p" $p "snapshots" $snaps "repoKey" $repoKey "latest" $latest) }}
+      {{- end }}
+    </div>
+    {{- end }}
+  </section>
+
+  <section aria-labelledby="{{ $p }}-versions">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-versions" $p) "title" "Downloads by version") }}
+    {{- $hasVersions := false }}{{ with $versions }}{{ with .totals }}{{ $hasVersions = true }}{{ end }}{{ end }}
+    {{- if $hasVersions }}
+    {{ partial "pages/health/versions.html" (dict "p" $p "versions" $versions "registry" $registry) }}
+    {{- else }}
+    {{ partial "ui/empty.html" (dict "title" (cond (ne $registry "") "No version breakdown yet" "No package is published from this repository") "body" "Version breakdown is available for npm, PyPI, NuGet, crates.io and RubyGems packages.") }}
+    {{- end }}
+  </section>
+
+  {{- $hot := dict }}{{ with $m }}{{ with .hotspots }}{{ $hot = . }}{{ end }}{{ end }}
+  {{- $hotMeta := "Merged PRs · last 90 days" }}{{ with $hot.top_n }}{{ $hotMeta = printf "%s · top %s files tracked" $hotMeta (lang.FormatNumber 0 .) }}{{ end }}
+  <section aria-labelledby="{{ $p }}-hotspots">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-hotspots" $p) "title" "Code hotspots" "meta" $hotMeta) }}
+    {{- if or $hot.by_file $hot.by_directory }}
+    <div class="grid gap-4 lg:grid-cols-2">
+      {{- with $hot.by_file }}
+      {{ partial "pages/health/hotspot-table.html" (dict "p" $p "kind" "files" "rows" . "repoKey" $repoKey) }}
+      {{- else }}
+      {{ partial "ui/empty.html" (dict "title" "No file hotspots" "body" "No files were changed by merged pull requests in the last 90 days.") }}
+      {{- end }}
+      {{- with $hot.by_directory }}
+      {{ partial "pages/health/hotspot-table.html" (dict "p" $p "kind" "dirs" "rows" . "repoKey" $repoKey) }}
+      {{- else }}
+      {{ partial "ui/empty.html" (dict "title" "No directory hotspots" "body" "No directories were changed by merged pull requests in the last 90 days.") }}
+      {{- end }}
+    </div>
+    {{- else }}
+    {{ partial "ui/empty.html" (dict "title" "No hotspot data yet" "body" "Hotspots appear once merged pull requests from the last 90 days have been analysed.") }}
+    {{- end }}
+  </section>
+
 </div>
-{{ else }}
-
-<!-- Hotspots -->
-{{ if $m.hotspots }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Code Hotspots</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Files most frequently modified in merged PRs (last 90 days)</p>
-
-  {{ if $m.hotspots.by_file }}
-  {{/* Build GitHub base URL */}}
-  {{ $ghFileBase := printf "https://github.com/%s/blob/main" $repoKey }}
-  <div class="mb-4">
-    <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Files</h3>
-    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-      {{/* Find max PR count for scaling */}}
-      {{ $maxPR := 0 }}
-      {{ range $m.hotspots.by_file }}
-        {{ if gt .pr_count $maxPR }}{{ $maxPR = .pr_count }}{{ end }}
-      {{ end }}
-
-      <div class="hotspot-grid">
-        {{ range first 10 $m.hotspots.by_file }}
-          {{ $ratio := div (float .pr_count) (float $maxPR) }}
-          {{ $filled := int (math.Round (mul $ratio 10)) }}
-          {{ if lt $filled 1 }}{{ $filled = 1 }}{{ end }}
-          {{ $level := int (math.Round (mul $ratio 4)) }}
-          {{ if lt $level 1 }}{{ $level = 1 }}{{ end }}
-          {{ if gt $level 4 }}{{ $level = 4 }}{{ end }}
-          {{ $fileLink := printf "%s/%s" $ghFileBase .path }}
-
-          <div class="hotspot-row">
-            <span class="hotspot-file" title="{{ .path }}">
-              <a href="{{ $fileLink }}" target="_blank" rel="noopener">{{ .path }}</a>
-            </span>
-            <div class="hotspot-squares">
-              {{ range seq 10 }}
-                {{ if le . $filled }}
-                  <span class="hotspot-sq hotspot-sq-{{ $level }}"></span>
-                {{ else }}
-                  <span class="hotspot-sq hotspot-sq-0"></span>
-                {{ end }}
-              {{ end }}
-            </div>
-            <div class="hotspot-stats">
-              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .pr_count }}</span><span class="hotspot-stat-label">PRs</span></span>
-              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ lang.FormatNumber 0 .total_changes }}</span><span class="hotspot-stat-label">Δ</span></span>
-            </div>
-          </div>
-        {{ end }}
-      </div>
-    </div>
-  </div>
-  {{ end }}
-
-  {{ if $m.hotspots.by_directory }}
-  {{/* Build GitHub base URL for directories */}}
-  {{ $ghDirBase := printf "https://github.com/%s/tree/main" $repoKey }}
-  <div>
-    <h3 class="text-xs font-medium text-base-content/70 mb-2">Top Directories</h3>
-    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-      {{/* Find max PR count for scaling */}}
-      {{ $maxDirPR := 0 }}
-      {{ range $m.hotspots.by_directory }}
-        {{ if gt .pr_count $maxDirPR }}{{ $maxDirPR = .pr_count }}{{ end }}
-      {{ end }}
-
-      <div class="hotspot-grid">
-        {{ range first 10 $m.hotspots.by_directory }}
-          {{ $ratio := div (float .pr_count) (float $maxDirPR) }}
-          {{ $filled := int (math.Round (mul $ratio 10)) }}
-          {{ if lt $filled 1 }}{{ $filled = 1 }}{{ end }}
-          {{ $level := int (math.Round (mul $ratio 4)) }}
-          {{ if lt $level 1 }}{{ $level = 1 }}{{ end }}
-          {{ if gt $level 4 }}{{ $level = 4 }}{{ end }}
-          {{ $dirLink := printf "%s/%s" $ghDirBase .path }}
-
-          <div class="hotspot-row">
-            <span class="hotspot-file" title="{{ .path }}">
-              <a href="{{ $dirLink }}" target="_blank" rel="noopener">{{ .path }}</a>
-            </span>
-            <div class="hotspot-squares">
-              {{ range seq 10 }}
-                {{ if le . $filled }}
-                  <span class="hotspot-sq hotspot-sq-{{ $level }}"></span>
-                {{ else }}
-                  <span class="hotspot-sq hotspot-sq-0"></span>
-                {{ end }}
-              {{ end }}
-            </div>
-            <div class="hotspot-stats">
-              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .pr_count }}</span><span class="hotspot-stat-label">PRs</span></span>
-              <span class="hotspot-stat"><span class="hotspot-stat-value">{{ .file_count }}</span><span class="hotspot-stat-label">files</span></span>
-            </div>
-          </div>
-        {{ end }}
-      </div>
-    </div>
-  </div>
-  {{ end }}
-</section>
-{{ end }}
-
-<!-- Historical Trends -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Historical Trends</h2>
-  {{ if $snapshots }}
-    {{/* Collect snapshots into a sortable slice */}}
-    {{ $entries := slice }}
-    {{ range $filename, $data := $snapshots }}
-      {{ $entries = $entries | append (dict "date" $data.date "issues_open" $data.issues.open "pulls_open" $data.pulls.open "stars" $data.repository.stars) }}
-    {{ end }}
-
-    {{/* Sort by date ascending */}}
-    {{ $sorted := sort $entries "date" "asc" }}
-
-    {{/* Extract sorted arrays */}}
-    {{ $dates := slice }}
-    {{ $issuesOpen := slice }}
-    {{ $pullsOpen := slice }}
-    {{ $stars := slice }}
-    {{ range $sorted }}
-      {{ $dates = $dates | append .date }}
-      {{ $issuesOpen = $issuesOpen | append .issues_open }}
-      {{ $pullsOpen = $pullsOpen | append .pulls_open }}
-      {{ $stars = $stars | append .stars }}
-    {{ end }}
-
-    {{ if gt (len $dates) 1 }}
-    <div class="space-y-4">
-      <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-        <h3 class="text-xs font-medium text-base-content/70 mb-3">Open Issues <span class="opacity-60">(UTC)</span></h3>
-        <canvas data-chart='{
-          "type": "line",
-          "data": {
-            "labels": {{ $dates | jsonify }},
-            "datasets": [{
-              "label": "Open Issues",
-              "data": {{ $issuesOpen | jsonify }},
-              "borderColor": "rgb(0, 102, 204)",
-              "backgroundColor": "rgba(0, 102, 204, 0.1)",
-              "fill": true,
-              "tension": 0.3
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": { "legend": { "display": false } }
-          }
-        }'></canvas>
-      </div>
-
-      <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-        <h3 class="text-xs font-medium text-base-content/70 mb-3">Open PRs <span class="opacity-60">(UTC)</span></h3>
-        <canvas data-chart='{
-          "type": "line",
-          "data": {
-            "labels": {{ $dates | jsonify }},
-            "datasets": [{
-              "label": "Open PRs",
-              "data": {{ $pullsOpen | jsonify }},
-              "borderColor": "rgb(40, 167, 69)",
-              "backgroundColor": "rgba(40, 167, 69, 0.1)",
-              "fill": true,
-              "tension": 0.3
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": { "legend": { "display": false } }
-          }
-        }'></canvas>
-      </div>
-
-      <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-        <h3 class="text-xs font-medium text-base-content/70 mb-3">Stars <span class="opacity-60">(UTC)</span></h3>
-        <canvas data-chart='{
-          "type": "line",
-          "data": {
-            "labels": {{ $dates | jsonify }},
-            "datasets": [{
-              "label": "Stars",
-              "data": {{ $stars | jsonify }},
-              "borderColor": "rgb(255, 193, 7)",
-              "backgroundColor": "rgba(255, 193, 7, 0.1)",
-              "fill": true,
-              "tension": 0.3
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": { "legend": { "display": false } }
-          }
-        }'></canvas>
-      </div>
-    </div>
-    {{ else }}
-    <div class="bg-base-100 border border-base-300 rounded-lg p-4 text-sm text-base-content/70">
-      Not enough historical data yet. Trends will appear after multiple data syncs.
-    </div>
-    {{ end }}
-  {{ else }}
-  <div class="bg-base-100 border border-base-300 rounded-lg p-4 text-sm text-base-content/70">
-    No snapshot data available yet. Trends will appear after daily snapshots accumulate.
-  </div>
-  {{ end }}
-</section>
-
-<!-- Downloads by Version -->
-{{ if $versions }}
-{{ $unit := $versions.unit | default "daily" }}
-{{ $unitLabel := cond (eq $unit "last_week") "7-day rolling" (cond (eq $unit "cumulative") "Cumulative" "Daily") }}
-{{ $unitBlurb := cond (eq $unit "last_week") "7-day rolling downloads per version (npm /versions API)" (cond (eq $unit "cumulative") "All-time cumulative downloads per version (NuGet, crates.io, RubyGems APIs)" "Per-version daily downloads via BigQuery") }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Downloads by Version</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">
-    {{ $unitBlurb }}
-    {{ with $versions.lastUpdated }}&middot; updated {{ dateFormat "Jan 2 15:04 UTC" (time .) }}{{ end }}
-  </p>
-
-  {{/* Rank versions by total and pick top 10 */}}
-  {{ $ranked := slice }}
-  {{ $grandTotal := 0 }}
-  {{ range $v, $n := $versions.totals }}
-    {{ $ranked = $ranked | append (dict "version" $v "count" $n) }}
-    {{ $grandTotal = add $grandTotal $n }}
-  {{ end }}
-  {{ $ranked = sort $ranked "count" "desc" }}
-  {{ $top := first 10 $ranked }}
-  {{ $topVersions := slice }}
-  {{ range $top }}{{ $topVersions = $topVersions | append .version }}{{ end }}
-
-  <div class="space-y-4">
-    <!-- Version totals table -->
-    <div class="rounded-lg border border-base-300 bg-base-100">
-      <table class="table table-sm w-full">
-        <thead>
-          <tr>
-            <th class="bg-base-200">Version</th>
-            <th class="bg-base-200 text-right">Downloads</th>
-            <th class="bg-base-200 text-right">Share</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{ range $top }}
-          {{ $pct := 0.0 }}
-          {{ if gt $grandTotal 0 }}{{ $pct = mul (div (float .count) (float $grandTotal)) 100 }}{{ end }}
-          <tr class="hover:bg-base-200/50">
-            <td class="font-mono">{{ .version }}</td>
-            <td class="text-right font-semibold tabular-nums">{{ lang.FormatNumber 0 .count }}</td>
-            <td class="text-right tabular-nums text-base-content/60">{{ printf "%.1f%%" $pct }}</td>
-          </tr>
-          {{ end }}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Stacked area chart -->
-    <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-      <h3 class="text-xs font-medium text-base-content/70 mb-3 inline-flex items-center gap-1">
-        {{ $unitLabel }} by Version <span class="opacity-60">(top 10, UTC)</span>
-        <span class="tooltip tooltip-right font-normal normal-case"><span class="tooltip-content text-xs">Top 10 versions by total downloads are plotted individually. The <strong>other</strong> series sums all remaining versions together so the stacked total equals overall {{ lower $unitLabel }} downloads.</span><i class="fa-solid fa-circle-info opacity-40 cursor-help"></i></span>
-      </h3>
-      {{/* Build sorted date axis and one data series per top-N version plus "other" */}}
-      {{ $vDates := slice }}
-      {{ range $d, $_ := $versions.daily }}{{ $vDates = $vDates | append $d }}{{ end }}
-      {{ $vDates = sort $vDates }}
-
-      {{ $palette := slice "#2563eb" "#16a34a" "#dc2626" "#ca8a04" "#9333ea" "#0891b2" "#db2777" "#65a30d" "#ea580c" "#475569" }}
-      {{ $datasets := slice }}
-      {{ range $i, $v := $topVersions }}
-        {{ $series := slice }}
-        {{ range $d := $vDates }}
-          {{ $dayMap := index $versions.daily $d }}
-          {{ $series = $series | append (or (index $dayMap $v) 0) }}
-        {{ end }}
-        {{ $datasets = $datasets | append (dict "label" $v "data" $series "borderColor" (index $palette $i) "backgroundColor" (index $palette $i) "fill" true "tension" 0.2 "borderWidth" 1 "pointRadius" 0) }}
-      {{ end }}
-      {{/* "other" bucket: per-day sum of versions outside the top 10 */}}
-      {{ $otherSeries := slice }}
-      {{ range $d := $vDates }}
-        {{ $dayMap := index $versions.daily $d }}
-        {{ $dayOther := 0 }}
-        {{ range $v, $n := $dayMap }}
-          {{ if not (in $topVersions $v) }}{{ $dayOther = add $dayOther $n }}{{ end }}
-        {{ end }}
-        {{ $otherSeries = $otherSeries | append $dayOther }}
-      {{ end }}
-      {{ $datasets = $datasets | append (dict "label" "other" "data" $otherSeries "borderColor" "#94a3b8" "backgroundColor" "#94a3b8" "fill" true "tension" 0.2 "borderWidth" 1 "pointRadius" 0) }}
-
-      <canvas data-chart='{
-        "type": "line",
-        "data": {
-          "labels": {{ $vDates | jsonify }},
-          "datasets": {{ $datasets | jsonify }}
-        },
-        "options": {
-          "responsive": true,
-          "interaction": { "mode": "index", "intersect": false },
-          "plugins": { "legend": { "position": "bottom", "labels": { "boxWidth": 12, "padding": 12 } } },
-          "scales": { "y": { "stacked": true } }
-        }
-      }'></canvas>
-    </div>
-  </div>
-</section>
-{{ end }}
-
-{{ end }}

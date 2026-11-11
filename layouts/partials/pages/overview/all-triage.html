@@ -1,0 +1,77 @@
+{{- /*
+  Overview A3a: Inbound triage (repos with actionability or issue tiers only).
+  Call: partial "pages/overview/all-triage.html" (dict "rows" $rows "p" $p)
+  Thresholds (spec 8.1): Actionable <=25 ok / <=50 watch / else over; Triage <5 / <10 / else;
+  P0 > 7d: 0 ok / else over; P1 > 90d: 0 ok / <5 watch / else over. Numbers stay ink; the dot carries status.
+*/ -}}
+{{- $p := .p }}{{ $rows := .rows -}}
+{{- $nClass := 0 -}}
+{{- range $rows }}{{ if or .hasAct .hasIss }}{{ $nClass = add $nClass 1 }}{{ end }}{{ end -}}
+{{- $na := `<span class="v-na" title="Not tracked for this repository">—</span>` | safeHTML -}}
+<div class="v-panel" id="{{ $p }}-triage">
+  <div class="v-panel-head">
+    <h3 class="v-panel-title">Inbound triage</h3>
+    <span class="v-panel-meta">{{ $nClass }} of {{ len $rows }} repositories classified</span>
+  </div>
+  {{- if gt $nClass 0 }}
+  <div class="v-scroll">
+    <table class="v-dt">
+      <thead>
+        <tr>
+          <th scope="col">Repository</th>
+          <th scope="col" class="num">Actionable PRs</th>
+          <th scope="col" class="num">Open bugs &amp; enhancements</th>
+          <th scope="col" class="num">Triage pending</th>
+          <th scope="col" class="num">P0 &gt; 7d</th>
+          <th scope="col" class="num">P1 &gt; 90d</th>
+        </tr>
+      </thead>
+      <tbody>
+      {{- range $rows }}{{ if or .hasAct .hasIss }}
+        {{- $a := .act }}{{ $i := .iss -}}
+        {{- $q := .key | urlquery -}}
+        <tr data-row-link>
+          <th scope="row"><a class="v-row-link" href="{{ printf "%s?repo=%s" ("issues/" | relURL) $q }}">{{ .name }}</a></th>
+          <td class="num">
+            {{- if .hasAct -}}
+              {{- $n := $a.summary.actionable_count | default 0 -}}
+              {{- $lvl := "" }}{{ if gt $n 50 }}{{ $lvl = "crit" }}{{ else if gt $n 25 }}{{ $lvl = "warn" }}{{ end -}}
+              {{- with $lvl }}{{ partial "ui/status.html" . }} {{ end -}}
+              <a href="{{ printf "%s?repo=%s" ("pulls/" | relURL) $q }}">{{ partial "ui/num.html" (dict "v" $n) }}</a>
+            {{- else }}{{ $na }}{{ end -}}
+          </td>
+          {{- if .hasIss }}
+            {{- $sum := $i.summary -}}
+            {{- $bugsEnh := add ($sum.by_type.bug | default 0) ($sum.by_type.enhancement | default 0) -}}
+            {{- $triage := add ($sum.untriaged_count | default 0) ($sum.partially_triaged_count | default 0) -}}
+            {{- $p0 := $sum.sla.p0_7d_breach | default 0 -}}
+            {{- $p1 := $sum.sla.p1_90d_breach | default 0 -}}
+            {{- $lt := "" }}{{ if ge $triage 10 }}{{ $lt = "crit" }}{{ else if ge $triage 5 }}{{ $lt = "warn" }}{{ end -}}
+            {{- $l0 := "" }}{{ if gt $p0 0 }}{{ $l0 = "crit" }}{{ end -}}
+            {{- $l1 := "" }}{{ if ge $p1 5 }}{{ $l1 = "crit" }}{{ else if gt $p1 0 }}{{ $l1 = "warn" }}{{ end }}
+          <td class="num">{{ partial "ui/num.html" (dict "v" $bugsEnh) }}</td>
+          <td class="num">{{ with $lt }}{{ partial "ui/status.html" . }} {{ end }}{{ partial "ui/num.html" (dict "v" $triage) }}</td>
+          <td class="num">{{ with $l0 }}{{ partial "ui/status.html" . }} {{ end }}{{ partial "ui/num.html" (dict "v" $p0) }}</td>
+          <td class="num">{{ with $l1 }}{{ partial "ui/status.html" . }} {{ end }}{{ partial "ui/num.html" (dict "v" $p1) }}</td>
+          {{- else }}
+          <td class="num">{{ $na }}</td>
+          <td class="num">{{ $na }}</td>
+          <td class="num">{{ $na }}</td>
+          <td class="num">{{ $na }}</td>
+          {{- end }}
+        </tr>
+      {{- end }}{{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="v-panel-foot">
+    <p class="v-legend"><span><span class="v-dot v-dot-warn"></span>Watch</span><span><span class="v-dot v-dot-crit"></span>Over target</span><span>Actionable ≤ 25 (watch ≤ 50) · Triage &lt; 5 (watch &lt; 10) · P0 &gt; 7d: 0 · P1 &gt; 90d: 0 (watch &lt; 5)</span></p>
+    <p>Actionable PRs are waiting on a maintainer. Triage pending counts open issues missing a type or priority label. P0 and P1 limits are the SEP-1730 SLAs. Select a row to open its issues; the Actionable PRs value opens its pull requests.</p>
+  </div>
+  {{- else }}
+  <div class="v-empty">
+    <p class="v-empty-title">No repositories are classified yet</p>
+    <p class="v-empty-body">Triage data appears once issues or pull requests have been classified.</p>
+  </div>
+  {{- end }}
+</div>

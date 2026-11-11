@@ -1,0 +1,27 @@
+{{- /* Humanised, sentence-case name for an actionability state slug (spec 4.10). Falls back to ui/humanize.html. Returns a string. */ -}}
+{{- $names := dict
+  "author-pinged-after-procedural" "Author pinged, awaiting us"
+  "needs-re-review" "Needs re-review"
+  "maintainer-intake" "Maintainer PRs awaiting review"
+  "duplicate-cluster" "Duplicate clusters"
+  "needs-decision" "Needs a decision"
+  "backport-follows-primary" "Backports of a main-branch PR"
+  "needs-first-review" "Needs first review"
+  "community-reviewed" "Community-reviewed"
+  "stale-awaiting-author" "Stale, awaiting author"
+  "ci-red-silent" "CI failing, author not told"
+  "stale-ci-abandoned" "CI failing, abandoned"
+  "approved-rotted" "Approved, now conflicting"
+  "pre-ci-ghost" "CI never ran"
+  "bot-broke-ci" "Bot PR, CI failing"
+  "bot-release" "Release PRs"
+  "unknown" "Unclassified"
+  "stale-draft" "Stale drafts"
+  "stale-draft-pinged" "Stale drafts, pinged"
+  "draft-active" "Active drafts"
+  "parked" "Parked"
+-}}
+{{- $s := string . -}}
+{{- $out := "" -}}
+{{- with index $names $s }}{{ $out = . }}{{ else }}{{ $out = partial "ui/humanize.html" $s }}{{ end -}}
+{{- return $out -}}

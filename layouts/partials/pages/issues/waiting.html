@@ -1,0 +1,56 @@
+{{- /* Legacy branch: "Longest waiting" from metrics.issues.issues_without_maintainer_response.
+     Ctx: (dict "rows" slice "p" $p) */ -}}
+{{- $p := .p -}}
+{{- $rows := .rows | default slice -}}
+{{- $n := len $rows -}}
+{{- $tid := printf "%s-waiting" $p -}}
+<section aria-labelledby="{{ $tid }}-h">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-h" $tid) "title" "Longest waiting" "meta" (printf "%d open without a maintainer response · longest first" $n)) }}
+  {{- if eq $n 0 }}
+  {{ partial "ui/empty.html" (dict "title" "No issues are waiting on a maintainer") }}
+  {{- else }}
+  <div class="v-panel">
+    <div class="v-scroll">
+      <table class="v-dt">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Issue</th>
+            <th scope="col" class="hidden sm:table-cell num">Comments</th>
+            <th scope="col" class="num">Waiting</th>
+          </tr>
+        </thead>
+        <tbody id="{{ $tid }}">
+          {{- range $k, $r := $rows }}
+          {{- $labels := $r.labels | default slice -}}
+          {{- $nlab := len $labels -}}
+          {{- $dw := float ($r.daysWaiting | default 0) -}}
+          {{- $cc := float ($r.commentCount | default 0) -}}
+          {{- $opened := "" }}{{ with $r.createdAt }}{{ $tc := time.AsTime . }}{{ $opened = $tc.Format "Jan 2, 2006" }}{{ end }}
+          <tr data-row-link{{ if and (gt $n 15) (ge $k 10) }} data-more hidden{{ end }}>
+            <td class="id"><a class="v-row-link" href="{{ $r.url }}" target="_blank" rel="noopener">#{{ $r.number }}</a></td>
+            <td class="title"><a href="{{ $r.url }}" target="_blank" rel="noopener" title="{{ $r.title }}">{{ $r.title }}</a>
+              {{- if gt $nlab 0 }}
+              <span class="sub flex flex-wrap items-center gap-2">{{ range first 2 $labels }}<span class="v-pill">{{ . }}</span>{{ end }}{{ if gt $nlab 2 }}<span class="v-pill">+{{ sub $nlab 2 }}</span>{{ end }}</span>
+              {{- else }}
+              <span class="sub">Unlabeled</span>
+              {{- end }}
+              <span class="sub sm:hidden">{{ lang.FormatNumber 0 $cc }} comments</span>
+            </td>
+            <td class="hidden sm:table-cell num">{{ lang.FormatNumber 0 $cc }}</td>
+            <td class="num">{{ if gt $dw 30.0 }}{{ partial "ui/status.html" "crit" }} {{ else if gt $dw 7.0 }}{{ partial "ui/status.html" "warn" }} {{ end }}<span{{ with $opened }} title="Opened {{ . }}"{{ end }}>{{ partial "pages/issues/age.html" $dw }}</span></td>
+          </tr>
+          {{- end }}
+          {{- if gt $n 15 }}
+          <tr class="v-more"><td colspan="4"><button type="button" data-more-for="{{ $tid }}" data-label="Show all {{ $n }}">Show all {{ $n }}</button></td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </div>
+    <div class="v-panel-foot">
+      <p class="v-legend"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Waiting: watch &gt; 7d · over target &gt; 30d</span></p>
+      <p>Waiting counts calendar days since the issue opened. Rows open on GitHub.</p>
+    </div>
+  </div>
+  {{- end }}
+</section>

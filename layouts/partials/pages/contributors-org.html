@@ -1,0 +1,43 @@
+{{- /* Org-wide maintainers (spec 8.3 "org"), rendered once by single.html after all repo blocks. Called with (dict "context" $page). */ -}}
+{{- $context := . -}}
+{{- if reflect.IsMap . }}{{ with .context }}{{ $context = . }}{{ end }}{{ end -}}
+{{- $p := "contributors-org" -}}
+{{- $mt := site.Data.maintainers -}}
+{{- $roles := partialCached "pages/contributors/roles.html" $context "roles" -}}
+{{- $n := 0 }}{{ with $mt }}{{ with .maintainers }}{{ $n = len . }}{{ end }}{{ end -}}
+{{- $meta := printf "%d maintainers · from modelcontextprotocol/access" $n -}}
+{{- with $mt }}{{ with .lastUpdated }}{{ $meta = printf "%s · updated %s" $meta ((time.AsTime .).Format "Jan 2, 2006") }}{{ end }}{{ end -}}
+{{- /* The empty first child gives the section the standard between-sections gap (.v-sections > * + *). */ -}}
+<div class="v-sections">
+  <span hidden></span>
+  <section aria-labelledby="{{ $p }}-maintainers">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-maintainers" $p) "title" "Maintainers · organization" "meta" $meta) }}
+    {{- if $roles }}
+    <div class="v-panel">
+      <div class="v-scroll">
+        <table class="v-dt" data-sortable>
+          <thead>
+            <tr>
+              <th scope="col" data-sort aria-sort="none"><button type="button">Role</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Count</button></th>
+              <th scope="col">Handles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{- range $roles }}
+            <tr>
+              <th scope="row" data-v="{{ lower .label }}">{{ .label }}</th>
+              <td class="num" data-v="{{ len .handles }}">{{ len .handles }}</td>
+              <td>{{ range $i, $h := .handles }}{{ if $i }}, {{ end }}<a class="v-link-quiet font-mono" href="https://github.com/{{ $h }}" target="_blank" rel="noopener">@{{ $h }}</a>{{ end }}</td>
+            </tr>
+            {{- end }}
+          </tbody>
+        </table>
+      </div>
+      <div class="v-panel-foot"><p>Handles open on GitHub. A person with several roles is counted once per role.</p></div>
+    </div>
+    {{- else }}
+    {{ partial "ui/empty.html" (dict "title" "Maintainer list not available" "body" "The organization maintainer list hasn't been fetched yet.") }}
+    {{- end }}
+  </section>
+</div>

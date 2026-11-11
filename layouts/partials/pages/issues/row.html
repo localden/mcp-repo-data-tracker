@@ -1,0 +1,59 @@
+{{- /* One tiered issue row (5 columns: # · Issue · Author · Comments · Age).
+     Ctx: (dict "i" issue "repoKey" "o/r" "gtype" "bug"|"" "more" bool)
+     Derived badges make every KPI / chip filter match its summary count exactly:
+       partially-triaged, close-candidate, repro-14d, question-2d, p0-7d, p1-90d, reply-2bd, triage-2bd, bot-triaged */ -}}
+{{- $i := .i -}}
+{{- $labels := $i.labels | default slice -}}
+{{- $ls := slice -}}{{- range $labels }}{{ $ls = $ls | append (replace (lower (string .)) " " "-") }}{{ end -}}
+{{- $age := float ($i.age_days | default 0) -}}
+{{- $abd := float ($i.age_business_days | default 0) -}}
+{{- $cc := float ($i.comment_count | default 0) -}}
+{{- $bc := float ($i.bot_comment_count | default 0) -}}
+{{- $rwd := -1.0 -}}{{- if and $i.reporter_replied (ne $i.reply_wait_days nil) }}{{ $rwd = float $i.reply_wait_days }}{{ end -}}
+{{- $waiting := false -}}{{- if and (or (in $labels "needs repro") (in $labels "needs confirmation")) (not $i.reporter_replied) }}{{ $waiting = true }}{{ end -}}
+{{- $b := slice -}}
+{{- if $i.bot_triaged }}{{ $b = $b | append "bot-triaged" }}{{ end -}}
+{{- if and $i.type (not $i.status) (not $i.priority) }}{{ $b = $b | append "partially-triaged" }}{{ end -}}
+{{- if or (in $labels "potentially close") (and $waiting (gt $age 14.0)) }}{{ $b = $b | append "close-candidate" }}{{ end -}}
+{{- if and $waiting (gt $age 14.0) }}{{ $b = $b | append "repro-14d" }}{{ end -}}
+{{- if and (eq $i.type "question") (not $i.has_maintainer_response) (gt $abd 2.0) }}{{ $b = $b | append "question-2d" }}{{ end -}}
+{{- if and (eq $i.priority "P0") (gt $age 7.0) }}{{ $b = $b | append "p0-7d" }}{{ end -}}
+{{- if and (eq $i.priority "P1") (gt $age 90.0) }}{{ $b = $b | append "p1-90d" }}{{ end -}}
+{{- if gt $rwd 2.0 }}{{ $b = $b | append "reply-2bd" }}{{ end -}}
+{{- if and (not $i.type) (gt $abd 2.0) }}{{ $b = $b | append "triage-2bd" }}{{ end -}}
+{{- /* Day counts via pages/issues/age.html: "0d" / "1d" below 2 days (ui/dur would print 1d as "24h"), ui/dur above. */ -}}
+{{- $ageS := partial "pages/issues/age.html" $abd -}}
+{{- $rwdS := "" -}}{{- if ge $rwd 0.0 }}{{ $rwdS = partial "pages/issues/age.html" $rwd }}{{ end -}}
+{{- $showType := false -}}{{- with $i.type }}{{ if ne . $.gtype }}{{ $showType = true }}{{ end }}{{ end -}}
+{{- $author := string ($i.author | default "ghost") -}}
+<tr data-row data-row-link data-author="{{ lower $author }}"
+  {{- with $ls }} data-labels="{{ delimit . "," }}"{{ end }}
+  {{- with $i.type }} data-type="{{ lower . }}"{{ end }}
+  {{- with $i.status }} data-status="{{ replace (lower .) " " "-" }}"{{ end }}
+  {{- with $i.tier }} data-tier="{{ . }}"{{ end }}
+  {{- with $i.priority }} data-priority="{{ lower . }}"{{ end }}
+  {{- if $i.sla_breach }} data-sla="breach" class="v-edge-crit"{{ end }}
+  {{- with $b }} data-badges="{{ delimit . "," }}"{{ end }}
+  {{- if .more }} data-more hidden{{ end }}>
+  <td class="id"><a class="v-row-link" href="{{ $i.url }}" target="_blank" rel="noopener">#{{ $i.number }}</a></td>
+  <td class="title"><a href="{{ $i.url }}" target="_blank" rel="noopener" title="{{ $i.title }}">{{ $i.title }}</a>
+    {{- if or $i.priority $i.status $i.assignee $i.linked_prs $showType }}
+    <span class="sub flex flex-wrap items-center gap-2">
+      {{- with $i.priority }}<span class="v-pill">{{ if or (eq . "P0") (eq . "P1") }}<span class="v-dot v-dot-crit" aria-hidden="true"></span>{{ end }}{{ . }}</span>{{ end -}}
+      {{- if $showType }}<span class="v-pill">{{ partial "ui/humanize.html" $i.type }}</span>{{ end -}}
+      {{- with $i.status }}<span class="v-pill">{{ partial "ui/humanize.html" . }}</span>{{ end -}}
+      {{- with $i.assignee }}<span class="v-pill">Assigned <span class="font-mono">@{{ . }}</span></span>{{ end -}}
+      {{- range $i.linked_prs }}<a class="v-link font-mono" href="https://github.com/{{ $.repoKey }}/pull/{{ . }}" target="_blank" rel="noopener">#{{ . }}</a>{{ end -}}
+    </span>
+    {{- end }}
+    <span class="sub sm:hidden"><span class="font-mono">@{{ $author }}</span>{{ if $i.is_maintainer }} · maint{{ end }}{{ if gt $cc 0.0 }} · {{ lang.FormatNumber 0 $cc }} comments{{ end }}{{ with $rwdS }} · waiting {{ . }}{{ end }}
+      {{- if $i.sla_breach }} <span class="v-pill"><span class="v-dot v-dot-crit" aria-hidden="true"></span>Past SLA</span>{{ end }}</span>
+  </td>
+  <td class="hidden sm:table-cell"><span class="font-mono">@{{ $author }}</span>{{ if $i.is_maintainer }} <span class="v-pill">maint</span>{{ end }}</td>
+  <td class="hidden sm:table-cell num">{{ if gt $cc 0.0 }}{{ lang.FormatNumber 0 $cc }}{{ if gt $bc 0.0 }} · {{ lang.FormatNumber 0 $bc }} bot{{ end }}{{ else }}<span class="v-na">—</span>{{ end }}</td>
+  <td class="num"><span title="{{ printf "%.0f" $age }} calendar days">{{ $ageS }}</span>
+    {{- /* Below 640px the waiting sub and the Past SLA pill move to the title's mobile line so the Age column stays narrow. */ -}}
+    {{- with $rwdS }}<span class="sub max-sm:hidden">waiting {{ . }}</span>{{ end }}
+    {{- if $i.sla_breach }}<span class="sub max-sm:hidden"><span class="v-pill"><span class="v-dot v-dot-crit" aria-hidden="true"></span>Past SLA</span></span>{{ end -}}
+  </td>
+</tr>

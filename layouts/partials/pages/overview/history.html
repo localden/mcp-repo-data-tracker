@@ -1,0 +1,57 @@
+{{- /*
+  Overview A4: History. Small multiples, one card per repository, one tab per metric (spec 8.1, 5.10).
+  Call: partial "pages/overview/history.html" (dict "rows" $rows "p" $p "latest" $latest "weeks" $weeks "nPkg" n)
+  Weekly bins from ui/weekly.html anchored on the global latest date; downloads per week sum full 7-day bins;
+  downloads per month sum daily values by month (current month marked partial).
+*/ -}}
+{{- $p := .p }}{{ $rows := .rows }}{{ $latest := .latest }}{{ $weeks := .weeks }}{{ $nPkg := .nPkg -}}
+{{- $maxPts := 0 -}}
+{{- range $rows }}{{ $n := len .s.issues.points }}{{ if gt $n $maxPts }}{{ $maxPts = $n }}{{ end }}{{ end -}}
+{{- $tabs := slice
+  (dict "k" "issues" "label" "Open issues" "path" "issues" "pol" "down")
+  (dict "k" "prs" "label" "Open PRs" "path" "pulls" "pol" "none")
+  (dict "k" "stars" "label" "Stars" "path" "stars" "pol" "up")
+  (dict "k" "dlw" "label" "Downloads per week" "path" "dl" "pol" "up")
+  (dict "k" "dlm" "label" "Downloads per month" "path" "dl" "pol" "up")
+-}}
+<section aria-labelledby="{{ $p }}-history">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-history" $p) "title" "History" "meta" "Weekly · y-axis per repository") }}
+  {{- if lt $maxPts 2 }}
+  {{ partial "ui/empty.html" (dict "title" "Not enough history yet" "body" "Charts appear once at least two daily snapshots exist.") }}
+  {{- else }}
+  <div class="v-tabs" role="tablist" aria-label="Metric">
+    {{- range $i, $t := $tabs }}
+    <button type="button" class="v-tab" role="tab" id="{{ $p }}-t-{{ $t.k }}" aria-controls="{{ $p }}-p-{{ $t.k }}" aria-selected="{{ if eq $i 0 }}true{{ else }}false{{ end }}" tabindex="{{ if eq $i 0 }}0{{ else }}-1{{ end }}">{{ $t.label }}</button>
+    {{- end }}
+  </div>
+  {{- range $i, $t := $tabs }}
+  <div role="tabpanel" id="{{ $p }}-p-{{ $t.k }}" aria-labelledby="{{ $p }}-t-{{ $t.k }}" class="mt-3"{{ if gt $i 0 }} hidden{{ end }}>
+    {{- if and (in (slice "dlw" "dlm") $t.k) (eq $nPkg 0) }}
+    {{ partial "ui/empty.html" (dict "title" "No SDK packages are tracked" "body" "Download history appears for repositories that publish a package.") }}
+    {{- else }}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {{- range $rows }}
+        {{- $r := . }}{{ $s := index $r.s $t.path -}}
+        {{- $id := printf "%s-h-%s-%s" $p $t.k (replace $r.key "/" "-") -}}
+        {{- if eq $t.k "dlw" -}}
+          {{- if $r.pkg }}
+      {{ partial "pages/overview/history-card.html" (dict "id" $id "title" $r.name "w" $r.dl.w "polarity" "up" "binNote" true "binStep" 1 "window" 7) }}
+          {{- end -}}
+        {{- else if eq $t.k "dlm" -}}
+          {{- if $r.pkg -}}
+            {{- $mo := partial "pages/overview/monthly.html" (dict "points" $s.points "anchor" $latest) -}}
+            {{- $mm := slice }}{{ if $mo.partialLast }}{{ $mm = $mm | append "Current month to date" }}{{ end }}{{ if $mo.gaps }}{{ $mm = $mm | append "Months missing data are left blank" }}{{ end }}
+      {{ partial "pages/overview/history-card.html" (dict "id" $id "title" $r.name "w" $mo "monthly" true "partialLast" $mo.partialLast "polarity" "up" "meta" (delimit $mm " · ") "binStep" 1) }}
+          {{- end -}}
+        {{- else -}}
+          {{- $w := partial "ui/weekly.html" (dict "points" $s.points "anchor" $latest "weeks" $weeks) -}}
+          {{- $meta := "" }}{{ if and $s.points $s.stale }}{{ $meta = printf "As of %s" ((time.AsTime $s.curDate).Format "Jan 2, 2006") }}{{ end }}
+      {{ partial "pages/overview/history-card.html" (dict "id" $id "title" $r.name "w" $w "value" $s.cur "series" $s "polarity" $t.pol "meta" $meta) }}
+        {{- end -}}
+      {{- end }}
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+  {{- end }}
+</section>

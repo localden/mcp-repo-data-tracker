@@ -1,403 +1,161 @@
-{{/* Issues Page Content
-
-     Tier-based dashboard for SDK repos: each tier answers "what should a
-     maintainer do next". SLA cards track SEP-1730 Tier 1 targets.
-
-     Non-SDK repos (spec, csharp) fall through to the original volume-stat layout.
-   */}}
-
-{{ define "iss-type-badge" }}
-{{- $colors := dict "bug" "#d73a4a" "enhancement" "#a2eeef" "question" "#d876e3" "documentation" "#0075ca" -}}
-{{- with . -}}
-<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle"
-      style="background-color:{{ index $colors . }};color:{{ if eq . "enhancement" }}#000{{ else }}#fff{{ end }}">{{ . }}</span>
+{{- /* Issues page (spec 8.4). Two branches:
+     - tiered: issues.json present (work queue, SLA, filterable groups, then Volume & timing)
+     - legacy: no tiers (KPI strip, Longest waiting, then Volume & timing)
+     Both share pages/issues/stats.html. Every DOM id starts with $p. */ -}}
+{{- $context := . -}}
+{{- $reqKey := "" -}}
+{{- if reflect.IsMap . }}
+  {{- with .context }}{{ $context = . }}{{ end -}}
+  {{- with .repoKey }}{{ $reqKey = . }}{{ end -}}
 {{- end -}}
-{{ end }}
+{{- $data := partial "load-metrics.html" (dict "context" $context "repoKey" $reqKey) -}}
+{{- $m := $data.metrics -}}
+{{- $t := $data.issuesTiers -}}
+{{- $snapshots := $data.snapshots -}}
+{{- $repoKey := $data.repoKey | default $reqKey -}}
+{{- $name := $data.repoName | default $repoKey -}}
+{{- $p := printf "issues-%s" (replace $repoKey "/" "-") -}}
+{{- $latest := partialCached "ui/latest-date.html" $context "latest" -}}
+{{- $statsCtx := dict "m" $m "repoKey" $repoKey "p" $p "snapshots" $snapshots "latest" $latest "name" $name -}}
 
-{{ define "iss-priority-badge" }}
-{{- $colors := dict "P0" "#b60205" "P1" "#d93f0b" "P2" "#fbca04" "P3" "#c5def5" -}}
-{{- with . -}}
-<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle"
-      style="background-color:{{ index $colors . }};color:{{ if or (eq . "P2") (eq . "P3") }}#000{{ else }}#fff{{ end }}">{{ . }}</span>
-{{- end -}}
-{{ end }}
+{{- if not (or $m $t) }}
+{{ partial "ui/page-head.html" (dict "title" "Issues" "repoKey" $repoKey) }}
+{{ partial "ui/empty.html" (dict "title" (printf "No issue data for %s yet" $name) "body" "This repository hasn't been aggregated.") }}
 
-{{ define "iss-row" }}
-<tr class="border-t border-base-300 hover:bg-base-200/50 cursor-pointer transition-colors"
-    data-author="{{ .author | lower }}"
-    data-labels="{{ delimit .labels " " | lower }}{{ if .bot_triaged }} bot-triaged{{ end }}"
-    data-tier="{{ .tier | lower | replaceRE " " "-" }}{{ if or (eq .tier "Untriaged") (eq .tier "Partially triaged") }} triage-pending{{ end }}"
-    data-sla="{{ if .sla_breach }}breach{{ end }}"
-    onclick="window.open('{{ .url }}', '_blank')">
-  <td class="text-xs font-mono whitespace-nowrap px-3">
-    <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-  </td>
-  <td class="text-xs whitespace-nowrap px-2">
-    {{ if .is_maintainer }}<span class="font-semibold">{{ .author }}</span>{{ else }}<span class="text-base-content/60">{{ .author }}</span>{{ end }}
-  </td>
-  <td class="text-xs truncate px-2" style="max-width:30rem" title="{{ .title }}">
-    {{ .title }}
-    {{- range .linked_prs }} <a href="{{ $.url | replaceRE "/issues/" "/pull/" | replaceRE "[0-9]+$" (string .) }}" target="_blank" class="text-primary hover:underline font-mono text-[10px]" onclick="event.stopPropagation()">→#{{ . }}</a>{{ end }}
-  </td>
-  <td class="text-xs text-right whitespace-nowrap px-2">
-    {{ template "iss-type-badge" .type }}
-    {{ template "iss-priority-badge" .priority }}
-  </td>
-  <td class="text-xs text-right px-2 {{ if gt .comment_count 5 }}font-semibold{{ end }}">
-    {{ if gt .comment_count 0 }}{{ .comment_count }}{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-  </td>
-  <td class="text-xs text-right px-2">
-    {{ if gt .bot_comment_count 0 }}{{ .bot_comment_count }}{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-  </td>
-  <td class="text-xs text-right font-medium whitespace-nowrap px-3">
-    {{ if .sla_breach }}<span class="text-error">{{ printf "%.0f" .age_days }}d</span>
-    {{ else if gt .age_days 90.0 }}<span class="text-warning">{{ printf "%.0f" .age_days }}d</span>
-    {{ else }}{{ printf "%.0f" .age_days }}d{{ end }}
-  </td>
-</tr>
-{{ end }}
+{{- else if $t }}
+{{- /* ============================== tiered branch ============================== */ -}}
+{{- $s := $t.summary | default dict -}}
+{{- $bfr := $s.bugs_fix_ready | default dict -}}
+{{- $dp := $s.decisions_pending | default dict -}}
+{{- $cc := $s.close_candidates | default dict -}}
+{{- $sla := $s.sla | default dict -}}
+{{- $groups := $t.groups | default slice -}}
 
-{{/* Volume/Response/Stale/Labels sections — shared between Stats fold and legacy layout */}}
-{{ define "iss-volume-sections" }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Volume</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open Issues" "value" .m.issues.open_count "sparkline" .issuesOpenSparkline "sparklineColor" "rgb(0, 102, 204)" "trend" .issuesOpenTrend "trendGoodDirection" "down" "link" .openIssuesLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" .m.issues.opened_7d "descriptor" "last 7 days" "link" .opened7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" .m.issues.opened_30d "descriptor" "last 30 days" "link" .opened30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" .m.issues.opened_90d "descriptor" "last 90 days" "link" .opened90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" .m.issues.closed_7d "descriptor" "last 7 days" "link" .closed7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" .m.issues.closed_30d "descriptor" "last 30 days" "link" .closed30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Closed" "value" .m.issues.closed_90d "descriptor" "last 90 days" "link" .closed90dLink) }}
-  </div>
-</section>
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Response Time</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Time to first maintainer response</p>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" .m.issues.response_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" .m.issues.response_time.median_hours) "sparkline" .issuesResponseMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" .issuesResponseTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" .m.issues.response_time.p90_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" .m.issues.response_time.p95_hours)) }}
-  </div>
-</section>
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Stale Issues</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Issues with no activity</p>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" .m.issues.stale_30d "descriptor" ">30 days" "sparkline" .issuesStale30dSparkline "sparklineColor" "rgb(255, 193, 7)" "trend" .issuesStale30dTrend "trendGoodDirection" "down" "link" .stale30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" .m.issues.stale_60d "descriptor" ">60 days" "link" .stale60dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Stale" "value" .m.issues.stale_90d "descriptor" ">90 days" "link" .stale90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Reopen Rate" "value" (printf "%.0f%%" (mul .m.issues.reopen_rate 100))) }}
-  </div>
-</section>
-{{ if .m.issues.by_label }}
-<details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden">
-  <summary class="text-sm font-semibold cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">Issues by Label</summary>
+{{- $p01 := float ($bfr.p01 | default 0) -}}
+{{- $bStatus := "" }}{{ if gt $p01 0.0 }}{{ $bStatus = "crit" }}{{ else if gt (float ($bfr.total | default 0)) 10.0 }}{{ $bStatus = "warn" }}{{ end -}}
+{{- $dp1 := float ($dp.p1 | default 0) -}}
+{{- $dStatus := "" }}{{ if gt $dp1 0.0 }}{{ $dStatus = "warn" }}{{ end -}}
+{{- $q := float ($s.questions_stale_2d | default 0) -}}
+{{- $qStatus := "" }}{{ if ge $q 5.0 }}{{ $qStatus = "crit" }}{{ else if gt $q 0.0 }}{{ $qStatus = "warn" }}{{ end -}}
+{{- $p0 := float ($s.p0_open | default 0) -}}
+{{- $p0b := float ($sla.p0_7d_breach | default 0) -}}
+{{- $p0Status := "" }}{{ if gt $p0b 0.0 }}{{ $p0Status = "crit" }}{{ else if gt $p0 0.0 }}{{ $p0Status = "warn" }}{{ end -}}
+{{- $p1b := float ($sla.p1_90d_breach | default 0) -}}
+{{- $p1Status := "" }}{{ if ge $p1b 5.0 }}{{ $p1Status = "crit" }}{{ else if gt $p1b 0.0 }}{{ $p1Status = "warn" }}{{ end -}}
+{{- $ccMeta := slice -}}{{- with $cc.median_age }}{{ $ccMeta = slice (printf "median age %s" (partial "ui/dur.html" (mul (float .) 24.0))) }}{{ end -}}
+
+{{- $rowsTotal := 0 -}}
+{{- range $groups }}{{ range (.tiers | default slice) }}{{ $rowsTotal = add $rowsTotal (len (.issues | default slice)) }}{{ end }}{{ end -}}
+
+{{- $metricsMeta := slice -}}
+{{- with $m }}{{ with .timestamp }}{{ $metricsMeta = slice (printf "Metrics updated %s UTC" ((time.AsTime .).UTC.Format "Jan 2, 2006 15:04")) }}{{ end }}{{ end }}
+{{ partial "ui/page-head.html" (dict "title" "Issues" "repoKey" $repoKey "updated" $t.lastUpdated "updatedLabel" "Classified" "staleDays" 7 "meta" $metricsMeta) }}
+<div class="v-sections">
+<div class="v-sections" data-filter-scope>
+
+  <section aria-labelledby="{{ $p }}-queue">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-queue" $p) "title" "Work queue" "meta" "Select a figure to filter the list") }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
+      {{ partial "ui/kpi.html" (dict "label" "Bugs ready" "value" $bfr.total "status" $bStatus
+           "meta" (slice (printf "%d P0/P1 · %d fix proposed" (int $p01) (int ($bfr.fix_proposed | default 0))))
+           "filter" "type:bug status:ready-for-work") }}
+      {{ partial "ui/kpi.html" (dict "label" "Decisions pending" "value" $dp.total "status" $dStatus
+           "meta" (slice (printf "%d P1" (int $dp1)))
+           "filter" "type:enhancement status:needs-decision") }}
+      {{ partial "ui/kpi.html" (dict "label" "Questions · > 2d" "value" $s.questions_stale_2d "status" $qStatus
+           "filter" "badge:question-2d") }}
+      {{ partial "ui/kpi.html" (dict "label" "Close candidates" "value" $cc.total "status" ""
+           "meta" $ccMeta
+           "filter" "badge:close-candidate") }}
+    </div></div>
+    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Bugs ready: any P0/P1 over, &gt; 10 watch · Decisions: any P1 watch · Questions &gt; 2 business days without a maintainer reply: 1–4 watch, 5+ over</span></p>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-sla">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-sla" $p) "title" "SLA · SEP-1730" "meta" "Select a figure to filter the list") }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-5">
+      {{ partial "ui/kpi.html" (dict "label" "P0 open" "value" $s.p0_open "status" $p0Status
+           "meta" (slice (printf "%d past 7d" (int $p0b)))
+           "filter" "priority:p0") }}
+      {{ partial "ui/kpi.html" (dict "label" "P1 · > 90d" "value" $sla.p1_90d_breach "status" $p1Status
+           "filter" "badge:p1-90d") }}
+      {{ partial "ui/kpi.html" (dict "label" "Reply · > 2 business days" "value" $sla.reply_2bd_breach "status" ""
+           "filter" "badge:reply-2bd") }}
+      {{ partial "ui/kpi.html" (dict "label" "Triage · > 2 business days" "value" $sla.triage_2bd_breach "status" ""
+           "filter" "badge:triage-2bd") }}
+      {{ partial "ui/kpi.html" (dict "label" "Needs repro · > 14d" "value" $s.needs_repro_14d "status" ""
+           "filter" "badge:repro-14d") }}
+    </div></div>
+    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>P0: any past 7d over, any open watch · P1 &gt; 90d: 1–4 watch, 5+ over · Reply and triage SLAs count business days; P0, P1 and repro ages count calendar days</span></p>
+  </section>
+
   <div>
-    <table class="table table-xs w-full">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium">Label</th>
-          <th class="bg-base-200/50 text-xs font-medium text-left w-24">Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ $labelSlice := slice }}
-        {{ range $label, $count := .m.issues.by_label }}
-          {{ $labelSlice = $labelSlice | append (dict "label" $label "count" $count) }}
-        {{ end }}
-        {{ range sort $labelSlice "count" "desc" }}
-        {{ $labelLink := printf "%s?q=is:issue+is:open+label:\"%s\"" $.ghBase .label }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ $labelLink }}', '_blank')">
-          <td class="text-xs">
-            <span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 group-hover:border-base-content/30 transition-colors">{{ .label }}</span>
-          </td>
-          <td class="text-xs font-medium text-left">{{ .count }}</td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</details>
-{{ end }}
-{{ end }}{{/* define iss-volume-sections */}}
-
-{{/* ─────────────────────────────────────────────────────────────────────── */}}
-
-{{ $context := . }}
-{{ $repoKey := "" }}
-{{ if reflect.IsMap . }}
-  {{ with .context }}{{ $context = . }}{{ end }}
-  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
-{{ end }}
-{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
-{{ $m := $data.metrics }}
-{{ $t := $data.issuesTiers }}
-{{ $snapshots := $data.snapshots }}
-
-{{ if not $m }}
-<div class="alert alert-warning"><span>No data available. Run the aggregation script.</span></div>
-{{ else }}
-
-{{ $repoKey := $data.repoKey }}
-{{ $ghBase := printf "https://github.com/%s/issues" $repoKey }}
-
-{{/* Shared sparkline/link vars (used by both tiered UI's Stats fold and the legacy layout) */}}
-{{ $issuesOpenSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.open") }}
-{{ $issuesResponseMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.response_time.median_hours") }}
-{{ $issuesStale30dSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "issues.stale_30d") }}
-{{ $issuesOpenTrend := partial "calc-trend.html" (dict "sparkline" $issuesOpenSparkline) }}
-{{ $issuesResponseTrend := partial "calc-trend.html" (dict "sparkline" $issuesResponseMedianSparkline) }}
-{{ $issuesStale30dTrend := partial "calc-trend.html" (dict "sparkline" $issuesStale30dSparkline) }}
-{{ $openIssuesLink := printf "%s?q=is:issue+is:open" $ghBase }}
-{{ $closed7dLink := printf "%s?q=is:issue+is:closed+closed:>%s" $ghBase (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-{{ $closed30dLink := printf "%s?q=is:issue+is:closed+closed:>%s" $ghBase (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $closed90dLink := printf "%s?q=is:issue+is:closed+closed:>%s" $ghBase (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{ $opened7dLink := printf "%s?q=is:issue+created:>%s" $ghBase (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-{{ $opened30dLink := printf "%s?q=is:issue+created:>%s" $ghBase (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $opened90dLink := printf "%s?q=is:issue+created:>%s" $ghBase (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{ $stale30dLink := printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghBase (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $stale60dLink := printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghBase (now.AddDate 0 0 -60 | time.Format "2006-01-02") }}
-{{ $stale90dLink := printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $ghBase (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-
-
-{{ $volCtx := dict "m" $m "ghBase" $ghBase
-  "issuesOpenSparkline" $issuesOpenSparkline "issuesOpenTrend" $issuesOpenTrend
-  "issuesResponseMedianSparkline" $issuesResponseMedianSparkline "issuesResponseTrend" $issuesResponseTrend
-  "issuesStale30dSparkline" $issuesStale30dSparkline "issuesStale30dTrend" $issuesStale30dTrend
-  "openIssuesLink" $openIssuesLink
-  "opened7dLink" $opened7dLink "opened30dLink" $opened30dLink "opened90dLink" $opened90dLink
-  "closed7dLink" $closed7dLink "closed30dLink" $closed30dLink "closed90dLink" $closed90dLink
-  "stale30dLink" $stale30dLink "stale60dLink" $stale60dLink "stale90dLink" $stale90dLink }}
-
-{{/* ═════════════════════════════════════════════════════════════════════════
-     TIERED UI — only when issues.json exists (SDK repos).
-     ═════════════════════════════════════════════════════════════════════════ */}}
-{{ with $t }}
-
-{{/* ───────── Row 1: actionable subset by type (4 cards) ───────── */}}
-{{ with .summary }}
-{{ $s := . }}
-{{ $fixClr := cond (gt $s.bugs_fix_ready.p01 0) "text-error" (cond (gt $s.bugs_fix_ready.total 10) "text-warning" "text-success") }}
-{{ $decClr := cond (gt $s.decisions_pending.p1 0) "text-warning" "" }}
-{{ $qClr   := cond (eq $s.questions_stale_2d 0) "text-success" (cond (lt $s.questions_stale_2d 5) "text-warning" "text-error") }}
-<section class="mb-4">
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div onclick="issFilterToggle('tier:ready-for-work')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Bugs ready"
-      "value" $s.bugs_fix_ready.total "valueClass" $fixClr
-      "descriptor" (printf "%d P0/P1 · %d fix proposed" (int $s.bugs_fix_ready.p01) (int ($s.bugs_fix_ready.fix_proposed | default 0)))
-      "info" "bug + ready for work — triaged and reproducible.\nClick to jump to the tier.\n\nRed: any P0/P1\nYellow: > 10\nGreen: ≤ 10") }}
+    <div class="v-filterbar">
+      <label class="v-field">{{ partial "ui/icon.html" "search" }}<span class="sr-only">Filter issues</span>
+        <input type="search" data-filter-input placeholder="Filter by title, author:, label:" autocomplete="off">
+        <button type="button" data-filter-clear hidden aria-label="Clear filter">{{ partial "ui/icon.html" "x" }}</button></label>
+      <span class="v-filter-count" data-filter-count data-noun="issues">{{ $rowsTotal }} issues</span>
     </div>
-    <div onclick="issFilterToggle('tier:decide')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Decisions pending"
-      "value" $s.decisions_pending.total "valueClass" $decClr
-      "descriptor" (printf "%d at P1" (int $s.decisions_pending.p1))
-      "info" "enhancement + needs decision — say yes (→ ready/design) or no (→ close).\nClick to jump to the tier.") }}
-    </div>
-    <div onclick="issFilterToggle('tier:answer')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Questions > 2d"
-      "value" $s.questions_stale_2d "valueClass" $qClr
-      "info" "Questions past 2 business days with no maintainer response.\nClick to jump to the tier.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
-    </div>
-    {{ partial "metric-card.html" (dict
-      "label" "Close candidates"
-      "value" $s.close_candidates.total
-      "descriptor" (printf "median %dd old" (int $s.close_candidates.median_age))
-      "info" "potentially close + repro/confirm requests expired (>14d). Across all types.") }}
-  </div>
-</section>
-
-{{/* ───────── Row 2: SLA breaches (4 cards) ───────── */}}
-{{ $p0Clr  := cond (gt $s.sla.p0_7d_breach 0) "text-error" (cond (gt $s.p0_open 0) "text-warning" "text-success") }}
-{{ $p1Clr  := cond (eq $s.sla.p1_90d_breach 0) "text-success" (cond (lt $s.sla.p1_90d_breach 5) "text-warning" "text-error") }}
-{{ $reproClr := cond (eq $s.needs_repro_14d 0) "text-success" (cond (lt $s.needs_repro_14d 5) "text-warning" "text-error") }}
-{{ $botClr := cond (eq $s.untriaged_count 0) "text-success" (cond (lt $s.untriaged_count 3) "text-warning" "text-error") }}
-<section class="mb-4">
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div onclick="issFilterToggle('label:p0')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "P0 open"
-      "value" $s.p0_open "valueClass" $p0Clr
-      "descriptor" (printf "%d past 7d SLA" (int $s.sla.p0_7d_breach))
-      "info" "All open P0 issues. SEP-1730: resolve within 7 days.\n\nGreen: 0\nYellow: any open\nRed: any past 7d") }}
-    </div>
-    <div onclick="issFilterToggle('label:p1 sla:breach')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "P1 > 90d"
-      "value" $s.sla.p1_90d_breach "valueClass" $p1Clr
-      "info" "P1 issues open longer than 90 days.\nNot in SEP-1730 — surfaces aspirational-P1 rot.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
-    </div>
-    {{ partial "metric-card.html" (dict
-      "label" "Repro expired"
-      "value" $s.needs_repro_14d "valueClass" $reproClr
-      "info" "needs repro / needs confirmation requested >14d ago, no reporter reply. Auto-close candidates.\n\nGreen: 0\nYellow: 1–4\nRed: 5+") }}
-    <div onclick="issFilterToggle('tier:untriaged')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Bot pending"
-      "value" $s.untriaged_count "valueClass" $botClr
-      "info" "No type label yet — bot hasn't run, or needs manual triage.\nShould be ~0 within 30min of any issue activity.\n\nGreen: 0\nYellow: 1–2\nRed: 3+") }}
+    <div class="v-filterbar">
+      {{- range $groups }}
+      {{- $gname := string (.name | default "Other") }}
+      {{- if ne $gname "Untriaged" }}
+      {{- $gn := 0 }}{{ range (.tiers | default slice) }}{{ $gn = add $gn (len (.issues | default slice)) }}{{ end }}
+      <a class="v-chip" href="#{{ $p }}-g-{{ lower $gname | replaceRE "[^a-z0-9]+" "-" }}">{{ $gname }} <span class="v-count">{{ $gn }}</span></a>
+      {{- end }}
+      {{- end }}
+      <button type="button" class="v-chip" data-filter="tier:untriaged" aria-pressed="false">Untriaged <span class="v-count">{{ partial "ui/num.html" (dict "v" ($s.untriaged_count | default 0)) }}</span></button>
+      <button type="button" class="v-chip" data-filter="badge:partially-triaged" aria-pressed="false">Partially triaged <span class="v-count">{{ partial "ui/num.html" (dict "v" ($s.partially_triaged_count | default 0)) }}</span></button>
     </div>
   </div>
-</section>
-{{ end }}{{/* with .summary */}}
 
-{{/* ───────── Stats fold ───────── */}}
-<details class="mb-6 border border-base-300 rounded-lg bg-base-100">
-  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
-    Stats <span class="font-normal text-base-content/50">— volume, response time, staleness, labels</span>
-  </summary>
-  <div class="px-4 pb-4">
-    {{ template "iss-volume-sections" $volCtx }}
+  <div class="v-sections" data-filter-results>
+    {{- range $groups }}
+    {{ partial "pages/issues/group.html" (dict "g" . "p" $p "repoKey" $repoKey) }}
+    {{- else }}
+    {{ partial "ui/empty.html" (dict "title" "No open issues" "body" "The classifier found no open issues in this repository.") }}
+    {{- end }}
+    <div class="v-panel v-empty" data-filter-empty hidden><p class="v-empty-title">No issues match</p><p class="v-empty-body"><button type="button" class="v-link" data-filter-clear>Clear filter</button></p></div>
   </div>
-</details>
 
-{{/* ───────── Filter + tier sections ───────── */}}
-<div class="flex items-center gap-2 bg-base-100 border border-base-300 rounded-lg px-3 py-2 mb-4 transition-colors focus-within:border-primary">
-  <i class="fa-solid fa-filter text-xs opacity-40"></i>
-  <input type="text"
-         placeholder="label:bug,P1 tier:needs-reply sla:breach author:name — or free text"
-         class="flex-1 min-w-0 bg-transparent border-0 outline-none text-xs"
-         oninput="issFilter(this.value)">
-  <button type="button" class="iss-filter-clear hidden opacity-40 hover:opacity-100"
-          onclick="var i=this.previousElementSibling;i.value='';issFilter('');i.focus()"
-          aria-label="Clear filter">
-    <i class="fa-solid fa-xmark text-xs"></i>
-  </button>
+</div>
+{{- /* Stats sit outside the filter scope: ui.js hides every tr.v-more in a scope while a filter is active. */ -}}
+
+  {{ partial "pages/issues/stats.html" $statsCtx }}
+
 </div>
 
-<script>
-function issFilter(q) {
-  q = q.toLowerCase().trim();
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
-  var clr = root.querySelector('.iss-filter-clear');
-  if (clr) clr.classList.toggle('hidden', !q);
-  var tokens = q ? q.split(/\s+/) : [];
-  // label:bug,P1 expands to label:bug AND label:P1
-  var checks = tokens.flatMap(function(tok) {
-    var m = tok.match(/^(author|label|tier|sla):(.+)$/);
-    if (!m) return [function(tr, summary) { return tr.textContent.toLowerCase().indexOf(tok) !== -1 || summary.indexOf(tok) !== -1; }];
-    var field = m[1] === 'label' ? 'labels' : m[1];
-    return m[2].split(',').map(function(val) {
-      return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
-    });
-  });
-  root.querySelectorAll('.iss-group').forEach(function(group) {
-    var groupHasVisible = false;
-    var groupText = group.querySelector('h2').textContent.toLowerCase();
-    group.querySelectorAll('details').forEach(function(det) {
-      var rows = det.querySelectorAll(':scope > table > tbody > tr');
-      var summaryText = det.querySelector('summary').textContent.toLowerCase() + ' ' + groupText;
-      var detHasVisible = false;
-      rows.forEach(function(tr) {
-        var show = checks.every(function(fn) { return fn(tr, summaryText); });
-        tr.style.display = show ? '' : 'none';
-        if (show) detHasVisible = true;
-      });
-      det.style.display = detHasVisible ? '' : 'none';
-      if (q && detHasVisible) det.open = true;
-      if (!q) det.open = false;
-      if (detHasVisible) groupHasVisible = true;
-    });
-    group.style.display = groupHasVisible ? '' : 'none';
-  });
-}
-function issFilterToggle(q) {
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
-  var input = root.querySelector('input[oninput*="issFilter"]');
-  if (!input) return;
-  input.value = (input.value === q) ? '' : q;
-  issFilter(input.value);
-  if (input.value) input.parentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-}
-</script>
+{{- else }}
+{{- /* ============================== legacy branch ============================== */ -}}
+{{- $iss := $m.issues | default dict -}}
+{{- $rt := $iss.response_time | default dict -}}
+{{- $gh := printf "https://github.com/%s/issues" $repoKey -}}
+{{- $sOpen := partialCached "ui/series.html" (dict "snapshots" $snapshots "path" "issues.open" "anchor" $latest) $repoKey "issues.open" -}}
+{{- $sAwait := partialCached "ui/series.html" (dict "snapshots" $snapshots "path" "issues.without_response_24h" "anchor" $latest) $repoKey "issues.without_response_24h" -}}
+{{- $sResp := partialCached "ui/series.html" (dict "snapshots" $snapshots "path" "issues.response_time.median_hours" "anchor" $latest) $repoKey "issues.response_time.median_hours" -}}
+{{- $sStale := partialCached "ui/series.html" (dict "snapshots" $snapshots "path" "issues.stale_30d" "anchor" $latest) $repoKey "issues.stale_30d" -}}
 
-{{ range .groups }}
-{{ $groupCount := 0 }}{{ range .tiers }}{{ $groupCount = add $groupCount (len .issues) }}{{ end }}
-<section class="mb-6 iss-group">
-  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
-    <span>{{ .name }} <span class="text-base-content/40 font-normal">({{ $groupCount }})</span></span>
-  </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">{{ .blurb }}</p>
-  {{ range .tiers }}
-  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden">
-    <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none flex items-center gap-2">
-      <span class="flex-1 min-w-0 truncate"><b>{{ .name }}</b> <span class="text-base-content/50">({{ len .issues }})</span> — <span class="text-base-content/60">{{ .blurb }}</span></span>
-    </summary>
-    <table class="table table-xs table-fixed w-full">
-      <colgroup>
-        <col style="width:5rem"><col style="width:8rem"><col>
-        <col style="width:10rem"><col style="width:3rem"><col style="width:3rem"><col style="width:4rem">
-      </colgroup>
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium">#</th>
-          <th class="bg-base-200/50 text-xs font-medium">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right">Labels</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right" title="Comments">💬</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right" title="mcp-claude comments">🤖</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right">Age</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .issues }}{{ template "iss-row" . }}{{ end }}
-      </tbody>
-    </table>
-  </details>
-  {{ end }}{{/* range .tiers */}}
-</section>
-{{ end }}{{/* range .groups */}}
+{{- /* R5 (spec 5.5): every cell has a sparkline or none does */ -}}
+{{- $live := and (not $sOpen.stale) (not $sAwait.stale) (not $sResp.stale) (not $sStale.stale) -}}
+{{ partial "ui/page-head.html" (dict "title" "Issues" "repoKey" $repoKey "updated" $m.timestamp) }}
+<div class="v-sections">
 
-{{ else }}{{/* with $t — no tier data, show legacy layout (spec/csharp/not-yet-computed) */}}
+  <section aria-labelledby="{{ $p }}-kpis">
+    <h2 class="sr-only" id="{{ $p }}-kpis">Summary</h2>
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
+      {{ partial "ui/kpi.html" (dict "label" "Open issues" "value" $iss.open_count "series" (cond $live $sOpen nil) "polarity" "down"
+           "href" (printf "%s?q=is:issue+is:open" $gh)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Awaiting response · 24h" "value" $iss.without_response_24h "series" (cond $live $sAwait nil) "polarity" "down"
+           "href" (printf "%s?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $gh (now.AddDate 0 0 -1 | time.Format "2006-01-02"))) }}
+      {{ partial "ui/kpi.html" (dict "label" "First response · median" "value" $rt.median_hours "format" "dur" "series" (cond $live $sResp nil) "noDelta" true) }}
+      {{ partial "ui/kpi.html" (dict "label" "Stale · > 30d" "value" $iss.stale_30d "series" (cond $live $sStale nil) "polarity" "down"
+           "href" (printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $gh (now.AddDate 0 0 -30 | time.Format "2006-01-02"))) }}
+    </div></div>
+  </section>
 
-{{ template "iss-volume-sections" $volCtx }}
+  {{ partial "pages/issues/waiting.html" (dict "rows" $iss.issues_without_maintainer_response "p" $p) }}
 
-{{ if $m.issues.issues_without_maintainer_response }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Issues Awaiting Maintainer Response</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Sorted by longest wait time first</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-28">Issue</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-32">Labels</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Comments</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $m.issues.issues_without_maintainer_response }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">{{ .title }}</td>
-          <td class="text-xs whitespace-nowrap">
-            {{ $labels := .labels }}{{ $labelCount := len $labels }}
-            {{ if eq $labelCount 0 }}<span class="text-[9px] text-base-content/40">(unlabeled)</span>
-            {{ else }}{{ range first 2 $labels }}<span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 mr-1">{{ . }}</span>{{ end }}{{ if gt $labelCount 2 }}<span class="inline-flex items-center px-1 rounded text-[9px] border border-base-300 bg-base-200 text-base-content/50">+{{ sub $labelCount 2 }}</span>{{ end }}{{ end }}
-          </td>
-          <td class="text-xs text-right">{{ if gt .commentCount 0 }}<span class="text-warning">{{ .commentCount }}</span>{{ else }}<span class="text-base-content/40">0</span>{{ end }}</td>
-          <td class="text-xs text-right font-medium">
-            {{ if gt .daysWaiting 30 }}<span class="text-error">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 7 }}<span class="text-warning">{{ .daysWaiting }}d</span>
-            {{ else }}{{ .daysWaiting }}d{{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
+  {{ partial "pages/issues/stats.html" $statsCtx }}
 
-{{ end }}{{/* with $t */}}
-
-{{ end }}{{/* if $m */}}
+</div>
+{{- end }}

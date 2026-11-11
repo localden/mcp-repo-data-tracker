@@ -1,3 +1,3 @@
 ---
-title: "Health & Trends"
+title: "Trends"
 ---

@@ -1,321 +1,149 @@
-{{/* SEP (Spec Enhancement Proposals) Page Content */}}
-{{/* Only available for modelcontextprotocol/modelcontextprotocol */}}
-{{ $context := . }}
-{{ $repoKey := "" }}
-{{ if reflect.IsMap . }}
-  {{ with .context }}{{ $context = . }}{{ end }}
-  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
-{{ end }}
+{{- /* SEPs page (design-system spec 8.6). Rendered once per repo block; SEPs exist only for the MCP Specification repo.
+       Context: dict "context" (page) "repoKey" "owner/repo". */ -}}
+{{- $repoKey := "" -}}
+{{- if reflect.IsMap . }}{{ with .repoKey }}{{ $repoKey = . }}{{ end }}{{ end -}}
+{{- $specKey := "modelcontextprotocol/modelcontextprotocol" -}}
+{{- $pageTitle := "Spec Enhancement Proposals" -}}
+{{- $p := printf "seps-%s" (replace $repoKey "/" "-") -}}
 
-{{/* Load SEP data directly */}}
-{{ $seps := false }}
-{{ $parts := split $repoKey "/" }}
-{{ if eq (len $parts) 2 }}
-  {{ $owner := index $parts 0 }}
-  {{ $repo := index $parts 1 }}
-  {{ with index site.Data.repos $owner }}
-    {{ with index . $repo }}
-      {{ $seps = .seps }}
-    {{ end }}
-  {{ end }}
-{{ end }}
+{{- $specName := "MCP Specification" }}{{ $repoName := $repoKey -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $k := printf "%s/%s" .owner .repo -}}
+  {{- if eq $k $specKey }}{{ $specName = .name | default .repo }}{{ end -}}
+  {{- if eq $k $repoKey }}{{ $repoName = .name | default .repo }}{{ end -}}
+{{- end -}}
 
-{{/* Check if this is a non-MCP repo */}}
-{{ $isMCPRepo := and (eq (index $parts 0) "modelcontextprotocol") (eq (index $parts 1) "modelcontextprotocol") }}
+{{- /* seps.json lives at data/repos/<owner>/<repo>/seps.json */ -}}
+{{- $seps := false -}}
+{{- $parts := split $repoKey "/" -}}
+{{- if eq (len $parts) 2 -}}
+  {{- with index site.Data.repos (index $parts 0) -}}
+    {{- with index . (index $parts 1) -}}
+      {{- with .seps }}{{ $seps = . }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 
-{{ if not $isMCPRepo }}
-<div class="bg-base-100 border border-base-300 rounded-lg p-4">
-  <p class="text-sm text-base-content/70">
-    Spec Enhancement Proposals (SEPs) are only tracked for the MCP Specification repository.
-    <button
-      onclick="window.RepoPicker.setSelectedRepo('modelcontextprotocol', 'modelcontextprotocol')"
-      class="text-primary hover:underline font-medium ml-1"
-    >Switch to MCP Specification &rarr;</button>
-  </p>
+{{- if ne $repoKey $specKey }}
+{{ partial "ui/page-head.html" (dict "title" $pageTitle "repoKey" $repoKey) }}
+{{ partial "ui/empty.html" (dict "title" (printf "SEPs are tracked in the %s repository" $specName) "action" (dict "label" (printf "Switch to %s" $specName) "repoKey" $specKey)) }}
+{{- else if not $seps }}
+{{- $none := printf "No SEP data for %s yet" $repoName }}
+{{ partial "ui/page-head.html" (dict "title" $pageTitle "repoKey" $repoKey) }}
+<div class="v-sections">
+  <section aria-labelledby="{{ $p }}-pipeline">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-pipeline" $p) "title" "Pipeline") }}
+    {{ partial "ui/empty.html" (dict "title" $none "body" "This repository hasn't been aggregated.") }}
+  </section>
+  <section aria-labelledby="{{ $p }}-list">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-list" $p) "title" "SEPs") }}
+    {{ partial "ui/empty.html" (dict "title" $none "body" "This repository hasn't been aggregated.") }}
+  </section>
 </div>
-{{ else if not $seps }}
-<div class="alert alert-info">
-  <span>No SEP data available. Run the aggregation script with --sep to populate SEP metrics.</span>
+{{- else }}
+
+{{- $c := $seps.counts | default dict -}}
+{{- $ref := now -}}{{- with $seps.lastUpdated }}{{ $ref = time.AsTime . }}{{ end -}}
+
+{{- /* GitHub searches that follow the aggregator's classification (src/metrics/seps.ts):
+       accepted > in-review ("in-review" or "in review") > draft > proposal for open PRs; merged = merged SEP PRs updated
+       in the last 90 days (closed PRs are fetched back to updatedAt >= now - 90d, src/github/pulls.ts).
+       "final" + maintainer assignee also counts as in-review; search can't express that, so the foot says it.
+       $ir is pre-encoded ("in review" in quotes) and passed as an argument, never as a printf format. */ -}}
+{{- $q := printf "https://github.com/%s/pulls?q=is:pr+label:SEP" $repoKey -}}
+{{- $since := ($ref.AddDate 0 0 -90).Format "2006-01-02" -}}
+{{- $ir := "%22in+review%22" -}}
+{{- $links := dict
+  "proposal" (printf "%s+is:open+-label:draft+-label:in-review+-label:%s+-label:accepted" $q $ir)
+  "draft" (printf "%s+is:open+label:draft+-label:in-review+-label:%s+-label:accepted" $q $ir)
+  "in-review" (printf "%s+is:open+label:in-review,%s+-label:accepted" $q $ir)
+  "accepted" (printf "%s+is:open+label:accepted" $q)
+  "merged" (printf "%s+is:merged+updated:>=%s" $q $since)
+-}}
+
+{{- $stages := slice
+  (dict "key" "proposal" "label" "Proposal" "list" ($seps.proposals | default slice) "n" $c.proposal "cls" "v-ord-1" "about" "Open, not yet in draft")
+  (dict "key" "draft" "label" "Draft" "list" ($seps.drafts | default slice) "n" $c.draft "cls" "v-ord-2" "about" "A sponsor is developing it")
+  (dict "key" "in-review" "label" "In review" "list" ($seps.inReview | default slice) "n" $c.inReview "cls" "v-ord-3" "about" "Ready for community and maintainer review")
+  (dict "key" "accepted" "label" "Accepted" "list" ($seps.accepted | default slice) "n" $c.accepted "cls" "v-ord-4" "about" "Approved, waiting to merge")
+  (dict "key" "merged" "label" "Merged" "list" ($seps.merged | default slice) "n" $c.merged "cls" "v-ord-5" "about" "Merged SEPs with activity in the last 90 days, newest merge first")
+-}}
+
+{{- /* Normalise: integer count (counts.* with list length as fallback), oldest daysWaiting, DOM id, GitHub link. */ -}}
+{{- $rows := slice }}{{ $sum := 0 }}{{ $mergedN := 0 -}}
+{{- range $stages -}}
+  {{- $n := int (.n | default (len .list)) -}}
+  {{- $oldest := -1.0 -}}
+  {{- range .list }}{{ $dw := float (.daysWaiting | default 0) }}{{ if gt $dw $oldest }}{{ $oldest = $dw }}{{ end }}{{ end -}}
+  {{- $sum = add $sum $n -}}
+  {{- if eq .key "merged" }}{{ $mergedN = $n }}{{ end -}}
+  {{- $rows = $rows | append (dict "key" .key "label" .label "list" .list "n" $n "cls" .cls "about" .about "oldest" $oldest "id" (printf "%s-stage-%s" $p .key) "href" (index $links .key)) -}}
+{{- end -}}
+{{- $total := int ($c.total | default $sum) -}}
+{{- $open := sub $total $mergedN }}{{ if lt $open 0 }}{{ $open = 0 }}{{ end -}}
+
+{{ partial "ui/page-head.html" (dict "title" $pageTitle "repoKey" $repoKey "updated" $seps.lastUpdated) }}
+<div class="v-sections">
+  <section aria-labelledby="{{ $p }}-pipeline">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-pipeline" $p) "title" "Pipeline" "meta" (printf "%d SEPs · %d open" $total $open)) }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-5">
+      {{- range $rows }}
+      {{- $meta := slice -}}
+      {{- if ge .oldest 0.0 }}{{ $meta = slice (printf "oldest %s" (partial "pages/seps/age.html" .oldest)) }}{{ end -}}
+      {{- $label := .label -}}
+      {{- if eq .key "merged" }}{{ $label = safeHTML (printf `%s · 90d<sup class="v-fn">1</sup>` .label) }}{{ end }}
+      {{ partial "ui/kpi.html" (dict "label" $label "value" .n "anchor" (printf "#%s" .id) "meta" $meta) }}
+      {{- end }}
+    </div></div>
+    {{- $segs := slice }}{{ $aria := slice -}}
+    {{- range $rows -}}
+      {{- $segLabel := cond (eq .key "merged") "Merged · 90d" .label -}}
+      {{- $segs = $segs | append (dict "n" .n "label" $segLabel "cls" .cls "href" .href) -}}
+      {{- $aria = $aria | append (printf "%s %d" $segLabel .n) -}}
+    {{- end }}
+    <div class="mt-3">
+      {{ partial "ui/segbar.html" (dict "segments" $segs "total" $sum "aria" (printf "SEPs by stage: %s" (delimit $aria ", "))) }}
+    </div>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-list">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-list" $p) "title" "SEPs" "meta" "By stage · open stages oldest first") }}
+    <div class="v-panel">
+      <div class="v-scroll">
+        <table class="v-dt">
+          <thead>
+            <tr>
+              <th scope="col">SEP</th>
+              <th scope="col">Title</th>
+              <th scope="col" class="hidden sm:table-cell">Author → Sponsor</th>
+              <th scope="col" class="hidden sm:table-cell num">Reviews</th>
+              <th scope="col" class="hidden sm:table-cell num">Size</th>
+              <th scope="col" class="num">Opened</th>
+              <th scope="col" class="num">Last activity</th>
+            </tr>
+          </thead>
+          {{- range $rows }}
+          <tbody id="{{ .id }}">
+            <tr class="v-group"><th colspan="7" scope="rowgroup">{{ .label }} <span class="v-count">{{ .n }}</span><span class="sub">{{ .about }}</span></th></tr>
+            {{- /* More rule (spec 5.7): over 15 rows -> first 10, rest data-more hidden, one .v-more row. */ -}}
+            {{- $ln := len .list }}{{ $more := gt $ln 15 }}
+            {{- range $i, $e := .list }}
+            {{ partial "pages/seps/row.html" (dict "e" $e "ref" $ref "more" (and $more (ge $i 10))) }}
+            {{- else }}
+            <tr><td colspan="7" class="text-ink-3">None</td></tr>
+            {{- end }}
+            {{- if $more }}
+            <tr class="v-more"><td colspan="7"><button type="button" data-more-for="{{ .id }}" data-label="Show all {{ $ln }}">Show all {{ $ln }}</button></td></tr>
+            {{- end }}
+          </tbody>
+          {{- end }}
+        </table>
+      </div>
+      <div class="v-panel-foot">
+        <p class="v-legend"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Last activity: watch &gt; 14d · over target &gt; 30d</span><span>Watch also marks the WG support needed and Deferred labels</span></p>
+        <p>¹ Merged counts merged SEP pull requests updated in the last 90 days, whatever their merge date. In review also counts Final SEPs with a maintainer assignee. Rows open on GitHub.</p>
+      </div>
+    </div>
+  </section>
 </div>
-{{ else }}
-
-{{/* Build GitHub filter URLs */}}
-{{ $ghBase := printf "https://github.com/%s/pulls" $repoKey }}
-{{ $proposalLink := printf "%s?q=is:pr+is:open+label:SEP+label:proposal" $ghBase }}
-{{ $draftLink := printf "%s?q=is:pr+is:open+label:SEP+label:draft" $ghBase }}
-{{ $inReviewLink := printf "%s?q=is:pr+is:open+label:SEP+label:in-review" $ghBase }}
-{{ $acceptedLink := printf "%s?q=is:pr+is:open+label:SEP+label:accepted" $ghBase }}
-{{ $mergedLink := printf "%s?q=is:pr+is:merged+label:SEP" $ghBase }}
-{{ $allSEPLink := printf "%s?q=is:pr+label:SEP" $ghBase }}
-
-<!-- Summary Cards -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Overview</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Total SEPs" "value" $seps.counts.total "link" $allSEPLink) }}
-    {{ partial "metric-card.html" (dict "label" "Proposals" "value" $seps.counts.proposal "descriptor" "awaiting sponsor" "link" $proposalLink) }}
-    {{ partial "metric-card.html" (dict "label" "Drafts" "value" $seps.counts.draft "descriptor" "being developed" "link" $draftLink) }}
-    {{ partial "metric-card.html" (dict "label" "In Review" "value" $seps.counts.inReview "descriptor" "ready for review" "link" $inReviewLink) }}
-    {{ partial "metric-card.html" (dict "label" "Accepted" "value" $seps.counts.accepted "descriptor" "pending merge" "link" $acceptedLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $seps.counts.merged "descriptor" "completed" "link" $mergedLink) }}
-  </div>
-</section>
-
-<!-- SEP Proposals (no sponsor) -->
-{{ if $seps.proposals }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Proposals Awaiting Sponsor</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">SEPs that need a maintainer to sponsor them</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full table-fixed">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28 text-base-content/30">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $seps.proposals }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-base-content/30">—</td>
-          <td class="text-xs text-right whitespace-nowrap">
-            <span class="text-success">+{{ .additions }}</span>
-            <span class="text-error">-{{ .deletions }}</span>
-          </td>
-          <td class="text-xs text-right font-medium">
-            {{ if gt .daysWaiting 30 }}
-            <span class="text-error">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 7 }}
-            <span class="text-warning">{{ .daysWaiting }}d</span>
-            {{ else }}
-            {{ .daysWaiting }}d
-            {{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-<!-- SEP Drafts (has sponsor) -->
-{{ if $seps.drafts }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Drafts in Development</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">SEPs with a sponsor actively working on them</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full table-fixed">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Age</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $seps.drafts }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-          </td>
-          <td class="text-xs text-right whitespace-nowrap">
-            <span class="text-success">+{{ .additions }}</span>
-            <span class="text-error">-{{ .deletions }}</span>
-          </td>
-          <td class="text-xs text-right font-medium">
-            {{ if gt .daysWaiting 30 }}
-            <span class="text-error">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 7 }}
-            <span class="text-warning">{{ .daysWaiting }}d</span>
-            {{ else }}
-            {{ .daysWaiting }}d
-            {{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-<!-- SEPs In Review -->
-{{ if $seps.inReview }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">SEPs In Review</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">SEPs ready for community and maintainer review</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full table-fixed">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Reviews</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $seps.inReview }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-          </td>
-          <td class="text-xs text-right">
-            {{ if gt .reviewCount 0 }}
-            <span class="text-success">{{ .reviewCount }}</span>
-            {{ else }}
-            <span class="text-base-content/40">0</span>
-            {{ end }}
-          </td>
-          <td class="text-xs text-right font-medium">
-            {{ if gt .daysWaiting 14 }}
-            <span class="text-error">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 7 }}
-            <span class="text-warning">{{ .daysWaiting }}d</span>
-            {{ else }}
-            {{ .daysWaiting }}d
-            {{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-<!-- Accepted SEPs (pending merge) -->
-{{ if $seps.accepted }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Accepted SEPs</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">SEPs approved and awaiting merge</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full table-fixed">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $seps.accepted }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-          </td>
-          <td class="text-xs text-right whitespace-nowrap">
-            <span class="text-success">+{{ .additions }}</span>
-            <span class="text-error">-{{ .deletions }}</span>
-          </td>
-          <td class="text-xs text-right font-medium">
-            {{ .daysWaiting }}d
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-<!-- Merged SEPs -->
-{{ if $seps.merged }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">Merged SEPs</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Successfully completed spec enhancements</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full table-fixed">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-16">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium w-28">Sponsor</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-24">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Merged</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $seps.merged }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-          </td>
-          <td class="text-xs truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-base-content/70 truncate">
-            {{ if .sponsor }}<span class="text-info">{{ .sponsor }}</span>{{ else }}<span class="text-base-content/30">—</span>{{ end }}
-          </td>
-          <td class="text-xs text-right whitespace-nowrap">
-            <span class="text-success">+{{ .additions }}</span>
-            <span class="text-error">-{{ .deletions }}</span>
-          </td>
-          <td class="text-xs text-right text-base-content/70">
-            {{ if .mergedAt }}
-            {{ $mergedTime := time .mergedAt }}
-            {{ $mergedTime.Format "Jan 2, 2006" }}
-            {{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-{{ end }}
+{{- end }}

@@ -1,0 +1,125 @@
+{{- /* Downloads by version (spec 8.2 section 3). Params: p, versions (versions.json), registry (display name).
+  Table: top 10 by total, "Other (n versions)", tfoot Total, so shares sum to 100%.
+  Chart: 100% share area over weekly bins of .daily, top 5 by total ordered by semver (newest = ord-5) + Other; only with 8+ weekly points. */ -}}
+{{- $v := .versions -}}{{- $p := .p -}}
+{{- $unit := $v.unit | default "daily" -}}
+{{- $unitLabel := cond (eq $unit "last_week") "7-day downloads" (cond (eq $unit "cumulative") "All-time downloads" "Daily downloads") -}}
+
+{{- /* rank versions by total */ -}}
+{{- $ranked := slice }}{{ $grand := 0.0 -}}
+{{- range $ver, $cnt := $v.totals }}{{ $ranked = $ranked | append (dict "version" $ver "count" (float $cnt)) }}{{ $grand = add $grand (float $cnt) }}{{ end -}}
+{{- $ranked = sort $ranked "count" "desc" -}}
+{{- $top := first 10 $ranked -}}
+{{- $topSum := 0.0 }}{{ range $top }}{{ $topSum = add $topSum .count }}{{ end -}}
+{{- $restN := sub (len $ranked) (len $top) -}}
+{{- $rest := sub $grand $topSum -}}
+
+{{- /* daily dates, ascending */ -}}
+{{- $dates := slice }}{{ with $v.daily }}{{ range $d, $_ := . }}{{ $dates = $dates | append $d }}{{ end }}{{ end -}}
+{{- $dates = sort $dates -}}
+{{- $dFirst := "" }}{{ $dLast := "" -}}
+{{- with $dates }}{{ $dFirst = index . 0 }}{{ $dLast = index . (sub (len .) 1) }}{{ end -}}
+
+{{- /* footnote: what the unit means */ -}}
+{{- $fn := "All-time downloads per version, as reported by the registry." -}}
+{{- if eq $unit "last_week" }}{{ $fn = "Downloads in the 7 days before the snapshot, per version, from the registry's versions API." }}{{ end -}}
+{{- if and (ne $unit "last_week") (ne $unit "cumulative") -}}
+  {{- $fn = "Daily downloads per version, summed over every tracked day." -}}
+  {{- with $dFirst }}{{ $fn = printf "Daily downloads per version, summed from %s to %s." ((time.AsTime .).Format "Jan 2, 2006") ((time.AsTime $dLast).Format "Jan 2, 2006") }}{{ end -}}
+{{- end -}}
+
+{{- /* share chart over weekly bins */ -}}
+{{- $chart := false }}{{ $chartLabels := slice }}{{ $chartSets := slice }}{{ $chartAria := "" -}}
+{{- if ge (len $dates) 56 -}}
+  {{- $anchor := $dLast -}}
+  {{- $span := add 1 (div (sub (time.AsTime $anchor).Unix (time.AsTime $dFirst).Unix) 86400) -}}
+  {{- $weeks := int (div $span 7) }}{{ if gt $weeks 52 }}{{ $weeks = 52 }}{{ end -}}
+  {{- if ge $weeks 8 -}}
+    {{- $from := ((time.AsTime $anchor).AddDate 0 0 (int (mul -7 $weeks))).Format "2006-01-02" -}}
+    {{- $win := slice }}{{ range $dates }}{{ if gt . $from }}{{ $win = $win | append . }}{{ end }}{{ end -}}
+    {{- $top5 := slice }}{{ range first 5 $ranked }}{{ $top5 = $top5 | append (dict "version" .version "key" (partial "pages/health/semver-key.html" .version)) }}{{ end -}}
+    {{- $top5 = sort $top5 "key" -}}
+    {{- $names := slice }}{{ range $top5 }}{{ $names = $names | append .version }}{{ end -}}
+    {{- $otherPts := slice -}}
+    {{- range $d := $win -}}
+      {{- $o := 0.0 }}{{ range $ver, $cnt := index $v.daily $d }}{{ if not (in $names $ver) }}{{ $o = add $o (float $cnt) }}{{ end }}{{ end -}}
+      {{- $otherPts = $otherPts | append (dict "date" $d "value" $o) -}}
+    {{- end -}}
+    {{- $wo := partial "ui/weekly.html" (dict "points" $otherPts "anchor" $anchor "weeks" $weeks "agg" "sum") -}}
+    {{- $nn := 0 }}{{ range $wo.cells }}{{ if ne . "null" }}{{ $nn = add $nn 1 }}{{ end }}{{ end -}}
+    {{- if and (ge $nn 8) (gt (len $names) 0) -}}
+      {{- $chart = true }}{{ $chartLabels = $wo.labels -}}
+      {{- $ords := index (dict "1" (slice 5) "2" (slice 3 5) "3" (slice 1 3 5) "4" (slice 2 3 4 5) "5" (slice 1 2 3 4 5)) (string (len $names)) -}}
+      {{- range $i, $name := $names -}}
+        {{- $pts := slice -}}
+        {{- range $d := $win }}{{ $pts = $pts | append (dict "date" $d "value" (float (index (index $v.daily $d) $name | default 0))) }}{{ end -}}
+        {{- $wv := partial "ui/weekly.html" (dict "points" $pts "anchor" $anchor "weeks" $weeks "agg" "sum") -}}
+        {{- $chartSets = $chartSets | append (partial "ui/dataset.html" (dict "label" $name "role" (printf "ord-%d" (index $ords $i)) "data" $wv.data)) -}}
+      {{- end -}}
+      {{- $chartSets = $chartSets | append (partial "ui/dataset.html" (dict "label" "Other" "role" "other" "data" $wo.data)) -}}
+      {{- $chartAria = printf "Weekly download share by version, week ending %s to week ending %s: versions %s to %s, plus other versions" ((time.AsTime (index $wo.labels 0)).Format "Jan 2, 2006") ((time.AsTime $anchor).Format "Jan 2, 2006") (index $names 0) (index $names (sub (len $names) 1)) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <div class="v-panel{{ if not $chart }} lg:col-span-2{{ end }}">
+    <div class="v-panel-head">
+      <span class="v-panel-title">Top versions</span>
+      <span class="v-panel-meta">
+        {{- with .registry }}{{ . }} · {{ end }}{{ $unitLabel }}
+        {{- with $v.lastUpdated -}}
+          {{- $t := time.AsTime . }}{{ $age := div (sub now.Unix $t.Unix) 86400 }} · as of {{ $t.UTC.Format "Jan 2, 2006" }}
+          {{- if gt $age 30 }} <span class="v-pill"><span class="v-dot v-dot-warn" aria-hidden="true"></span><span class="text-warn">{{ $age }} days old</span></span>{{ end -}}
+        {{- end -}}
+      </span>
+    </div>
+    <div class="v-scroll">
+      <table class="v-dt">
+        <thead>
+          <tr>
+            <th scope="col">Version</th>
+            <th scope="col" class="num">{{ $unitLabel }}<sup class="v-fn">1</sup></th>
+            <th scope="col" class="num">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+        {{- range $top }}
+          {{- $pct := 0.0 }}{{ if gt $grand 0.0 }}{{ $pct = mul (div .count $grand) 100.0 }}{{ end }}
+          <tr>
+            <th scope="row" class="font-mono">{{ .version }}</th>
+            <td class="num">{{ partial "ui/num.html" (dict "v" .count) }}</td>
+            <td class="num"><span class="flex items-center gap-3"><span class="grow">{{ partial "ui/meter.html" (dict "value" (int .count) "max" (int $grand) "label" (printf "Share of %s" .version)) }}</span><span>{{ partial "ui/pct.html" $pct }}</span></span></td>
+          </tr>
+        {{- end }}
+        {{- if gt $restN 0 }}
+          {{- $pct := 0.0 }}{{ if gt $grand 0.0 }}{{ $pct = mul (div $rest $grand) 100.0 }}{{ end }}
+          <tr>
+            <th scope="row" class="text-ink-2">Other ({{ $restN }} {{ cond (eq $restN 1) "version" "versions" }})</th>
+            <td class="num">{{ partial "ui/num.html" (dict "v" $rest) }}</td>
+            <td class="num"><span class="flex items-center gap-3"><span class="grow">{{ partial "ui/meter.html" (dict "value" (int $rest) "max" (int $grand) "label" "Share of other versions") }}</span><span>{{ partial "ui/pct.html" $pct }}</span></span></td>
+          </tr>
+        {{- end }}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Total</th>
+            <td class="num">{{ partial "ui/num.html" (dict "v" $grand) }}</td>
+            <td class="num">{{ if gt $grand 0.0 }}100%{{ else }}<span class="v-na">—</span>{{ end }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="v-panel-foot"><p>¹ {{ $fn }}</p></div>
+  </div>
+  {{- if $chart }}
+  {{ partial "ui/chart-card.html" (dict
+    "id" (printf "%s-ver-share" $p)
+    "title" "Weekly share by version"
+    "meta" "Top 5 versions and other"
+    "kind" "share"
+    "labels" $chartLabels
+    "datasets" $chartSets
+    "aria" $chartAria) }}
+  {{- end }}
+</div>

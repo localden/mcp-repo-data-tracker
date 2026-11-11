@@ -1,0 +1,47 @@
+{{- /*
+  Week-over-week downloads across packages, for the "SDK downloads · 7d" KPI (spec 4.5: summed weekly bins).
+  Call: partial "pages/overview/sum-weekly.html" (dict "lists" (slice (dict "c" $w.cells) …) "weeks" $weeks)
+  Each list is the cells of ui/weekly.html (agg "sum"), all built with the same anchor and weeks.
+  Uses the last 8 bins. A package with a missing bin among them (a snapshot gap, or a new package whose
+  diff-derived daily counts have not filled a 7-day bin yet) is held flat at its newest full bin, so it never shows
+  up as a dip and the sparkline comes from packages with complete bins. "flat" counts those packages; "missing"
+  counts packages with no full bin at all.
+  Returns the ui/series.html shape: cur = last bin, prev7 = the bin before, spark = the summed bins.
+  has7 is false when any package is held flat: its newest full bin can be weeks old, so cur is not a true current
+  week and all.html shows the registry-reported sum instead, without a delta.
+*/ -}}
+{{- $lists := .lists | default slice -}}
+{{- $W := int .weeks -}}
+{{- $K := 8 }}{{ if lt $W $K }}{{ $K = $W }}{{ end -}}
+{{- $full := slice }}{{ $flat := 0.0 }}{{ $nFlat := 0 }}{{ $nMissing := 0 -}}
+{{- if ge $K 2 -}}
+  {{- range $lists -}}
+    {{- $cells := .c | default slice -}}
+    {{- $ok := true }}{{ $newest := "null" -}}
+    {{- range $j := seq 0 (sub $K 1) -}}
+      {{- $idx := int (add (sub $W $K) $j) -}}
+      {{- $c := "null" }}{{ if lt $idx (len $cells) }}{{ $c = index $cells $idx }}{{ end -}}
+      {{- if eq $c "null" }}{{ $ok = false }}{{ end -}}
+    {{- end -}}
+    {{- range $cells }}{{ if ne . "null" }}{{ $newest = . }}{{ end }}{{ end -}}
+    {{- if $ok -}}
+      {{- $full = $full | append (dict "c" $cells) -}}
+    {{- else -}}
+      {{- $nFlat = add $nFlat 1 -}}
+      {{- if eq $newest "null" }}{{ $nMissing = add $nMissing 1 }}{{ else }}{{ $flat = add $flat (float $newest) }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $n := len $full -}}
+{{- $spark := slice }}{{ $cur := 0.0 }}{{ $prev := 0.0 -}}
+{{- if gt $n 0 -}}
+  {{- range $j := seq 0 (sub $K 1) -}}
+    {{- $idx := int (add (sub $W $K) $j) -}}
+    {{- $sum := $flat -}}
+    {{- range $full }}{{ $sum = add $sum (float (index .c $idx)) }}{{ end -}}
+    {{- $spark = $spark | append $sum -}}
+    {{- if eq $j (sub $K 1) }}{{ $cur = $sum }}{{ end -}}
+    {{- if eq $j (sub $K 2) }}{{ $prev = $sum }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return dict "cur" $cur "curDate" "" "has7" (and (gt $n 0) (eq $nFlat 0)) "prev7" $prev "has30" false "prev30" 0 "spark" $spark "points" slice "stale" (eq $n 0) "flat" $nFlat "missing" $nMissing -}}

@@ -1,0 +1,75 @@
+{{- /* One issue group (Bugs, Enhancements, ...) as a filterable section with one table; one tbody per tier.
+     Ctx: (dict "g" group "p" $p "repoKey" "o/r") */ -}}
+{{- $g := .g -}}{{- $p := .p -}}{{- $repoKey := .repoKey -}}
+{{- $tierNames := dict
+  "untriaged" "Untriaged"
+  "in-progress" "In progress"
+  "fix-proposed" "Fix proposed"
+  "ready-for-work" "Ready for work"
+  "needs-maintainer" "Needs maintainer"
+  "close-candidates" "Close candidates"
+  "waiting" "Waiting"
+  "backlog" "Backlog"
+  "decide" "Needs decision"
+  "design" "Needs design"
+  "ready" "Ready for work"
+  "answer" "Needs an answer"
+  "docs" "Docs"
+-}}
+{{- $groupTypes := dict "Bugs" "bug" "Enhancements" "enhancement" "Questions" "question" "Docs" "documentation" -}}
+{{- $gname := string ($g.name | default "Other") -}}
+{{- $gtype := index $groupTypes $gname | default "" -}}
+{{- $gid := printf "%s-g-%s" $p (lower $gname | replaceRE "[^a-z0-9]+" "-") -}}
+{{- $tiers := $g.tiers | default slice -}}
+{{- $n := 0 }}{{ $breach := 0 -}}
+{{- range $tiers }}{{ range (.issues | default slice) }}{{ $n = add $n 1 }}{{ if .sla_breach }}{{ $breach = add $breach 1 }}{{ end }}{{ end }}{{ end -}}
+{{- $meta := slice (printf "%d open" $n) -}}
+{{- if gt $breach 0 }}{{ $meta = $meta | append (printf "%d past SLA" $breach) }}{{ end -}}
+{{- with $g.blurb }}{{ $meta = $meta | append (partial "pages/issues/blurb.html" .) }}{{ end -}}
+<section data-filter-group id="{{ $gid }}" aria-labelledby="{{ $gid }}-h">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-h" $gid) "title" $gname "meta" (delimit $meta " · ")) }}
+  {{- if eq $n 0 }}
+  {{ partial "ui/empty.html" (dict "title" (printf "No open %s" (lower $gname))) }}
+  {{- else }}
+  <div class="v-panel">
+    <div class="v-scroll">
+      <table class="v-dt">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Issue</th>
+            <th scope="col" class="hidden sm:table-cell">Author</th>
+            <th scope="col" class="hidden sm:table-cell num">Comments</th>
+            <th scope="col" class="num">Age</th>
+          </tr>
+        </thead>
+        {{- range $tiers }}
+        {{- $tn := string (.name | default "tier") -}}
+        {{- $tid := printf "%s-t-%s" $gid ($tn | replaceRE "[^a-z0-9-]+" "-") -}}
+        {{- $tname := index $tierNames $tn | default (partial "ui/humanize.html" $tn) -}}
+        {{- $iss := .issues | default slice -}}
+        {{- $tn2 := len $iss -}}
+        {{- $tb := 0 }}{{ range $iss }}{{ if .sla_breach }}{{ $tb = add $tb 1 }}{{ end }}{{ end -}}
+        {{- $sub := slice -}}
+        {{- with .blurb }}{{ $sub = $sub | append (partial "pages/issues/blurb.html" .) }}{{ end -}}
+        {{- if gt $tb 0 }}{{ $sub = $sub | append (printf "%d past SLA" $tb) }}{{ end -}}
+        {{- $cut := $tn2 }}{{ if gt $tn2 15 }}{{ $cut = 10 }}{{ end }}
+        <tbody data-filter-section id="{{ $tid }}">
+          <tr class="v-group"><th colspan="5" scope="rowgroup">{{ $tname }} <span class="v-count">{{ $tn2 }}</span>{{ with $sub }}<span class="sub">{{ delimit . " · " }}</span>{{ end }}</th></tr>
+          {{- if eq $tn2 0 }}
+          <tr><td colspan="5"><span class="v-na">None</span></td></tr>
+          {{- end }}
+          {{- range $k, $i := $iss }}
+          {{ partial "pages/issues/row.html" (dict "i" $i "repoKey" $repoKey "gtype" $gtype "more" (ge $k $cut)) }}
+          {{- end }}
+          {{- if gt $tn2 15 }}
+          <tr class="v-more"><td colspan="5"><button type="button" data-more-for="{{ $tid }}" data-label="Show all {{ $tn2 }}">Show all {{ $tn2 }}</button></td></tr>
+          {{- end }}
+        </tbody>
+        {{- end }}
+      </table>
+    </div>
+    <div class="v-panel-foot"><p>Age counts business days since the issue opened; waiting counts business days since the reporter's last reply. Rows open on GitHub.</p></div>
+  </div>
+  {{- end }}
+</section>

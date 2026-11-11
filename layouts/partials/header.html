@@ -1,53 +1,50 @@
-<header class="navbar sticky top-0 z-50 w-full bg-base-100 border-b border-base-300 px-4 overflow-visible flex-wrap min-h-fit">
-  <div class="navbar-start w-auto flex-none gap-2 overflow-visible">
-    <a href="{{ .Site.BaseURL }}" class="text-sm font-semibold hover:opacity-80">{{ .Site.Title }}</a>
-    <span class="relative inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
-      <span class="absolute inset-[1px] rounded-full bg-base-100"></span>
-      <i class="fa-solid fa-flask text-[8px] relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent"></i>
-      <span class="relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent">Experimental</span>
-    </span>
-  </div>
-  <div class="navbar-end flex-1 gap-2 overflow-visible flex-wrap justify-end">
-    {{/* Repo Picker */}}
-    {{ $reposIndex := site.Data.repos }}
-    {{ if and $reposIndex $reposIndex.repositories (gt (len $reposIndex.repositories) 1) }}
-    <div class="dropdown dropdown-end" id="repo-picker">
-      <button tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-base-300 rounded-md hover:bg-base-200" id="repo-picker-trigger" aria-expanded="false" aria-haspopup="listbox">
-        <span id="repo-picker-label">Select Repository</span>
-        <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      <div tabindex="0" class="dropdown-content bg-base-100 rounded-lg z-[100] w-80 max-w-[calc(100vw-2rem)] p-1.5 shadow-xl border border-base-300" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
-        <div class="repo-picker-item" role="option" data-owner="" data-repo="" data-name="All Repositories">
-          <a href="?repo=__all__" class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
-            <span class="text-xs font-medium">All Repositories</span>
-            <span class="text-[10px] text-base-content/50">Summary across all tracked repos</span>
-          </a>
-        </div>
-        <div class="border-t border-base-300 my-1"></div>
-        {{ range $index, $repo := $reposIndex.repositories }}
-        <div class="repo-picker-item" role="option" data-owner="{{ $repo.owner }}" data-repo="{{ $repo.repo }}" data-name="{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}">
-          <a href="?repo={{ $repo.owner }}/{{ $repo.repo }}" class="flex flex-col gap-0.5 px-2.5 py-2 rounded-md bg-base-100 hover:bg-base-200 cursor-pointer w-full">
-            <span class="text-xs font-medium">{{ $repo.name | default (printf "%s/%s" $repo.owner $repo.repo) }}</span>
-            <code class="font-mono text-[10px] text-base-content/50">{{ $repo.owner }}/{{ $repo.repo }}</code>
-          </a>
-        </div>
-        {{ end }}
-      </div>
-    </div>
-    {{ end }}
-    <nav class="flex items-center gap-1 overflow-x-auto max-w-full">
-      <a href="{{ .Site.BaseURL }}" class="px-3 py-1.5 text-sm rounded-md {{ if .IsHome }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Overview</a>
-      <a href="{{ "issues/" | relURL }}" class="repo-nav-link px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Issues" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Issues</a>
-      <a href="{{ "pulls/" | relURL }}" class="repo-nav-link px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Pull Requests" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">PRs</a>
-      <a href="{{ "seps/" | relURL }}" class="repo-nav-link px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Spec Enhancement Proposals" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}" id="seps-nav-link" style="display: none;">SEPs</a>
-      <a href="{{ "contributors/" | relURL }}" class="repo-nav-link px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Contributors" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Contributors</a>
-      <a href="{{ "health/" | relURL }}" class="repo-nav-link px-3 py-1.5 text-sm rounded-md {{ if eq .Title "Health & Trends" }}bg-base-200 font-medium{{ else }}hover:bg-base-200{{ end }}">Trends</a>
+{{- $page := "" -}}{{- with .File -}}{{- $page = .BaseFileName -}}{{- end -}}
+{{- $isHome := .IsHome -}}
+{{- $repos := site.Data.repos.repositories -}}
+<header class="v-header">
+  <div class="v-shell v-header-row">
+    <a href="{{ site.Home.RelPermalink }}" class="v-brand">{{ site.Title }}</a>
+    <span class="v-pill">Experimental</span>
+    <nav class="v-nav" aria-label="Sections">
+      <a class="v-nav-item" data-nav data-base="{{ site.Home.RelPermalink }}" href="{{ site.Home.RelPermalink }}"{{ if $isHome }} aria-current="page"{{ end }}>Overview</a>
+      {{- range slice (slice "issues" "Issues") (slice "pulls" "Pull requests") (slice "seps" "SEPs") (slice "contributors" "Contributors") (slice "health" "Trends") }}
+      {{- $key := index . 0 }}{{ $u := printf "%s/" $key | relURL }}
+      <a class="v-nav-item v-nav-repo" data-nav data-base="{{ $u }}" href="{{ $u }}"{{ if eq $key "seps" }} id="seps-nav-link"{{ end }}{{ if eq $page $key }} aria-current="page"{{ end }}>{{ index . 1 }}</a>
+      {{- end }}
     </nav>
-    <button id="theme-toggle" type="button" class="px-2.5 py-1.5 rounded-md hover:bg-base-200" aria-label="Toggle theme">
-      <i class="fa-solid fa-moon theme-icon-dark"></i>
-      <i class="fa-solid fa-sun theme-icon-light hidden"></i>
-    </button>
+    <div class="v-tools">
+      {{- if gt (len $repos) 1 }}
+      <div class="dropdown dropdown-end" id="repo-picker">
+        <div tabindex="0" role="button" class="v-nav-item v-picker" id="repo-picker-trigger" aria-haspopup="listbox" aria-label="Select repository">
+          <span class="v-picker-label">
+            <span class="v-scope-only" data-repo="__all__">All repositories</span>
+            {{- range $repos }}<span class="v-scope-only" data-repo="{{ .owner }}/{{ .repo }}">{{ .name | default .repo }}</span>{{ end }}
+          </span>
+          {{ partial "ui/icon.html" "chevron-down" }}
+        </div>
+        <ul tabindex="-1" class="dropdown-content v-menu" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
+          <li class="repo-picker-item" role="option" data-owner="" data-repo="" data-name="All repositories">
+            <a class="v-menu-item" href="{{ site.Home.RelPermalink }}">
+              <span class="v-menu-title">All repositories</span><span class="v-menu-sub">{{ len $repos }} tracked</span>{{ partial "ui/icon.html" "check" }}
+            </a>
+          </li>
+          <li class="v-menu-sep" role="separator"></li>
+          {{- range $repos }}
+          <li class="repo-picker-item" role="option" data-owner="{{ .owner }}" data-repo="{{ .repo }}" data-name="{{ .name | default .repo }}">
+            <a class="v-menu-item" href="?repo={{ printf "%s/%s" .owner .repo | urlquery }}">
+              <span class="v-menu-title">{{ .name | default .repo }}</span>
+              {{- with .package }}<span class="v-menu-sub">{{ .registry }}</span>{{ end }}
+              {{ partial "ui/icon.html" "check" }}
+            </a>
+          </li>
+          {{- end }}
+        </ul>
+      </div>
+      {{- end }}
+      <button id="theme-toggle" type="button" class="v-nav-item v-icon-btn" aria-label="Toggle dark mode">
+        <span class="theme-icon-dark">{{ partial "ui/icon.html" "moon" }}</span>
+        <span class="theme-icon-light">{{ partial "ui/icon.html" "sun" }}</span>
+      </button>
+    </div>
   </div>
 </header>

@@ -1,0 +1,152 @@
+{{- /*
+  Overview, all repositories (spec 8.1 A). Rendered inside .repo-content[data-repo="__all__"].
+  Call: partial "pages/overview/all.html" (dict "rows" $rows "weeks" $weeks "latest" $latest)
+*/ -}}
+{{- $rows := .rows }}{{ $latest := .latest }}{{ $weeks := .weeks -}}
+{{- $p := "overview-all" -}}
+{{- $lt := time.AsTime $latest -}}
+{{- $nRepos := len $rows -}}
+
+{{- /* Totals and the per-metric series lists (repos with metrics only). */ -}}
+{{- $tStars := 0 }}{{ $tForks := 0 }}{{ $tIss := 0 }}{{ $tPR := 0 }}{{ $tActive := 0 }}{{ $tAwI := 0 }}{{ $tAwP := 0 }}{{ $tDlW := 0 -}}
+{{- $lStars := slice }}{{ $lIss := slice }}{{ $lPR := slice }}{{ $lAwI := slice }}{{ $lAwP := slice }}{{ $lDl := slice -}}
+{{- $nPkg := 0 }}{{ $updated := "" }}{{ $behind := slice -}}
+{{- range $rows -}}
+  {{- $r := . }}{{ $s := $r.s -}}
+  {{- with $r.m -}}
+    {{- $tStars = add $tStars (.repository.stars | default 0) -}}
+    {{- $tForks = add $tForks (.repository.forks | default 0) -}}
+    {{- $tIss = add $tIss (.issues.open_count | default 0) -}}
+    {{- $tPR = add $tPR (.pulls.open_count | default 0) -}}
+    {{- $tActive = add $tActive (.contributors.active_30d | default 0) -}}
+    {{- $tAwI = add $tAwI (.issues.without_response_24h | default 0) -}}
+    {{- $tAwP = add $tAwP (.pulls.without_review_24h | default 0) -}}
+    {{- $lStars = $lStars | append $s.stars -}}
+    {{- $lIss = $lIss | append $s.issues -}}
+    {{- $lPR = $lPR | append $s.pulls -}}
+    {{- $lAwI = $lAwI | append $s.awaitiss -}}
+    {{- $lAwP = $lAwP | append $s.awaitpr -}}
+    {{- with .timestamp }}{{ if gt (string .) $updated }}{{ $updated = string . }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- with $r.pkg -}}
+    {{- $nPkg = add $nPkg 1 -}}
+    {{- $tDlW = add $tDlW ($r.dl.weekly | default 0) -}}
+    {{- $lDl = $lDl | append (dict "c" $r.dl.w.cells) -}}
+  {{- end -}}
+  {{- with $s.issues.curDate -}}
+    {{- $lag := int (div ($lt.Sub (time.AsTime .)).Hours 24.0) -}}
+    {{- if gt $lag 1 }}{{ $behind = $behind | append (printf `<span class="v-pill"><span class="v-dot v-dot-warn" aria-hidden="true"></span><span class="text-warn">%s %dd behind</span></span>` (htmlEscape $r.name) $lag) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $sStars := partial "pages/overview/sum-series.html" (dict "list" $lStars "anchor" $latest) -}}
+{{- $sIss := partial "pages/overview/sum-series.html" (dict "list" $lIss "anchor" $latest) -}}
+{{- $sPR := partial "pages/overview/sum-series.html" (dict "list" $lPR "anchor" $latest) -}}
+{{- $sAwI := partial "pages/overview/sum-series.html" (dict "list" $lAwI "anchor" $latest) -}}
+{{- $sAwP := partial "pages/overview/sum-series.html" (dict "list" $lAwP "anchor" $latest) -}}
+{{- $sDl := partial "pages/overview/sum-weekly.html" (dict "lists" $lDl "weeks" $weeks) -}}
+{{- /* Downloads value: the newest full summed 7-day bin, the same basis as its week-over-week delta.
+       Falls back to the sum of registry-reported last_week values when any package lacks full recent bins (no delta then). */ -}}
+{{- $dlVal := $tDlW }}{{ if and (not $sDl.stale) (eq $sDl.flat 0) }}{{ $dlVal = $sDl.cur }}{{ end -}}
+{{- $dlHTML := partial "ui/num.html" (dict "v" $dlVal) -}}
+{{- if eq $nPkg 0 }}{{ $dlHTML = partial "ui/num.html" (dict) }}{{ end -}}
+
+{{- /* Spec 5.5: within one strip either every cell has a sparkline or none does. The strip is live only when all six
+       series are current and have at least two points; otherwise every cell gets a stale series (no spark, no delta). */ -}}
+{{- $stripLive := true -}}
+{{- range (slice $sStars $sIss $sPR $sAwI $sAwP $sDl) }}{{ if or .stale (lt (len .spark) 2) }}{{ $stripLive = false }}{{ end }}{{ end -}}
+{{- /* Cell meta: name the repositories or packages held flat by sum-series / sum-weekly (gaps or new, spec 4.5). */ -}}
+{{- $flatMeta := dict -}}
+{{- range $k, $v := (dict "stars" $sStars "iss" $sIss "pr" $sPR "awi" $sAwI "awp" $sAwP) -}}
+  {{- $m := slice }}{{ if and $stripLive (gt $v.flat 0) }}{{ $m = slice (printf "Trend excl. %d with gaps" $v.flat) }}{{ end -}}
+  {{- $flatMeta = merge $flatMeta (dict $k $m) -}}
+{{- end -}}
+{{- $dlMeta := slice (printf "%d %s" (int $nPkg) (cond (eq $nPkg 1) "package" "packages")) -}}
+{{- if and $stripLive (gt $sDl.flat 0) }}{{ $dlMeta = $dlMeta | append (printf "Trend excl. %d with gaps" $sDl.flat) }}{{ end -}}
+{{- if not $stripLive -}}
+  {{- $dead := dict "cur" 0 "curDate" "" "has7" false "prev7" 0 "has30" false "prev30" 0 "spark" slice "points" slice "stale" true -}}
+  {{- $sStars = $dead }}{{ $sIss = $dead }}{{ $sPR = $dead }}{{ $sAwI = $dead }}{{ $sAwP = $dead }}{{ $sDl = $dead -}}
+{{- end -}}
+
+{{- /* Page head meta: counts, then a warn pill per repository whose newest snapshot lags the global latest by more than a day.
+       ui/page-head.html prints meta items as-is inside <span>, so the pills are passed as safe HTML. */ -}}
+{{- $meta := slice (printf "%d %s" $nRepos (cond (eq $nRepos 1) "repository" "repositories")) (printf "%d %s" (int $nPkg) (cond (eq $nPkg 1) "SDK package" "SDK packages")) -}}
+{{- range $behind }}{{ $meta = $meta | append (safeHTML .) }}{{ end -}}
+{{ partial "ui/page-head.html" (dict "title" "All repositories" "meta" $meta "updated" $updated) }}
+<div class="v-sections">
+  <section aria-labelledby="{{ $p }}-kpis">
+    <h2 class="sr-only" id="{{ $p }}-kpis">Key metrics</h2>
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+      {{ partial "ui/kpi.html" (dict "label" "Stars" "value" $tStars "series" $sStars "meta" $flatMeta.stars "polarity" "up" "anchor" (printf "#%s-repos" $p)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Open issues" "value" $tIss "series" $sIss "meta" $flatMeta.iss "polarity" "down" "anchor" (printf "#%s-repos" $p)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Open PRs" "value" $tPR "series" $sPR "meta" $flatMeta.pr "polarity" "none" "anchor" (printf "#%s-repos" $p)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Awaiting response · 24h" "value" $tAwI "series" $sAwI "meta" $flatMeta.awi "polarity" "down" "anchor" (printf "#%s-repos" $p)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Awaiting review · 24h" "value" $tAwP "series" $sAwP "meta" $flatMeta.awp "polarity" "down" "anchor" (printf "#%s-repos" $p)) }}
+      {{ partial "ui/kpi.html" (dict "label" "SDK downloads · 7d" "format" "html" "valueHTML" ($dlHTML | safeHTML) "value" $dlVal "series" $sDl "polarity" "up" "meta" $dlMeta "anchor" (printf "#%s-downloads" $p)) }}
+    </div></div>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-repos">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-repos" $p) "title" "Repositories" "meta" "Changes vs 7 days ago") }}
+    <div class="v-panel">
+      <div class="v-scroll">
+        <table class="v-dt v-dt-sticky" data-sortable>
+          <thead>
+            <tr class="v-groups"><th></th><th colspan="3" class="grp">Community</th><th colspan="4" class="grp">Backlog</th></tr>
+            <tr>
+              <th scope="col" data-sort aria-sort="none"><button type="button">Repository</button></th>
+              <th scope="col" class="num grp" data-sort aria-sort="none"><button type="button">Stars</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Forks</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Active contributors · 30d<sup class="v-fn">1</sup></button></th>
+              <th scope="col" class="num grp" data-sort aria-sort="none"><button type="button">Open issues</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Awaiting response · 24h</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Open PRs</button></th>
+              <th scope="col" class="num" data-sort aria-sort="none"><button type="button">Awaiting review · 24h</button></th>
+            </tr>
+          </thead>
+          <tbody>
+          {{- range $rows }}
+            {{- $m := .m }}{{ $s := .s }}{{ $naT := cond (not $m) "Not aggregated yet" "Not tracked for this repository" }}
+            <tr data-row-link>
+              <th scope="row" data-v="{{ lower .name }}"><a class="v-row-link" href="?repo={{ .key | urlquery }}" data-repo-switch>{{ .name }}</a><span class="sub font-mono">{{ .repo }}</span></th>
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.repository.stars "s" $s.stars "polarity" "up" "grp" true) }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.repository.forks) }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.contributors.active_30d) }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.issues.open_count "s" $s.issues "polarity" "down" "grp" true) }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.issues.without_response_24h) }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.pulls.open_count "s" $s.pulls "polarity" "none") }}
+              {{ partial "pages/overview/count-cell.html" (dict "naTitle" $naT "v" $m.pulls.without_review_24h) }}
+            </tr>
+          {{- end }}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">All repositories</th>
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tStars "grp" true) }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tForks) }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tActive "fn" "1") }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tIss "grp" true) }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tAwI) }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tPR) }}
+              {{ partial "pages/overview/count-cell.html" (dict "v" $tAwP) }}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="v-panel-foot">
+        <p>Select a row to open that repository.</p>
+        <p>¹ Sum of per-repo counts; people active in several repositories are counted once per repository.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-inbound">
+    <h2 class="sr-only" id="{{ $p }}-inbound">Inbound triage and SDK downloads</h2>
+    <div class="grid gap-4 lg:grid-cols-2">
+      {{ partial "pages/overview/all-triage.html" (dict "rows" $rows "p" $p) }}
+      {{ partial "pages/overview/all-downloads.html" (dict "rows" $rows "p" $p "nPkg" $nPkg "total" $tDlW) }}
+    </div>
+  </section>
+
+  {{ partial "pages/overview/history.html" (dict "rows" $rows "p" $p "latest" $latest "weeks" $weeks "nPkg" $nPkg) }}
+</div>

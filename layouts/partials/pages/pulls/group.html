@@ -1,0 +1,35 @@
+{{- /* One tier-like group as section[data-filter-group]: section head + one panel with one .v-dt (spec 8.5 #4).
+     Params: p (DOM id prefix), slug (group id part; anchors are #{p}-tier-{slug}), title, meta (string),
+             blurb (string, panel foot), states (slice), tier (data-tier value), empty (empty-state title). */ -}}
+{{- $gid := printf "%s-tier-%s" .p .slug -}}
+{{- $t := partial "pages/pulls/tally.html" (.states | default slice) -}}
+<section data-filter-group id="{{ $gid }}" aria-labelledby="{{ $gid }}-h">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-h" $gid) "title" .title "meta" .meta) }}
+  {{- if gt $t.n 0 }}
+  <div class="v-panel">
+    <div class="v-scroll">
+      <table class="v-dt">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Pull request</th>
+            <th scope="col" class="hidden sm:table-cell">Author</th>
+            <th scope="col" class="hidden sm:table-cell">Why</th>
+            <th scope="col" class="hidden sm:table-cell num">Size</th>
+            <th scope="col" class="num">Age</th>
+          </tr>
+        </thead>
+        {{- range .states }}
+        {{ partial "pages/pulls/state.html" (dict "state" . "p" $.p "gid" $.slug "tier" $.tier) }}
+        {{- end }}
+      </table>
+    </div>
+    <div class="v-panel-foot">
+      {{- with .blurb }}<p>{{ . }}</p>{{ end }}
+      <p class="v-legend"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Age: watch &gt; 1d · over target &gt; 7d</span><span>SLA pills mark re-review and maintainer PRs waiting over 24h</span><span>Rows open on GitHub</span></p>
+    </div>
+  </div>
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "title" .empty "body" .blurb) }}
+  {{- end }}
+</section>

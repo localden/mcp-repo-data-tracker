@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}" data-theme="light">
+<html lang="{{ site.LanguageCode }}">
 <head>
   {{- partial "head.html" . -}}
 </head>
-<body class="min-h-screen flex flex-col bg-base-200">
+<body class="v-body">
   {{- partial "header.html" . -}}
-  <main class="flex-1 container mx-auto px-4 py-8 max-w-6xl w-full">
+  <main class="v-shell v-main">
     {{- block "main" . }}{{- end }}
   </main>
   {{- partial "footer.html" . -}}
-  <script src="{{ "js/theme-toggle.js" | relURL }}"></script>
   <script src="{{ "js/repo-picker.js" | relURL }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{{ "js/theme-toggle.js" | relURL }}"></script>
+  <script src="{{ "js/ui.js" | relURL }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
   <script src="{{ "js/charts.js" | relURL }}"></script>
 </body>
 </html>

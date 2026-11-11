@@ -1,0 +1,47 @@
+{{- /*
+  Sum of several ui/series.html results, per calendar day, for the all-repositories KPI strip.
+  Call: partial "pages/overview/sum-series.html" (dict "list" (slice $seriesA $seriesB …) "anchor" $latest)
+  For each of the 31 days ending on anchor, a series contributes its newest value dated on or up to 2 days before
+  that day (the spec's stale tolerance). A series that misses any day of the window (a snapshot gap, a lagging or a
+  newly tracked repository) is held flat at its newest value on every day, so it never shows up as a dip or a jump
+  and the trend and delta come from the repositories with complete history. "flat" counts those series.
+  Returns the ui/series.html shape: {cur, curDate, has7, prev7, has30, prev30, spark, points, stale, flat}.
+  prev7 is the sum on the newest day in [anchor - 10d, anchor - 7d] (spec 4.5). stale = no series covers the window.
+*/ -}}
+{{- $t := time.AsTime .anchor -}}
+{{- $from := ($t.AddDate 0 0 -45).Format "2006-01-02" -}}
+{{- $lo7 := ($t.AddDate 0 0 -10).Format "2006-01-02" }}{{ $hi7 := ($t.AddDate 0 0 -7).Format "2006-01-02" -}}
+{{- $lists := slice }}{{ $flat := 0.0 }}{{ $nFlat := 0 -}}
+{{- range .list -}}
+  {{- $s := . -}}
+  {{- $pts := slice -}}
+  {{- range $s.points }}{{ if gt .date $from }}{{ $pts = $pts | append . }}{{ end }}{{ end -}}
+  {{- $vals := slice }}{{ $full := gt (len $pts) 0 -}}
+  {{- range $i := seq 0 30 -}}
+    {{- $dt := $t.AddDate 0 0 (int (sub $i 30)) -}}
+    {{- $day := $dt.Format "2006-01-02" }}{{ $min := ($dt.AddDate 0 0 -2).Format "2006-01-02" -}}
+    {{- $vd := "" }}{{ $v := 0.0 -}}
+    {{- range $pts }}{{ if le .date $day }}{{ $vd = .date }}{{ $v = float .value }}{{ end }}{{ end -}}
+    {{- if lt $vd $min }}{{ $full = false }}{{ end -}}
+    {{- $vals = $vals | append $v -}}
+  {{- end -}}
+  {{- if $full -}}
+    {{- $lists = $lists | append (dict "vals" $vals) -}}
+  {{- else -}}
+    {{- $nFlat = add $nFlat 1 -}}
+    {{- with $s.points }}{{ $flat = add $flat (float (index . (sub (len .) 1)).value) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $n := len $lists -}}
+{{- $spark := slice }}{{ $has7 := false }}{{ $p7 := 0.0 }}{{ $cur := 0.0 -}}
+{{- if gt $n 0 -}}
+  {{- range $i := seq 0 30 -}}
+    {{- $day := ($t.AddDate 0 0 (int (sub $i 30))).Format "2006-01-02" -}}
+    {{- $sum := $flat -}}
+    {{- range $lists }}{{ $sum = add $sum (float (index .vals $i)) }}{{ end -}}
+    {{- $spark = $spark | append $sum -}}
+    {{- if and (ge $day $lo7) (le $day $hi7) }}{{ $has7 = true }}{{ $p7 = $sum }}{{ end -}}
+    {{- if eq $i 30 }}{{ $cur = $sum }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return dict "cur" $cur "curDate" .anchor "has7" $has7 "prev7" $p7 "has30" false "prev30" 0 "spark" $spark "points" slice "stale" (eq $n 0) "flat" $nFlat -}}

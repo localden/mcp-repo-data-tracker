@@ -1,0 +1,40 @@
+{{- /* One PR row in a tier table (spec 8.5 #4). Six columns: # · Pull request · Author · Why · Size · Age.
+     Params: pr (actionability PR dict), tier (data-tier slug), more (bool: behind the more rule),
+             indent (bool: cluster member), pick (bool: cluster pick). */ -}}
+{{- $pr := .pr -}}
+{{- $author := $pr.author | default "" -}}
+{{- /* badges: auth, sla, <sla_kind> (filter tokens badge:auth / badge:1st-review / badge:re-review / badge:maintainer).
+     Only rows the summary counts carry them, so a filter shows exactly the SLA KPI's number: the summary counts one
+     PR per duplicate cluster (state duplicate-cluster, not duplicate-cluster-member) and nothing in Not our move. */ -}}
+{{- $counted := and (ne (string $pr.state) "duplicate-cluster-member") (ne .tier "not-our-move") -}}
+{{- $badges := slice -}}
+{{- if $counted -}}
+  {{- if $pr.is_auth }}{{ $badges = $badges | append "auth" }}{{ end -}}
+  {{- if $pr.sla_breach }}{{ $badges = $badges | append "sla" }}{{ end -}}
+  {{- with $pr.sla_kind }}{{ $badges = $badges | append (lower (string .)) }}{{ end -}}
+{{- end -}}
+{{- /* SLA pill + crit edge only for re-review and maintainer breaches; 1st-review is carried by the Age dot and the badge */ -}}
+{{- $slaPill := "" -}}
+{{- if $pr.sla_breach }}{{ with $pr.sla_kind }}{{ if or (eq . "re-review") (eq . "maintainer") }}{{ $slaPill = . }}{{ end }}{{ end }}{{ end -}}
+{{- $cls := slice -}}
+{{- if .indent }}{{ $cls = $cls | append "v-indent" }}{{ end -}}
+{{- if $slaPill }}{{ $cls = $cls | append "v-edge-crit" }}{{ else if .indent }}{{ $cls = $cls | append "v-edge-group" }}{{ end -}}
+{{- /* Age: dot warn > 1d, crit > 7d */ -}}
+{{- $age := float ($pr.age_days | default 0) -}}
+{{- $lvl := "" }}{{ if gt $age 7.0 }}{{ $lvl = "crit" }}{{ else if gt $age 1.0 }}{{ $lvl = "warn" }}{{ end -}}
+{{- /* Why: blank when the short reason is only the age ("177d") */ -}}
+{{- $why := string ($pr.short_reason | default "") -}}
+{{- if findRE `^[0-9]+(\.[0-9]+)?d$` $why }}{{ $why = "" }}{{ end -}}
+{{- $adds := $pr.additions | default 0 }}{{ $dels := $pr.deletions | default 0 -}}
+<tr data-row data-row-link data-author="{{ lower $author }}" data-badges="{{ delimit $badges "," }}" data-state="{{ $pr.state }}" data-tier="{{ .tier }}"{{ with $cls }} class="{{ delimit . " " }}"{{ end }}{{ if .more }} data-more hidden{{ end }}>
+  <td class="id"><a class="v-row-link" href="{{ $pr.url }}" target="_blank" rel="noopener">#{{ int $pr.number }}</a>{{ if .pick }} <span class="v-pill">pick</span>{{ end }}</td>
+  <td class="title"><a href="{{ $pr.url }}" target="_blank" rel="noopener" title="{{ $pr.title }}">{{ $pr.title }}</a>
+    {{- $pickWhy := "" }}{{ if .pick }}{{ with $pr.cluster_pick_reason }}{{ $pickWhy = printf "Picked: %s" . }}{{ end }}{{ end -}}
+    {{- if or $slaPill $pr.is_auth $pickWhy }}<span class="sub">{{ if $slaPill }}<span class="v-pill"><span class="v-dot v-dot-crit" aria-hidden="true"></span>SLA: {{ $slaPill }}</span> {{ end }}{{ if $pr.is_auth }}<span class="v-pill">auth</span> {{ end }}{{ $pickWhy }}</span>{{ end }}
+    <span class="sub sm:hidden">{{ with $author }}<span class="font-mono">@{{ . }}</span>{{ else }}—{{ end }}{{ if $pr.is_maintainer }} · maint{{ end }} · +{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt (float $dels) 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</span>
+  </td>
+  <td class="hidden sm:table-cell">{{ with $author }}<span class="font-mono">@{{ . }}</span>{{ else }}<span class="v-na" title="Not tracked">—</span>{{ end }}{{ if $pr.is_maintainer }} <span class="v-pill">maint</span>{{ end }}</td>
+  <td class="hidden sm:table-cell text-ink-2"{{ if $why }}{{ with $pr.reason }} title="{{ . }}"{{ end }}{{ end }}>{{ $why }}</td>
+  <td class="hidden sm:table-cell num text-ink-2">+{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt (float $dels) 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</td>
+  <td class="num">{{ with $lvl }}{{ partial "ui/status.html" . }} {{ end }}{{ partial "pages/pulls/age.html" $age }}</td>
+</tr>

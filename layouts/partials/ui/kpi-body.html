@@ -1,0 +1,23 @@
+{{- $f := .format | default "num" -}}{{- $s := .series -}}
+{{- $live := and $s (not $s.stale) -}}
+<span class="v-kpi-label">{{ .label }}{{ if .href }}{{ partial "ui/icon.html" "arrow-up-right" }}{{ end }}</span>
+<span class="v-kpi-value">
+  {{- with .status }}{{ partial "ui/status.html" . }}{{ end -}}
+  {{- if eq $f "html" }}{{ .valueHTML }}
+  {{- else if eq .value nil }}<span class="v-na">—</span>
+  {{- else if eq $f "dur" }}{{ partial "ui/dur.html" .value }}
+  {{- else if eq $f "pct" }}{{ partial "ui/pct.html" .value }}
+  {{- else }}{{ partial "ui/num.html" (dict "v" .value) }}{{ end -}}
+  {{- with .of }}<span class="v-kpi-of">/ {{ partial "ui/num.html" (dict "v" .) }}</span>{{ end -}}
+</span>
+<span class="v-kpi-meta">
+  {{- with .status }}<span class="text-ink-2">{{ $.statusText | default (cond (eq . "crit") "Over target" "Watch") }}</span>{{ end -}}
+  {{- if and $live (not .noDelta) -}}
+    {{- $w := .window | default 7 -}}
+    {{- if cond (eq $w 30) $s.has30 $s.has7 -}}
+      {{ partial "ui/delta.html" (dict "cur" (cond (eq .value nil) $s.cur .value) "prev" (cond (eq $w 30) $s.prev30 $s.prev7) "polarity" (.polarity | default "none") "unit" (.deltaUnit | default "count") "suffix" (printf "vs %dd" $w)) }}
+    {{- end -}}
+  {{- end -}}
+  {{- range .meta }}<span>{{ . }}</span>{{ end -}}
+</span>
+{{- if $live }}{{ partial "ui/spark.html" (dict "values" $s.spark "crit" (eq .status "crit")) }}{{ end -}}

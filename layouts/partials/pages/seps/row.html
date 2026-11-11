@@ -1,0 +1,75 @@
+{{- /* One SEP row in the stage table (spec 8.6, section 2).
+       Context: dict "e" (a seps.json entry) "ref" (time.Time of seps.lastUpdated, used for "Merged {age} ago")
+       "more" (bool: hidden behind the group's Show all, spec 5.7). */ -}}
+{{- $e := .e -}}{{- $ref := .ref -}}
+{{- $num := int ($e.number | default 0) -}}
+{{- $raw := string ($e.title | default "") -}}
+
+{{- /* SEP id: "SEP-NNNN" from the title prefix, else "#PR". PR number shown when it differs. */ -}}
+{{- $sepId := printf "#%d" $num -}}{{- $prNote := "" -}}
+{{- with findRE `^\s*SEP-[0-9]+` $raw 1 -}}
+  {{- $sepId = strings.TrimSpace (index . 0) -}}
+  {{- if ne (strings.TrimPrefix "SEP-" $sepId) (string $num) }}{{ $prNote = printf "PR #%d" $num }}{{ end -}}
+{{- end -}}
+
+{{- /* Title with the "SEP-NNNN:" / "SEP:" prefix stripped. */ -}}
+{{- $title := strings.TrimSpace (replaceRE `^\s*SEP(-[0-9]+)?\s*:\s*` "" $raw) -}}
+{{- if not $title }}{{ $title = strings.TrimSpace $raw }}{{ end -}}
+
+{{- /* Topic pills: labels minus the stage labels. wg-support-needed / deferred always shown, with a warn dot. Max 2 + "+N". */ -}}
+{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "in review" "accepted" "final" -}}
+{{- $warnNames := dict "wg-support-needed" "WG support needed" "deferred" "Deferred" -}}
+{{- $warn := slice }}{{ $topics := slice -}}
+{{- range ($e.labels | default slice) -}}
+  {{- $l := lower (string .) -}}
+  {{- if isset $warnNames $l }}{{ $warn = $warn | append $l }}{{ else if not (in $stageLabels $l) }}{{ $topics = $topics | append (string .) }}{{ end -}}
+{{- end -}}
+{{- $room := sub 2 (len $warn) }}{{ if lt $room 0 }}{{ $room = 0 }}{{ end -}}
+{{- $extra := sub (len $topics) $room }}{{ if lt $extra 0 }}{{ $extra = 0 }}{{ end -}}
+
+{{- /* People */ -}}
+{{- $author := string ($e.author | default "") -}}{{- $sponsor := string ($e.sponsor | default "") -}}
+{{- $whoA := "—" }}{{ if $author }}{{ $whoA = printf "@%s" $author }}{{ end -}}
+{{- $whoS := "—" }}{{ if $sponsor }}{{ $whoS = cond (eq $sponsor $author) "self" (printf "@%s" $sponsor) }}{{ end -}}
+{{- $reviews := $e.reviewCount -}}
+{{- $adds := $e.additions | default 0 }}{{ $dels := float ($e.deletions | default 0) -}}
+
+{{- /* Dates */ -}}
+{{- $opened := "" }}{{ with $e.createdAt }}{{ $opened = (time.AsTime .).Format "Jan 2, 2006" }}{{ end -}}
+{{- $updated := "" }}{{ with $e.updatedAt }}{{ $updated = (time.AsTime .).Format "Jan 2, 2006" }}{{ end -}}
+<tr data-row-link{{ if .more }} data-more hidden{{ end }}>
+  <td class="id"><a class="v-row-link" href="{{ $e.url }}" target="_blank" rel="noopener"{{ with $prNote }} title="{{ . }}"{{ end }}>{{ $sepId }}</a>{{ with $prNote }}<span class="sub">{{ . }}</span>{{ end }}</td>
+  <td class="title">
+    <a href="{{ $e.url }}" target="_blank" rel="noopener" title="{{ $title }}">{{ $title }}</a>
+    {{- if or $warn $topics }}
+    <span class="sub flex flex-wrap items-center gap-2">
+      {{- range $warn }}<span class="v-pill">{{ partial "ui/status.html" "warn" }}{{ index $warnNames . }}</span>{{ end -}}
+      {{- range $i, $t := $topics }}{{ if lt $i $room }}<span class="v-pill">{{ $t }}</span>{{ end }}{{ end -}}
+      {{- if gt $extra 0 }}<span class="v-pill">+{{ $extra }}</span>{{ end -}}
+    </span>
+    {{- end }}
+    <span class="sub sm:hidden">{{ $whoA }} → {{ $whoS }} · {{ if eq $reviews nil }}—{{ else }}{{ partial "ui/num.html" (dict "v" $reviews) }}{{ end }} {{ if eq (float ($reviews | default 0)) 1.0 }}review{{ else }}reviews{{ end }} · +{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt $dels 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</span>
+  </td>
+  <td class="hidden sm:table-cell">
+    {{- if $author }}<span class="font-mono">@{{ $author }}</span>{{ else }}<span class="v-na">—</span><span class="sr-only">unknown author</span>{{ end -}}
+    {{- " → " -}}
+    {{- if not $sponsor }}<span class="v-na">—</span><span class="sr-only">no sponsor</span>{{ else if eq $sponsor $author }}<span class="text-ink-2">self</span>{{ else }}<span class="font-mono">@{{ $sponsor }}</span>{{ end -}}
+  </td>
+  <td class="hidden sm:table-cell num">{{ partial "ui/num.html" (dict "v" $reviews) }}</td>
+  <td class="hidden sm:table-cell num text-ink-2">+{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt $dels 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</td>
+  <td class="num">{{ if eq $e.daysWaiting nil }}<span class="v-na">—</span>{{ else }}<span{{ with $opened }} title="Opened {{ . }}"{{ end }}>{{ partial "pages/seps/age.html" $e.daysWaiting }}</span>{{ end }}</td>
+  {{- if $e.mergedAt }}
+  {{- $m := time.AsTime $e.mergedAt -}}
+  {{- $ago := div (sub $ref.Unix $m.Unix) 86400 }}
+  {{- /* "Merged" is visually carried by the group header (keeps the nowrap column narrow on phones); kept for screen readers and in title. */ -}}
+  <td class="num"><span title="Merged {{ $m.Format "Jan 2, 2006" }}"><span class="sr-only">Merged </span>{{ if lt $ago 1 }}today{{ else }}{{ partial "pages/seps/age.html" $ago }} ago{{ end }}</span>
+    {{- with $e.createdAt }}<span class="sub">cycle {{ partial "pages/seps/age.html" (div (sub $m.Unix (time.AsTime .).Unix) 86400) }}</span>{{ end -}}
+    {{- if ne $e.daysInCurrentStatus nil }}<span class="sub"{{ with $updated }} title="Updated {{ . }}"{{ end }}>updated {{ if lt (float $e.daysInCurrentStatus) 1.0 }}today{{ else }}{{ partial "pages/seps/age.html" $e.daysInCurrentStatus }} ago{{ end }}</span>{{ end -}}
+  </td>
+  {{- else if eq $e.daysInCurrentStatus nil }}
+  <td class="num"><span class="v-na">—</span></td>
+  {{- else }}
+  {{- $idle := float $e.daysInCurrentStatus }}
+  <td class="num">{{ if gt $idle 30.0 }}{{ partial "ui/status.html" "crit" }} {{ else if gt $idle 14.0 }}{{ partial "ui/status.html" "warn" }} {{ end }}<span{{ with $updated }} title="Updated {{ . }}"{{ end }}>{{ partial "pages/seps/age.html" $idle }}</span></td>
+  {{- end }}
+</tr>

@@ -1,0 +1,32 @@
+{{- /*
+  Overview B3: Community panel (stat rows). Maintainers vs community is a nominal 2-part split (v-cat-1 / v-cat-2).
+  Call: partial "pages/overview/community-panel.html" (dict "r" $row "m" $metrics "gh" url "q" urlqueried-key …)
+*/ -}}
+{{- $m := .m }}{{ $gh := .gh -}}
+{{- $c := $m.contributors -}}
+{{- $act := $c.active_30d }}{{ $ft := $c.first_time_30d -}}
+<div class="v-panel">
+  <div class="v-panel-head">
+    <h3 class="v-panel-title">Community</h3>
+    <span class="v-panel-meta"><a href="{{ printf "%s?repo=%s" ("contributors/" | relURL) .q }}">Contributors</a></span>
+  </div>
+  <dl class="v-stats">
+    <div class="v-stat v-stat-wide"><dt>Active contributors · 30d</dt><dd>
+      <span class="text-ink tabular-nums">{{ partial "ui/num.html" (dict "v" $act) }}</span>
+      {{- if and (ne $c.active_maintainers_30d nil) (ne $c.active_community_30d nil) }}
+      {{- $mn := int (float $c.active_maintainers_30d) }}{{ $cm := int (float $c.active_community_30d) }}
+      <div class="mt-2">{{ partial "ui/segbar.html" (dict
+        "segments" (slice (dict "n" $mn "label" "Maintainers" "cls" "v-cat-1") (dict "n" $cm "label" "Community" "cls" "v-cat-2"))
+        "total" (add $mn $cm)
+        "aria" (printf "Active contributors in the last 30 days: %d maintainers, %d community" $mn $cm)
+      ) }}</div>
+      {{- end }}
+    </dd></div>
+    <div class="v-stat"><dt>First-time · 30d</dt><dd>{{ partial "ui/num.html" (dict "v" $ft) }}{{ if and (ne $ft nil) $act (gt (float $act) 0.0) }}<span class="v-stat-sub">{{ partial "ui/pct.html" (mul (div (float $ft) (float $act)) 100.0) }} of active</span>{{ end }}</dd></div>
+    <div class="v-stat"><dt>Retention</dt><dd>{{ if ne $c.retention_rate_pct nil }}{{ partial "ui/pct.html" $c.retention_rate_pct }}{{ else }}{{ partial "ui/num.html" (dict) }}{{ end }}</dd></div>
+    <div class="v-stat"><dt>Churned · 30d</dt><dd>{{ partial "ui/num.html" (dict "v" $c.churned_30d) }}</dd></div>
+    <div class="v-stat"><dt>Commits per week · avg</dt><dd>{{ if ne $c.commits_per_week_avg nil }}{{ strings.TrimSuffix ".0" (lang.FormatNumber 1 (float $c.commits_per_week_avg)) }}{{ else }}{{ partial "ui/num.html" (dict) }}{{ end }}</dd></div>
+    <div class="v-stat"><dt>Total known</dt><dd>{{ partial "ui/num.html" (dict "v" $c.total_known) }}</dd></div>
+    <div class="v-stat"><dt>Forks</dt><dd>{{ if ne $m.repository.forks nil }}<a class="v-link-quiet" href="{{ printf "%s/forks" $gh }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" $m.repository.forks) }}{{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ else }}{{ partial "ui/num.html" (dict) }}{{ end }}</dd></div>
+  </dl>
+</div>

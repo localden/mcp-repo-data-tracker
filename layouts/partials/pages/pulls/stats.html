@@ -1,0 +1,81 @@
+{{- /* Volume & timing (spec 8.5 #5), shared by the actionability and legacy branches.
+     Params: m (metrics.json), p (DOM id prefix), repoKey, snaps (snapshots), latest (YYYY-MM-DD). */ -}}
+{{- $p := .p }}{{ $rk := .repoKey -}}
+{{- $pl := .m.pulls | default dict -}}
+{{- $rt := $pl.review_time | default dict }}{{ $mt := $pl.merge_time | default dict }}{{ $bs := $pl.by_size | default dict -}}
+{{- $gh := printf "https://github.com/%s/pulls?q=" $rk -}}
+{{- $d7 := now.AddDate 0 0 -7 | time.Format "2006-01-02" -}}
+{{- $d30 := now.AddDate 0 0 -30 | time.Format "2006-01-02" -}}
+{{- $d90 := now.AddDate 0 0 -90 | time.Format "2006-01-02" -}}
+{{- $openL := printf "%sis:pr+is:open" $gh }}{{ $draftL := printf "%sis:pr+is:open+draft:true" $gh -}}
+{{- $sOpen := partialCached "ui/series.html" (dict "snapshots" .snaps "path" "pulls.open" "anchor" .latest) $rk "pulls.open" -}}
+{{- $flow := slice
+  (dict "label" "Opened" "q" "is:pr+created:>" "v7" $pl.opened_7d "v30" $pl.opened_30d "v90" $pl.opened_90d)
+  (dict "label" "Merged" "q" "is:pr+is:merged+merged:>" "v7" $pl.merged_7d "v30" $pl.merged_30d "v90" $pl.merged_90d)
+-}}
+{{- /* first review: median + avg / p90 / p95 */ -}}
+{{- $frSub := slice -}}
+{{- if ne $rt.avg_hours nil }}{{ $frSub = $frSub | append (printf "avg %s" (partial "ui/dur.html" $rt.avg_hours)) }}{{ end -}}
+{{- if ne $rt.p90_hours nil }}{{ $frSub = $frSub | append (printf "p90 %s" (partial "ui/dur.html" $rt.p90_hours)) }}{{ end -}}
+{{- if ne $rt.p95_hours nil }}{{ $frSub = $frSub | append (printf "p95 %s" (partial "ui/dur.html" $rt.p95_hours)) }}{{ end -}}
+{{- $sizeTotal := add (add (float ($bs.small | default 0)) (float ($bs.medium | default 0))) (float ($bs.large | default 0)) -}}
+<section aria-labelledby="{{ $p }}-stats">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-stats" $p) "title" "Volume & timing") }}
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="v-panel">
+      <div class="v-panel-head">
+        <span class="v-panel-title">Flow</span>
+        <span class="v-panel-meta">
+          <a class="v-link-quiet" href="{{ $openL }}" target="_blank" rel="noopener">Open <span class="text-ink tabular-nums">{{ partial "ui/num.html" (dict "v" $pl.open_count) }}</span>{{ partial "ui/icon.html" "arrow-up-right" }}</a>
+          {{- if and (ne $pl.open_count nil) (not $sOpen.stale) $sOpen.has7 }} {{ partial "ui/delta.html" (dict "cur" $pl.open_count "prev" $sOpen.prev7 "polarity" "none" "suffix" "vs 7d") }}{{ end }} · <a class="v-link-quiet" href="{{ $draftL }}" target="_blank" rel="noopener"><span class="tabular-nums">{{ partial "ui/num.html" (dict "v" $pl.draft_count) }}</span> draft{{ partial "ui/icon.html" "arrow-up-right" }}</a>
+        </span>
+      </div>
+      <div class="v-scroll">
+        <table class="v-dt">
+          <thead>
+            <tr><th scope="col"><span class="sr-only">Measure</span></th><th scope="col" class="num">7d</th><th scope="col" class="num">30d</th><th scope="col" class="num">90d</th></tr>
+          </thead>
+          <tbody>
+            {{- range $flow }}
+            <tr>
+              <th scope="row">{{ .label }}</th>
+              <td class="num"><a href="{{ printf "%s%s%s" $gh .q $d7 }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" .v7) }}</a></td>
+              <td class="num"><a href="{{ printf "%s%s%s" $gh .q $d30 }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" .v30) }}</a></td>
+              <td class="num"><a href="{{ printf "%s%s%s" $gh .q $d90 }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" .v90) }}</a></td>
+            </tr>
+            {{- end }}
+            <tr>
+              <th scope="row">Closed unmerged</th>
+              <td class="num"><span class="v-na" title="Not tracked for this window">—</span></td>
+              <td class="num"><span class="v-na" title="Not tracked for this window">—</span></td>
+              <td class="num"><a href="{{ printf "%sis:pr+is:closed+is:unmerged+closed:>%s" $gh $d90 }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" $pl.closed_not_merged_90d) }}</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="v-panel-foot"><p>Counts open the matching GitHub search. Closed unmerged is tracked for 90 days only.</p></div>
+    </div>
+
+    <div class="v-panel">
+      <div class="v-panel-head"><span class="v-panel-title">Timing &amp; review quality</span></div>
+      <dl class="v-stats">
+        <div class="v-stat"><dt>First review · median</dt><dd>{{ if ne $rt.median_hours nil }}{{ partial "ui/dur.html" $rt.median_hours }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end }}{{ with $frSub }}<span class="v-stat-sub">{{ delimit . " · " }}</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Merge time · median</dt><dd>{{ if ne $mt.median_hours nil }}{{ partial "ui/dur.html" $mt.median_hours }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end }}{{ if ne $mt.avg_hours nil }}<span class="v-stat-sub">avg {{ partial "ui/dur.html" $mt.avg_hours }}</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Code review rate</dt><dd>{{ if ne $pl.code_review_rate_pct nil }}{{ partial "ui/pct.html" $pl.code_review_rate_pct }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Rejection rate · 90d</dt><dd>{{ if ne $pl.rejection_rate_pct nil }}{{ partial "ui/pct.html" $pl.rejection_rate_pct }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Avg reviews per PR</dt><dd>{{ if ne $pl.avg_reviews_per_pr nil }}{{ strings.TrimSuffix ".0" (lang.FormatNumber 1 (float $pl.avg_reviews_per_pr)) }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end }}</dd></div>
+        <div class="v-stat v-stat-wide"><dt>Size · open PRs</dt><dd>
+          {{- if gt $sizeTotal 0.0 }}
+          {{ partial "ui/segbar.html" (dict
+            "segments" (slice
+              (dict "n" ($bs.small | default 0) "label" "Small < 100" "cls" "v-ord-1")
+              (dict "n" ($bs.medium | default 0) "label" "Medium 100–500" "cls" "v-ord-3")
+              (dict "n" ($bs.large | default 0) "label" "Large > 500" "cls" "v-ord-5"))
+            "total" $sizeTotal
+            "aria" (printf "Open PRs by size: %s small, %s medium, %s large" (lang.FormatNumber 0 ($bs.small | default 0)) (lang.FormatNumber 0 ($bs.medium | default 0)) (lang.FormatNumber 0 ($bs.large | default 0)))) }}
+          {{- else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end -}}
+        </dd></div>
+      </dl>
+    </div>
+  </div>
+</section>

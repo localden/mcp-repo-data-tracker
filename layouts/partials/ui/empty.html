@@ -1,0 +1,5 @@
+<div class="v-panel v-empty">
+  <p class="v-empty-title">{{ .title }}</p>
+  {{ with .body }}<p class="v-empty-body">{{ . }}</p>{{ end }}
+  {{ with .action }}<p class="v-empty-body"><a class="v-link" href="?repo={{ .repoKey | urlquery }}" data-repo-switch>{{ .label }}</a></p>{{ end }}
+</div>

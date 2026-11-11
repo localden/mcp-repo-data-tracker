@@ -1,0 +1,6 @@
+{{- /* Duration or the missing mark. Ctx: (dict "v" number-or-nil "scale" 24 "zeroNA" bool "naTitle" "...")
+     scale converts days to hours; zeroNA treats 0 as missing (e.g. close time with no closed issues). Outputs text. */ -}}
+{{- $na := eq .v nil -}}
+{{- if not $na }}{{ if .zeroNA }}{{ if eq (float .v) 0.0 }}{{ $na = true }}{{ end }}{{ end }}{{ end -}}
+{{- if $na -}}<span class="v-na" title="{{ .naTitle | default "Not tracked for this repository" }}">—</span>
+{{- else -}}{{- partial "ui/dur.html" (mul (float .v) (float (.scale | default 1))) -}}{{- end -}}

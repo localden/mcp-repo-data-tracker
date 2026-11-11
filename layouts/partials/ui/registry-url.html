@@ -1,0 +1,5 @@
+{{- /* Registry page URL for a repos.json .package dict ({registry, name}). Returns a string ("" for an unknown registry). */ -}}
+{{- $base := dict "npm" "https://www.npmjs.com/package/" "pypi" "https://pypi.org/project/" "nuget" "https://www.nuget.org/packages/" "crates" "https://crates.io/crates/" "rubygems" "https://rubygems.org/gems/" -}}
+{{- $url := "" -}}
+{{- with . -}}{{- with index $base (string .registry) -}}{{- $url = printf "%s%s" . $.name -}}{{- end -}}{{- end -}}
+{{- return $url -}}

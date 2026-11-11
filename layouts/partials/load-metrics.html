@@ -64,6 +64,9 @@
   {{ $repoName := $targetRepo.name | default (printf "%s/%s" $owner $repo) }}
   {{ $repoKey := printf "%s/%s" $owner $repo }}
 
+  {{/* Names first, so a repos.json entry without a data directory still gets its display name in empty states */}}
+  {{ $result = dict "metrics" false "contributors" false "snapshots" false "repoName" $repoName "owner" $owner "repo" $repo "repoKey" $repoKey "allRepos" $allRepos }}
+
   {{/* Access nested data: site.Data.repos.<owner>.<repo> */}}
   {{ with index site.Data.repos $owner }}
     {{ with index . $repo }}

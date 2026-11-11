@@ -1,204 +1,70 @@
-/**
- * Repo Picker - Dropdown for switching between repositories
- * Uses URL query parameter (?repo=owner/repo) for state management
- * Switches content without page reload when pre-rendered content exists
- * Works with DaisyUI dropdown component
- */
-(function() {
+/* VISR repo scope: html[data-scope] drives which .repo-content is visible (CSS in head.html). */
+(function () {
   'use strict';
-
-  const REPO_PARAM = 'repo';
-  const ALL_REPOS_KEY = '__all__';
-
-  // Get repo from URL query parameter
-  function getSelectedRepo() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(REPO_PARAM);
+  var PARAM = 'repo', ALL = '__all__', root = document.documentElement;
+  function esc(s) { return window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&'); }
+  function has(key) { return !!document.querySelector('.repo-content[data-repo="' + esc(key) + '"]'); }
+  function anyBlocks() { return !!document.querySelector('.repo-content[data-repo]'); }
+  function defaultKey() {
+    var d = document.querySelector('.repo-content[data-default]') || document.querySelector('.repo-content[data-repo]');
+    return d ? d.getAttribute('data-repo') : null;
   }
-
-  // Get the default repo key. Prefers the all-repos summary if present on the page,
-  // otherwise falls back to the first per-repo content block.
-  function getDefaultRepo() {
-    if (document.querySelector(`.repo-content[data-repo="${ALL_REPOS_KEY}"]`)) {
-      return ALL_REPOS_KEY;
-    }
-    const firstContent = document.querySelector('.repo-content[data-repo]');
-    return firstContent ? firstContent.dataset.repo : null;
-  }
-
-  // Show content for selected repo, hide others
-  function showRepoContent(repoKey) {
-    const allContent = document.querySelectorAll('.repo-content[data-repo]');
-    if (allContent.length === 0) return false;
-
-    let found = false;
-    allContent.forEach(content => {
-      if (content.dataset.repo === repoKey) {
-        content.style.display = '';
-        found = true;
-      } else {
-        content.style.display = 'none';
-      }
+  function getSelectedRepo() { try { return new URLSearchParams(location.search).get(PARAM); } catch (e) { return null; } }
+  function syncPicker(key) {
+    document.querySelectorAll('#repo-picker-menu .repo-picker-item').forEach(function (li) {
+      var k = li.dataset.owner && li.dataset.repo ? li.dataset.owner + '/' + li.dataset.repo : ALL;
+      li.setAttribute('aria-selected', String(k === key));
     });
-
-    return found;
   }
-
-  // Set repo in URL and switch content (or reload if content not pre-rendered)
+  function syncNav(key) {
+    document.querySelectorAll('.v-nav a[data-nav]').forEach(function (a) {
+      var u = new URL(a.getAttribute('data-base'), location.href);
+      if (key && key !== ALL) u.searchParams.set(PARAM, key);
+      a.setAttribute('href', u.pathname + u.search);
+    });
+  }
+  function apply(key, notify) {
+    root.setAttribute('data-scope', key);
+    syncPicker(key); syncNav(key);
+    if (notify) document.dispatchEvent(new CustomEvent('visr:repochange', { detail: { repo: key } }));
+  }
   function setSelectedRepo(owner, repo) {
-    const isAll = !owner && !repo;
-    const repoKey = isAll ? ALL_REPOS_KEY : `${owner}/${repo}`;
-
-    // Update URL without reload
-    const url = new URL(window.location.href);
-    if (isAll) {
-      url.searchParams.delete(REPO_PARAM);
-    } else {
-      url.searchParams.set(REPO_PARAM, repoKey);
+    var key = (!owner && !repo) ? ALL : owner + '/' + repo;
+    if (anyBlocks() && !has(key)) {                    // not pre-rendered on this page
+      var brand = document.querySelector('.v-brand');
+      var u = new URL(key === ALL ? (brand ? brand.href : '/') : location.href);
+      if (key !== ALL) u.searchParams.set(PARAM, key);
+      location.href = u.toString();
+      return;
     }
-    window.history.pushState({ repo: repoKey }, '', url.toString());
-
-    // Try to show pre-rendered content
-    const contentShown = showRepoContent(repoKey);
-
-    // Update picker UI
-    updatePickerUI(repoKey);
-
-    // If content wasn't found, navigate appropriately
-    if (!contentShown) {
-      if (isAll) {
-        // All-repos summary only exists on home page
-        const homeLink = document.querySelector('.navbar-start a[href]');
-        window.location.href = homeLink ? homeLink.href : '/';
-      } else {
-        window.location.reload();
-      }
-    }
+    var url = new URL(location.href);
+    if (key === ALL) url.searchParams.delete(PARAM); else url.searchParams.set(PARAM, key);
+    history.pushState({ repo: key }, '', url.toString());
+    apply(key, true);
+    window.scrollTo(0, 0);
   }
-
-  // Update the picker dropdown UI to reflect selection
-  function updatePickerUI(repoKey) {
-    const menu = document.getElementById('repo-picker-menu');
-    const label = document.getElementById('repo-picker-label');
-    if (!menu || !label) return;
-
-    const items = menu.querySelectorAll('.repo-picker-item');
-    items.forEach(item => {
-      const owner = item.dataset.owner;
-      const repo = item.dataset.repo;
-      const itemKey = (!owner && !repo) ? ALL_REPOS_KEY : `${owner}/${repo}`;
-      const anchor = item.querySelector('a');
-      if (itemKey === repoKey) {
-        item.classList.add('selected');
-        item.setAttribute('aria-selected', 'true');
-        if (anchor) anchor.classList.add('active');
-        label.textContent = item.dataset.name;
-      } else {
-        item.classList.remove('selected');
-        item.setAttribute('aria-selected', 'false');
-        if (anchor) anchor.classList.remove('active');
-      }
-    });
-
-    // Show/hide per-repo nav links based on selection
-    updateNavVisibility(repoKey);
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest('#repo-picker-menu a[href], a[data-repo-switch]');
+    if (!a) return;
+    var li = a.closest('.repo-picker-item'), key;
+    if (li) key = li.dataset.owner && li.dataset.repo ? li.dataset.owner + '/' + li.dataset.repo : ALL;
+    else { try { key = new URL(a.href).searchParams.get(PARAM); } catch (err) { key = null; } }
+    if (!key) return;
+    e.preventDefault();
+    if (document.activeElement) document.activeElement.blur();   // closes the daisy dropdown
+    var parts = key === ALL ? ['', ''] : key.split('/');
+    setSelectedRepo(parts[0], parts[1]);
+  });
+  window.addEventListener('popstate', function (e) {
+    var key = (e.state && e.state.repo) || getSelectedRepo() || defaultKey();
+    if (key) apply(key, true);
+  });
+  function init() {
+    var key = root.getAttribute('data-scope') || getSelectedRepo() || defaultKey();
+    if (anyBlocks() && !has(key)) key = defaultKey();
+    if (key) apply(key, false);
   }
-
-  // Per-repo nav links (Issues, PRs, Contributors, Trends) are hidden in
-  // all-repos mode. SEPs additionally only shows for the spec repo.
-  function updateNavVisibility(repoKey) {
-    const isAll = repoKey === ALL_REPOS_KEY;
-    document.querySelectorAll('.repo-nav-link').forEach(link => {
-      if (link.id === 'seps-nav-link') {
-        link.style.display = (repoKey === 'modelcontextprotocol/modelcontextprotocol') ? '' : 'none';
-      } else {
-        link.style.display = isAll ? 'none' : '';
-      }
-    });
-  }
-
-  // Close DaisyUI dropdown by blurring the active element
-  function closeDropdown() {
-    document.activeElement?.blur();
-  }
-
-  // Initialize the picker
-  function initRepoPicker() {
-    const dropdown = document.getElementById('repo-picker');
-    const menu = document.getElementById('repo-picker-menu');
-
-    if (!dropdown || !menu) return;
-
-    const items = menu.querySelectorAll('.repo-picker-item');
-    const selectedRepo = getSelectedRepo() || getDefaultRepo();
-
-    // Set initial selection and show correct content
-    if (selectedRepo) {
-      showRepoContent(selectedRepo);
-      updatePickerUI(selectedRepo);
-    } else if (items.length > 0) {
-      // Default to first item
-      const firstItem = items[0];
-      const repoKey = `${firstItem.dataset.owner}/${firstItem.dataset.repo}`;
-      showRepoContent(repoKey);
-      updatePickerUI(repoKey);
-    }
-
-    // Handle item selection
-    items.forEach(item => {
-      const anchor = item.querySelector('a');
-      if (anchor) {
-        anchor.addEventListener('click', function(e) {
-          e.preventDefault();
-          const owner = item.dataset.owner;
-          const repo = item.dataset.repo;
-          closeDropdown();
-          setSelectedRepo(owner, repo);
-        });
-      }
-    });
-
-    // Handle browser back/forward
-    window.addEventListener('popstate', function(e) {
-      const repoKey = e.state?.repo || getSelectedRepo() || getDefaultRepo();
-      if (repoKey) {
-        showRepoContent(repoKey);
-        updatePickerUI(repoKey);
-      }
-    });
-  }
-
-  // Export for use in other scripts
-  window.RepoPicker = {
-    getSelectedRepo: getSelectedRepo,
-    setSelectedRepo: setSelectedRepo,
-    showRepoContent: showRepoContent
-  };
-
-  // Preserve repo param when clicking navigation links
-  function initNavLinkPreservation() {
-    const navLinks = document.querySelectorAll('nav a[href]');
-    navLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        const repoParam = new URLSearchParams(window.location.search).get(REPO_PARAM);
-        if (repoParam) {
-          e.preventDefault();
-          const url = new URL(this.href);
-          url.searchParams.set(REPO_PARAM, repoParam);
-          window.location.href = url.toString();
-        }
-      });
-    });
-  }
-
-  // Initialize on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      initRepoPicker();
-      initNavLinkPreservation();
-    });
-  } else {
-    initRepoPicker();
-    initNavLinkPreservation();
-  }
+  window.RepoPicker = { getSelectedRepo: getSelectedRepo, setSelectedRepo: setSelectedRepo, showRepoContent: function (k) { apply(k, true); } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -1,0 +1,5 @@
+{{- /* Signed count as a string ("+5", "−3", "±0"), no colour (spec 8.1 Flow "Net"). Call: partial "pages/overview/signed.html" n. Returns a string. */ -}}
+{{- $n := float . -}}
+{{- $out := "±0" -}}
+{{- if gt $n 0.0 }}{{ $out = printf "+%s" (lang.FormatNumber 0 $n) }}{{ else if lt $n 0.0 }}{{ $out = printf "−%s" (lang.FormatNumber 0 (math.Abs $n)) }}{{ end -}}
+{{- return $out -}}

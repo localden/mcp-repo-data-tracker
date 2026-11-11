@@ -1,625 +1,165 @@
-{{/* Pull Requests Page Content */}}
+{{- /* Pull requests page (design-system spec 8.5). Called once per repo block by _default/single.html with
+     (dict "context" $page "repoKey" "owner/repo"), or with the page itself when repos.json is absent.
+     Page-local partials live in pages/pulls/: group (tier section), state (tbody), row (PR row), tally,
+     state-label (slug dict), stats (Volume & timing, shared), legacy (no actionability.json). */ -}}
+{{- $context := . }}{{ $repoKey := "" -}}
+{{- if reflect.IsMap . -}}
+  {{- with .context }}{{ $context = . }}{{ end -}}
+  {{- with .repoKey }}{{ $repoKey = . }}{{ end -}}
+{{- end -}}
+{{- $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) -}}
+{{- with $data.repoKey }}{{ $repoKey = . }}{{ end -}}
+{{- $m := $data.metrics -}}
+{{- $p := printf "pulls-%s" (replace (default "repo" $repoKey) "/" "-") -}}
 
-{{/* Named templates for the actionability PR tables. Defined at top level because
-     Hugo requires {{ define }} outside control structures. Called via {{ template }}
-     below. Column layout kept identical across all call sites so rows align. */}}
+{{- if not $m }}
+{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey) }}
+{{ partial "ui/empty.html" (dict "title" (printf "No pull request data for %s yet" ($data.repoName | default $repoKey | default "this repository")) "body" "This repository hasn't been aggregated.") }}
+{{- else }}
+{{- $snaps := $data.snapshots -}}
+{{- $latest := partialCached "ui/latest-date.html" $context "latest" -}}
+{{- $a := $data.actionability -}}
+{{- $metricsMeta := slice -}}
+{{- with $m.timestamp }}{{ $metricsMeta = slice (printf "Metrics updated %s UTC" ((time.AsTime .).UTC.Format "Jan 2, 2006 15:04")) }}{{ end -}}
 
-{{/* Auth badge — #92ad2d matches the GitHub area:auth label. Inline style because
-     tailwind doesn't ship an arbitrary-hex class and the purge would drop it. */}}
-{{ define "act-auth-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle" style="background-color:#92ad2d;color:#fff">{{ . }}</span>{{ end }}
-{{ define "act-sla-badge" }}<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold inline-block align-middle" style="background-color:#dc3545;color:#fff">{{ . }}</span>{{ end }}
+{{- if not $a }}
+{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey "updated" $m.timestamp) }}
+{{ partial "pages/pulls/legacy.html" (dict "m" $m "p" $p "repoKey" $repoKey "snaps" $snaps "latest" $latest) }}
+{{- else }}
+{{- /* ---------------------------------------------------------------- actionability branch */ -}}
+{{- $sum := $a.summary | default dict -}}
+{{- $sla := $sum.sla | default dict -}}
+{{- $pl := $m.pulls | default dict -}}
+{{- $act := float ($sum.actionable_count | default 0) -}}
+{{- $target := float ($sla.actionable_target | default ($sum.actionable_target | default 25)) -}}
+{{- $auth := float ($sum.auth_count | default 0) -}}
+{{- $hrs := float ($sum.effort_hours | default 0) -}}
 
-{{ define "act-pr-row" }}
-<tr class="border-t border-base-300 hover:bg-base-200/50 cursor-pointer transition-colors"
-    data-author="{{ .author | lower }}" data-badges="{{ if .is_auth }}auth {{ end }}{{ with .sla_kind }}sla {{ . }}{{ end }}"
-    onclick="window.open('{{ .url }}', '_blank')">
-  <td class="text-xs font-mono whitespace-nowrap pl-3">
-    <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-  </td>
-  <td class="text-xs text-base-content/70 truncate">
-    {{ if .is_maintainer }}<span class="font-semibold">{{ .author }}</span>{{ else }}{{ .author }}{{ end }}
-  </td>
-  <td class="text-xs truncate" title="{{ .title }}">
-    {{ with .sla_kind }}<span style="float:right">{{ template "act-sla-badge" . }}</span>{{ end }}{{ if .is_auth }}<span style="float:right">{{ template "act-auth-badge" "auth" }}</span>{{ end }}{{ .title }}
-  </td>
-  <td class="text-xs text-base-content/50 truncate" title="{{ .reason }}">{{ .short_reason }}</td>
-  <td class="text-xs text-right whitespace-nowrap">
-    <span class="text-success">+{{ .additions }}</span><span class="text-error">-{{ .deletions }}</span>
-  </td>
-  <td class="text-xs text-right text-base-content/60 pr-3">{{ .age_days | lang.FormatNumber 0 }}d</td>
-</tr>
-{{ end }}
+{{- /* Queue strip: series per cell; R5 all-or-none sparklines, and stale series never draw (spec 4.5) */ -}}
+{{- $sAct := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.actionable_count" "anchor" $latest) $repoKey "actionability.actionable_count" -}}
+{{- $sEff := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.effort_hours" "anchor" $latest) $repoKey "actionability.effort_hours" -}}
+{{- $sDone := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.actioned" "anchor" $latest) $repoKey "actionability.actioned" -}}
+{{- $sMerged := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "pulls.merged_7d" "anchor" $latest) $repoKey "pulls.merged_7d" -}}
+{{- $qLive := and (not $sAct.stale) (not $sEff.stale) (not $sDone.stale) (not $sMerged.stale) -}}
 
-{{/* Per-section ⊕/⊖ toggle — low-contrast until hover so it doesn't compete
-     with the tier name. Paired with actToggle() defined inline below. */}}
-{{ define "act-tier-toggle" }}
-<span class="text-base-content/30 hover:text-base-content/70 font-normal text-sm select-none" style="margin-left:auto">
-  <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),true)" title="expand all in section">⊕</span>
-  <span class="cursor-pointer px-1" onclick="actToggle(this.closest('.act-tier'),false)" title="collapse all in section">⊖</span>
-</span>
-{{ end }}
+{{- $actSt := "" }}{{ if gt $act 50.0 }}{{ $actSt = "crit" }}{{ else if gt $act 25.0 }}{{ $actSt = "warn" }}{{ end -}}
+{{- $actMeta := slice (printf "%s auth · %s maint" (lang.FormatNumber 0 $auth) (lang.FormatNumber 0 ($sum.maint_count | default 0))) -}}
+{{- if or $sla.actionable_over_target (and (gt $target 0.0) (gt $act $target)) -}}
+  {{- if gt $target 0.0 }}{{ $actMeta = $actMeta | append (printf "%s× target" (strings.TrimSuffix ".0" (printf "%.1f" (div $act $target)))) }}{{ end -}}
+{{- end -}}
+{{- $effSt := "" }}{{ if ge $hrs 10.0 }}{{ $effSt = "crit" }}{{ else if ge $hrs 5.0 }}{{ $effSt = "warn" }}{{ end -}}
+{{- $effMeta := slice (printf "≈ %s working days of 8h" (strings.TrimSuffix ".0" (printf "%.1f" (div $hrs 8.0)))) -}}
+{{- $doneVal := cond (isset $sum "actioned_7d") $sum.actioned_7d nil -}}
+{{- $doneMeta := slice }}{{ if isset $sum "actioned_30d" }}{{ $doneMeta = slice (printf "%s in 30d" (lang.FormatNumber 0 ($sum.actioned_30d | default 0))) }}{{ end -}}
+{{- $mergedMeta := slice }}{{ if ne $pl.merged_30d nil }}{{ $mergedMeta = slice (printf "%s in 30d" (lang.FormatNumber 0 $pl.merged_30d)) }}{{ end -}}
 
-{{ define "act-state-detail" }}
-<details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}">
-  <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-    {{ with (len (where .prs "sla_breach" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" .) }}</span>{{ end }}{{ end }}{{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
-    <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
-  </summary>
-  <table class="table table-xs table-fixed w-full">
-    <colgroup>
-      <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
-      <col><col style="width:6rem"><col style="width:3rem">
-    </colgroup>
-    <tbody>
-      {{ range .prs }}{{ template "act-pr-row" . }}{{ end }}
-    </tbody>
-  </table>
-</details>
-{{ end }}
+{{- /* SLA strip */ -}}
+{{- $hasSla := isset $sum "sla" -}}
+{{- $fr := float ($sla.first_review_7d_breach | default 0) }}{{ $rr := float ($sla.re_review_24h_breach | default 0) }}{{ $mr := float ($sla.maint_24h_breach | default 0) -}}
+{{- $frSt := "" }}{{ if ge $fr 10.0 }}{{ $frSt = "crit" }}{{ else if ge $fr 5.0 }}{{ $frSt = "warn" }}{{ end -}}
+{{- $rrSt := "" }}{{ if ge $rr 10.0 }}{{ $rrSt = "crit" }}{{ else if ge $rr 5.0 }}{{ $rrSt = "warn" }}{{ end -}}
+{{- $mrSt := "" }}{{ if gt $mr 3.0 }}{{ $mrSt = "crit" }}{{ else if gt $mr 1.0 }}{{ $mrSt = "warn" }}{{ end -}}
+{{- $authMeta := slice }}{{ if gt $act 0.0 }}{{ $authMeta = slice (printf "%s of actionable" (partial "ui/pct.html" (mul (div $auth $act) 100.0))) }}{{ end -}}
 
-{{/* Support both direct context and dict with context/repoKey */}}
-{{ $context := . }}
-{{ $repoKey := "" }}
-{{ if reflect.IsMap . }}
-  {{ with .context }}{{ $context = . }}{{ end }}
-  {{ with .repoKey }}{{ $repoKey = . }}{{ end }}
-{{ end }}
-{{ $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) }}
-{{ $m := $data.metrics }}
-{{ $snapshots := $data.snapshots }}
+{{- /* Totals across summary.by_tier (formerly the "Breakdown by tier" table footer) */ -}}
+{{- $totN := 0.0 }}{{ $totA := 0.0 }}{{ $totM := 0.0 }}{{ $totMins := 0.0 -}}
+{{- range $sum.by_tier }}{{ $totN = add $totN (float (.count | default 0)) }}{{ $totA = add $totA (float (.auth | default 0)) }}{{ $totM = add $totM (float (.maint | default 0)) }}{{ $totMins = add $totMins (float (.mins | default 0)) }}{{ end -}}
+{{- $nom := $sum.not_our_move_count | default 0 -}}
+{{- $listMeta := printf "%s actionable · %s auth · %s maint · ≈ %s · %s not our move" (lang.FormatNumber 0 $totN) (lang.FormatNumber 0 $totA) (lang.FormatNumber 0 $totM) (partial "ui/dur.html" (div $totMins 60.0)) (lang.FormatNumber 0 $nom) -}}
 
-{{ if not $m }}
-<div class="alert alert-warning">
-  <span>No data available. Run the aggregation script.</span>
+{{- /* Rendered row count for the filter counter */ -}}
+{{- $rowsTotal := 0 -}}
+{{- range $a.tiers }}{{ $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" (.states | default slice)).n }}{{ end -}}
+{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.bot_corner | default slice)).n -}}
+{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.untriaged | default slice)).n -}}
+{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.not_our_move | default slice)).n -}}
+
+{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey "updated" $a.lastUpdated "updatedLabel" "Classified" "staleDays" 7 "meta" $metricsMeta) }}
+<div class="v-sections" data-filter-scope>
+  <section aria-labelledby="{{ $p }}-queue">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-queue" $p) "title" "Queue" "meta" "Classified PRs where the next move is ours") }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
+      {{ partial "ui/kpi.html" (dict "label" "Actionable" "value" $act "of" $target "status" $actSt "meta" $actMeta "series" (cond $qLive $sAct nil) "polarity" "down") }}
+      {{ partial "ui/kpi.html" (dict "label" "Est. effort" "value" $hrs "format" "dur" "status" $effSt "meta" $effMeta "series" (cond $qLive $sEff nil) "polarity" "down" "deltaUnit" "hours") }}
+      {{ partial "ui/kpi.html" (dict "label" "Actioned · 7d" "value" $doneVal "meta" $doneMeta "series" (cond $qLive $sDone nil) "noDelta" true) }}
+      {{ partial "ui/kpi.html" (dict "label" "Merged · 7d" "value" $pl.merged_7d "meta" $mergedMeta "series" (cond $qLive $sMerged nil) "polarity" "up") }}
+    </div></div>
+    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Actionable ≤ 25 (watch ≤ 50) · Effort &lt; 5h (watch &lt; 10h)</span></p>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-sla">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-sla" $p) "title" "Review SLAs" "meta" "Select a figure to filter the list") }}
+    {{- if $hasSla }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
+      {{ partial "ui/kpi.html" (dict "label" "First review · > 7d" "value" $fr "of" $sla.first_review_eligible "status" $frSt "filter" "badge:1st-review") }}
+      {{ partial "ui/kpi.html" (dict "label" "Re-review · > 24h" "value" $rr "of" $sla.re_review_eligible "status" $rrSt "filter" "badge:re-review") }}
+      {{ partial "ui/kpi.html" (dict "label" "Maintainer · > 24h" "value" $mr "of" $sla.maint_eligible "status" $mrSt "filter" "badge:maintainer") }}
+      {{ partial "ui/kpi.html" (dict "label" "Auth PRs" "value" $auth "meta" $authMeta "filter" "badge:auth") }}
+    </div></div>
+    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>First review and re-review &lt; 5 (watch &lt; 10) · Maintainer ≤ 1 (watch ≤ 3) · Auth is informational</span></p>
+    {{- else }}
+    {{ partial "ui/empty.html" (dict "title" "SLA counts are not available for this repository" "body" "The classifier output has no SLA summary yet.") }}
+    {{- end }}
+  </section>
+
+  <section aria-labelledby="{{ $p }}-list">
+    {{ partial "ui/section-head.html" (dict "id" (printf "%s-list" $p) "title" "Pull requests by tier" "meta" $listMeta) }}
+    <div class="v-filterbar">
+      <label class="v-field">{{ partial "ui/icon.html" "search" }}<span class="sr-only">Filter pull requests</span>
+        <input type="search" data-filter-input placeholder="Filter by title, author:, badge:" autocomplete="off">
+        <button type="button" data-filter-clear hidden aria-label="Clear filter">{{ partial "ui/icon.html" "x" }}</button></label>
+      <span class="v-filter-count" data-filter-count data-noun="PRs">{{ $rowsTotal }} PRs</span>
+    </div>
+    <div class="v-filterbar">
+      {{- range $sum.by_tier }}
+        {{- $idx := int (.idx | default 0) -}}
+        {{- $slug := printf "%d" $idx }}{{ $label := printf "%d · %s" $idx (.name | default "") -}}
+        {{- if lt $idx 0 }}{{ $slug = "unclassified" }}{{ $label = "Unclassified" }}{{ else if ge $idx 99 }}{{ $slug = "bot" }}{{ $label = "Bot corner" }}{{ end }}
+      <a class="v-chip" href="#{{ $p }}-tier-{{ $slug }}">{{ $label }} <span class="v-count">{{ lang.FormatNumber 0 (.count | default 0) }}</span></a>
+      {{- end }}
+      <a class="v-chip" href="#{{ $p }}-tier-nom">Not our move <span class="v-count">{{ lang.FormatNumber 0 $nom }}</span></a>
+    </div>
+
+    <div class="v-sections" data-filter-results>
+      {{- with $a.tiers }}{{ range sort . "idx" }}
+        {{- $tier := . -}}
+        {{- $bt := dict }}{{ range $sum.by_tier }}{{ if eq (float (.idx | default 0)) (float ($tier.idx | default 0)) }}{{ $bt = . }}{{ end }}{{ end -}}
+        {{- $tc := float ($tier.count | default ($bt.count | default 0)) -}}
+        {{- $meta := printf "%s %s · %s auth · %s maint" (lang.FormatNumber 0 $tc) (cond (eq $tc 1.0) "PR" "PRs") (lang.FormatNumber 0 ($bt.auth | default 0)) (lang.FormatNumber 0 ($bt.maint | default 0)) -}}
+        {{- with ($tier.mins | default ($bt.mins | default 0)) }}{{ if gt (float .) 0.0 }}{{ $meta = printf "%s · ≈ %s" $meta (partial "ui/dur.html" (div (float .) 60.0)) }}{{ end }}{{ end -}}
+        {{- /* by_tier counts one PR per duplicate cluster; the table lists every member, so name the extra rows */ -}}
+        {{- $tt := partial "pages/pulls/tally.html" ($tier.states | default slice) -}}
+        {{- $extra := sub (float $tt.n) $tc -}}
+        {{- if gt $extra 0.0 }}{{ $meta = printf "%s · %s more in duplicate clusters" $meta (lang.FormatNumber 0 $extra) }}{{ end -}}
+        {{- $name := $tier.name | default "Tier" -}}
+        {{- $slugName := strings.Trim (replaceRE `[^a-z0-9]+` "-" (lower $name)) "-" -}}
+        {{- $blurb := partial "pages/pulls/blurb.html" ($tier.blurb | default "") }}
+      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" (printf "%d" (int $tier.idx)) "title" (printf "%d · %s" (int $tier.idx) $name) "meta" $meta "blurb" $blurb "states" ($tier.states | default slice) "tier" $slugName "empty" "No pull requests in this tier") }}
+      {{- end }}{{ end }}
+
+      {{- /* Bot corner (by_tier idx 99) and Unclassified (idx < 0): rows from the tally, minutes from by_tier */ -}}
+      {{- $botMins := 0.0 }}{{ $unMins := 0.0 -}}
+      {{- range $sum.by_tier }}{{ $bi := float (.idx | default 0) }}{{ if ge $bi 99.0 }}{{ $botMins = add $botMins (float (.mins | default 0)) }}{{ else if lt $bi 0.0 }}{{ $unMins = add $unMins (float (.mins | default 0)) }}{{ end }}{{ end -}}
+
+      {{- $botT := partial "pages/pulls/tally.html" ($a.bot_corner | default slice) -}}
+      {{- $botMeta := printf "%d %s · %d auth · %d maint" $botT.n (cond (eq $botT.n 1) "PR" "PRs") $botT.auth $botT.maint -}}
+      {{- if gt $botMins 0.0 }}{{ $botMeta = printf "%s · ≈ %s" $botMeta (partial "ui/dur.html" (div $botMins 60.0)) }}{{ end }}
+      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "bot" "title" "Bot corner" "meta" $botMeta "blurb" "Dependabot and Renovate PRs that need human attention." "states" ($a.bot_corner | default slice) "tier" "bot-corner" "empty" "No bot PRs need attention") }}
+
+      {{- $unT := partial "pages/pulls/tally.html" ($a.untriaged | default slice) -}}
+      {{- $unMeta := printf "%d %s · %d auth · %d maint" $unT.n (cond (eq $unT.n 1) "PR" "PRs") $unT.auth $unT.maint -}}
+      {{- if gt $unMins 0.0 }}{{ $unMeta = printf "%s · ≈ %s" $unMeta (partial "ui/dur.html" (div $unMins 60.0)) }}{{ end }}
+      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "unclassified" "title" "Unclassified" "meta" $unMeta "blurb" "The classifier could not determine a state. These need manual triage." "states" ($a.untriaged | default slice) "tier" "unclassified" "empty" "Every open PR is classified") }}
+
+      {{- $nomT := partial "pages/pulls/tally.html" ($a.not_our_move | default slice) -}}
+      {{- $nomMeta := printf "%d %s · %d auth · %d maint" $nomT.n (cond (eq $nomT.n 1) "PR" "PRs") $nomT.auth $nomT.maint }}
+      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "nom" "title" "Not our move" "meta" $nomMeta "blurb" "The clock is on the author or blocked externally. No action owed today." "states" ($a.not_our_move | default slice) "tier" "not-our-move" "empty" "No pull requests are waiting on authors") }}
+
+      <div class="v-panel v-empty" data-filter-empty hidden><p class="v-empty-title">No pull requests match</p><p class="v-empty-body"><button type="button" class="v-link" data-filter-clear>Clear filter</button></p></div>
+    </div>
+  </section>
+
+  {{ partial "pages/pulls/stats.html" (dict "m" $m "p" $p "repoKey" $repoKey "snaps" $snaps "latest" $latest) }}
 </div>
-{{ else }}
-
-{{/* Extract sparkline data for PR metrics */}}
-{{ $pullsOpenSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.open") }}
-{{ $pullsAwaitingSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.without_review_24h") }}
-{{ $pullsReviewMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.review_time.median_hours") }}
-{{ $pullsMergeMedianSparkline := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.merge_time.median_hours") }}
-
-{{/* Calculate trends from sparkline data */}}
-{{ $pullsOpenTrend := partial "calc-trend.html" (dict "sparkline" $pullsOpenSparkline) }}
-{{ $pullsAwaitingTrend := partial "calc-trend.html" (dict "sparkline" $pullsAwaitingSparkline) }}
-{{ $pullsReviewTrend := partial "calc-trend.html" (dict "sparkline" $pullsReviewMedianSparkline) }}
-{{ $pullsMergeTrend := partial "calc-trend.html" (dict "sparkline" $pullsMergeMedianSparkline) }}
-
-{{/* Build GitHub filter URLs for PRs */}}
-{{ $repoKey := $data.repoKey }}
-{{ $openPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open" $repoKey }}
-{{ $draftPRsLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+draft:true" $repoKey }}
-{{ $opened7dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-{{ $opened30dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $opened90dLink := printf "https://github.com/%s/pulls?q=is:pr+created:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{ $merged7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-{{ $merged30dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -30 | time.Format "2006-01-02") }}
-{{ $merged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:merged+merged:>=%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{ $closedUnmerged90dLink := printf "https://github.com/%s/pulls?q=is:pr+is:closed+is:unmerged+closed:>%s" $repoKey (now.AddDate 0 0 -90 | time.Format "2006-01-02") }}
-{{/* Actionability — from scripts/pr-actionable classifier. Only exists for typescript-sdk/python-sdk. */}}
-{{ $a := $data.actionability }}
-{{ if $a }}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     HEADLINE — 4 cards, always visible. Sparklines show trend once snapshots
-     accumulate (actionability.* paths in snapshots/YYYY-MM-DD.json).
-     ────────────────────────────────────────────────────────────────────────── */}}
-{{ $actCountSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.actionable_count") }}
-{{ $actHoursSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.effort_hours") }}
-{{ $actAuthSpark  := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.auth_count") }}
-{{ $actCountTrend := partial "calc-trend.html" (dict "sparkline" $actCountSpark) }}
-{{ $actHoursTrend := partial "calc-trend.html" (dict "sparkline" $actHoursSpark) }}
-{{ $actionedSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.actioned") }}
-{{ $actionedTrend := partial "calc-trend.html" (dict "sparkline" $actionedSpark) }}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     HEADLINE + SLA — two card rows. Row 1 = queue health, row 2 = SLA breaches.
-     Scoped inside `with .sla` so repos pre-dating the classifier fall through.
-     ────────────────────────────────────────────────────────────────────────── */}}
-{{ with $a.summary.sla }}
-{{ $s := . }}
-{{ $act := $a.summary.actionable_count }}
-{{ $auth := $a.summary.auth_count }}
-{{ $hrs := $a.summary.effort_hours }}
-{{/* Actionable: ≤25 green / ≤50 yellow / >50 red. Hours: <5 green / <10 yellow / ≥10 red. */}}
-{{ $actClr  := cond (le $act 25) "text-success" (cond (le $act 50) "text-warning" "text-error") }}
-{{ $hrsClr  := cond (lt $hrs 5.0) "text-success" (cond (lt $hrs 10.0) "text-warning" "text-error") }}
-{{ $actPct  := div (mul 100.0 $act) $s.actionable_target }}
-{{ $authPct := cond (gt $act 0) (div (mul 100.0 $auth) $act) 0.0 }}
-{{/* SLA breach counts — directly actionable: review one old PR → number drops by one.
-     First/re-review: <5 green / <10 yellow / 10+ red (volume-driven, weekends cause noise).
-     Maintainer: 0-1 green / 2-3 yellow / 4+ red (tighter — these are teammates blocked). */}}
-{{ $firstClr := cond (lt $s.first_review_7d_breach 5) "text-success" (cond (lt $s.first_review_7d_breach 10) "text-warning" "text-error") }}
-{{ $reClr    := cond (lt $s.re_review_24h_breach 5)   "text-success" (cond (lt $s.re_review_24h_breach 10)   "text-warning" "text-error") }}
-{{ $maintClr := cond (le $s.maint_24h_breach 1)       "text-success" (cond (le $s.maint_24h_breach 3)        "text-warning" "text-error") }}
-{{ $firstSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.first_review_7d_breach") }}
-{{ $reSpark    := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.re_review_24h_breach") }}
-{{ $maintSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "actionability.sla.maint_24h_breach") }}
-
-<section class="mb-4">
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict
-      "label" "Actionable vs target"
-      "value" $act "valueClass" $actClr
-      "total" $s.actionable_target "percent" $actPct "percentLabel" "of target"
-      "sparkline" $actCountSpark "sparklineColor" (cond $s.actionable_over_target "rgb(220, 53, 69)" "rgb(40, 167, 69)")
-      "trend" $actCountTrend "trendGoodDirection" "down"
-      "info" (printf "PRs where the ball is in our court.\n\nGreen: ≤ 25\nYellow: 26–50\nRed: > 50")) }}
-    <div onclick="actFilterToggle('label:auth')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Auth"
-      "value" $auth
-      "total" $act "percent" $authPct "percentLabel" "of actionable"
-      "sparkline" $actAuthSpark "sparklineColor" "rgb(255, 193, 7)"
-      "info" (printf "Actionable PRs touching auth code.\nClick to filter to these PRs.\n\nNo target — informational.")) }}
-    </div>
-    {{ if isset $a.summary "actioned_7d" }}
-    {{ partial "metric-card.html" (dict
-      "label" "Actioned (7d)"
-      "value" $a.summary.actioned_7d
-      "descriptor" (printf "%d in last 30d" (int ($a.summary.actioned_30d | default 0)))
-      "sparkline" $actionedSpark "sparklineColor" "rgb(40, 167, 69)"
-      "trend" $actionedTrend "trendGoodDirection" "up"
-      "info" "Throughput: actionable→non-actionable transitions per day. A PR that cycles review→author→re-review counts each cycle. Sparkline shows daily values.") }}
-    {{ end }}
-    {{ $mergedSpark := partial "get-sparkline.html" (dict "snapshots" $snapshots "path" "pulls.merged_7d") }}
-    {{ partial "metric-card.html" (dict
-      "label" "Merged (7d)"
-      "value" $m.pulls.merged_7d
-      "descriptor" (printf "%d in last 30d" (int ($m.pulls.merged_30d | default 0)))
-      "sparkline" $mergedSpark "sparklineColor" "rgb(108, 117, 125)"
-      "info" "PRs merged in the last 7 days — the terminal-outcome subset of Actioned. Rolling 7×24h window from last data refresh.") }}
-    {{ partial "metric-card.html" (dict
-      "label" "Hours to clear"
-      "value" (printf "~%s" ($hrs | lang.FormatNumber 1)) "valueClass" $hrsClr
-      "sparkline" $actHoursSpark "sparklineColor" "rgb(108, 117, 125)"
-      "trend" $actHoursTrend "trendGoodDirection" "down"
-      "info" (printf "Estimated maintainer hours to clear all actionable PRs.\n\nGreen: < 5h\nYellow: 5–10h\nRed: ≥ 10h")) }}
-    <div onclick="actFilterToggle('label:1st-review')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "1st review > 7d"
-      "value" $s.first_review_7d_breach "valueClass" $firstClr
-      "descriptor" (printf "of %d eligible" (int ($s.first_review_eligible | default 0)))
-      "sparkline" $firstSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down"
-      "info" (printf "Community PRs past 7 days with no maintainer review — across all pressing states, not just the first-review bucket.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
-    </div>
-    <div onclick="actFilterToggle('label:re-review')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Re-review > 24h"
-      "value" $s.re_review_24h_breach "valueClass" $reClr
-      "descriptor" (printf "of %d eligible" (int ($s.re_review_eligible | default 0)))
-      "sparkline" $reSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down"
-      "info" (printf "PRs where the author acted (pushed/commented) after our review, past 24h — across all pressing states.\nClick to filter to these PRs.\n\nGreen: < 5\nYellow: 5–9\nRed: ≥ 10")) }}
-    </div>
-    <div onclick="actFilterToggle('label:maintainer')" style="cursor:pointer;display:grid">
-    {{ partial "metric-card.html" (dict
-      "label" "Maintainer > 24h"
-      "value" $s.maint_24h_breach "valueClass" $maintClr
-      "descriptor" (printf "of %d eligible" (int ($s.maint_eligible | default 0)))
-      "sparkline" $maintSpark "sparklineColor" "rgb(220, 53, 69)"
-      "trendGoodDirection" "down"
-      "info" (printf "PRs from maintainers past 24 hours — across all pressing states. A maintainer PR in a cluster still counts.\nClick to filter to these PRs.\n\nGreen: 0–1\nYellow: 2–3\nRed: ≥ 4")) }}
-    </div>
-  </div>
-</section>
-{{ end }}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     ALL STATS — collapsed by default. Volume, Review/Merge time, Size dist.
-     ────────────────────────────────────────────────────────────────────────── */}}
-<details class="mb-6 border border-base-300 rounded-lg bg-base-100">
-  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
-    Stats <span class="font-normal text-base-content/50">— volume, timing, size distribution</span>
-  </summary>
-  <div class="px-4 pb-4">
-
-<!-- Volume Metrics -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Volume</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
-    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count "link" $draftPRsLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_7d "descriptor" "last 7 days" "link" $opened7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_30d "descriptor" "last 30 days" "link" $opened30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_90d "descriptor" "last 90 days" "link" $opened90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "link" $merged7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "link" $merged30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days" "link" $merged90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days" "link" $closedUnmerged90dLink) }}
-  </div>
-</section>
-
-<!-- Review Time -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Time to First Review</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsReviewTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours)) }}
-  </div>
-</section>
-
-<!-- Merge Time -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Merge Time</h2>
-  <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.merge_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours) "sparkline" $pullsMergeMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsMergeTrend "trendGoodDirection" "down") }}
-  </div>
-</section>
-
-<!-- Size Distribution -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
-    {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
-    {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
-  </div>
-</section>
-
-  </div>
-</details>{{/* end Stats */}}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     TIER BREAKDOWN — its own collapse, above the tier sections.
-     ────────────────────────────────────────────────────────────────────────── */}}
-<details class="mb-4 border border-base-300 rounded-lg bg-base-100">
-  <summary class="text-sm font-semibold cursor-pointer px-4 py-3 hover:bg-base-200/50 select-none">
-    Breakdown by tier
-  </summary>
-  <div class="px-4 pb-4">
-    <table class="table table-xs w-full">
-      <thead><tr>
-        <th class="text-xs">Tier</th><th class="text-xs text-right">Count</th>
-        <th class="text-xs text-right">Auth</th><th class="text-xs text-right">Maint.</th>
-        <th class="text-xs text-right">~Time</th>
-      </tr></thead>
-      <tbody>
-        {{ range $a.summary.by_tier }}
-        <tr class="border-b border-base-300 last:border-b-0">
-          <td class="text-xs">{{ if and (ge .idx 0) (lt .idx 99) }}{{ .idx }} — {{ end }}{{ .name }}</td>
-          <td class="text-xs text-right font-medium">{{ .count }}</td>
-          <td class="text-xs text-right text-base-content/70">{{ .auth }}</td>
-          <td class="text-xs text-right text-base-content/70">{{ .maint }}</td>
-          <td class="text-xs text-right text-base-content/70">
-            {{ if ge .mins 60.0 }}{{ div .mins 60.0 | lang.FormatNumber 1 }}h{{ else if gt .mins 0.0 }}{{ .mins | lang.FormatNumber 0 }}m{{ else }}—{{ end }}
-          </td>
-        </tr>
-        {{ end }}
-        {{ $totN := 0 }}{{ $totA := 0 }}{{ $totM := 0 }}{{ $totMins := 0.0 }}
-        {{ range $a.summary.by_tier }}{{ $totN = add $totN .count }}{{ $totA = add $totA .auth }}{{ $totM = add $totM .maint }}{{ $totMins = add $totMins .mins }}{{ end }}
-        <tr class="border-t-2 border-base-content/20 font-semibold">
-          <td class="text-xs">total actionable</td>
-          <td class="text-xs text-right">{{ $totN }}</td>
-          <td class="text-xs text-right">{{ $totA }}</td>
-          <td class="text-xs text-right">{{ $totM }}</td>
-          <td class="text-xs text-right">{{ if ge $totMins 60.0 }}{{ div $totMins 60.0 | lang.FormatNumber 1 }}h{{ else }}{{ $totMins | lang.FormatNumber 0 }}m{{ end }}</td>
-        </tr>
-        <tr class="text-base-content/50">
-          <td class="text-xs">not our move</td>
-          <td class="text-xs text-right">{{ $a.summary.not_our_move_count }}</td>
-          <td class="text-xs text-right">—</td>
-          <td class="text-xs text-right">—</td>
-          <td class="text-xs text-right">—</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</details>
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     LIVE FILTER — type to filter rows; cascades to hide empty states/tiers.
-     ────────────────────────────────────────────────────────────────────────── */}}
-<div class="flex items-center gap-2 bg-base-100 border border-base-300 rounded-lg px-3 py-2 mb-4 transition-colors focus-within:border-primary">
-  <i class="fa-solid fa-filter text-xs opacity-40"></i>
-  <input type="text"
-         placeholder="author:name label:auth label:sla — or free text"
-         class="flex-1 min-w-0 bg-transparent border-0 outline-none text-xs"
-         oninput="actFilter(this.value)">
-  <button type="button" class="act-filter-clear hidden opacity-40 hover:opacity-100"
-          onclick="var i=this.previousElementSibling;i.value='';actFilter('');i.focus()"
-          aria-label="Clear filter">
-    <i class="fa-solid fa-xmark text-xs"></i>
-  </button>
-</div>
-<script>
-function actFilter(q) {
-  q = q.toLowerCase().trim();
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
-  var clr = root.querySelector('.act-filter-clear');
-  if (clr) clr.classList.toggle('hidden', !q);
-  var tokens = q ? q.split(/\s+/) : [];
-  // author:foo / label:auth / label:sla check data attributes; bare tokens check full text.
-  var checks = tokens.map(function(tok) {
-    var m = tok.match(/^(author|label):(.+)$/);
-    if (!m) return function(tr, summary) { return tr.textContent.toLowerCase().indexOf(tok) !== -1 || summary.indexOf(tok) !== -1; };
-    var field = m[1] === 'label' ? 'badges' : m[1], val = m[2];
-    return function(tr) { return (tr.dataset[field] || '').indexOf(val) !== -1; };
-  });
-  root.querySelectorAll('.act-tier').forEach(function(tier) {
-    var tierHasVisible = false;
-    // Reverse doc order → inner cluster <details> settle before the outer wrapper reads them.
-    var dets = Array.from(tier.querySelectorAll('details')).reverse();
-    dets.forEach(function(det) {
-      var rows = det.querySelectorAll(':scope > table > tbody > tr');
-      var summaryText = det.querySelector('summary').textContent.toLowerCase();
-      var detHasVisible = false;
-      if (rows.length) {
-        rows.forEach(function(tr) {
-          var show = checks.every(function(fn) { return fn(tr, summaryText); });
-          tr.style.display = show ? '' : 'none';
-          if (show) detHasVisible = true;
-        });
-      } else {
-        // Wrapper (e.g. cluster outer) — visible if any nested details survived.
-        det.querySelectorAll(':scope details').forEach(function(inner) {
-          if (inner.style.display !== 'none') detHasVisible = true;
-        });
-      }
-      det.style.display = detHasVisible ? '' : 'none';
-      if (q && detHasVisible) det.open = true;
-      if (!q) det.open = det.hasAttribute('data-default-open');
-      if (detHasVisible) tierHasVisible = true;
-    });
-    tier.style.display = tierHasVisible ? '' : 'none';
-  });
-}
-function actFilterToggle(q) {
-  var root = document.querySelector('.repo-content:not([style*="none"])') || document;
-  var input = root.querySelector('input[oninput*="actFilter"]');
-  if (!input) return;
-  input.value = (input.value === q) ? '' : q;
-  actFilter(input.value);
-  if (input.value) input.parentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-}
-</script>
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     TIER SECTIONS — per-state <details> like the gist. No State column; the
-     state IS the <summary>. Tier 0 opens by default (fastest wins).
-     ────────────────────────────────────────────────────────────────────────── */}}
-
-<script>
-function actToggle(scope, open) {
-  scope.querySelectorAll('details').forEach(function(d) { d.open = open; });
-}
-</script>
-
-{{ range $a.tiers }}
-<section class="mb-6 act-tier">
-  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
-    <span>{{ .name }} <span class="text-base-content/40 font-normal">({{ .count }})</span></span>
-    {{ template "act-tier-toggle" }}
-  </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">{{ .blurb }}</p>
-
-  {{ $tierIdx := .idx }}
-  {{ range .states }}
-  {{ if eq .name "duplicate-cluster" }}
-  {{/* Clusters: nested <details> per cluster (gist-style). Summary shows issue link,
-       member count, ⭐ pick. Members use the same row template so columns align. */}}
-  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
-    <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-      {{- $cSla := 0 }}{{ $cAuth := 0 }}{{ $cN := 0 }}{{ range .clusters }}{{ range .members }}{{ $cN = add $cN 1 }}{{ $cSla = add $cSla (cond .sla_breach 1 0) }}{{ $cAuth = add $cAuth (cond .is_auth 1 0) }}{{ end }}{{ end -}}
-      {{ if gt $cSla 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" $cSla) }}</span>{{ end }}{{ if gt $cAuth 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" $cAuth) }}</span>{{ end }}
-      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .clusters }} clusters, {{ $cN }} PRs)</span> — <span class="text-base-content/60">{{ .desc }}</span>
-    </summary>
-    <div class="px-3 pb-2 pt-1">
-      {{ range .clusters }}
-      <details class="mb-2 border border-base-300 rounded bg-base-200/30 overflow-hidden">
-        <summary class="text-xs cursor-pointer px-3 py-1.5 hover:bg-base-200/50 select-none">
-          {{ if eq .kind "issue" }}
-            Issue <a href="{{ .issue_url }}" target="_blank" class="text-primary hover:underline font-mono" onclick="event.stopPropagation()">#{{ .id }}</a>
-          {{ else }}
-            Semantic: <span class="text-base-content/70">{{ .desc }}</span>
-          {{ end }}
-          <span class="text-base-content/50">— {{ len .members }} PRs</span>
-          {{ with .pick }}<span class="text-warning ml-1">⭐ #{{ . }}</span>{{ end }}
-          {{ with .pick_reason }}<span class="text-base-content/50 text-[10px]">({{ . }})</span>{{ end }}
-        </summary>
-        <table class="table table-xs table-fixed w-full">
-          <colgroup>
-            <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
-            <col><col style="width:6rem"><col style="width:3rem">
-          </colgroup>
-          <tbody>
-            {{ range .members }}{{ template "act-pr-row" . }}{{ end }}
-          </tbody>
-        </table>
-      </details>
-      {{ end }}
-    </div>
-  </details>
-  {{ else }}
-  <details class="mb-2 border border-base-300 rounded-lg bg-base-100 overflow-hidden" data-state="{{ .name }}"{{ if eq $tierIdx 0 }} open data-default-open{{ end }}>
-    <summary class="text-xs font-medium cursor-pointer px-3 py-2 hover:bg-base-200/50 select-none">
-      {{ with (len (where .prs "sla_breach" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-sla-badge" (printf "%d SLA" .) }}</span>{{ end }}{{ end }}{{ with (len (where .prs "is_auth" true)) }}{{ if gt . 0 }}<span style="float:right">{{ template "act-auth-badge" (printf "%d auth" .) }}</span>{{ end }}{{ end }}
-      <b>{{ .name }}</b> <span class="text-base-content/50">({{ len .prs }})</span> — <span class="text-base-content/60">{{ .desc }}</span>
-    </summary>
-    <table class="table table-xs table-fixed w-full">
-      <colgroup>
-        <col style="width:4rem"><col style="width:8rem"><col style="width:34rem">
-        <col><col style="width:6rem"><col style="width:3rem">
-      </colgroup>
-      <tbody>
-        {{ range .prs }}{{ template "act-pr-row" . }}{{ end }}
-      </tbody>
-    </table>
-  </details>
-  {{ end }}
-  {{ end }}
-</section>
-{{ end }}
-
-{{/* ──────────────────────────────────────────────────────────────────────────
-     BOT CORNER / UNTRIAGED / NOT OUR MOVE — rendered identically to tiers:
-     <section> + <h2> + <p blurb> + per-state <details>.
-     ────────────────────────────────────────────────────────────────────────── */}}
-
-{{ with $a.bot_corner }}
-{{ $n := 0 }}{{ range . }}{{ $n = add $n (len .prs) }}{{ end }}
-<section class="mb-6 act-tier">
-  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
-    <span>Bot corner <span class="text-base-content/40 font-normal">({{ $n }})</span></span>
-    {{ template "act-tier-toggle" }}
-  </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">Dependabot/renovate PRs that need human attention.</p>
-  {{ range . }}{{ template "act-state-detail" . }}{{ end }}
-</section>
-{{ end }}
-
-{{ with $a.untriaged }}
-{{ $n := 0 }}{{ range . }}{{ $n = add $n (len .prs) }}{{ end }}
-<section class="mb-6 act-tier">
-  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
-    <span class="text-error">Unclassified <span class="text-base-content/40 font-normal">({{ $n }})</span></span>
-    {{ template "act-tier-toggle" }}
-  </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">Classifier couldn't determine a state — needs manual triage.</p>
-  {{ range . }}{{ template "act-state-detail" . }}{{ end }}
-</section>
-{{ end }}
-
-{{ if $a.not_our_move }}
-<section class="mb-6 act-tier">
-  <h2 class="text-sm font-semibold mb-1 flex items-center gap-2">
-    <span>Not our move <span class="text-base-content/40 font-normal">({{ $a.summary.not_our_move_count }})</span></span>
-    {{ template "act-tier-toggle" }}
-  </h2>
-  <p class="text-[10px] text-base-content/40 mb-2">Clock is on the author or blocked externally. No action owed today.</p>
-  {{ range $a.not_our_move }}{{ template "act-state-detail" . }}{{ end }}
-</section>
-{{ end }}
-
-{{ else }}{{/* No actionability.json — csharp-sdk/spec keep the original layout unchanged */}}
-
-<!-- Volume Metrics -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Volume</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "sparkline" $pullsOpenSparkline "sparklineColor" "rgb(40, 167, 69)" "trend" $pullsOpenTrend "trendGoodDirection" "down" "link" $openPRsLink) }}
-    {{ partial "metric-card.html" (dict "label" "Draft PRs" "value" $m.pulls.draft_count "link" $draftPRsLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_7d "descriptor" "last 7 days" "link" $opened7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_30d "descriptor" "last 30 days" "link" $opened30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Opened" "value" $m.pulls.opened_90d "descriptor" "last 90 days" "link" $opened90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_7d "descriptor" "last 7 days" "link" $merged7dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_30d "descriptor" "last 30 days" "link" $merged30dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Merged" "value" $m.pulls.merged_90d "descriptor" "last 90 days" "link" $merged90dLink) }}
-    {{ partial "metric-card.html" (dict "label" "Closed Unmerged" "value" $m.pulls.closed_not_merged_90d "descriptor" "last 90 days" "link" $closedUnmerged90dLink) }}
-  </div>
-</section>
-
-<!-- Review Time -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Time to First Review</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.review_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.review_time.median_hours) "sparkline" $pullsReviewMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsReviewTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "P90" "value" (partial "format-hours.html" $m.pulls.review_time.p90_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "P95" "value" (partial "format-hours.html" $m.pulls.review_time.p95_hours)) }}
-  </div>
-</section>
-
-<!-- Merge Time -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-3">Merge Time</h2>
-  <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Average" "value" (partial "format-hours.html" $m.pulls.merge_time.avg_hours)) }}
-    {{ partial "metric-card.html" (dict "label" "Median" "value" (partial "format-hours.html" $m.pulls.merge_time.median_hours) "sparkline" $pullsMergeMedianSparkline "sparklineColor" "rgb(108, 117, 125)" "trend" $pullsMergeTrend "trendGoodDirection" "down") }}
-  </div>
-</section>
-
-{{/* Links for PRs needing review - using review:none filter */}}
-{{ $noReview24hLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -1 | time.Format "2006-01-02") }}
-{{ $noReview7dLink := printf "https://github.com/%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $repoKey (now.AddDate 0 0 -7 | time.Format "2006-01-02") }}
-
-<!-- PRs Needing Attention -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">PRs Needing Maintainer Review</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Open PRs with no maintainer review (excludes drafts from counts)</p>
-  <div class="grid grid-cols-2 gap-3">
-    {{ partial "metric-card.html" (dict "label" "No Maintainer Review" "value" $m.pulls.without_review_24h "descriptor" ">24 hours" "sparkline" $pullsAwaitingSparkline "sparklineColor" "rgb(220, 53, 69)" "trend" $pullsAwaitingTrend "trendGoodDirection" "down") }}
-    {{ partial "metric-card.html" (dict "label" "No Maintainer Review" "value" $m.pulls.without_review_7d "descriptor" ">7 days") }}
-  </div>
-</section>
-
-<!-- PRs Without Maintainer Review List -->
-{{ if $m.pulls.prs_without_maintainer_review }}
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">PRs Awaiting Maintainer Review</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Sorted by longest wait time first</p>
-  <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-    <table class="table table-xs w-full">
-      <thead>
-        <tr class="border-b border-base-300">
-          <th class="bg-base-200/50 text-xs font-medium w-28">PR</th>
-          <th class="bg-base-200/50 text-xs font-medium">Title</th>
-          <th class="bg-base-200/50 text-xs font-medium w-24">Author</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Size</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Reviews</th>
-          <th class="bg-base-200/50 text-xs font-medium text-right w-20">Waiting</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range $m.pulls.prs_without_maintainer_review }}
-        <tr class="border-b border-base-300 last:border-b-0 hover:bg-base-200/50 cursor-pointer transition-colors group {{ if .isDraft }}opacity-50{{ end }}" onclick="window.open('{{ .url }}', '_blank')">
-          <td class="text-xs font-mono whitespace-nowrap">
-            <a href="{{ .url }}" target="_blank" class="text-primary hover:underline" onclick="event.stopPropagation()">#{{ .number }}</a>
-            {{ if .isDraft }}<span class="ml-1 text-[9px] text-base-content/40">(draft)</span>{{ end }}
-          </td>
-          <td class="text-xs max-w-md truncate" title="{{ .title }}">
-            {{ .title }}
-          </td>
-          <td class="text-xs text-base-content/70">
-            {{ if .author }}{{ .author }}{{ else }}<span class="italic">unknown</span>{{ end }}
-          </td>
-          <td class="text-xs text-right whitespace-nowrap">
-            <span class="text-success">+{{ .additions }}</span>
-            <span class="text-error">-{{ .deletions }}</span>
-          </td>
-          <td class="text-xs text-right">
-            {{ if gt .reviewCount 0 }}
-            <span class="text-warning">{{ .reviewCount }}</span>
-            {{ else }}
-            <span class="text-base-content/40">0</span>
-            {{ end }}
-          </td>
-          <td class="text-xs text-right font-medium">
-            {{ if .isDraft }}
-            <span class="text-base-content/40">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 7 }}
-            <span class="text-error">{{ .daysWaiting }}d</span>
-            {{ else if gt .daysWaiting 1 }}
-            <span class="text-warning">{{ .daysWaiting }}d</span>
-            {{ else }}
-            {{ .daysWaiting }}d
-            {{ end }}
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</section>
-{{ end }}
-
-<!-- Size Distribution -->
-<section class="mb-6">
-  <h2 class="text-sm font-semibold mb-1">PR Size Distribution</h2>
-  <p class="text-[10px] text-base-content/40 mb-3">Open PRs by lines changed</p>
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-    {{ partial "metric-card.html" (dict "label" "Small" "value" $m.pulls.by_size.small "descriptor" "<100 lines") }}
-    {{ partial "metric-card.html" (dict "label" "Medium" "value" $m.pulls.by_size.medium "descriptor" "100-500 lines") }}
-    {{ partial "metric-card.html" (dict "label" "Large" "value" $m.pulls.by_size.large "descriptor" ">500 lines") }}
-  </div>
-</section>
-
-{{ end }}{{/* end: if $a / else */}}
-
-{{ end }}
+{{- end }}
+{{- end }}

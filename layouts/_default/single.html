@@ -1,55 +1,22 @@
 {{ define "main" }}
-<article>
-  {{ $pageName := .File.BaseFileName }}
-  {{ $reposIndex := site.Data.repos }}
-
-  {{/* For SEPs page, title is rendered inside repo-content to allow hiding for non-MCP repos */}}
-  {{ if ne $pageName "seps" }}
-  <h1>{{ .Title }}</h1>
-  {{ end }}
-
-  {{ if and $reposIndex $reposIndex.repositories (or (eq $pageName "issues") (eq $pageName "pulls") (eq $pageName "contributors") (eq $pageName "health") (eq $pageName "seps")) }}
-    {{/* Multi-repo mode - render content for each repository */}}
-    {{ range $index, $repoConfig := $reposIndex.repositories }}
-      {{ $owner := $repoConfig.owner }}
-      {{ $repo := $repoConfig.repo }}
-      {{ $repoKey := printf "%s/%s" $owner $repo }}
-      {{ $isMCPRepo := and (eq $owner "modelcontextprotocol") (eq $repo "modelcontextprotocol") }}
-
-      <div class="repo-content" data-repo="{{ $repoKey }}" {{ if ne $index 0 }}style="display: none;"{{ end }}>
-        {{/* Show SEPs title only for MCP repo */}}
-        {{ if and (eq $pageName "seps") $isMCPRepo }}
-        <h1>{{ $.Title }}</h1>
-        {{ end }}
-        {{ if eq $pageName "issues" }}
-          {{ partial "pages/issues.html" (dict "context" $ "repoKey" $repoKey) }}
-        {{ else if eq $pageName "pulls" }}
-          {{ partial "pages/pulls.html" (dict "context" $ "repoKey" $repoKey) }}
-        {{ else if eq $pageName "contributors" }}
-          {{ partial "pages/contributors.html" (dict "context" $ "repoKey" $repoKey) }}
-        {{ else if eq $pageName "health" }}
-          {{ partial "pages/health.html" (dict "context" $ "repoKey" $repoKey) }}
-        {{ else if eq $pageName "seps" }}
-          {{ partial "pages/seps.html" (dict "context" $ "repoKey" $repoKey) }}
-        {{ end }}
-      </div>
-    {{ end }}
-  {{ else }}
-    {{/* Single repo or non-metrics page */}}
-    {{ if eq $pageName "issues" }}
-      {{ partial "pages/issues.html" . }}
-    {{ else if eq $pageName "pulls" }}
-      {{ partial "pages/pulls.html" . }}
-    {{ else if eq $pageName "contributors" }}
-      {{ partial "pages/contributors.html" . }}
-    {{ else if eq $pageName "health" }}
-      {{ partial "pages/health.html" . }}
-    {{ else if eq $pageName "seps" }}
-      <h1>{{ .Title }}</h1>
-      {{ partial "pages/seps.html" (dict "context" . "repoKey" "modelcontextprotocol/modelcontextprotocol") }}
-    {{ else }}
-      {{ .Content }}
-    {{ end }}
-  {{ end }}
+{{- $pageName := "" -}}{{- with .File -}}{{- $pageName = .BaseFileName -}}{{- end -}}
+{{- $repos := site.Data.repos.repositories -}}
+{{- $pages := slice "issues" "pulls" "contributors" "health" "seps" -}}
+<article class="v-sections-root">
+{{- if and $repos (in $pages $pageName) }}
+  {{- range $i, $rc := $repos }}
+    {{- $repoKey := printf "%s/%s" $rc.owner $rc.repo }}
+  <div class="repo-content" data-repo="{{ $repoKey }}"{{ if eq $i 0 }} data-default{{ end }}>
+    {{ partial (printf "pages/%s.html" $pageName) (dict "context" $ "repoKey" $repoKey) }}
+  </div>
+  {{- end }}
+  {{- if eq $pageName "contributors" }}{{ partial "pages/contributors-org.html" (dict "context" $) }}{{ end }}
+{{- else if eq $pageName "seps" }}
+  {{ partial "pages/seps.html" (dict "context" . "repoKey" "modelcontextprotocol/modelcontextprotocol") }}
+{{- else if in $pages $pageName }}
+  {{ partial (printf "pages/%s.html" $pageName) . }}
+{{- else }}
+  <div class="v-prose">{{ .Content }}</div>
+{{- end }}
 </article>
 {{ end }}

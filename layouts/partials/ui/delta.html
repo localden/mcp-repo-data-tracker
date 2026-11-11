@@ -1,0 +1,13 @@
+{{- $cur := float .cur -}}{{- $prev := float .prev -}}{{- $d := sub $cur $prev -}}
+{{- $sign := cond (gt $d 0.0) "+" "−" -}}{{- $txt := "±0" -}}
+{{- if ne $d 0.0 -}}
+  {{- if eq .unit "hours" -}}{{- $txt = printf "%s%s" $sign (partial "ui/dur.html" (math.Abs $d)) -}}
+  {{- else if ge (math.Abs $prev) 1000.0 -}}
+    {{- $p := math.Abs (mul (div $d $prev) 100.0) -}}
+    {{- $txt = cond (lt $p 0.1) (printf "%s<0.1%%" $sign) (printf "%s%s%%" $sign (strings.TrimSuffix ".0" (printf "%.1f" $p))) -}}
+  {{- else -}}{{- $txt = printf "%s%s" $sign (lang.FormatNumber 0 (math.Abs $d)) -}}{{- end -}}
+{{- end -}}
+{{- $state := "flat" -}}
+{{- if and (ne $d 0.0) (eq .polarity "up") }}{{ $state = cond (gt $d 0.0) "good" "bad" }}{{ end -}}
+{{- if and (ne $d 0.0) (eq .polarity "down") }}{{ $state = cond (lt $d 0.0) "good" "bad" }}{{ end -}}
+<span class="v-delta is-{{ $state }}">{{ $txt }}{{ with .suffix }} <span class="v-delta-win">{{ . }}</span>{{ end }}{{ if eq $state "good" }}<span class="sr-only">, improving</span>{{ else if eq $state "bad" }}<span class="sr-only">, worsening</span>{{ end }}</span>

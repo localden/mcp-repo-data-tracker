@@ -1,3 +1,3 @@
 ---
-title: "Pull Requests"
+title: "Pull requests"
 ---

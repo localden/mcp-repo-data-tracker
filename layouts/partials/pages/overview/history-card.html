@@ -1,0 +1,46 @@
+{{- /*
+  One small-multiple card for the overview History tabs.
+  Call: partial "pages/overview/history-card.html" (dict
+    "id" "<$p-prefixed id>" "title" "Repo name"
+    "w" (result of ui/weekly.html or pages/overview/monthly.html: labels, cells, data)
+    "monthly" bool "partialLast" bool
+    "value" n-or-nil (default: newest bin) "series" $s (head delta vs 30d) "polarity" up|down|none
+    "meta" string "binNote" bool (say which week the newest full bin ends on, when it is not the latest week)
+    "binStep" n (no "series"): head delta from the bins themselves, newest non-empty bin vs the bin n steps
+      earlier (1 weekly bin for downloads, 1 month). No delta when that bin is empty or the newest bin is a partial current month.
+    "window" 7|30 (default 30): the delta label; downloads per week pass binStep 1 + window 7 (week over week, spec 4.5).)
+  Renders ui/chart-card.html, or ui/empty.html when every bin is empty.
+*/ -}}
+{{- $w := .w -}}
+{{- $cells := $w.cells }}{{ $labels := $w.labels -}}
+{{- $fi := -1 }}{{ $li := -1 -}}
+{{- range $i, $c := $cells }}{{ if ne $c "null" }}{{ if lt $fi 0 }}{{ $fi = $i }}{{ end }}{{ $li = $i }}{{ end }}{{ end -}}
+{{- if ge $fi 0 -}}
+  {{- $fmt := "Jan 2, 2006" }}{{ $l1 := index $labels $fi }}{{ $l2 := index $labels $li -}}
+  {{- if .monthly }}{{ $fmt = "Jan 2006" }}{{ $l1 = printf "%s-01" $l1 }}{{ $l2 = printf "%s-01" $l2 }}{{ end -}}
+  {{- $d1 := (time.AsTime $l1).Format $fmt }}{{ $d2 := (time.AsTime $l2).Format $fmt -}}
+  {{- $v1 := float (index $cells $fi) }}{{ $v2 := float (index $cells $li) -}}
+  {{- $aria := printf "%s, %s to %s: %s to %s" .title $d1 $d2 (lang.FormatNumber 0 $v1) (lang.FormatNumber 0 $v2) -}}
+  {{- $value := .value }}{{ if eq $value nil }}{{ $value = $v2 }}{{ end -}}
+  {{- $series := .series -}}
+  {{- if and .binStep (not .series) -}}
+    {{- $pi := sub $li (int .binStep) -}}
+    {{- $partialNewest := and .partialLast (eq $li (sub (len $cells) 1)) -}}
+    {{- if and (ge $pi 0) (not $partialNewest) -}}
+      {{- $pc := index $cells $pi -}}
+      {{- if ne $pc "null" -}}
+        {{- if eq (int (.window | default 30)) 7 }}{{ $series = dict "cur" $v2 "curDate" "" "has7" true "prev7" (float $pc) "has30" false "prev30" 0 "spark" slice "points" slice "stale" false }}
+        {{- else }}{{ $series = dict "cur" $v2 "curDate" "" "has7" false "prev7" 0 "has30" true "prev30" (float $pc) "spark" slice "points" slice "stale" false }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $meta := .meta | default "" -}}
+  {{- if and .binNote (lt $li (sub (len $cells) 1)) }}{{ $meta = printf "Week ending %s" $d2 }}{{ end -}}
+  {{- $ds := partial "ui/dataset.html" (dict "label" .title "role" "accent" "data" $w.data "partialLast" (.partialLast | default false)) -}}
+  {{- partial "ui/chart-card.html" (dict
+    "id" .id "title" .title "value" $value "series" $series "window" (int (.window | default 30)) "polarity" (.polarity | default "none")
+    "meta" $meta "kind" "small" "size" "sm" "labels" $labels "datasets" (slice $ds) "aria" $aria
+  ) -}}
+{{- else -}}
+  {{- partial "ui/empty.html" (dict "title" .title "body" "Not enough history yet") -}}
+{{- end -}}

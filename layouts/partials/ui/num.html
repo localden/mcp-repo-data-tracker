@@ -1,0 +1,13 @@
+{{- if eq .v nil -}}<span class="v-na" title="Not tracked">—</span>
+{{- else -}}
+{{- $v := float .v -}}{{- $a := math.Abs $v -}}
+{{- if or (eq .mode "full") (lt $a 10000.0) -}}{{- lang.FormatNumber 0 $v -}}
+{{- else -}}
+  {{- $u := "K" }}{{ $d := 1000.0 -}}
+  {{- if ge $a 1000000000.0 }}{{ $u = "B" }}{{ $d = 1000000000.0 }}{{ else if ge $a 1000000.0 }}{{ $u = "M" }}{{ $d = 1000000.0 }}{{ end -}}
+  {{- $x := div $v $d }}{{ $ax := math.Abs $x -}}
+  {{- $s := "" }}{{ if lt $ax 10.0 }}{{ $s = printf "%.2f" $x }}{{ else if lt $ax 100.0 }}{{ $s = printf "%.1f" $x }}{{ else }}{{ $s = printf "%.0f" $x }}{{ end -}}
+  {{- if in $s "." }}{{ $s = strings.TrimRight "0" $s }}{{ $s = strings.TrimSuffix "." $s }}{{ end -}}
+  <span title="{{ lang.FormatNumber 0 $v }}">{{ $s }}{{ $u }}</span>
+{{- end -}}
+{{- end -}}

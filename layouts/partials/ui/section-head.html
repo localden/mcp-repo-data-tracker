@@ -1,0 +1,5 @@
+<div class="v-section-head">
+  <h2 class="v-section-title" id="{{ .id }}">{{ .title }}</h2>
+  {{ with .meta }}<p class="v-section-meta">{{ . }}</p>{{ end }}
+  {{ with .link }}<a class="v-section-link" href="{{ . }}">{{ $.linkText }} {{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ end }}
+</div>

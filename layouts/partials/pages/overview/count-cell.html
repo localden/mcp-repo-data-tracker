@@ -1,0 +1,10 @@
+{{- /*
+  Numeric .v-dt cell with an optional 7-day delta as .sub (spec 4.5: tables show the bare signed value).
+  Call: partial "pages/overview/count-cell.html" (dict "v" n-or-nil "s" $series "polarity" up|down|none "grp" bool "fn" "1" "naTitle" "…")
+*/ -}}
+{{- $v := .v }}{{ $s := .s -}}
+<td class="num{{ if .grp }} grp{{ end }}" data-v="{{ if ne $v nil }}{{ $v }}{{ end }}">
+  {{- if ne $v nil }}{{ partial "ui/num.html" (dict "v" $v) }}{{ else }}<span class="v-na" title="{{ .naTitle | default "Not tracked for this repository" }}">—</span>{{ end -}}
+  {{- with .fn }}<sup class="v-fn">{{ . }}</sup>{{ end -}}
+  {{- if and $s (ne $v nil) (not $s.stale) $s.has7 }}<span class="sub">{{ partial "ui/delta.html" (dict "cur" $v "prev" $s.prev7 "polarity" (.polarity | default "none")) }}</span>{{ end -}}
+</td>

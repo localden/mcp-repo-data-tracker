@@ -12,7 +12,7 @@ on:
       - 'assets/**'
       - 'hugo.toml'
       - 'package.json'
-      - 'tailwind.config.js'
+      - '.github/scripts/**'
       - '.github/workflows/deploy.yml'
   workflow_call: # Called by aggregate workflow
   workflow_dispatch: # Manual trigger
@@ -46,6 +46,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Design-system guard
+        run: bash .github/scripts/design-guard.sh
 
       - name: Build CSS
         run: npm run css:build

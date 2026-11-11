@@ -1,0 +1,16 @@
+{{- $vals := .values | default slice -}}
+{{- if ge (len $vals) 2 -}}
+{{- $w := 96.0 }}{{ $h := 28.0 }}{{ $pad := 5.0 -}}
+{{- $lo := float (index $vals 0) }}{{ $hi := $lo -}}
+{{- range $vals }}{{ $f := float . }}{{ if lt $f $lo }}{{ $lo = $f }}{{ end }}{{ if gt $f $hi }}{{ $hi = $f }}{{ end }}{{ end -}}
+{{- $minSpan := mul 0.1 (math.Abs $hi) -}}
+{{- if lt (sub $hi $lo) $minSpan }}{{ $mid := div (add $hi $lo) 2.0 }}{{ $lo = sub $mid (div $minSpan 2.0) }}{{ $hi = add $mid (div $minSpan 2.0) }}{{ end -}}
+{{- $span := sub $hi $lo }}{{ if le $span 0.0 }}{{ $span = 1.0 }}{{ $lo = sub $lo 0.5 }}{{ end -}}
+{{- $n := float (sub (len $vals) 1) }}{{ $pts := slice }}{{ $lx := 0.0 }}{{ $ly := 0.0 -}}
+{{- range $i, $v := $vals -}}
+  {{- $x := add $pad (mul (div (float $i) $n) (sub $w (mul 2.0 $pad))) -}}
+  {{- $y := sub (sub $h $pad) (mul (div (sub (float $v) $lo) $span) (sub $h (mul 2.0 $pad))) -}}
+  {{- $pts = $pts | append (printf "%.1f,%.1f" $x $y) }}{{ $lx = $x }}{{ $ly = $y -}}
+{{- end -}}
+<svg class="v-spark{{ if .crit }} is-crit{{ end }}" width="96" height="28" viewBox="0 0 96 28" aria-hidden="true" focusable="false"><polyline points="{{ delimit $pts " " }}"/><circle cx="{{ printf "%.1f" $lx }}" cy="{{ printf "%.1f" $ly }}" r="4"/></svg>
+{{- end -}}

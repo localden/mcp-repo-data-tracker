@@ -1,0 +1,10 @@
+{{- $h := float . -}}{{- $out := "" -}}
+{{- if lt $h 1.0 -}}{{- $out = printf "%.0fm" (mul $h 60) -}}
+{{- else if lt $h 10.0 -}}{{- $out = printf "%sh" (strings.TrimSuffix ".0" (printf "%.1f" $h)) -}}
+{{- else if lt $h 48.0 -}}{{- $out = printf "%.0fh" $h -}}
+{{- else -}}{{- $d := div $h 24.0 -}}
+  {{- if lt $d 10.0 -}}{{- $out = printf "%sd" (strings.TrimSuffix ".0" (printf "%.1f" $d)) -}}
+  {{- else if lt $d 365.0 -}}{{- $out = printf "%.0fd" $d -}}
+  {{- else -}}{{- $out = printf "%sy" (strings.TrimSuffix ".0" (printf "%.1f" (div $d 365.0))) -}}{{- end -}}
+{{- end -}}
+{{- return $out -}}

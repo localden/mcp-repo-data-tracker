@@ -1,0 +1,138 @@
+{{- /* Issues "Volume & timing" section, shared by the tiered and legacy branches.
+     Ctx: (dict "m" metrics "repoKey" "o/r" "p" $p "snapshots" $snapshots "latest" "YYYY-MM-DD" "name" "Repo name") */ -}}
+{{- $p := .p -}}{{- $repoKey := .repoKey -}}
+{{- $iss := dict -}}{{- with .m }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+<section aria-labelledby="{{ $p }}-stats">
+  {{ partial "ui/section-head.html" (dict "id" (printf "%s-stats" $p) "title" "Volume & timing") }}
+  {{- if not $iss }}
+  {{ partial "ui/empty.html" (dict "title" (printf "No issue data for %s yet" .name) "body" "This repository hasn't been aggregated.") }}
+  {{- else }}
+  {{- $gh := printf "https://github.com/%s/issues" $repoKey -}}
+  {{- $fmt := "2006-01-02" -}}
+  {{- $d1 := now.AddDate 0 0 -1 | time.Format $fmt -}}
+  {{- $d7 := now.AddDate 0 0 -7 | time.Format $fmt -}}
+  {{- $d30 := now.AddDate 0 0 -30 | time.Format $fmt -}}
+  {{- $d60 := now.AddDate 0 0 -60 | time.Format $fmt -}}
+  {{- $d90 := now.AddDate 0 0 -90 | time.Format $fmt -}}
+  {{- $openL := printf "%s?q=is:issue+is:open" $gh -}}
+  {{- $sOpen := partialCached "ui/series.html" (dict "snapshots" .snapshots "path" "issues.open" "anchor" .latest) $repoKey "issues.open" -}}
+  {{- $rt := $iss.response_time | default dict -}}
+  {{- $ct := $iss.close_time | default dict -}}
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="v-panel">
+      <div class="v-panel-head">
+        <h3 class="v-panel-title">Flow</h3>
+        <p class="v-panel-meta">Open {{ partial "pages/issues/numlink.html" (dict "v" $iss.open_count "href" $openL "icon" true) }}
+          {{- if and (ne $iss.open_count nil) (not $sOpen.stale) $sOpen.has7 }} {{ partial "ui/delta.html" (dict "cur" $iss.open_count "prev" $sOpen.prev7 "polarity" "down" "unit" "count" "suffix" "vs 7d") }}{{ end -}}
+        </p>
+      </div>
+      <div class="v-scroll">
+        <table class="v-dt">
+          <thead>
+            <tr><th scope="col"><span class="sr-only">Measure</span></th><th scope="col" class="num">7d</th><th scope="col" class="num">30d</th><th scope="col" class="num">90d</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Opened</th>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.opened_7d "href" (printf "%s?q=is:issue+created:>%s" $gh $d7)) }}</td>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.opened_30d "href" (printf "%s?q=is:issue+created:>%s" $gh $d30)) }}</td>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.opened_90d "href" (printf "%s?q=is:issue+created:>%s" $gh $d90)) }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Closed</th>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.closed_7d "href" (printf "%s?q=is:issue+is:closed+closed:>%s" $gh $d7)) }}</td>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.closed_30d "href" (printf "%s?q=is:issue+is:closed+closed:>%s" $gh $d30)) }}</td>
+              <td class="num">{{ partial "pages/issues/numlink.html" (dict "v" $iss.closed_90d "href" (printf "%s?q=is:issue+is:closed+closed:>%s" $gh $d90)) }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Net</th>
+              <td class="num">{{ partial "pages/issues/net.html" (dict "a" $iss.opened_7d "b" $iss.closed_7d) }}</td>
+              <td class="num">{{ partial "pages/issues/net.html" (dict "a" $iss.opened_30d "b" $iss.closed_30d) }}</td>
+              <td class="num">{{ partial "pages/issues/net.html" (dict "a" $iss.opened_90d "b" $iss.closed_90d) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="v-panel-foot"><p>Net is opened minus closed. Counts open the matching GitHub search.</p></div>
+    </div>
+
+    {{- $rtSub := slice -}}
+    {{- with $rt.avg_hours }}{{ $rtSub = $rtSub | append (printf "avg %s" (partial "ui/dur.html" .)) }}{{ end -}}
+    {{- with $rt.p90_hours }}{{ $rtSub = $rtSub | append (printf "p90 %s" (partial "ui/dur.html" .)) }}{{ end -}}
+    {{- with $rt.p95_hours }}{{ $rtSub = $rtSub | append (printf "p95 %s" (partial "ui/dur.html" .)) }}{{ end -}}
+    {{- $ctSub := slice -}}
+    {{- with $ct.avg_days }}{{ $ctSub = $ctSub | append (printf "avg %s" (partial "ui/dur.html" (mul (float .) 24.0))) }}{{ end -}}
+    {{- with $ct.p90_days }}{{ $ctSub = $ctSub | append (printf "p90 %s" (partial "ui/dur.html" (mul (float .) 24.0))) }}{{ end -}}
+    {{- $s30 := float ($iss.stale_30d | default 0) -}}
+    {{- $s60 := float ($iss.stale_60d | default 0) -}}
+    {{- $s90 := float ($iss.stale_90d | default 0) -}}
+    {{- $b1 := math.Max 0.0 (sub $s30 $s60) -}}
+    {{- $b2 := math.Max 0.0 (sub $s60 $s90) -}}
+    {{- $suspect := false -}}{{- $rp := 0.0 -}}
+    {{- if ne $iss.reopen_rate nil }}{{ $rp = mul (float $iss.reopen_rate) 100.0 }}{{ if ge $rp 99.0 }}{{ $suspect = true }}{{ end }}{{ end -}}
+    <div class="v-panel">
+      <div class="v-panel-head"><h3 class="v-panel-title">Timing &amp; hygiene</h3></div>
+      <dl class="v-stats">
+        <div class="v-stat"><dt>First response · median</dt><dd>{{ partial "pages/issues/dur.html" (dict "v" $rt.median_hours) }}{{ with $rtSub }}<span class="v-stat-sub">{{ delimit . " · " }}</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Time to close · median</dt><dd>{{ partial "pages/issues/dur.html" (dict "v" $ct.median_days "scale" 24 "zeroNA" true "naTitle" "No closed issues to measure") }}{{ with $ctSub }}<span class="v-stat-sub">{{ delimit . " · " }}</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Awaiting response · 24h / 7d / 30d</dt><dd>{{ partial "pages/issues/numlink.html" (dict "v" $iss.without_response_24h "href" (printf "%s?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $gh $d1) "icon" true) }} / {{ partial "ui/num.html" (dict "v" $iss.without_response_7d) }} / {{ partial "ui/num.html" (dict "v" $iss.without_response_30d) }}</dd></div>
+        <div class="v-stat v-stat-wide"><dt>Stale · share of open</dt><dd>
+          {{- partial "ui/segbar.html" (dict
+            "segments" (slice
+              (dict "n" $b1 "label" "30–60d" "cls" "v-ord-1")
+              (dict "n" $b2 "label" "60–90d" "cls" "v-ord-3")
+              (dict "n" $s90 "label" "> 90d" "cls" "v-ord-5"))
+            "total" $iss.open_count
+            "aria" (printf "Open issues without activity: 30 to 60 days %.0f, 60 to 90 days %.0f, over 90 days %.0f" $b1 $b2 $s90)) -}}
+          <p class="v-stat-sub mt-2">No activity &gt; 30d {{ partial "pages/issues/numlink.html" (dict "v" $iss.stale_30d "href" (printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $gh $d30) "icon" true) }} · &gt; 60d {{ partial "pages/issues/numlink.html" (dict "v" $iss.stale_60d "href" (printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $gh $d60) "icon" true) }} · &gt; 90d {{ partial "pages/issues/numlink.html" (dict "v" $iss.stale_90d "href" (printf "%s?q=is:issue+is:open+updated:<=%s+sort:updated-asc" $gh $d90) "icon" true) }}</p>
+        </dd></div>
+        <div class="v-stat"><dt>Label coverage</dt><dd>{{ if ne $iss.label_coverage_pct nil }}{{ partial "ui/pct.html" $iss.label_coverage_pct }}{{ else }}{{ partial "ui/num.html" (dict "v" nil) }}{{ end }}{{ if ne $iss.unlabeled_count nil }}<span class="v-stat-sub">{{ partial "pages/issues/numlink.html" (dict "v" $iss.unlabeled_count "href" (printf "%s?q=is:issue+is:open+no:label" $gh) "icon" true) }} unlabeled</span>{{ end }}</dd></div>
+        <div class="v-stat"><dt>Reopen rate{{ if $suspect }}<sup class="v-fn">1</sup>{{ end }}</dt><dd>
+          {{- if eq $iss.reopen_rate nil }}{{ partial "ui/num.html" (dict "v" nil) }}
+          {{- else if $suspect }}<span class="text-ink-3">{{ partial "ui/pct.html" $rp }}</span> <span class="v-pill">Suspect</span>
+          {{- else }}{{ partial "ui/pct.html" $rp }}{{ end -}}
+        </dd></div>
+      </dl>
+      <div class="v-panel-foot">
+        <p>Counts open the matching GitHub search.</p>
+        {{- if $suspect }}<p>¹ Under review: the reopen metric currently counts most closed issues.</p>{{ end }}
+      </div>
+    </div>
+  </div>
+
+  {{- $bl := slice -}}
+  {{- range $k, $v := ($iss.by_label | default dict) }}{{ $bl = $bl | append (dict "label" $k "count" $v) }}{{ end -}}
+  {{- if $bl }}{{ $bl = sort $bl "count" "desc" }}{{ end -}}
+  {{- $open := float ($iss.open_count | default 0) -}}
+  {{- $nl := len $bl -}}
+  <div class="v-panel mt-4">
+    <div class="v-panel-head">
+      <h3 class="v-panel-title">Labels <span class="v-count">{{ $nl }}</span></h3>
+      <p class="v-panel-meta">Open issues per label · share of {{ partial "ui/num.html" (dict "v" $iss.open_count) }} open</p>
+    </div>
+    {{- if $bl }}
+    <div class="v-scroll">
+      <table class="v-dt">
+        <thead><tr><th scope="col">Label</th><th scope="col" class="num">Open</th><th scope="col" class="num">Share</th></tr></thead>
+        <tbody id="{{ $p }}-labels">
+          {{- range $k, $r := $bl }}
+          {{- $c := float ($r.count | default 0) }}
+          <tr data-row-link{{ if and (gt $nl 15) (ge $k 10) }} data-more hidden{{ end }}>
+            <th scope="row">{{ $r.label }}</th>
+            <td class="num"><a class="v-row-link" href="{{ printf `%s?q=is:issue+is:open+label:"%s"` $gh $r.label }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" $c) }}</a></td>
+            <td class="num"><span class="flex items-center gap-3"><span class="grow">{{ partial "ui/meter.html" (dict "value" $c "max" $open "label" $r.label) }}</span><span>{{ if gt $open 0.0 }}{{ partial "ui/pct.html" (mul (div $c $open) 100.0) }}{{ end }}</span></span></td>
+          </tr>
+          {{- end }}
+          {{- if gt $nl 15 }}
+          <tr class="v-more"><td colspan="3"><button type="button" data-more-for="{{ $p }}-labels" data-label="Show all {{ $nl }}">Show all {{ $nl }}</button></td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </div>
+    <div class="v-panel-foot"><p>Shares can add up to more than 100% because an issue can carry several labels. Rows open on GitHub.</p></div>
+    {{- else }}
+    <div class="v-empty"><p class="v-empty-title">No labels on open issues</p></div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>

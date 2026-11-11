@@ -1,0 +1,82 @@
+{{- /*
+  Overview data, gathered once per build.
+  Call: partial "pages/overview/rows.html" (dict "latest" $latest)
+  Returns dict:
+    rows     slice of per-repo dicts (key owner repo name pkg m act iss s dl hasAct hasIss)
+    weeks    full weeks since the earliest snapshot (2..52), shared by every weekly chart
+    earliest earliest snapshot date ("YYYY-MM-DD")
+  Series (s.*) come from ui/series.html through partialCached with the spec cache keys ($key + snapshot path).
+  Nil-valued dict entries (m, act, iss, pkg) must be read through a variable or "with" before chaining fields.
+*/ -}}
+{{- $latest := .latest -}}
+{{- $all := site.Data.repos -}}
+{{- $lt := time.AsTime $latest -}}
+
+{{- /* Pass 1: earliest snapshot date, from the cached issues.open series. */ -}}
+{{- $earliest := $latest -}}
+{{- range $rc := $all.repositories -}}
+  {{- $key := printf "%s/%s" $rc.owner $rc.repo -}}
+  {{- $snaps := false -}}
+  {{- with index $all $rc.owner }}{{ with index . $rc.repo }}{{ with .snapshots }}{{ $snaps = . }}{{ end }}{{ end }}{{ end -}}
+  {{- $s := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "issues.open" "anchor" $latest) $key "issues.open" -}}
+  {{- with $s.points }}{{ $first := (index . 0).date }}{{ if lt $first $earliest }}{{ $earliest = $first }}{{ end }}{{ end -}}
+{{- end -}}
+{{- $days := int (div ($lt.Sub (time.AsTime $earliest)).Hours 24.0) -}}
+{{- $weeks := int (div $days 7) -}}
+{{- if gt $weeks 52 }}{{ $weeks = 52 }}{{ end -}}
+{{- if lt $weeks 2 }}{{ $weeks = 2 }}{{ end -}}
+
+{{- /* Pass 2: one row per repos.json entry, in repos.json order. */ -}}
+{{- $rows := slice -}}
+{{- range $rc := $all.repositories -}}
+  {{- $key := printf "%s/%s" $rc.owner $rc.repo -}}
+  {{- $d := dict -}}
+  {{- with index $all $rc.owner }}{{ with index . $rc.repo }}{{ $d = . }}{{ end }}{{ end -}}
+  {{- $snaps := false -}}
+  {{- with $d.snapshots }}{{ $snaps = . }}{{ end -}}
+  {{- $m := $d.metrics -}}
+  {{- $S := dict
+    "stars" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "repository.stars" "anchor" $latest) $key "repository.stars")
+    "issues" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "issues.open" "anchor" $latest) $key "issues.open")
+    "pulls" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "pulls.open" "anchor" $latest) $key "pulls.open")
+    "awaitiss" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "issues.without_response_24h" "anchor" $latest) $key "issues.without_response_24h")
+    "awaitpr" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "pulls.without_review_24h" "anchor" $latest) $key "pulls.without_review_24h")
+    "respmed" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "issues.response_time.median_hours" "anchor" $latest) $key "issues.response_time.median_hours")
+    "revmed" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "pulls.review_time.median_hours" "anchor" $latest) $key "pulls.review_time.median_hours")
+    "active" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "contributors.active_30d" "anchor" $latest) $key "contributors.active_30d")
+    "dl" (partialCached "ui/series.html" (dict "snapshots" $snaps "path" "downloads.daily" "anchor" $latest) $key "downloads.daily")
+  -}}
+
+  {{- /* Downloads (package repos only). Daily comes from the newest snapshot with a value, because registry APIs lag 1-2 days. */ -}}
+  {{- $dl := dict "has" false "w" (dict "labels" slice "cells" slice "data" "[]") "wow" (dict "has" false "cur" 0 "prev" 0) -}}
+  {{- with $rc.package -}}
+    {{- $ds := $S.dl -}}
+    {{- $md := $m.downloads -}}
+    {{- $daily := $md.daily -}}
+    {{- if $ds.points }}{{ $daily = $ds.cur }}{{ end -}}
+    {{- $weekly := $md.last_week -}}
+    {{- if and (not $weekly) $ds.points }}{{ $sum := 0.0 }}{{ range last 7 $ds.points }}{{ $sum = add $sum (float .value) }}{{ end }}{{ $weekly = $sum }}{{ end -}}
+    {{- $monthly := $md.last_month -}}
+    {{- if and (not $monthly) $ds.points }}{{ $sum := 0.0 }}{{ range last 30 $ds.points }}{{ $sum = add $sum (float .value) }}{{ end }}{{ $monthly = $sum }}{{ end -}}
+    {{- $w := partial "ui/weekly.html" (dict "points" $ds.points "anchor" $latest "weeks" $weeks "agg" "sum") -}}
+    {{- $wow := dict "has" false "cur" 0 "prev" 0 -}}
+    {{- $c := $w.cells }}{{ $n := len $c -}}
+    {{- if ge $n 2 -}}
+      {{- $a := index $c (sub $n 1) }}{{ $b := index $c (sub $n 2) -}}
+      {{- if and (ne $a "null") (ne $b "null") }}{{ $wow = dict "has" true "cur" (float $a) "prev" (float $b) }}{{ end -}}
+    {{- end -}}
+    {{- $pD := false }}{{ if and $daily $weekly }}{{ $pD = eq (float $daily) (float $weekly) }}{{ end -}}
+    {{- $pW := false }}{{ if and $weekly $monthly }}{{ $pW = eq (float $weekly) (float $monthly) }}{{ end -}}
+    {{- $first := "" }}{{ with $ds.points }}{{ $first = (index . 0).date }}{{ end -}}
+    {{- $dl = dict "has" true "daily" $daily "dailyDate" $ds.curDate "weekly" $weekly "monthly" $monthly "total" $md.total "through" $md.total_through "first" $first "partialDaily" $pD "partialWeekly" $pW "w" $w "wow" $wow -}}
+  {{- end -}}
+
+  {{- $hasAct := false }}{{ with $d.actionability }}{{ with .summary }}{{ $hasAct = true }}{{ end }}{{ end -}}
+  {{- $hasIss := false }}{{ with $d.issues }}{{ with .summary }}{{ $hasIss = true }}{{ end }}{{ end -}}
+  {{- $rows = $rows | append (dict
+    "key" $key "owner" $rc.owner "repo" $rc.repo "name" ($rc.name | default $key)
+    "pkg" $rc.package "m" $m "act" $d.actionability "iss" $d.issues
+    "s" $S "dl" $dl "hasAct" $hasAct "hasIss" $hasIss
+  ) -}}
+{{- end -}}
+{{- return dict "rows" $rows "weeks" $weeks "earliest" $earliest -}}

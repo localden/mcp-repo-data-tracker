@@ -1,0 +1,13 @@
+{{- /* Human label for a maintainers.json role id: strip "ROLE_IDS.", then a page-local label dict, falling back to
+  ui/humanize.html on the lowercased id ("CORE_MAINTAINERS" -> "Core maintainers", "GO_SDK" -> "Go SDK"). Returns a string. */ -}}
+{{- $id := strings.TrimPrefix "ROLE_IDS." (string .) -}}
+{{- $labels := dict
+  "TYPESCRIPT_SDK" "TypeScript SDK"
+  "CSHARP_SDK" "C# SDK"
+  "PHP_SDK" "PHP SDK"
+  "MCP_APPS_SDK" "MCP Apps SDK"
+  "MCPB_MAINTAINERS" "MCPB maintainers"
+-}}
+{{- $out := index $labels $id | default "" -}}
+{{- if eq $out "" }}{{ $out = partial "ui/humanize.html" (lower $id) }}{{ end -}}
+{{- return $out -}}

@@ -1,0 +1,18 @@
+{{- /* Maps a maintainers.json role id to the tracked repository it maintains ("owner/repo"), or "" when none.
+  Rules: explicit overrides first (roles whose names don't follow <X>_SDK); SPEC* / CORE* roles -> the spec repo;
+  <X>_SDK -> modelcontextprotocol/<x>-sdk. Call: partial "pages/contributors/role-map.html" "ROLE_IDS.PYTHON_SDK" */ -}}
+{{- $id := strings.TrimPrefix "ROLE_IDS." (string .) -}}
+{{- $spec := "modelcontextprotocol/modelcontextprotocol" -}}
+{{- $explicit := dict
+  "MCP_APPS_SDK" "modelcontextprotocol/ext-apps"
+  "MCPB_MAINTAINERS" "modelcontextprotocol/mcpb"
+-}}
+{{- $out := index $explicit $id | default "" -}}
+{{- if eq $out "" -}}
+  {{- if or (strings.HasPrefix $id "SPEC") (strings.HasPrefix $id "CORE") -}}
+    {{- $out = $spec -}}
+  {{- else if strings.HasSuffix $id "_SDK" -}}
+    {{- $out = printf "modelcontextprotocol/%s-sdk" (lower (strings.TrimSuffix "_SDK" $id)) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

@@ -1,0 +1,16 @@
+{{- $cfg := dict -}}{{- $k := .repoKey -}}
+{{- with $k }}{{ range site.Data.repos.repositories }}{{ if eq (printf "%s/%s" .owner .repo) $k }}{{ $cfg = . }}{{ end }}{{ end }}{{ end -}}
+<header class="v-page-head">
+  <h1 class="v-page-title">{{ .title }}</h1>
+  <p class="v-page-meta">
+    {{- with $cfg.description }}<span>{{ . }}</span>{{ end -}}
+    {{- with $k }}<a class="v-link-quiet font-mono" href="https://github.com/{{ . }}" target="_blank" rel="noopener">{{ . }}{{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ end -}}
+    {{- with $cfg.package }}<a class="v-link-quiet font-mono" href="{{ partial "ui/registry-url.html" . }}" target="_blank" rel="noopener">{{ .registry }} · {{ .name }}{{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ end -}}
+    {{- range .meta }}<span>{{ . }}</span>{{ end -}}
+    {{- with .updated -}}
+      {{- $t := time.AsTime . }}{{ $age := div (sub now.Unix $t.Unix) 86400 -}}
+      <span>{{ $.updatedLabel | default "Updated" }} {{ $t.UTC.Format "Jan 2, 2006 15:04" }} UTC</span>
+      {{- if gt $age ($.staleDays | default 2) }}<span><span class="v-pill"><span class="v-dot v-dot-warn" aria-hidden="true"></span><span class="text-warn">{{ $age }} days old</span></span></span>{{ end -}}
+    {{- end -}}
+  </p>
+</header>

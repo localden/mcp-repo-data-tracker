@@ -1,0 +1,55 @@
+{{- /*
+  Overview, one repository (spec 8.1 B). Rendered inside .repo-content[data-repo="owner/repo"].
+  Call: partial "pages/overview/repo.html" (dict "r" $row "latest" $latest)
+*/ -}}
+{{- $r := .r }}{{ $m := $r.m }}{{ $s := $r.s -}}
+{{- $p := printf "overview-%s" (replace $r.key "/" "-") -}}
+{{ partial "ui/page-head.html" (dict "title" $r.name "repoKey" $r.key "updated" $m.timestamp) }}
+{{- if not $m }}
+{{ partial "ui/empty.html" (dict "title" (printf "No data for %s yet" $r.name) "body" "This repository hasn't been aggregated.") }}
+{{- else }}
+{{- $gh := printf "https://github.com/%s" $r.key -}}
+{{- $q := $r.key | urlquery -}}
+{{- $dates := dict
+  "d1" (now.AddDate 0 0 -1 | time.Format "2006-01-02")
+  "d7" (now.AddDate 0 0 -7 | time.Format "2006-01-02")
+  "d30" (now.AddDate 0 0 -30 | time.Format "2006-01-02")
+  "d60" (now.AddDate 0 0 -60 | time.Format "2006-01-02")
+  "d90" (now.AddDate 0 0 -90 | time.Format "2006-01-02")
+-}}
+{{- $ctx := dict "r" $r "m" $m "s" $s "gh" $gh "q" $q "dates" $dates "p" $p -}}
+<div class="v-sections">
+  <section aria-labelledby="{{ $p }}-kpis">
+    <h2 class="sr-only" id="{{ $p }}-kpis">Key metrics</h2>
+    {{- /* R5 (spec 5.5): every cell has a sparkline or none does; stale series never draw (spec 4.5) */ -}}
+    {{- $live := true -}}
+    {{- range (slice $s.stars $s.issues $s.pulls $s.awaitiss $s.awaitpr $s.respmed $s.revmed $s.active) }}{{ with . }}{{ if .stale }}{{ $live = false }}{{ end }}{{ else }}{{ $live = false }}{{ end }}{{ end }}
+    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
+      {{ partial "ui/kpi.html" (dict "label" "Stars" "value" $m.repository.stars "series" (cond $live $s.stars nil) "polarity" "up" "href" (printf "%s/stargazers" $gh)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Open issues" "value" $m.issues.open_count "series" (cond $live $s.issues nil) "polarity" "down" "href" (printf "%s/issues?q=is:issue+is:open" $gh)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Open PRs" "value" $m.pulls.open_count "series" (cond $live $s.pulls nil) "polarity" "none" "href" (printf "%s/pulls?q=is:pr+is:open" $gh)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Awaiting response · 24h" "value" $m.issues.without_response_24h "series" (cond $live $s.awaitiss nil) "polarity" "down" "href" (printf "%s/issues?q=is:issue+is:open+comments:0+created:<=%s+sort:created-asc" $gh $dates.d1)) }}
+      {{ partial "ui/kpi.html" (dict "label" "Awaiting review · 24h" "value" $m.pulls.without_review_24h "series" (cond $live $s.awaitpr nil) "polarity" "down" "href" (printf "%s/pulls?q=is:pr+is:open+review:none+created:<=%s+sort:created-asc" $gh $dates.d1)) }}
+      {{ partial "ui/kpi.html" (dict "label" "First response · median" "value" $m.issues.response_time.median_hours "format" "dur" "series" (cond $live $s.respmed nil) "noDelta" true) }}
+      {{ partial "ui/kpi.html" (dict "label" "First review · median" "value" $m.pulls.review_time.median_hours "format" "dur" "series" (cond $live $s.revmed nil) "noDelta" true) }}
+      {{ partial "ui/kpi.html" (dict "label" "Active contributors · 30d" "value" $m.contributors.active_30d "series" (cond $live $s.active nil) "polarity" "up" "anchor" (printf "%s?repo=%s" ("contributors/" | relURL) $q)) }}
+    </div></div>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-work">
+    <h2 class="sr-only" id="{{ $p }}-work">Issues and pull requests</h2>
+    <div class="grid gap-4 lg:grid-cols-2">
+      {{ partial "pages/overview/issues-panel.html" $ctx }}
+      {{ partial "pages/overview/pulls-panel.html" $ctx }}
+    </div>
+  </section>
+
+  <section aria-labelledby="{{ $p }}-reach">
+    <h2 class="sr-only" id="{{ $p }}-reach">Community and downloads</h2>
+    <div class="grid gap-4 lg:grid-cols-2">
+      {{ partial "pages/overview/community-panel.html" $ctx }}
+      {{ partial "pages/overview/downloads-panel.html" $ctx }}
+    </div>
+  </section>
+</div>
+{{- end }}

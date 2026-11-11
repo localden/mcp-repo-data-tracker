@@ -1,0 +1,8 @@
+{{- /* "avg 60d · p90 173d · p95 217d" from hour values; missing parts are skipped. Call: partial "pages/overview/timing-sub.html" (dict "avg" h "p90" h "p95" h). Returns a string. */ -}}
+{{- $parts := slice -}}
+{{- $a := .avg }}{{ $b := .p90 }}{{ $c := .p95 -}}
+{{- if ne $a nil }}{{ $parts = $parts | append (printf "avg %s" (partial "ui/dur.html" $a)) }}{{ end -}}
+{{- if ne $b nil }}{{ $parts = $parts | append (printf "p90 %s" (partial "ui/dur.html" $b)) }}{{ end -}}
+{{- if ne $c nil }}{{ $parts = $parts | append (printf "p95 %s" (partial "ui/dur.html" $c)) }}{{ end -}}
+{{- $out := "" }}{{ if $parts }}{{ $out = delimit $parts " · " }}{{ end -}}
+{{- return $out -}}

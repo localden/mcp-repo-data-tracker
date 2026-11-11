@@ -1,47 +1,16 @@
-/**
- * Theme Toggle - switches between light and dark daisyUI themes.
- * Preference persisted in localStorage; initial theme applied by inline
- * script in <head> to avoid FOUC.
- */
-(function() {
+/* VISR theme toggle: flips html[data-theme]; icons and charts react to the attribute. */
+(function () {
   'use strict';
-
-  var STORAGE_KEY = 'theme';
-
-  function currentTheme() {
-    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  var KEY = 'theme', root = document.documentElement;
+  function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function set(theme, persist) {
+    root.setAttribute('data-theme', theme);
+    if (persist) { try { localStorage.setItem(KEY, theme); } catch (e) {} }
   }
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    var darkIcon = document.querySelector('.theme-icon-dark');
-    var lightIcon = document.querySelector('.theme-icon-light');
-    if (darkIcon && lightIcon) {
-      if (theme === 'dark') {
-        darkIcon.classList.add('hidden');
-        lightIcon.classList.remove('hidden');
-      } else {
-        lightIcon.classList.add('hidden');
-        darkIcon.classList.remove('hidden');
-      }
-    }
-  }
-
-  function toggleTheme() {
-    var next = currentTheme() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(STORAGE_KEY, next);
-    applyTheme(next);
-  }
-
-  function init() {
-    applyTheme(currentTheme());
-    var btn = document.getElementById('theme-toggle');
-    if (btn) btn.addEventListener('click', toggleTheme);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#theme-toggle')) return;
+    set(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+  });
+  var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq && mq.addEventListener) mq.addEventListener('change', function (e) { if (!saved()) set(e.matches ? 'dark' : 'light', false); });
 })();

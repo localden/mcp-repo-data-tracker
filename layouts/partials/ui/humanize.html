@@ -1,0 +1,7 @@
+{{- /* "fix-proposed" -> "Fix proposed". Replace -/_ with a space, uppercase the first letter, then whole-word sdk/mcp/pr -> SDK/MCP/PR. Returns a string. */ -}}
+{{- $s := replaceRE `[-_]+` " " (string .) | strings.TrimSpace -}}
+{{- $s = strings.FirstUpper $s -}}
+{{- $s = replaceRE `(?i)\bsdk\b` "SDK" $s -}}
+{{- $s = replaceRE `(?i)\bmcp\b` "MCP" $s -}}
+{{- $s = replaceRE `(?i)\bpr\b` "PR" $s -}}
+{{- return $s -}}

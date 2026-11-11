@@ -1,0 +1,13 @@
+{{- /* Max snapshot date ("YYYY-MM-DD") across all tracked repos. Call: partialCached "ui/latest-date.html" . "latest" */ -}}
+{{- $latest := "" -}}
+{{- with site.Data.repos -}}
+  {{- $all := . -}}
+  {{- range .repositories -}}
+    {{- $rc := . -}}
+    {{- with index $all $rc.owner -}}{{- with index . $rc.repo -}}{{- with .snapshots -}}
+      {{- range . -}}{{- with .date -}}{{- if gt (string .) $latest }}{{ $latest = string . }}{{ end -}}{{- end -}}{{- end -}}
+    {{- end -}}{{- end -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if eq $latest "" }}{{ $latest = now.UTC.Format "2006-01-02" }}{{ end -}}
+{{- return $latest -}}

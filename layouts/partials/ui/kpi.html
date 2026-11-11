@@ -1,0 +1,4 @@
+{{- if .href -}}<a class="v-kpi" href="{{ .href }}" target="_blank" rel="noopener">{{ partial "ui/kpi-body.html" . }}</a>
+{{- else if .anchor -}}<a class="v-kpi" href="{{ .anchor }}">{{ partial "ui/kpi-body.html" . }}</a>
+{{- else if .filter -}}<button type="button" class="v-kpi" data-filter="{{ .filter }}" aria-pressed="false">{{ partial "ui/kpi-body.html" . }}</button>
+{{- else -}}<div class="v-kpi">{{ partial "ui/kpi-body.html" . }}</div>{{- end -}}

@@ -1,0 +1,46 @@
+{{- /*
+  Overview B3: Downloads panel for package repos; an empty panel that says why for the rest (spec 4.6 exception).
+  Call: partial "pages/overview/downloads-panel.html" (dict "r" $row …)
+  Weekly sub = week-over-week change of full 7-day bins. "Partial" pill as on the all-repositories table.
+*/ -}}
+{{- $r := .r }}{{ $d := $r.dl -}}
+<div class="v-panel">
+  <div class="v-panel-head">
+    <h3 class="v-panel-title">Downloads</h3>
+    {{- with $r.pkg }}
+    {{- $reg := partial "ui/registry-url.html" . }}
+    <span class="v-panel-meta">{{ if $reg }}<a class="v-link-quiet font-mono" href="{{ $reg }}" target="_blank" rel="noopener">{{ .registry }} · {{ .name }}{{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ else }}<span class="font-mono">{{ .registry }} · {{ .name }}</span>{{ end }}</span>
+    {{- end }}
+  </div>
+  {{- if $r.pkg }}
+  {{- $wow := $d.wow }}{{ $isNpm := eq $r.pkg.registry "npm" }}
+  {{- $pill := `<span class="v-pill">Partial</span><sup class="v-fn">2</sup>` | safeHTML }}
+  <dl class="v-stats">
+    <div class="v-stat"><dt>Daily</dt><dd>{{ partial "ui/num.html" (dict "v" $d.daily) }}
+      {{- /* Registry daily counts lag the snapshot by 1-2 days: npm names the day it covers (total_through); other registries only have the snapshot date. */ -}}
+      {{- if and $isNpm $d.through }}<span class="v-stat-sub">{{ (time.AsTime $d.through).Format "Jan 2, 2006" }}</span>
+      {{- else }}{{ with $d.dailyDate }}<span class="v-stat-sub">Snapshot {{ (time.AsTime .).Format "Jan 2, 2006" }}</span>{{ end }}{{ end -}}
+    </dd></div>
+    <div class="v-stat"><dt>Weekly</dt><dd>{{ partial "ui/num.html" (dict "v" $d.weekly) }}{{ if $d.partialDaily }} {{ $pill }}{{ end }}{{ if $wow.has }}<span class="v-stat-sub">{{ partial "ui/delta.html" (dict "cur" $wow.cur "prev" $wow.prev "polarity" "up" "suffix" "vs 7d") }}</span>{{ end }}</dd></div>
+    <div class="v-stat"><dt>30 days</dt><dd>{{ partial "ui/num.html" (dict "v" $d.monthly) }}{{ if $d.partialWeekly }} {{ $pill }}{{ end }}</dd></div>
+    <div class="v-stat"><dt>Total<sup class="v-fn">1</sup></dt><dd>{{ partial "ui/num.html" (dict "v" $d.total) }}</dd></div>
+  </dl>
+  <div class="v-panel-foot">
+    <p>Daily is the most recent day with data. Weekly change compares the last two full 7-day periods.</p>
+    {{- if $isNpm }}
+    <p>¹ npm does not report lifetime downloads, so this total is a running sum of daily counts{{ with $d.first }} since tracking began on {{ (time.AsTime .).Format "Jan 2, 2006" }}{{ end }}{{ with $d.through }} (through {{ (time.AsTime .).Format "Jan 2, 2006" }}){{ end }}; treat it as a trend indicator, not a lifetime total.</p>
+    {{- else if eq $r.pkg.registry "pypi" }}
+    <p>¹ PyPI totals come from BigQuery's full download history since first publish.</p>
+    {{- else }}
+    <p>¹ Lifetime total as reported by the registry.</p>
+    {{- end }}
+    {{- if or $d.partialDaily $d.partialWeekly }}
+    <p>² Partial: the registry exposes cumulative totals only, so short windows equal the total until enough history exists. Daily counts are derived from changes in that total, so they appear after two days of data.</p>
+    {{- end }}
+  </div>
+  {{- else }}
+  <div class="v-empty">
+    <p class="v-empty-title">No package is published from this repository</p>
+  </div>
+  {{- end }}
+</div>
