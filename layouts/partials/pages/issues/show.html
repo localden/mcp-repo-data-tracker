@@ -1,3 +1,5 @@
 {{- /* SLA "Show" button (brief 3.2b-1, P6): switches the queue to its Overdue tab and keeps only the rows tagged sla-<key> (ui.js data-show),
-  then the queue's rule note reads "Filtered to {label}". Dict {key (rule key), label (the Rule text), list (the queue [data-list] id)}. */ -}}
-<button type="button" class="v-tt" data-show data-for="{{ .list }}" data-show-tab="overdue" data-show-tag="sla-{{ .key }}" data-show-label="{{ .label }}" aria-controls="{{ .list }}-table">Show<span class="sr-only"> the overdue issues for {{ .label }}</span></button>
+  then the queue's rule note reads "Filtered to {label}". Dict {key (rule key), label (the Rule text), list (the queue [data-list] id)}.
+  A text button in link style (.v-chiplink: link colour, quiet underline, 44px touch target under pointer: coarse), so a row with a
+  Show button is as tall as a row without one. */ -}}
+<button type="button" class="v-chiplink" data-show data-for="{{ .list }}" data-show-tab="overdue" data-show-tag="sla-{{ .key }}" data-show-label="{{ .label }}" aria-controls="{{ .list }}-table">Show<span class="sr-only"> the overdue issues for {{ .label }}</span></button>

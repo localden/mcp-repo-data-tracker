@@ -11,7 +11,7 @@
   --color-*: initial;
   --text-*: initial;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
 }
 @theme inline {
   --color-ink: var(--ink);
@@ -46,7 +46,7 @@
     --fs-caption: 0.75rem;   --lh-caption: 1rem;
     --fs-figure: 1.75rem;    --lh-figure: 2.25rem;
     --fs-code: 0.75rem;      --lh-code: 1rem;
-    --fs-brand: 0.9375rem;   --lh-brand: 1.25rem;
+    --fs-brand: var(--fs-subhead); --lh-brand: var(--lh-subhead);   /* brand = subhead role (14/600), not a ninth combination */
     --fs-nav: 0.875rem;      --lh-nav: 1.25rem;
     --fs-input: 0.875rem;
     --plot-h: 14rem;         /* 200px plot + 24px axis band (5.6) */
@@ -91,6 +91,11 @@
       --fs-body: 0.9375rem;   --lh-body: 1.375rem;
       --fs-label: 0.8125rem;  --lh-label: 1.125rem;
       --fs-caption: 0.8125rem; --lh-caption: 1.125rem;
+      /* the whole ramp moves together so titles never fall below the 15px body (subhead/brand 15/600, nav 15/500 = row headers,
+         code 13/400 = captions): phones stay at the same eight size/weight roles as desktop */
+      --fs-subhead: 0.9375rem; --lh-subhead: 1.375rem;
+      --fs-nav: 0.9375rem;    --lh-nav: 1.375rem;
+      --fs-code: 0.8125rem;   --lh-code: 1.125rem;
       --fs-input: 1rem;
       --plot-h: 11.5rem;      /* 160px plot + 24px axis band */
     }
@@ -160,6 +165,10 @@
     font-variant-numeric: proportional-nums; color: var(--ink); }
   .v-code { font-family: var(--font-mono); font-size: var(--fs-code); line-height: var(--lh-code); font-weight: 400; color: var(--muted); }
   .v-muted { color: var(--muted); }
+  /* no orphaned last words in titles, labels and caption lines */
+  .v-page-title, .v-section-title, .v-card-title, .v-kpi-label { text-wrap: balance; }
+  .v-section-caption, .v-gap-note, .v-chart-empty-note, .v-empty-text, .v-card-note, .v-chart-note, .v-dt caption, .v-kv dt,
+  .v-notes, .v-dt .sub, .v-page-desc { text-wrap: pretty; }
   .v-ink { color: var(--ink); }
   .v-nowrap { white-space: nowrap; }
   .v-num { font-variant-numeric: tabular-nums; }
@@ -173,9 +182,11 @@
   .v-link { color: var(--link); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
     text-underline-offset: 3px; }
   .v-link:hover { text-decoration-color: currentColor; }
+  /* quiet links (numbers in tables, meta links): a --line-strong hairline, so a column of linked numbers is not a column of rules */
   .v-link-quiet { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
+    text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
   .v-link-quiet:hover { color: var(--ink); text-decoration-color: currentColor; }
+  @media (pointer: coarse) { .v-dt a.v-link-quiet, .v-kv a.v-link-quiet { padding-block: 10px; margin-block: -10px; } }   /* R8 */
   .v-prose { max-width: 42rem; }
   .v-prose p + p { margin-top: 12px; }
   .v-prose a { color: var(--link); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
@@ -217,14 +228,15 @@
     .v-brand { min-height: 0; }
     .v-nav { margin-left: 24px; }
     .v-nav-list { display: flex; }
-    .v-nav-item { width: auto; height: 36px; }
+    .v-nav-item { width: auto; height: 56px; }   /* full bar height: the current underline sits on the header's bottom edge */
     .v-nav-long { display: inline; }
     .v-nav-short { display: none; }
     .v-theme { margin-left: auto; }
     .v-icon-btn { width: 36px; height: 36px; }
   }
   @media (width >= 64rem) { .v-brand-sub { display: inline; margin-left: 12px; } }
-  @media (width >= 48rem) and (pointer: coarse) { .v-icon-btn { width: 44px; height: 44px; } .v-nav-item { height: 44px; } }
+  @media (width >= 48rem) and (pointer: coarse) { .v-icon-btn { width: 44px; height: 44px; } }
+  .v-nav-item:focus-visible { outline-offset: -2px; }
 
   /* ------------------------------------------------------------ menu / scope switcher (4.6 q) */
   .v-menu-wrap { position: relative; }
@@ -268,11 +280,12 @@
   .v-gap-note { display: flex; align-items: flex-start; gap: 4px; margin-top: 8px;
     font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--warn-text); }
   .v-gap-note > .v-icon { margin-top: 2px; }
+  @media (width < 40rem) { .v-gap-tail { display: none; } }   /* R5: phones keep the fact; the method sentence is in Data notes */
   .v-notes { margin-top: 12px; max-width: 48rem; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line);
     border-radius: 8px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
   .v-notes-h { font-weight: 500; color: var(--ink); }
   .v-notes-h:not(:first-child) { margin-top: 12px; }
-  .v-notes-kv { display: grid; grid-template-columns: max-content 1fr; column-gap: 16px; row-gap: 4px; margin-top: 4px; }
+  .v-notes-kv { display: grid; grid-template-columns: 10rem minmax(0, 1fr); column-gap: 16px; row-gap: 4px; margin-top: 4px; }
   .v-notes-kv > div { display: contents; }
   .v-notes-kv dt { color: var(--ink); }
   .v-notes p { margin-top: 4px; }
@@ -345,13 +358,21 @@
   .v-kpi-value { display: flex; align-items: center; margin-top: 8px; white-space: nowrap; font-size: var(--fs-figure); line-height: var(--lh-figure);
     font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: proportional-nums; color: var(--ink); }
   .v-kpi-value .v-zero { font-weight: 600; }
+  /* the status triangle scales with the 28px figure (the 12px/16px slot is sized for body text) */
+  .v-kpi-value .v-status-icon { width: 24px; }
+  .v-kpi-value .v-status-icon > .v-icon { width: 18px; height: 18px; }
   .v-kpi-ctx, .v-kpi-filtering { display: flex; flex-direction: column; margin-top: 4px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
   .v-kpi-spark, .v-kpi-since { display: block; margin-top: auto; padding-top: 12px; }
   .v-kpi-since { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
+  .v-kpi-label-short { display: none; }
   @media (width < 40rem) {
-    /* R6: tiles <= 96px on phone: 12 + label 18 + 4 + value 32 + one 18px context line + 12 */
+    /* R6: tiles <= 96px on phone: 12 + label 18 + 4 + value 32 + one 18px context line + 12. Value and context bottom-align, so
+       when one label in a 2-up row wraps, the figures still read across the row. labelShort swaps in a phone label. */
     .v-kpi-spark, .v-kpi-since { display: none; }
-    .v-kpi-value { margin-top: 4px; line-height: 2rem; }
+    .v-kpi-label { padding-bottom: 4px; }
+    .v-kpi-label:has(> .v-kpi-label-short) > .v-kpi-label-full { display: none; }
+    .v-kpi-label-short { display: inline; }
+    .v-kpi-value { margin-top: auto; line-height: 2rem; }
     .v-kpi-ctx { margin-top: 0; }
     .v-kpi-ctx > .v-kpi-qual:not(:only-child) { display: none; }
   }
@@ -372,7 +393,9 @@
   .v-delta.is-bad { color: var(--bad-text); }
   .v-delta.is-flat { color: var(--muted); }
   .v-delta-vs { color: var(--muted); }
-  .v-status { display: inline-flex; align-items: center; white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--bad-text); }
+  /* no tabular-nums on text: the tnum hyphen is figure-wide ("Follow - up"); numeric statuses inherit tnum from .num cells */
+  .v-status { display: inline-flex; align-items: center; white-space: nowrap; font-weight: 600; color: var(--bad-text); }
+  .v-status-text.is-text { font-variant-numeric: normal; }
   .v-status-icon { display: inline-flex; align-items: center; width: 16px; flex: none; color: var(--status-critical); }
   .v-status-icon > .v-icon { width: 12px; height: 12px; }
   .v-status.no-icon > .v-status-icon { display: none; }
@@ -381,7 +404,7 @@
     border: 1px solid color-mix(in srgb, var(--warn-text) 30%, transparent); border-radius: 4px; }
   .v-tags { display: inline-flex; flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
   .v-tag { white-space: nowrap; font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 400; color: var(--muted); }
-  .v-tag.is-strong { font-weight: 600; color: var(--ink); }
+  .v-tag.is-strong { font-weight: 500; color: var(--ink); }   /* ink 500 against muted 400 singles out P0/P1 within the label role */
   a.v-tag { text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
   a.v-tag:hover { color: var(--ink); }
 
@@ -396,10 +419,12 @@
   .v-chip[aria-pressed="true"] .v-chip-check { display: inline-block; }
   .v-chip .v-count, .v-chiplink .v-count { font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
   .v-chiplinks { display: flex; flex-wrap: wrap; column-gap: 16px; row-gap: 8px; }
-  .v-chiplink { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; color: var(--link);
-    text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
-  .v-chiplink:hover { text-decoration-color: currentColor; }
-  .v-chiplink .v-count { text-decoration: none; }
+  /* navigation chips and handle lists: link colour, no underline at rest (a row of 30 names must not read as a wall of rules);
+     on hover the label underlines, never the count (the decoration sits on .v-chiplink-text; bare links underline whole) */
+  .v-chiplink { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; color: var(--link); text-decoration: none;
+    text-underline-offset: 3px; cursor: pointer; }
+  .v-chiplink:not(:has(.v-chiplink-text)):is(:hover, :focus-visible), .v-chiplink:is(:hover, :focus-visible) .v-chiplink-text {
+    text-decoration: underline; text-underline-offset: 3px; }
   @media (pointer: coarse) { .v-chip { height: 44px; } .v-chiplink { padding-block: 10px; margin-block: -10px; } }
 
   /* ------------------------------------------------------------ tabs / segmented control (4.6 l) */
@@ -435,6 +460,7 @@
   .v-rule-note { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--ink); }
   .v-rule-note button { display: inline-flex; align-items: center; gap: 4px; color: var(--link); cursor: pointer; }
   @media (width < 40rem), (pointer: coarse) { .v-field { height: 44px; max-width: none; } .v-field-clear { width: 36px; height: 36px; } }
+  @media (width < 40rem) { .v-filterbar > .v-field { flex-basis: 100%; } }   /* the field takes its own row; the count wraps right */
 
   /* ------------------------------------------------------------ disclosure + table toggle (4.6 o, s) */
   .v-disclosure { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: var(--ink); cursor: pointer; }
@@ -458,6 +484,12 @@
   .v-dt :is(th, td):last-child { padding-right: 16px; }
   .v-dt .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .v-dt .sub { display: block; font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 400; color: var(--muted); }
+  .v-dt thead th.num, .v-dt .num .sub { font-variant-numeric: normal; }   /* words in numeric columns ("SEP-1730", "Follow-up") */
+  .v-dt thead th.num { white-space: normal; }   /* a header wraps inside its column rather than running past it */
+  /* a 28px button (Show, Table) fits the 20px line box, so rows with and without one stay the same height */
+  .v-dt :is(td, th) > :is(.v-tt, .v-chart-toggle) { margin-block: -4px; }
+  @media (pointer: coarse) { .v-dt :is(td, th) > :is(.v-tt, .v-chart-toggle) { margin-block: -12px; } }
+  .v-dt tbody th[scope="row"] .v-code { color: var(--ink); }   /* a version or path used as the row label is not disabled text */
   .v-dt thead th .sub { margin-top: 0; }
   .v-dt:not(:has(thead)) > tbody:first-of-type > tr:first-child > * { border-top: 0; }
   .v-dt tr.v-group > th { height: 40px; padding: 8px 16px; text-align: left; vertical-align: middle; background: var(--group-band);
@@ -470,8 +502,13 @@
   .v-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .v-listmeta { display: none; flex-wrap: wrap; column-gap: 8px; margin-top: 4px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
   .v-listmeta > * { white-space: nowrap; }
-  .v-dt th[data-sort] > button { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-align: inherit; cursor: pointer; }
-  .v-dt th.num[data-sort] > button { flex-direction: row-reverse; }
+  .v-listmeta .v-status { font-weight: 500; }   /* caption-size status: red + icon carry it; stays in the label role (13/500) */
+  /* block-level and exactly cell-wide: a long label wraps inside its column instead of running out of it, and sits on the
+     same baseline as plain headers */
+  .v-dt th[data-sort] > button { display: flex; align-items: flex-end; gap: 4px; width: 100%; color: inherit; text-align: inherit;
+    font: inherit; cursor: pointer; }
+  .v-dt th.num[data-sort] > button { flex-direction: row-reverse; justify-content: flex-start; text-align: right; }
+  .v-dt th[data-sort] > button > .v-sort-icon { margin-bottom: 2px; }
   .v-sort-icon { width: 12px; height: 12px; color: var(--muted); }
   .v-dt.is-sticky thead th { position: sticky; top: var(--header-h); z-index: 2; background: var(--surface); box-shadow: 0 1px 0 var(--line); }
   .v-dt.is-sticky-groups tr.v-group > th { position: sticky; top: var(--header-h); z-index: 1; }
@@ -489,15 +526,24 @@
   /* overflow container, only where a table cannot fit (R1, R2) */
   .v-scroll { position: relative; overflow-x: auto; overscroll-behavior-x: contain; }
   .v-scroll.is-clipped { mask-image: linear-gradient(to right, black calc(100% - 24px), transparent); }
-  .v-scroll .v-dt :is(th, td):first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--line-strong); }
-  .v-scroll .v-dt tr.v-group > th:first-child { background: var(--group-band); box-shadow: none; }
+  /* the sticky first column and its edge exist only while the table actually scrolls (ui.js sets is-scrollable) */
+  .v-scroll.is-scrollable .v-dt :is(th, td):first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--line-strong); }
+  .v-scroll.is-scrollable .v-dt tr.v-group > th:first-child { background: var(--group-band); box-shadow: none; }
+  .v-scroll.is-scrollable .v-dt tr[data-row-link]:hover > :first-child { background: var(--hover); }
   .v-scroll :focus-visible, .v-scroll:focus-visible, .v-menu :focus-visible { outline-offset: -2px; }
   /* phone list rows (4.6 f): title left, verdict right, meta row below */
   @media (width < 40rem) {
-    .v-dt.is-list, .v-dt.is-list > tbody { display: block; }
+    /* flex column, so a <caption> becomes a full-width block at the bottom instead of a min-content table-caption (one word a line) */
+    .v-dt.is-list { display: flex; flex-direction: column; }
+    .v-dt.is-list > tbody { display: block; }
+    .v-dt.is-list > caption { display: block; order: 1; }
     .v-dt.is-list > thead, .v-dt.is-list > colgroup { display: none; }
-    .v-dt.is-list > tbody > tr:not(.v-group) { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px;
-      border-top: 1px solid var(--line); }
+    .v-dt.is-list > tbody > tr:not(.v-group) { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px; }
+    /* dividers only between visible rows: the first visible row never doubles the card border or the card head's rule */
+    .v-dt.is-list > tbody > tr:not([hidden]) ~ tr:not([hidden]):not(.v-group),
+    .v-dt.is-list > tbody:not([hidden]) ~ tbody:not([hidden]) > tr:not([hidden]):not(.v-group) { border-top: 1px solid var(--line); }
+    .v-dt.is-list > tbody:first-of-type > tr.v-group:first-child > th { border-top: 0; }
+    .v-card > .v-dt.is-list:first-child > tbody:first-of-type > tr.v-group:first-child > th { border-radius: 7px 7px 0 0; }
     .v-dt.is-list > tbody > tr:not(.v-group) > * { display: none; padding: 0; border: 0; }
     .v-dt.is-list > tbody > tr > .v-title-cell { display: block; grid-column: 1; grid-row: 1; }
     .v-dt.is-list > tbody > tr > .v-verdict { display: block; grid-column: 2; grid-row: 1; text-align: right; }
@@ -511,10 +557,16 @@
   .v-blocks > .v-block { padding: 12px 16px; border-top: 1px solid var(--line); }
   .v-blocks > .v-block:first-child { border-top: 0; }
   .v-block-title { font-weight: 500; color: var(--ink); }
-  .v-kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 4px; margin-top: 8px; }
-  .v-kv > div { display: contents; }
-  .v-kv dt { color: var(--muted); }
-  .v-kv dd { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink); }
+  /* block titles are row headers, not in-text links: ink, with the quiet hairline */
+  .v-block-title > a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+  .v-block-title > a:hover { text-decoration-color: currentColor; }
+  /* each row sized on its own value: when label and value cannot share a line the value drops, right-aligned, instead of the
+     label breaking around a column sized by the widest value in the block */
+  .v-kv { display: flex; flex-direction: column; row-gap: 4px; margin-top: 8px; }
+  .v-kv > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: 12px; }
+  .v-kv dt { min-width: 0; color: var(--muted); }
+  .v-kv dd { margin-left: auto; text-align: right; white-space: nowrap; color: var(--ink); }
+  .v-kv dd.num, .v-kv dd .num { font-variant-numeric: tabular-nums; }
 
   /* ------------------------------------------------------------ empty / short history (4.6 p) */
   .v-empty { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
@@ -525,16 +577,24 @@
 
   /* ------------------------------------------------------------ chart chrome (4.6 k, 5.6-5.13); markup in ui/chart.html,
      ui/spark.html, ui/meter.html, ui/stackbar.html and charts.js (WP0b) */
+  /* a chart named by its section head: no title bar, just a quiet row with the legend left and the Table toggle right */
+  .v-chart.is-bare > .v-chart-head { min-height: 0; padding: 12px 16px 0; border-bottom: 0; align-items: flex-start; }
+  .v-chart.is-bare > .v-chart-head > .v-legend { margin: 0; padding-top: 6px; }
+  .v-chart.is-bare > .v-chart-head + .v-chart-body { padding-top: 12px; }
+  .v-chart-toggle { margin-left: auto; }
   .v-chart-heading { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; }
-  .v-chart-value { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .v-chart-value { font-size: var(--fs-subhead); line-height: var(--lh-subhead); font-weight: 600; color: var(--ink);
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
   .v-chart-sub { flex-basis: 100%; min-height: var(--lh-caption); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
   .v-plot { position: relative; height: var(--plot-h); }
   .v-plot.is-small, .v-plot.is-sm { height: var(--plot-sm-h); }
   .v-plot > canvas { display: block; max-width: 100%; }
   .v-chart-note, .v-chart-caption { margin-top: 8px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
   /* the Table view keeps the plot's height so the toggle never shrinks the card (4.6 s, 5.9); the card body already pads 16px */
-  .v-chart-table { min-height: var(--plot-h); }
-  .v-chart-table.is-small { min-height: var(--plot-sm-h); }
+  .v-chart-table { height: var(--plot-h); overflow-y: auto; overscroll-behavior: contain; }
+  .v-chart-table.is-small { height: var(--plot-sm-h); }
+  .v-chart-table:focus-visible { outline-offset: -2px; }
+  .v-chart-table .v-dt thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); box-shadow: 0 1px 0 var(--line); }
   .v-chart-table .v-dt :is(th, td):first-child { padding-left: 0; }
   .v-chart-table .v-dt :is(th, td):last-child { padding-right: 0; }
   .v-chart-table .v-dt tr:hover > * { background: transparent; }
@@ -543,6 +603,8 @@
   .v-chart-empty.is-small { min-height: var(--plot-sm-h); }
   .v-chart-empty-value { font-size: var(--fs-subhead); line-height: var(--lh-subhead); font-weight: 600; color: var(--ink); }
   .v-chart-empty-note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--muted); }
+  /* the full plot height only matters beside a real plot; a section with no canvas at all keeps its short-history cards compact */
+  .v-section:not(:has(canvas)) :is(.v-chart-empty:not(.is-small), .v-empty.is-chart) { min-height: var(--plot-sm-h); }
   .v-legend { display: flex; flex-wrap: wrap; column-gap: 16px; row-gap: 4px; margin-bottom: 12px;
     font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 500; color: var(--muted); }
   .v-legend > li { display: inline-flex; align-items: center; gap: 8px; }
@@ -552,16 +614,16 @@
   .v-key { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 2px; }
   .v-key.is-line { width: 12px; height: 2px; border-radius: 0; }
   /* series roles (the canvas "role" names): legend keys and stacked-bar segments */
-  :is(.v-key, .v-stack-seg).is-accent, :is(.v-key, .v-stack-seg).is-series-1 { background: var(--chart-1); }
-  :is(.v-key, .v-stack-seg).is-series-2 { background: var(--chart-2); }
-  :is(.v-key, .v-stack-seg).is-spark { background: var(--spark); }
-  :is(.v-key, .v-stack-seg).is-other { background: var(--other); }
-  :is(.v-key, .v-stack-seg).is-seg-neutral { background: var(--seg-neutral); }
-  :is(.v-key, .v-stack-seg).is-ord-1 { background: var(--ord-1); }
-  :is(.v-key, .v-stack-seg).is-ord-2 { background: var(--ord-2); }
-  :is(.v-key, .v-stack-seg).is-ord-3 { background: var(--ord-3); }
-  :is(.v-key, .v-stack-seg).is-ord-4 { background: var(--ord-4); }
-  :is(.v-key, .v-stack-seg).is-ord-5 { background: var(--ord-5); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-accent, :is(.v-key, .v-stack-seg, .v-meter > i).is-series-1 { background: var(--chart-1); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-series-2 { background: var(--chart-2); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-spark { background: var(--spark); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-other { background: var(--other); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-seg-neutral { background: var(--seg-neutral); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-ord-1 { background: var(--ord-1); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-ord-2 { background: var(--ord-2); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-ord-3 { background: var(--ord-3); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-ord-4 { background: var(--ord-4); }
+  :is(.v-key, .v-stack-seg, .v-meter > i).is-ord-5 { background: var(--ord-5); }
   .v-tip { position: absolute; z-index: 20; min-width: 8rem; padding: 8px 12px; pointer-events: none; white-space: nowrap;
     font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--ink);
     background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: var(--shadow-overlay); }
@@ -583,15 +645,26 @@
   .v-spark.is-mini { width: 80px; height: 20px; }
   .v-spark path { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
   .v-spark .v-spark-line { stroke: var(--spark); stroke-width: 1.5; }
+  /* a missing stretch: one thin dashed bridge in the same grey, so the series reads as one line with a hole */
+  .v-spark .v-spark-gap { stroke: var(--spark); stroke-width: 1; stroke-dasharray: 2 3; stroke-linecap: butt; }
   .v-spark .v-spark-pt { stroke: var(--spark); stroke-width: 5; }
   .v-spark .v-spark-ring { stroke: var(--surface); stroke-width: 12; }
   .v-spark .v-spark-dot { stroke: var(--chart-1); stroke-width: 8; }
   .v-spark.is-crit .v-spark-dot { stroke: var(--status-critical); }
   tr[data-row-link]:hover .v-spark .v-spark-ring { stroke: var(--hover); }
+  /* column sparkline (kind "column", weekly flows): 12 slots on a 1px baseline; an empty slot is a week without a complete count */
+  .v-spark-cols { display: flex; align-items: flex-end; gap: 2px; width: 100%; height: 32px; border-bottom: 1px solid var(--line); }
+  .v-spark-cols.is-cell { height: 24px; }
+  .v-spark-cols.is-mini { width: 80px; height: 20px; }
+  .v-spark-cols > i { flex: 1 1 0; min-width: 0; height: var(--v); background: var(--chart-1); border-radius: 2px 2px 0 0; }
+  .v-spark-cols > i.is-empty { height: 100%; background: transparent; }
   /* meter and ranking bar (5.13) */
   .v-meter { display: inline-block; vertical-align: middle; flex: none; width: 4rem; height: 8px; overflow: hidden; background: var(--track); border-radius: 4px; }
-  .v-meter.is-rank { background: transparent; }
+  /* a ranking bar has a square baseline and a 2px-rounded data end, so a short bar stays a bar, never a dot */
+  .v-meter.is-rank { background: transparent; border-radius: 0; }
+  .v-meter.is-fill { flex: 1 1 4rem; width: auto; }
   .v-meter > i { display: block; height: 100%; width: var(--v); background: var(--chart-1); border-radius: 0 4px 4px 0; }
+  .v-meter.is-rank > i { border-radius: 0 2px 2px 0; }
   .v-meter-pct { display: inline-block; min-width: 4.5ch; text-align: right; font-variant-numeric: tabular-nums; }
   /* stacked bar, one row (5.13): segments sized by --n with 2px surface gaps, 4px radius on the data ends */
   .v-stack { display: flex; gap: 2px; height: 12px; }
@@ -609,5 +682,5 @@
 @media (forced-colors: active) {
   .v-tab[aria-selected="true"], .v-nav-item[aria-current], [aria-pressed="true"], .v-menu a[aria-current] { outline: 2px solid Highlight; outline-offset: -2px; }
   .v-status-icon > .v-icon { fill: CanvasText; }
-  .v-meter, .v-meter > i, .v-stack-seg, .v-key, .v-spark { forced-color-adjust: none; }
+  .v-meter, .v-meter > i, .v-stack-seg, .v-key, .v-spark, .v-spark-cols { forced-color-adjust: none; }
 }

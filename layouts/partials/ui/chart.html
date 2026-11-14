@@ -142,6 +142,11 @@
 
 {{- /* Short-history body text (§4.6 p, §5.5). */ -}}
 {{- $current := .current | default "" -}}
+{{- if and (not $current) (gt (len $rows) 1) (eq $unit "count") -}}
+  {{- /* 2+ count series: every series' latest value, label first ("Open issues 31 · Open PRs 37"); the nbsp keeps "·" off a line start */ -}}
+  {{- $parts := slice }}{{ range $i, $r := $rows }}{{ if ge $r.lastIdx 0 }}{{ $parts = $parts | append (printf "%s %s" $r.label (index $fmt (printf "s%d" $i))) }}{{ end }}{{ end -}}
+  {{- with $parts }}{{ $current = delimit . " · " }}{{ end -}}
+{{- end -}}
 {{- if and (not $current) (gt (len $rows) 0) (in (slice "count" "downloads") $unit) }}{{ with index $rows 0 }}{{ if ge .lastIdx 0 }}{{ $current = partial "ui/num.html" (dict "v" .last "mode" (cond (eq $unit "downloads") "compact" "tile")) }}{{ end }}{{ end }}{{ end -}}
 {{- $note := printf "No data collected for %s yet." $scope -}}
 {{- with $firstAll -}}
@@ -155,20 +160,32 @@
   {{- end -}}
 {{- end -}}
 
-<div class="v-card v-chart{{ if eq $size "small" }} is-small{{ end }}" data-chart>
+{{- /* A chart named by its section head (no title, value or sub) gets no empty title bar: a bare head row holds the legend (2+
+     series) and the Table toggle, with no divider; without a canvas there is no head at all. */ -}}
+{{- $hasHead := or .title .value .sub .reserve_sub -}}
+{{- $legendInHead := and (not $hasHead) $canvas (ge (len $rows) 2) -}}
+<div class="v-card v-chart{{ if eq $size "small" }} is-small{{ end }}{{ if not $hasHead }} is-bare{{ end }}" data-chart>
+  {{- if or $hasHead $canvas }}
   <div class="v-card-head v-chart-head">
+    {{- if $hasHead }}
     <div class="v-chart-heading">
       {{- with .title }}{{ if eq $.level 2 }}<h2 class="v-card-title" id="{{ $id }}-title">{{ . }}</h2>{{ else }}<h3 class="v-card-title" id="{{ $id }}-title">{{ . }}</h3>{{ end }}{{ end -}}
       {{- with .value }}<span class="v-chart-value">{{ . }}</span>{{ end -}}
       {{- if or .sub .reserve_sub }}<p class="v-chart-sub">{{ with .sub }}{{ . }}{{ end }}</p>{{ end -}}
     </div>
+    {{- else if $legendInHead }}
+    <ul class="v-legend" data-chart-legend>
+      {{- range $rows }}<li><span class="v-key {{ if eq $kind "line" }}is-line{{ else }}is-bar{{ end }} is-{{ .role }}" aria-hidden="true"></span>{{ .label }}</li>{{ end -}}
+    </ul>
+    {{- end }}
     {{- if $canvas }}
     <button type="button" class="v-chart-toggle" aria-pressed="false" aria-controls="{{ $id }}-table" data-chart-toggle>Table</button>
     {{- end }}
   </div>
+  {{- end }}
   <div class="v-card-body v-chart-body">
   {{- if $canvas }}
-    {{- if ge (len $rows) 2 }}
+    {{- if and (ge (len $rows) 2) (not $legendInHead) }}
     <ul class="v-legend" data-chart-legend>
       {{- range $rows }}<li><span class="v-key {{ if eq $kind "line" }}is-line{{ else }}is-bar{{ end }} is-{{ .role }}" aria-hidden="true"></span>{{ .label }}</li>{{ end -}}
     </ul>

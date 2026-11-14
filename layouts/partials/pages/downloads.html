@@ -22,12 +22,12 @@
 {{- end -}}
 
 {{- /* One x-domain for the small multiples (52 ISO weeks ending on the newest complete week of any package) and one set of 12
-     weeks for the table sparklines, so every chart and row covers the same weeks (5.6). */ -}}
+     weeks for the table strips, so every chart and row covers the same weeks (5.6). */ -}}
 {{- $wTo := "" }}{{ range $base }}{{ with .d.weekly.to }}{{ if gt . $wTo }}{{ $wTo = . }}{{ end }}{{ end }}{{ end -}}
-{{- $wFrom := "" }}{{ $wEnd := "" }}{{ $last12 := slice -}}
+{{- $wFrom := "" }}{{ $last12 := slice -}}
 {{- with $wTo -}}
   {{- $t := time.AsTime . -}}
-  {{- $wFrom = ($t.AddDate 0 0 -357).Format "2006-01-02" }}{{ $wEnd = ($t.AddDate 0 0 6).Format "2006-01-02" -}}
+  {{- $wFrom = ($t.AddDate 0 0 -357).Format "2006-01-02" -}}
   {{- range $k := seq 11 -1 0 }}{{ $last12 = $last12 | append (($t.AddDate 0 0 (int (mul -7 $k))).Format "2006-01-02") }}{{ end -}}
 {{- end -}}
 {{- $pkgs := slice -}}
@@ -41,25 +41,45 @@
 {{- $asof := "" -}}
 {{- range $src }}{{ with .at }}{{ $day := (time.AsTime .).Format "2006-01-02" }}{{ if or (eq $asof "") (lt $day $asof) }}{{ $asof = $day }}{{ end }}{{ end }}{{ end -}}
 
-{{- /* Gap notice (2.4): null runs of 3 or more days inside the charted weeks, per package; the outage is named on its run. */ -}}
-{{- $notices := slice -}}
+{{- /* Gap notice (2.4), built from what the weekly charts leave out. A weekly bin needs all 7 days (5.4), so a 1- or 2-day npm miss
+     blanks a week as surely as the outage does; a notice about 3-day runs only named C# while the TypeScript chart showed five gap
+     bands. Per package with a chart: the weeks in the shared domain, from its first complete day on (earlier weeks are before
+     tracking, not gaps), that have a missing day. The notice counts them and names the outage when one touches it; Data notes list
+     the weeks. After the backfill only what cannot be rebuilt remains (NuGet freeze days, the outage for NuGet). */ -}}
+{{- $o := partial "data/outage.html" . -}}
+{{- $gapParts := slice }}{{ $gapNotes := slice }}{{ $gapOutage := false -}}
 {{- if $wTo -}}
-  {{- range $base -}}
-    {{- $name := .r.name }}{{ $runs := slice -}}
-    {{- range partial "data/gaps.html" (dict "points" .d.points "min" 3) }}{{ if and (ge .to $wFrom) (le .from $wEnd) }}{{ $runs = $runs | append . }}{{ end }}{{ end -}}
-    {{- with $runs -}}
-      {{- $lastI := sub (len .) 1 }}{{ $lastY := (time.AsTime (index . $lastI).to).Year -}}
-      {{- $parts := slice -}}
-      {{- range $i, $g := . -}}
-        {{- $txt := partial "data/date-range.html" (dict "from" $g.from "to" $g.to "year" (or (eq $i $lastI) (ne (time.AsTime $g.to).Year $lastY))) -}}
-        {{- if $g.outage }}{{ $txt = printf "%s (collection outage)" $txt }}{{ end -}}
-        {{- $parts = $parts | append $txt -}}
+  {{- range $pkgs -}}
+    {{- $d := .d }}{{ $name := .r.name -}}
+    {{- if and (ge $d.weekly.n 4) $d.first -}}
+      {{- $runs := slice }}{{ $rf := "" }}{{ $rl := "" }}{{ $n := 0 -}}
+      {{- range $d.weekly.points -}}
+        {{- if and (ge .date $wFrom) (ge .date $d.first) -}}
+          {{- if eq .value nil -}}
+            {{- $n = add $n 1 }}{{ if eq $rf "" }}{{ $rf = .date }}{{ end }}{{ $rl = .date -}}
+          {{- else if ne $rf "" -}}
+            {{- $runs = $runs | append (dict "from" $rf "to" (((time.AsTime $rl).AddDate 0 0 6).Format "2006-01-02")) }}{{ $rf = "" -}}
+          {{- end -}}
+        {{- end -}}
       {{- end -}}
-      {{- $notices = $notices | append (printf "No %s download data for %s." $name (delimit $parts ", " " and ")) -}}
+      {{- if ne $rf "" }}{{ $runs = $runs | append (dict "from" $rf "to" (((time.AsTime $rl).AddDate 0 0 6).Format "2006-01-02")) }}{{ end -}}
+      {{- with $runs -}}
+        {{- $lastI := sub (len .) 1 }}{{ $lastY := (time.AsTime (index . $lastI).to).Year -}}
+        {{- $parts := slice -}}
+        {{- range $i, $g := . -}}
+          {{- $parts = $parts | append (partial "data/date-range.html" (dict "from" $g.from "to" $g.to "year" (or (eq $i $lastI) (ne (time.AsTime $g.to).Year $lastY)))) -}}
+          {{- if and (le $g.from $o.to) (ge $g.to $o.from) }}{{ $gapOutage = true }}{{ end -}}
+        {{- end -}}
+        {{- $gapParts = $gapParts | append (printf "%d for %s" $n $name) -}}
+        {{- $gapNotes = $gapNotes | append (printf "%s weeks with a missing day: %s." $name (delimit $parts ", " " and ")) -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- $gap := "" }}{{ with $notices }}{{ $gap = printf "%s Charts show the gap." (delimit . " ") }}{{ end -}}
+{{- $gap := "" -}}
+{{- with $gapParts -}}
+  {{- $gap = printf "Weeks with a missing day are not plotted: %s%s." (delimit . ", " " and ") (cond $gapOutage (printf ", including %s (collection outage)" $o.range) "") -}}
+{{- end -}}
 
 {{- /* Data notes: how each registry counts a day (3.5-0), then the definitions behind the columns (4.6 n). */ -}}
 {{- $notes := slice -}}
@@ -68,12 +88,13 @@
 {{- if in $regs "crates" }}{{ $notes = $notes | append "crates.io: daily range API." }}{{ end -}}
 {{- $cum := slice }}{{ if in $regs "nuget" }}{{ $cum = $cum | append "NuGet" }}{{ end }}{{ if in $regs "rubygems" }}{{ $cum = $cum | append "RubyGems" }}{{ end -}}
 {{- with $cum }}{{ $notes = $notes | append (printf "%s: daily = change in lifetime total; days the total did not move are shown as missing." (delimit . " and ")) }}{{ end -}}
+{{- range $gapNotes }}{{ $notes = $notes | append . }}{{ end -}}
 {{- $ending := "" }}{{ with $common.end }}{{ $ending = printf " ending %s" (partial "ui/date.html" .) }}{{ end -}}
 {{- $defs := slice
-  (dict "term" "Last 7 days" "text" (printf "Downloads on the 7 days%s, the newest day that every package with at least 7 complete days has reached, so those rows share one window. A package with fewer complete days is read on its own newest days. A window with a missing day shows the days collected and how many there are; a missing day is never counted as zero." $ending))
+  (dict "term" "Last 7 days" "text" (printf "The 7 complete days%s, the newest day every package with at least 7 complete days has reached, so those rows share one window. A package with fewer complete days counts the days it has. A window with a missing day shows the days collected and how many; a missing day is never counted as zero." $ending))
   (dict "term" "Change" "text" "Last 7 days against the 7 days before them, and against the 7 days ending 4 weeks earlier. Shown only when both windows are complete.")
-  (dict "term" "Weekly downloads" "text" "Monday to Sunday totals. A week with a missing day is not plotted; the current week is stated as week to date.")
-  (dict "term" "Lifetime" "text" "The registry's lifetime total. npm reports no lifetime figure, so its total is a running sum of daily counts.")
+  (dict "term" "Weekly downloads" "text" "Monday to Sunday totals, in the 12 weeks column and the weekly charts. A week with a missing day is left empty, never drawn as zero; the current week is stated as week to date.")
+  (dict "term" "Lifetime" "text" "The registry's lifetime total. npm reports none, so its figure is a running sum of daily counts since tracking began.")
   (dict "term" "Versions in use" "text" "PyPI: downloads per version over the last 30 complete days. npm: the registry's count for the last 7 days. NuGet, RubyGems and crates.io: the change in each version's lifetime total over 30 days.") -}}
 
 {{- $h1 := printf "Downloads · %s" (partial "ui/plural.html" (dict "n" (len $base) "one" "SDK package")) }}

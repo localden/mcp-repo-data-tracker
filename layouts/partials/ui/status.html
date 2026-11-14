@@ -20,5 +20,5 @@
 {{- else if eq $state "na" -}}{{ partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) }}
 {{- else if eq $state "zero" -}}<span class="v-zero">0</span>
 {{- else -}}
-<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" "alert-triangle" }}</span><span class="v-status-text">{{ $body }}</span></span>
+<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" "alert-triangle" }}</span><span class="v-status-text{{ if or $c.html $c.text }} is-text{{ end }}">{{ $body }}</span></span>
 {{- end -}}

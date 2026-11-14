@@ -11,7 +11,7 @@
   {{- /* header line 2: the window, then the change (with its base) or "n of 7 days" as text (the table carries the Flag; a 20px
        Flag here would push this plot below its neighbours, 5.6). Kept short enough for one line at the narrowest 3-up and 2-up
        widths, so plot tops align: "Last 7 days" is in the section caption and, for screen readers, before the value. */ -}}
-  {{- $win := "" }}{{ with $d.window }}{{ $win = printf `<span class="v-nowrap">%s</span>` . }}{{ end -}}
+  {{- $win := "" }}{{ with $x.win }}{{ $win = printf `<span class="v-nowrap">%s</span>` . }}{{ end -}}
   {{- $tail := "" -}}
   {{- if $x.has7 }}{{ $tail = partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "polarity" "up" "vs" "prior 7 days") -}}
   {{- else if $x.flag }}{{ $tail = printf `<span class="v-nowrap">%d of 7 days</span>` (int $d.days_covered) }}{{ end -}}
@@ -28,7 +28,9 @@
         "value" $value "sub" $sub "reserve_sub" true "foot" $foot
         "series" (slice (dict "label" "Downloads" "points" $d.weekly.points))) }}
     {{- else }}
-    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. */ -}}
+    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. The second
+         sentence is held together with no-break spaces, so a narrow card breaks between the sentences, never as "(Dec" / "7)." */ -}}
+    {{- $nb := htmlUnescape "&#160;" -}}
     {{- $note := printf "No data collected for %s yet." $p.r.name -}}
     {{- with $d.first -}}
       {{- $ft := time.AsTime . -}}
@@ -36,9 +38,9 @@
       {{- $start := $ft }}{{ if gt $dow 0 }}{{ $start = $ft.AddDate 0 0 (int (sub 7 $dow)) }}{{ end -}}
       {{- $at := $start.AddDate 0 0 28 -}}
       {{- if gt ($at.Format "2006-01-02") $d.complete_through -}}
-        {{- $note = printf "Tracking since %s. Trend appears after 4 weeks (%s)." ($ft.Format "Jan 2, 2006") ($at.Format "Jan 2") -}}
+        {{- $note = printf "Tracking since %s. %s" ($ft.Format "Jan 2, 2006") (replace (printf "Trend appears after 4 weeks (%s)." ($at.Format "Jan 2")) " " $nb) -}}
       {{- else -}}
-        {{- $note = printf "Tracking since %s. Too few complete weeks in this window for a trend." ($ft.Format "Jan 2, 2006") -}}
+        {{- $note = printf "Tracking since %s. %s of the 4 complete weeks a trend needs." ($ft.Format "Jan 2, 2006") (string (int $d.weekly.n)) -}}
       {{- end -}}
     {{- end }}
     <div class="v-card v-chart is-small">

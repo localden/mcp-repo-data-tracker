@@ -46,11 +46,13 @@ MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('mobile', 'dark', 3, ('menu',))]
 AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 SERIOUS = ('serious', 'critical')
-MAX_FONT_COMBOS = 7
-# brief §5.10 / §7.4 item 8: (check name, tokens in slot order, validator flags)
+# brief §4.1 defines eight size/weight roles (title, heading, subhead, body 400, body 500, label, caption, figure); the check
+# counts text inside <main> only, so header/footer chrome (brand, nav, build hash) is outside the page's type budget.
+MAX_FONT_COMBOS = 8
+# brief §5.10 / §7.4 item 8: (check name, tokens in slot order, validator flags). Backlog age is a one-hue ramp, light = young.
 PALETTE_SETS = [('categorical', ['--chart-1', '--chart-2'], []),
                 ('ordinal-stages', ['--ord-1', '--ord-2', '--ord-3', '--ord-4'], ['--ordinal']),
-                ('ordinal-age', ['--seg-neutral', '--ord-2', '--ord-3', '--ord-5'], ['--ordinal'])]
+                ('ordinal-age', ['--ord-1', '--ord-2', '--ord-3', '--ord-5'], ['--ordinal'])]
 # brief §7.4 item 5, on the rendered text of the whole page
 TEXT_BANS = [(re.compile(r'\b1000(?:\.0+)?K\b'), '1000K'), (re.compile(r'\bNaN\b'), 'NaN'),
              (re.compile(r'\bundefined\b'), 'undefined'), (re.compile('Suspect'), 'Suspect'),
@@ -70,10 +72,14 @@ RULES = {
     'kbd-menu-open': 'Enter on the scope switcher (or the Repositories menu) expands it and focuses the current item',
     'kbd-menu-escape': 'ArrowDown then Escape collapses it and returns focus to the button',
     'kbd-menu-activate': 'activating a repo link loads a page whose document.title names the repo',
-    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations on the page',
-    'text-bans': '1000K, NaN, undefined, Suspect, Over target, Past SLA, a superscript digit on a number, a line starting with ·',
+    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations inside <main> (brief 4.1 roles: title, heading, '
+                   'subhead, body, body 500, label, caption, figure); reports/<capture>.json fontSamples names one element per combo',
+    'text-bans': '1000K, NaN, undefined, Suspect, Over target, Past SLA, a superscript digit on a number, a · that starts a '
+                 'rendered line (layout probe: real line boxes, so sr-only spans never fake a line break)',
+    'cell-overflow': 'no table cell content runs past its cell (a fixed column narrower than its header or value)',
+    'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
-    'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical, ord-1..4 and seg-neutral+ord-2/3/5 ordinal',
+    'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical, ord-1..4 (SEP stages) and ord-1/2/3/5 (backlog age) ordinal',
     'redirect': 'a legacy URL lands on its new URL',
 }
 
@@ -98,9 +104,15 @@ PROBE = r"""() => {
     .map(el => ({ el: path(el), scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
   const canvases = [...document.querySelectorAll('canvas[data-viz]')];
   const mounted = c => !!(window.Chart && Chart.getChart(c));
-  const fonts = {}, colors = {};
+  const fonts = {}, fontSamples = {}, colors = {};
   all.filter(el => ownText(el) && !tiny(el)).forEach(el => { const cs = getComputedStyle(el);
-    const f = cs.fontSize + ' ' + cs.fontWeight; fonts[f] = (fonts[f] || 0) + 1; colors[cs.color] = (colors[cs.color] || 0) + 1; });
+    colors[cs.color] = (colors[cs.color] || 0) + 1;
+    if (!el.closest('main')) return;   // header/footer chrome (brand, nav, build hash) is outside the page's type budget
+    const f = cs.fontSize + ' ' + cs.fontWeight; fonts[f] = (fonts[f] || 0) + 1;
+    if (!fontSamples[f]) fontSamples[f] = path(el) + ' "' + (el.textContent || '').trim().slice(0, 40) + '"'; });
+  // table cells whose content runs past the cell (fixed columns narrower than a header or value)
+  const cellOverflow = [...document.querySelectorAll('.v-dt th, .v-dt td')].filter(shown).filter(c => c.scrollWidth > c.clientWidth + 1)
+    .slice(0, 25).map(c => ({ el: path(c), text: (c.innerText || '').trim().slice(0, 60), over: c.scrollWidth - c.clientWidth }));
   // a "·" that starts a visual line: the previous visible character sits on an earlier line (wrapped meta lines)
   const dots = [], tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const at = (n, i) => { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1); const b = r.getClientRects(); return b.length ? b[0] : null; };
@@ -118,7 +130,7 @@ PROBE = r"""() => {
   }
   return { title: document.title, theme: document.documentElement.dataset.theme,
     scrollWidth: document.documentElement.scrollWidth, clientWidth: vw, height: document.documentElement.scrollHeight,
-    overflow, clipped, innerScroll, fontSizes: fonts, textColors: colors, lineStartDots: dots,
+    overflow, clipped, innerScroll, fontSizes: fonts, fontSamples, textColors: colors, lineStartDots: dots, cellOverflow,
     charts: { total: canvases.length, shown: canvases.filter(shown).length, mounted: canvases.filter(mounted).length,
               shownNotMounted: canvases.filter(c => shown(c) && !mounted(c)).map(c => c.id || path(c)) },
     canvases: [...document.querySelectorAll('canvas')].map(c => ({ el: c.id || path(c), metric: c.dataset.metric || null, label: c.getAttribute('aria-label') })),
@@ -216,17 +228,29 @@ def reload(page, url):
     return page.evaluate(TAG)
 
 
-def tiles(page, out, cid, vw, vh, cap):
-    h = page.evaluate('document.documentElement.scrollHeight')
-    files = []
-    for i, y in enumerate(range(0, h, vh)):
-        if i == cap:
-            print(f'  {cid}: page is {h}px, kept the first {cap} tiles')
-            break
+def tiles(page, out, cid, vw, vh, cap, files):
+    """Viewport-height slices, appended to files as each one is written. The height is re-read before every slice (late chart
+    mounts and list init change it); the last slice is a full viewport ending at the bottom, never a thin sliver; a clip that
+    Playwright still rejects (its full-page image can come out a few px under scrollHeight) is lifted in 16px steps."""
+    y, h = 0, 0
+    for i in range(cap):
+        h = page.evaluate('document.documentElement.scrollHeight')
+        if y >= h:
+            return
+        top, height = max(0, min(y, h - vh)), min(vh, h)
         f = out / 'tiles' / f'{cid}--{i:02d}.png'
-        page.screenshot(path=str(f), full_page=True, clip={'x': 0, 'y': y, 'width': vw, 'height': min(vh, h - y)})
+        for lift in range(0, 129, 16):
+            try:
+                page.screenshot(path=str(f), full_page=True, clip={'x': 0, 'y': max(0, top - lift), 'width': vw, 'height': height})
+                break
+            except Exception:
+                if lift == 128 or top - lift <= 0:
+                    raise
         files.append(f.relative_to(out).as_posix())
-    return files
+        if top + vh >= h:
+            return
+        y += vh
+    print(f'  {cid}: page is {h}px, kept the first {cap} tiles')
 
 
 def shot(locator, f):
@@ -504,9 +528,8 @@ def text_bans(text):
     for rx, label in TEXT_BANS:
         for m in list(rx.finditer(text))[:3]:
             hits.append(f"{label}: '...{text[max(0, m.start() - 30):m.end() + 30]}...'".replace('\n', ' '))
-    for line in re.split(r'[\n\t]', text):
-        if line.strip().startswith('·'):
-            hits.append(f'line starts with ·: {line.strip()[:80]!r}')
+    # "a line starting with ·" is judged on rendered line boxes (rep['lineStartDots']), not on innerText: innerText breaks lines
+    # around position:absolute sr-only spans, which faked "· 7 of 9 repos" lines that never render.
     return hits
 
 
@@ -520,7 +543,13 @@ def page_checks(cid, vp, rep, page_text):
         sc = rep['innerScroll']
         record('R2-inner-scroll', cid, not sc, '; '.join(f"{s['el']} {s['scrollWidth']} > {s['clientWidth']}" for s in sc[:5]) or 'none')
     fonts = sorted(rep['fontSizes'].items(), key=lambda kv: -kv[1])
-    record('font-combos', cid, len(fonts) <= MAX_FONT_COMBOS, f'{len(fonts)} combos: ' + ', '.join(f'{k} x{n}' for k, n in fonts))
+    detail = f'{len(fonts)} combos inside <main>: ' + ', '.join(f'{k} x{n}' for k, n in fonts)
+    if len(fonts) > MAX_FONT_COMBOS:   # name where the rarest combos come from, so a stray size can be traced to a template
+        samples = rep.get('fontSamples', {})
+        detail += '; rarest: ' + '; '.join(f"{k} at {samples.get(k, '?')}" for k, _ in fonts[MAX_FONT_COMBOS:][-3:])
+    record('font-combos', cid, len(fonts) <= MAX_FONT_COMBOS, detail)
+    co = rep.get('cellOverflow', [])
+    record('cell-overflow', cid, not co, '; '.join(f"{c['el']} {c['text']!r} +{c['over']}px" for c in co[:5]) or 'none')
     hits = text_bans(page_text) + [f"· starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']]
     record('text-bans', cid, not hits, '; '.join(hits[:8]) + (f' (+{len(hits) - 8} more)' if len(hits) > 8 else '') or 'none')
     cv = rep['canvases']
@@ -556,7 +585,12 @@ def capture(ctx, base, out, pid, path, vp, theme, cap, wanted, axe_src, validato
         rep['axe'] = run_axe(page, axe_src)
         record_axe('axe', cid, rep['axe'])
         page_checks(cid, vp, rep, page_text)
-        entry['tiles'] = tiles(page, out, cid, vw, vh, cap)
+        try:
+            tiles(page, out, cid, vw, vh, cap, entry['tiles'])
+            record('tiles', cid, True, f"{len(entry['tiles'])} tiles")
+        except Exception as e:   # keep the tiles already shot; states and the keyboard walk still run
+            print(f'  tiles failed for {cid}: {short(e)}')
+            record('tiles', cid, 'error', f"{short(e)} (kept {len(entry['tiles'])} tiles)")
         for name, fn in (('palette', lambda: palette(page, out, theme, validator, cid) if pid == 'overview' and vp == 'desktop' else None),
                          ('states', lambda: entry.__setitem__('states', states(page, out, cid, url, wanted, axe_src, rep))),
                          ('keyboard', lambda: keyboard_walk(page, url, cid) if (vp, theme) == ('desktop', 'light') else None)):

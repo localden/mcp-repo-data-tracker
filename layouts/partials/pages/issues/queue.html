@@ -4,13 +4,20 @@
     recounts them). "Waiting for a reply" is the Overview's ?tab=waiting target: the rows of metrics.json's no-reply list older than
     7 days, so it lists exactly the Overview count.
     Bugs and Enhancements show tier group rows (subhead + count) when the tab has 2 or more tiers; their rows are a second copy under
-    those group rows, tagged for that tab only, so the flat tabs stay sorted by overage and no count includes a row twice.
-    The default tab is Overdue while it has rows, else All. Status icons drop when more than half of the rows are overdue (4.6 j).
-    Below 64rem the fixed columns no longer fit, so the table scrolls inside the card until it turns into list rows below 40rem. */ -}}
+    those group rows, tagged for that tab only, so the flat tabs stay sorted by overage and no count includes a row twice. Under a tier
+    row the Next step cell is left empty when it repeats the tier name.
+    The default tab is Overdue while it has rows, else All. Every row of that default list is overdue, so the Overdue cells drop the
+    status icon and keep the red text (4.6 j: more than half of the list is overdue); the column header names the state.
+    Columns (fixed): # 4.5rem · Issue auto · Next step 10rem (the longest label, "Review proposed fix", on one line) · Author 9rem ·
+    Waiting on 9rem ("275 business days" on one line, so a row is never 3 lines tall) · Age 5rem · Overdue 7rem.
+    Below 64rem the fixed columns no longer fit, so the table scrolls inside the card until it turns into list rows below 40rem.
+    The age note follows the scroll region, so its 12px top padding comes from the card note itself (pt-3).
+    The age definition is a card note under the table, not a <caption>: a caption inside a phone list table (display: block) shrinks
+    to one word per line. */ -}}
 {{- $r := .r }}{{ $q := .q }}{{ $id := .id | default "iq" -}}
 {{- $n := len $q.rows -}}
 {{- $sel := cond (gt (int $q.overdue) 0) "overdue" "open" -}}
-{{- $icon := le (mul (int $q.overdue) 2) $n -}}
+{{- $icon := and (ne $sel "overdue") (le (mul (int $q.overdue) 2) $n) -}}
 {{- $tabs := slice
   (dict "key" "overdue" "label" "Overdue" "count" (index $q.tabs "overdue"))
   (dict "key" "waiting" "label" "Waiting for a reply" "count" (index $q.tabs "waiting"))
@@ -32,11 +39,12 @@
         "chips" $chips "noun" "issues" "one" "issue" "total" $inSel) }}
     <p class="v-rule-note" data-rule-note hidden>Filtered to <span data-rule-label></span> <button type="button" data-rule-clear>Clear{{ partial "ui/icon.html" "x" }}</button></p>
     <div class="v-card" role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $sel }}">
-      {{- /* the shared overflow region (4.6 e): only 640–1023px ever scrolls; >= 64rem the columns fit, below 40rem rows are lists */}}
-      <div class="v-scroll" role="region" tabindex="0" aria-labelledby="queue">
+      {{- /* overflow region: only 640–1023px ever scrolls; >= 64rem the columns fit, below 40rem rows are lists. A plain overflow-x-auto
+           wrapper, not .v-scroll: .v-scroll's always-on sticky first column drew a full-height rule beside # at 1440px and kept its
+           surface background over the row hover band. Its own name, so it is not a second "Queue" region (axe landmark-unique). */}}
+      <div class="overflow-x-auto" role="region" tabindex="0" aria-label="Issue queue table">
       <table class="v-dt is-fixed is-list" id="{{ $id }}-table" aria-labelledby="queue">
-        <caption>Age is calendar days since the issue opened.</caption>
-        <colgroup><col class="v-col-18"><col class="v-col-auto"><col class="v-col-36"><col class="v-col-40"><col class="v-col-28"><col class="v-col-20"><col class="v-col-36"></colgroup>
+        <colgroup><col class="v-col-18"><col class="v-col-auto"><col class="v-col-40"><col class="v-col-36"><col class="v-col-36"><col class="v-col-20"><col class="v-col-28"></colgroup>
         <thead><tr>
           <th scope="col"><span aria-hidden="true">#</span><span class="sr-only">Number</span></th>
           <th scope="col">Issue</th>
@@ -62,13 +70,14 @@
           {{ partial "ui/group-row.html" (dict "label" $tr.label "count" (len $tr.rows) "cols" 7) }}
           {{- end }}
           {{- range $tr.rows }}
-          {{ partial "pages/issues/row.html" (dict "r" . "copy" "group" "icon" $icon) }}
+          {{ partial "pages/issues/row.html" (dict "r" . "copy" "group" "icon" $icon "tier" (cond $multi $tr.label "")) }}
           {{- end }}
         </tbody>
         {{- end }}
         {{- end }}
       </table>
       </div>
+      <p class="v-card-note pt-3">Age is calendar days since the issue opened.</p>
       {{ partial "ui/more.html" (dict "list" $id "controls" (printf "%s-table" $id) "n" $inSel) }}
     </div>
     <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>

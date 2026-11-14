@@ -1,16 +1,23 @@
 {{- /* One classified queue row (brief 3.2b-2): # · Issue · Next step · Author · Waiting on · Age · Overdue.
-  Ctx: dict {r (a pages/issues/rows.html row), copy ("flat" | "group"), over (bool: beyond the first paint), icon (bool: status icon)}.
+  Ctx: dict {r (a pages/issues/rows.html row), copy ("flat" | "group"), over (bool: beyond the first paint), icon (bool: status icon),
+    tier (the tier group row label above a group copy, or "")}.
     The group copy sits under a tier group row in the Bugs or Enhancements tab and starts hidden (ui.js shows it), so without JS
-    only the flat list renders. One link per row, the title; #123 is plain text. Phone: title + Age (verdict) + a meta row. */ -}}
+    only the flat list renders. Under a tier row, Next step is left empty when it only repeats the tier name (3.2b-2: shown only when it
+    differs). One link per row, the title; #123 is plain text.
+    The rule names ("Follow-up") sit in normal-nums spans: the cells are tabular, and tabular figures widen the hyphen.
+    Phone: title + Age (verdict) + a meta row (#, author, next step), then the overdue status on its own line. */ -}}
 {{- $r := .r }}{{ $group := eq .copy "group" -}}
+{{- $tier := .tier | default "" -}}
+{{- $next := $r.next }}{{ if and $group (ne $tier "") (eq $next $tier) }}{{ $next = "" }}{{ end -}}
+{{- $ohtml := "" }}{{ with $r.otext }}{{ $ohtml = printf `<span class="normal-nums">%s</span> · %s` (htmlEscape $r.orule) (htmlEscape $r.over) | safeHTML }}{{ end -}}
 <tr data-row data-row-link data-tags="{{ cond $group $r.gtags $r.ftags }}" data-text="{{ $r.text }}"{{ if .over }} data-over{{ end }}{{ if $group }} hidden{{ end }}>
   <td><span class="v-muted">#{{ $r.n }}</span></td>
   <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener" title="{{ $r.ctitle }}">{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
     {{- partial "ui/tag.html" $r.tags }}
-    <span class="v-listmeta"><span>#{{ $r.n }}</span><span>{{ $r.author }}{{ if $r.maint }} · maintainer{{ end }}</span>{{ with $r.next }}<span>{{ . }}</span>{{ end }}{{ with $r.otext }}<span>{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}</span>{{ end }}</span></td>
-  <td>{{ $r.next }}</td>
+    <span class="v-listmeta"><span>#{{ $r.n }}</span><span>{{ $r.author }}{{ if $r.maint }} · maintainer{{ end }}</span>{{ with $next }}<span>{{ . }}</span>{{ end }}{{ with $ohtml }}<span class="basis-full">{{ partial "ui/status.html" (dict "html" . "title" $r.otitle "icon" $.icon) }}</span>{{ end }}</span></td>
+  <td>{{ $next }}</td>
   <td><span class="block truncate" title="{{ $r.author }}">{{ $r.author }}</span>{{ if $r.maint }}<span class="sub">maintainer</span>{{ end }}</td>
   <td>{{ $r.waiton }}{{ with $r.waitsub }}<span class="sub">{{ . }}</span>{{ end }}</td>
   <td class="num v-verdict" data-v="{{ printf "%.1f" $r.age }}"><span title="{{ $r.ageTitle }}">{{ $r.ageHTML }}</span></td>
-  <td class="num" data-v="{{ printf "%.1f" $r.k }}">{{ with $r.over }}{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}<span class="sub">{{ $r.orule }}</span>{{ end }}</td>
+  <td class="num" data-v="{{ printf "%.1f" $r.k }}">{{ with $r.over }}{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}<span class="sub normal-nums">{{ $r.orule }}</span>{{ end }}</td>
 </tr>

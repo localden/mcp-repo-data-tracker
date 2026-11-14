@@ -1,13 +1,18 @@
 {{- /* One downloads window value for the SDK adoption table (brief 3.1-5, 5.4, 6.3). Emits HTML.
   Call: partial "pages/overview/dl-value.html" (dict "v" $d.dl7 "sum" $d.sum7 "days" $d.days_covered "of" 7 "window" $d.window
-          "total" $d.days_total ["stack" true])
+          "end" $d.end "first" $d.first "total" $d.days_total ["stack" true])
   v: the complete-window sum (nil when any day is missing) -> compact ("87.8M"). Otherwise the partial sum of the complete days is
-  shown muted with the Flag "3 of 7 days" (P5: flagged, never passed off as the full window), or "—" when the window has no complete
-  day. total 0 (nothing collected yet) -> "—". stack: the Flag goes on its own line (table cells); else it follows the value. */ -}}
+  shown muted with the Flag "3 of 7 days" (P5: flagged, never passed off as the full window), or "—" with the Flag "0 of 7 days" when
+  the window has no complete day (a data-quality gap, e.g. a frozen NuGet total). A package whose tracking began after the window
+  ends (first > end) reads a plain "—" with the sr-only reason: that is not a data-quality problem, so no Flag. total 0 (nothing
+  collected yet) -> "—". stack: the Flag goes on its own line (table cells); else it follows the value. */ -}}
 {{- $c := . -}}
 {{- $days := int ($c.days | default 0) }}{{ $win := $c.window | default "" -}}
+{{- $first := $c.first | default "" }}{{ $end := $c.end | default "" -}}
 {{- if ne $c.v nil -}}
   {{- partial "ui/num.html" (dict "v" $c.v "mode" "compact") -}}
+{{- else if and (eq $days 0) (ne $first "") (ne $end "") (gt $first $end) -}}
+  {{- partial "ui/num.html" (dict "v" nil "na" (printf "tracking began %s" (partial "ui/date.html" (dict "d" $first "style" "short")))) -}}
 {{- else if gt (int ($c.total | default 0)) 0 -}}
   {{- if gt $days 0 }}<span class="v-muted">{{ partial "ui/num.html" (dict "v" $c.sum "mode" "compact") }}</span>
   {{- else }}{{ partial "ui/num.html" (dict "v" nil "na" (cond (ne $win "") (printf "no complete days in %s" $win) "no complete days")) }}{{ end -}}

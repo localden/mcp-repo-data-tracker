@@ -124,13 +124,15 @@
       return out;
     }
     if (gran === 'day' && n <= 21) { if (last > 0 && last * slot >= lastW + 12) out[0] = shortDate(labels[0]); return out; }
-    var prevX = -Infinity, prevW = 0, first = true;
+    var prevX = -Infinity, prevW = 0, first = true, lp = parts(labels[last]);
     for (i = 0; i < last; i++) {
       var p = parts(labels[i]);
       var boundary = i === 0 ? (gran === 'day' ? p.d === 1 : gran === 'week' ? p.d <= 7 : true) : parts(labels[i - 1]).m !== p.m;
       if (!boundary) continue;
-      var text = first || p.m === 0 ? MONTHS[p.m] + ' ' + p.y : MONTHS[p.m], x = i * slot, tw = textWidth(text);
-      if (x - prevX < (prevW + tw) / 2 + 12 || last * slot - x < (lastW + tw) / 2 + 12) continue;
+      var text = first || p.m === 0 ? MONTHS[p.m] + ' ' + p.y : MONTHS[p.m], x = i * slot, tw = textWidth(text), room = last * slot - x;
+      /* the last label already names its month ("Nov 9"): a same-month tick near it only stutters ("Nov  Nov 9") */
+      if (gran !== 'month' && p.m === lp.m && p.y === lp.y && room < 2 * (lastW + tw)) continue;
+      if (x - prevX < (prevW + tw) / 2 + 16 || room < (lastW + tw) / 2 + 16) continue;
       out[i] = text; prevX = x; prevW = tw; first = false;
     }
     return out;
@@ -164,10 +166,27 @@
     runs.forEach(function (r) { var p = out[out.length - 1]; if (p && r[0] <= p[1] + 1) p[1] = Math.max(p[1], r[1]); else out.push([r[0], r[1]]); });
     return out;
   }
+  /* Bands only where every series is missing: a hole in one series breaks its own line, but a full-height "No data" band over a
+     line that has data would be false. */
+  function intersectRuns(lists, minRun) {
+    var out = lists[0].slice();
+    for (var k = 1; k < lists.length; k++) {
+      var next = [];
+      out.forEach(function (r) { lists[k].forEach(function (q) { var s = Math.max(r[0], q[0]), e = Math.min(r[1], q[1]); if (e - s + 1 >= minRun) next.push([s, e]); }); });
+      out = next;
+    }
+    return mergeRuns(out);
+  }
+  /* A null run is named the collection outage only when it lies inside the outage (6 days of slack for week rounding); a longer
+     run that merely touches it keeps its own dates and says it includes the outage. Mirrors layouts/partials/data/gaps.html. */
+  function gapText(from, to, o) {
+    var hit = o && o.length === 2 && from <= o[1] && to >= o[0];
+    if (hit && from >= addDays(o[0], -6) && to <= addDays(o[1], 6)) return { range: dateRange(o[0], o[1]), note: ' (collection outage)' };
+    return { range: dateRange(from, to), note: hit ? ' (includes the ' + dateRange(o[0], o[1]) + ' collection outage)' : '' };
+  }
   function bandText(st, b) {
-    var from = st.labels[b[0]], to = periodEnd(st.labels[b[1]], st.gran), o = st.spec.outage;
-    if (o && o.length === 2 && from <= o[1] && to >= o[0]) return 'No data · ' + dateRange(o[0], o[1]) + ' (collection outage)';
-    return 'No data · ' + dateRange(from, to);
+    var g = gapText(st.labels[b[0]], periodEnd(st.labels[b[1]], st.gran), st.spec.outage);
+    return 'No data · ' + g.range + g.note;
   }
 
   /* Plugins (§5.11-3). State lives in a Map keyed by canvas, set before the chart is constructed. */
@@ -181,7 +200,7 @@
       var l = Math.max(a.left, x.getPixelForValue(b[0]) - half), r = Math.min(a.right, x.getPixelForValue(b[1]) + half);
       if (r <= l) return;
       ctx.fillStyle = T.gap; ctx.fillRect(l, a.top, r - l, a.bottom - a.top);
-      if (r - l >= 40) {
+      if (r - l >= textWidth('No data') + 16) {   /* the label only where it fits with 8px either side */
         ctx.fillStyle = T.muted; ctx.font = '12px ' + T.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('No data', (l + r) / 2, (a.top + a.bottom) / 2);
       }
@@ -195,20 +214,30 @@
   } };
   var endLabel = { id: 'visrEndLabel', afterDatasetsDraw: function (c) {   /* last non-null value, right of the end dot (§5.8) */
     var st = S(c); if (!st || st.kind !== 'line') return;
-    var ctx = c.ctx, placed = [];
-    ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    var ctx = c.ctx, a = c.chartArea, items = [], k;
     st.info.forEach(function (inf, d) {
-      var meta = c.getDatasetMeta(d), el = inf.last >= 0 && meta.data[inf.last]; if (!el || meta.hidden) return;
-      if (placed.some(function (y) { return Math.abs(y - el.y) < 14; })) return;   /* colliding labels fall back to legend + tooltip */
-      placed.push(el.y); ctx.fillText(st.endText[d], el.x + 8, el.y);
+      var meta = c.getDatasetMeta(d), el = inf.last >= 0 && meta.data[inf.last]; if (!el || meta.hidden || !st.endText[d]) return;
+      items.push({ d: d, x: el.x, y: el.y });
     });
+    if (!items.length) return;
+    /* every series keeps its label: colliding labels are pushed apart 14px (top down), then the group is lifted back inside the plot */
+    items.sort(function (p, q) { return p.y - q.y; });
+    for (k = 1; k < items.length; k++) if (items[k].y - items[k - 1].y < 14) items[k].y = items[k - 1].y + 14;
+    var over = items[items.length - 1].y - (a.bottom - 6);
+    if (over > 0) items.forEach(function (it) { it.y -= over; });
+    var under = a.top + 6 - items[0].y;
+    if (under > 0) items.forEach(function (it) { it.y += under; });
+    ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    items.forEach(function (it) { ctx.fillText(st.endText[it.d], it.x + 8, it.y); });
     ctx.restore();
   } };
   var capLabel = { id: 'visrCapLabel', afterDatasetsDraw: function (c) {   /* value on the latest column's cap */
     var st = S(c); if (!st || !st.spec.capLabel || st.kind === 'line') return;
     var inf = st.info[0], el = inf && inf.last >= 0 && c.getDatasetMeta(0).data[inf.last]; if (!el) return;
     var ctx = c.ctx; ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText(st.endText[0], el.x, el.y - 4); ctx.restore();
+    var y = el.y - 4, av = st.spec.avg;   /* never on the labeled average rule: sit just above it when they would touch */
+    if (av && av.value != null) { var ay = c.scales.y.getPixelForValue(av.value); if (Math.abs(y - ay) < 14) y = Math.min(y, ay - 4); }
+    ctx.fillText(st.endText[0], el.x, y); ctx.restore();
   } };
   var avgRule = { id: 'visrAvgRule', afterDatasetsDraw: function (c) {   /* 1px --line-strong rule, labeled (commits, §5.1) */
     var st = S(c), avg = st && st.spec.avg; if (!avg || avg.value == null) return;
@@ -276,9 +305,13 @@
     el.hidden = false;
     var a = c.chartArea, x = c.scales.x.getPixelForValue(i), act = elementsAt(c, i), y = a.top;
     if (act.length) y = Math.min.apply(null, act.map(function (e) { return e.element.y; }));
-    var w = el.offsetWidth, h = el.offsetHeight, left = Math.min(Math.max(x - w / 2, a.left), box.clientWidth - w), top = y - h - 12;
+    var w = el.offsetWidth, h = el.offsetHeight, left, top = y - h - 12;
+    if (top >= 0) left = Math.min(Math.max(x - w / 2, a.left), box.clientWidth - w);
+    else {   /* no room above (small multiples): beside the hovered x, kept inside the plot so it never covers the x labels */
+      top = Math.max(0, Math.min(y - h / 2, a.bottom - h));
+      left = x + 12 + w <= box.clientWidth ? x + 12 : x - 12 - w;
+    }
     if (left < 0) left = 0;
-    if (top < 0) top = y + 12;
     el.style.left = Math.round(left) + 'px'; el.style.top = Math.round(top) + 'px';
     if (announce && st.live) st.live.textContent = spoken.join('. ');
   }
@@ -288,7 +321,8 @@
     var spec = JSON.parse(canvas.dataset.series), labels = spec.labels || [], series = spec.series || [];
     var line = kind === 'line', stack = kind === 'stack', single = series.length === 1, f = valueFmt(unit);
     var info = series.map(function (s) { return analyse(s.data, gran); });
-    var bands = mergeRuns([].concat.apply([], info.map(function (x) { return x.runs; })));
+    var bands = info.length < 2 ? mergeRuns((info[0] ? info[0].runs : []).slice())
+      : intersectRuns(info.map(function (x) { return x.runs; }), gran === 'day' ? 3 : 1);
     var datasets = series.map(function (s, i) {
       var role = s.role || (i ? 'series-2' : 'accent'), c = color(role), a = info[i];
       if (line) {
@@ -379,7 +413,7 @@
     var c = live.get(cv); if (state.get(cv).index != null) { select(c, null, true); c.render(); }
   });
 
-  /* Table view (§5.9): replaces the plot in place; newest first, null runs collapsed, 12 rows then "Show all". */
+  /* Table view (§5.9): replaces the plot in place at the plot's height; newest first, null runs collapsed, scrolls inside. */
   function toWeekly(labels, series, agg) {
     var keys = [], at = {}, size = {};
     labels.forEach(function (l) { var k = weekStart(l); if (!(k in at)) { at[k] = keys.length; keys.push(k); size[k] = 0; } size[k]++; });
@@ -419,7 +453,8 @@
         var j = i; while (j > 0 && empty(j - 1)) j--;
         var from = labels[j], to = periodEnd(labels[i], g);
         r.className = 'is-gap'; th.colSpan = heads.length;
-        th.textContent = dateRange(from, to) + ' · No data' + (out && out.length === 2 && from <= out[1] && to >= out[0] ? ' (collection outage)' : '');
+        var gt = gapText(from, to, out);
+        th.textContent = dateRange(from, to) + ' · No data' + gt.note;
         i = j - 1;
       } else {
         var total = 0; series.forEach(function (s) { total += s.data[i] || 0; });
@@ -435,14 +470,12 @@
         }
         i--;
       }
-      rows++; if (rows > 12) r.hidden = true;
+      rows++;
     }
+    /* every row, newest first, in a box of the plot's height that scrolls under a sticky header (keyboard-scrollable region) */
+    host.setAttribute('tabindex', '0'); host.setAttribute('role', 'region');
+    host.setAttribute('aria-label', cap1(metric) + ' table, ' + rows + ' rows');
     host.appendChild(tbl);
-    if (rows > 12) {
-      var b = document.createElement('button'); b.type = 'button'; b.className = 'v-chart-more';
-      b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', tb.id);
-      b.textContent = 'Show all ' + rows; b.setAttribute('data-label', b.textContent); host.appendChild(b);
-    }
   }
   document.addEventListener('click', function (e) {
     if (!e.target.closest) return;
@@ -460,9 +493,15 @@
     if (!cv || !host) return;
     var on = btn.getAttribute('aria-pressed') !== 'true';
     if (on && !host.hasAttribute('data-built')) { buildTable(cv, host); host.setAttribute('data-built', ''); }
+    var legend = card.querySelector('[data-chart-legend]');
+    if (on) {   /* the table takes exactly the room the plot (and a body legend) held, and scrolls inside it: the card never changes height (4.6 s, 5.9) */
+      var hgt = cv.parentNode.offsetHeight;
+      if (legend && legend.closest('.v-chart-body') && !legend.hidden) hgt += legend.offsetHeight + (parseFloat(getComputedStyle(legend).marginBottom) || 0);
+      if (hgt > 0) host.style.height = hgt + 'px';
+    }
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     cv.parentNode.hidden = on; host.hidden = !on;
-    var legend = card.querySelector('[data-chart-legend]'); if (legend) legend.hidden = on;
+    if (legend) legend.hidden = on;
     if (on && live.has(cv)) { select(live.get(cv), null, false); }
   });
 

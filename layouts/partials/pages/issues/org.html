@@ -1,5 +1,6 @@
 {{- /* /issues/ (brief 3.2a): all repositories. Context: the section page (content/issues/_index.md, .Params.repo empty).
-    1 Repo chips: links to /issues/<repo>/ with metrics.json issues.open_count (navigation, not filters).
+    1 Repo chips: links to /issues/<repo>/ with metrics.json issues.open_count (navigation, not filters), led by a visible
+      "Open issues" label so the bare counts are not read as waiting counts.
     2 Longest waiting for a maintainer reply: the union of every repo's metrics.json issues.issues_without_maintainer_response,
       oldest first; Repository · # · Issue (at most 2 tags) · Age · Comments; 25 rows, then "Show all N". No status markers (P4).
   Data as of = the oldest metrics.json timestamp across the repositories. No chart, so no gap notice. */ -}}
@@ -23,7 +24,7 @@
       (dict "term" "Longest waiting for a maintainer reply" "text" "Open issues by non-maintainers with no comment from a maintainer of their repository, at any age, oldest first."))) }}
 
 <nav class="v-section" aria-label="Open issues by repository">
-  <div class="v-chiplinks">{{ range $chips }}{{ partial "ui/chip.html" . }}{{ end }}</div>
+  <div class="v-chiplinks items-baseline"><span class="v-label">Open issues</span>{{ range $chips }}{{ partial "ui/chip.html" . }}{{ end }}</div>
 </nav>
 
 <section class="v-section" aria-labelledby="longest-waiting">
@@ -36,7 +37,6 @@
         "noun" "issues" "one" "issue" "total" $n) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list" id="io-table" aria-labelledby="longest-waiting">
-        <caption>Age is calendar days since the issue opened.</caption>
         <colgroup><col class="v-col-40"><col class="v-col-18"><col class="v-col-auto"><col class="v-col-20"><col class="v-col-24"></colgroup>
         <thead><tr>
           {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
@@ -51,6 +51,7 @@
           {{- end }}
         </tbody>
       </table>
+      <p class="v-card-note">Age is calendar days since the issue opened.</p>
       {{ partial "ui/more.html" (dict "list" "io" "controls" "io-table" "n" $n) }}
     </div>
     <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>

@@ -1,24 +1,47 @@
 {{- /* 3. Activity, last 26 weeks (brief 3.6-3, 5.1, 5.8): issues and PRs, open vs waiting past 7 days, as two daily line charts that share
   one x-domain and tick set (2-up at >= 64rem, stacked below). ui/chart.html draws the legend, end labels, gap band, reconstructed
-  caption and Table toggle, and shows the short-history body below 14 daily points. Context: the dict from pages/repo.html. */ -}}
+  caption and Table toggle.
+  Short history (fewer than 14 daily points in both series, 5.5; Rust SDK and Ruby SDK until their history is reconstructed or
+  reaches 14 days): a compact card with both current values and the date the trend appears. ui/chart.html's own short body keeps
+  the plot height and prints only the first series, which left two near-empty plot-height frames holding one number each.
+  Context: the dict from pages/repo.html. */ -}}
 {{- $r := .r }}{{ $s := .s -}}
-{{- $from := $s.iOpen.from }}{{ $to := $s.iOpen.to }}
+{{- $from := $s.iOpen.from }}{{ $to := $s.iOpen.to -}}
+{{- $cards := slice
+  (dict "id" "repo-issues" "title" "Issues" "metric" "issues" "one" "issue" "a" $s.iOpen "b" $s.iWait
+        "la" "Open" "lb" "Waiting for a reply > 7 days" "na" "open" "nb" "waiting for a reply > 7 days")
+  (dict "id" "repo-pulls" "title" "PRs" "metric" "PRs" "one" "PR" "a" $s.pOpen "b" $s.pWait
+        "la" "Open" "lb" "Waiting for first review > 7 days" "na" "open" "nb" "waiting for first review > 7 days") }}
 <section class="v-section" aria-labelledby="activity">
   {{ partial "ui/section-head.html" (dict "title" "Activity" "id" "activity" "caption" "Daily, last 26 weeks") }}
   <div class="v-grid">
+    {{- range $cards }}
+    {{- $c := . }}
     <div class="v-span-6">
-      {{ partial "ui/chart.html" (dict "id" "repo-issues" "title" "Issues" "metric" "issues" "metric_one" "issue" "scope" $r.name
+      {{- if and (lt (int $c.a.n) 14) (lt (int $c.b.n) 14) }}
+      {{- /* value line "31 open · 17 waiting for a reply > 7 days"; body "Tracking since …" dated by the first snapshot, as ui/chart.html words it */ -}}
+      {{- $vals := slice -}}
+      {{- if ne $c.a.cur nil }}{{ $vals = $vals | append (printf "%s %s" (lang.FormatNumber 0 (float $c.a.cur)) $c.na) }}{{ end -}}
+      {{- if ne $c.b.cur nil }}{{ $vals = $vals | append (printf "%s %s" (lang.FormatNumber 0 (float $c.b.cur)) $c.nb) }}{{ end -}}
+      {{- $body := printf "No data collected for %s yet." $r.name -}}
+      {{- with $c.a.first -}}
+        {{- $ft := time.AsTime . }}{{ $at := $ft.AddDate 0 0 13 -}}
+        {{- if gt ($at.Format "2006-01-02") $to -}}
+          {{- $body = printf "Tracking since %s. Trend appears after 14 days (%s)." ($ft.Format "Jan 2, 2006") ($at.Format "Jan 2") -}}
+        {{- else -}}
+          {{- $body = printf "Tracking since %s. Too few data points in this window for a trend." ($ft.Format "Jan 2, 2006") -}}
+        {{- end -}}
+      {{- end }}
+      {{- /* a no-break space (U+00A0) glues each "·" to the item before it, so a wrapped line never starts with it */}}
+      {{ partial "ui/empty.html" (dict "title" $c.title "id" (printf "%s-title" $c.id) "value" (delimit $vals (printf "%c· " 160)) "body" $body "size" "none") }}
+      {{- else }}
+      {{ partial "ui/chart.html" (dict "id" $c.id "title" $c.title "metric" $c.metric "metric_one" $c.one "scope" $r.name
           "unit" "count" "gran" "day" "from" $from "to" $to
           "series" (slice
-            (dict "label" "Open" "role" "accent" "points" $s.iOpen.points "reconstructed" $s.iOpen.reconstructed)
-            (dict "label" "Waiting for a reply > 7 days" "role" "series-2" "points" $s.iWait.points "reconstructed" $s.iWait.reconstructed))) }}
+            (dict "label" $c.la "role" "accent" "points" $c.a.points "reconstructed" $c.a.reconstructed)
+            (dict "label" $c.lb "role" "series-2" "points" $c.b.points "reconstructed" $c.b.reconstructed))) }}
+      {{- end }}
     </div>
-    <div class="v-span-6">
-      {{ partial "ui/chart.html" (dict "id" "repo-pulls" "title" "PRs" "metric" "PRs" "metric_one" "PR" "scope" $r.name
-          "unit" "count" "gran" "day" "from" $from "to" $to
-          "series" (slice
-            (dict "label" "Open" "role" "accent" "points" $s.pOpen.points "reconstructed" $s.pOpen.reconstructed)
-            (dict "label" "Waiting for first review > 7 days" "role" "series-2" "points" $s.pWait.points "reconstructed" $s.pWait.reconstructed))) }}
-    </div>
+    {{- end }}
   </div>
 </section>

@@ -1,23 +1,45 @@
 {{- /* 6. Community (brief 3.6-6): tiles (active, new, returned, maintainers active), the active-contributors trend, commits per week
-  (stacked under it: different windows), who was active in the last 30 days, and this repository's maintainers (omitted for a repo
-  with no maintainer group, where the "Maintainers active" tile says so). Context: the dict from pages/repo.html.
+  (stacked under it: different windows), who was active in the last 30 days, and this repository's maintainers (a repo with no
+  maintainer group says so in the "Maintainers active" tile). Context: the dict from pages/repo.html.
   Maintainer counts use this repository's groups only (pages/repo/roles.html), matched ignoring case (D1-5 rule). Until D1-5 lands
   (contributors.maintainers_present_30d) the metrics.json split counts any MCP maintainer, so the split, the name lists and the
   maintainer presence are computed here from the 30-day active list (previousPeriodContributors), and the trend shows the total
   only. Afterwards the data's own split is used, and the trend splits Maintainers/Others from the first repo-scoped snapshot
   (a snapshot carrying maintainers_total, or repos.json valid_from), so the two definitions are never drawn on one line.
-  D1-10 adds active_people (the "Active in the last 30 days" table) and retained_30d/retention_base_30d (the third tile). */ -}}
+  D1-10 adds active_people (the "Active in the last 30 days" table) and retained_30d/retention_base_30d (the third tile).
+  Layout decisions against the first render:
+  - Until D1-10 the maintainers sit inside the "Active in the last 30 days" card (active ones as links, the rest by name), instead
+    of a second, half-width table that repeated the same active names row by row.
+  - The "Others" names are capped at 30 with "Show all N" (ui.js [data-list]); 108 underlined names ran to 2.5 phone screens.
+  - A maintainer reads the same in every list: the activity list's spelling of the login ("DaleSeo", "poita"). */ -}}
 {{- $r := .r }}{{ $m := .m }}{{ $c := .c }}{{ $roles := .roles }}{{ $d15 := .d15 }}{{ $d110 := .d110 -}}
+{{- $lim := 30 -}}
 
 {{- /* Who was active: logins, then split by the repository's maintainer set */ -}}
 {{- $logins := slice -}}
 {{- if $c.active_people }}{{ range $c.active_people }}{{ with .login }}{{ $logins = $logins | append (string .) }}{{ end }}{{ end -}}
 {{- else }}{{ range $c.previousPeriodContributors | default slice }}{{ $logins = $logins | append (string .) }}{{ end }}{{ end -}}
-{{- $maint := slice }}{{ $others := slice -}}
+{{- $maint := slice }}{{ $others := slice }}{{ $sc := newScratch -}}
 {{- range $logins -}}
+  {{- $sc.SetInMap "as" (lower .) . -}}
   {{- if in $roles.lower (lower .) }}{{ $maint = $maint | append (dict "k" (lower .) "h" .) }}{{ else }}{{ $others = $others | append (dict "k" (lower .) "h" .) }}{{ end -}}
 {{- end -}}
 {{- if $maint }}{{ $maint = sort $maint "k" }}{{ end }}{{ if $others }}{{ $others = sort $others "k" }}{{ end -}}
+{{- $seenAs := $sc.Get "as" | default dict -}}
+
+{{- /* Maintainers of this repository: present = in the active list (D1-5: maintainers_present_30d, which also counts reviews and
+     comments). act = present maintainers in the activity list's spelling, idle = the rest in maintainers.json order (sorted). */ -}}
+{{- $present := slice -}}
+{{- if $d15 }}{{ range $c.maintainers_present_30d | default slice }}{{ $present = $present | append (lower (string .)) }}{{ end -}}
+{{- else }}{{ range $maint }}{{ $present = $present | append .k }}{{ end }}{{ end -}}
+{{- $actM := slice }}{{ $idleM := slice -}}
+{{- range $i, $h := $roles.handles -}}
+  {{- $k := index $roles.lower $i -}}
+  {{- if in $present $k }}{{ $actM = $actM | append (index $seenAs $k | default $h) }}{{ else }}{{ $idleM = $idleM | append $h }}{{ end -}}
+{{- end -}}
+{{- $nAct := len $actM -}}
+{{- $mRight := "" }}{{ with $roles.handles }}{{ $mRight = printf "%d of %d active in the last 30 days" $nAct (len .) }}{{ end -}}
+{{- $mEmpty := cond $roles.defined "No maintainers are listed for this repository's groups in modelcontextprotocol/access." "No maintainer group is defined for this repository." -}}
 
 {{- /* Maintainers vs others for the tile bar and caption */ -}}
 {{- $split := false }}{{ $mn := 0 }}{{ $on := 0 -}}
@@ -30,13 +52,15 @@
 {{- end -}}
 {{- $cap := "" }}{{ $bar := "" -}}
 {{- if $split -}}
-  {{- /* a no-break space before the "·", so a wrapped caption never starts a line with it */ -}}
-  {{- $cap = printf "%s · %s" (partial "ui/plural.html" (dict "n" $mn "one" "maintainer")) (partial "ui/plural.html" (dict "n" $on "one" "other")) -}}
+  {{- /* two nowrap items, the "·" glued to the first by a no-break space, so a wrapped caption never splits "108 others" or starts a
+       line with the separator (6.1 rule 2) */ -}}
+  {{- $cap = printf `<span class="v-nowrap">%s&nbsp;·</span> <span class="v-nowrap">%s</span>`
+      (partial "ui/plural.html" (dict "n" $mn "one" "maintainer")) (partial "ui/plural.html" (dict "n" $on "one" "other")) | safeHTML -}}
   {{- $bar = partial "ui/stackbar.html" (dict "legend" "none" "segments" (slice
       (dict "label" "Maintainers" "n" $mn "role" "accent") (dict "label" "Others" "n" $on "role" "seg-neutral"))) -}}
 {{- end -}}
 
-{{- /* Tiles: active contributors (with the 2-segment bar), new contributors, returned from last month (D1-10 only) */ -}}
+{{- /* Tiles: active contributors (with the 2-segment bar), new contributors, returned from last month (D1-10 only), maintainers active */ -}}
 {{- $actTitle := cond $d110
   "Distinct people, known bots excluded, who opened an issue or PR, authored a commit, reviewed or commented"
   "Distinct people, known bots excluded, who opened an issue or PR or authored a commit; reviews and comments are not counted yet" -}}
@@ -52,6 +76,12 @@
   {{- $ret := printf "of %s active 30–60 days ago" (lang.FormatNumber 0 $base) -}}
   {{- if ge $base 20.0 }}{{ $ret = printf "%s (%s)" $ret (partial "ui/pct.html" (mul (div (float $c.retained_30d) $base) 100.0)) }}{{ end -}}
   {{- $tiles = $tiles | append (dict "label" "Returned from last month" "value" $c.retained_30d "context" $ret) -}}
+{{- end -}}
+{{- if $roles.handles -}}
+  {{- $tiles = $tiles | append (dict "label" "Maintainers active" "qualifier" "last 30 days" "value" $nAct
+      "context" (printf "of %s" (partial "ui/plural.html" (dict "n" (len $roles.handles) "one" "maintainer")))) -}}
+{{- else -}}
+  {{- $tiles = $tiles | append (dict "label" "Maintainers active" "value" nil "na" "no maintainer group" "context" $mEmpty) -}}
 {{- end -}}
 
 {{- /* Trend: 52 ISO weeks, last value per week. The total until a repo-scoped split has 4 weekly points. */ -}}
@@ -78,7 +108,7 @@
 {{- end -}}
 {{- /* The domain starts at the first week with a value, so a repo tracked for less than a year has no empty lead-in. A repo tracked
      for under 4 weeks gets the short-history card dated by its first snapshot (Rust SDK, Ruby SDK: "Tracking since Nov 10, 2026"),
-     not by the Monday of its first weekly bin (5.5). */ -}}
+     not by the Monday of its first weekly bin (5.5); the card is compact because it stands alone at full width. */ -}}
 {{- $trendFrom := "" }}{{ $trendN := 0 -}}
 {{- range (index $ser 0).points }}{{ if ne .value nil }}{{ if eq $trendFrom "" }}{{ $trendFrom = .date }}{{ end }}{{ $trendN = add $trendN 1 }}{{ end }}{{ end -}}
 {{- $trendShort := false -}}
@@ -94,23 +124,6 @@
   {{- $ts := time.AsTime $m.timestamp }}{{ $n := len $trend -}}
   {{- range $i, $v := $trend }}{{ $cpts = $cpts | append (dict "date" (($ts.AddDate 0 0 (int (mul -7 (sub $n $i)))).Format "2006-01-02") "value" (float $v)) }}{{ end -}}
   {{- $avg = div $sum (float $n) -}}
-{{- end -}}
-
-{{- /* Maintainers of this repository: present = in the active list (D1-5: maintainers_present_30d, which also counts reviews and comments) */ -}}
-{{- $present := slice -}}
-{{- if $d15 }}{{ range $c.maintainers_present_30d | default slice }}{{ $present = $present | append (lower (string .)) }}{{ end -}}
-{{- else }}{{ range $maint }}{{ $present = $present | append .k }}{{ end }}{{ end -}}
-{{- $mrows := slice }}{{ $nAct := 0 -}}
-{{- range $i, $h := $roles.handles }}{{ if in $present (index $roles.lower $i) }}{{ $mrows = $mrows | append (dict "h" $h "on" true) }}{{ $nAct = add $nAct 1 }}{{ end }}{{ end -}}
-{{- range $i, $h := $roles.handles }}{{ if not (in $present (index $roles.lower $i)) }}{{ $mrows = $mrows | append (dict "h" $h "on" false) }}{{ end }}{{ end -}}
-{{- $mRight := "" }}{{ with $roles.handles }}{{ $mRight = printf "%d of %d active in the last 30 days" $nAct (len .) }}{{ end -}}
-{{- $mEmpty := cond $roles.defined "No maintainers are listed for this repository's groups in modelcontextprotocol/access." "No maintainer group is defined for this repository." -}}
-{{- /* Glossary "Maintainers active": n of N; a repo with no group (conformance) says so here and drops the list card */ -}}
-{{- if $roles.handles -}}
-  {{- $tiles = $tiles | append (dict "label" "Maintainers active" "qualifier" "last 30 days" "value" $nAct
-      "context" (printf "of %s" (partial "ui/plural.html" (dict "n" (len $roles.handles) "one" "maintainer")))) -}}
-{{- else -}}
-  {{- $tiles = $tiles | append (dict "label" "Maintainers active" "value" nil "na" "no maintainer group" "context" $mEmpty) -}}
 {{- end }}
 <section class="v-section" aria-labelledby="community">
   {{ partial "ui/section-head.html" (dict "title" "Community" "id" "community") }}
@@ -118,7 +131,7 @@
     {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Community summary") }}
 
     {{- if $trendShort }}
-    {{ partial "ui/empty.html" (dict "title" "Active contributors" "id" "repo-contributors-title" "value" $trendVal "since" $tot.first) }}
+    {{ partial "ui/empty.html" (dict "title" "Active contributors" "id" "repo-contributors-title" "value" $trendVal "since" $tot.first "size" "none") }}
     {{- else }}
     {{ partial "ui/chart.html" (dict "id" "repo-contributors" "title" "Active contributors" "sub" "people active in the previous 30 days, by week"
         "metric" "active contributors" "metric_one" "active contributor" "scope" $r.name "unit" "count" "gran" "week" "fill" false
@@ -131,14 +144,14 @@
         "cap_label" true "ticks" "all" "avg" $avg "avg_label" (printf "12-wk avg %.1f" $avg)
         "series" (slice (dict "label" "Commits" "points" $cpts))) }}
     {{- else if $trend }}
-    {{ partial "ui/empty.html" (dict "title" "Commits per week" "body" "No commits on the default branch in the last 12 weeks.") }}
+    {{ partial "ui/empty.html" (dict "title" "Commits per week" "body" "No commits on the default branch in the last 12 weeks." "size" "none") }}
     {{- else }}
-    {{ partial "ui/empty.html" (dict "title" "Commits per week" "body" (printf "No data collected for %s yet." $r.name)) }}
+    {{ partial "ui/empty.html" (dict "title" "Commits per week" "body" (printf "No data collected for %s yet." $r.name) "size" "none") }}
     {{- end }}
 
     {{- $nPeople := len $logins }}
     {{- if $c.active_people }}
-    {{- /* D1-10: one row per person, most active first */ -}}
+    {{- /* D1-10: one row per person, most active first; the maintainers follow in their own compact card */ -}}
     {{- $rows := slice -}}
     {{- range $c.active_people -}}
       {{- $t := add (add (float (.prs_opened | default 0)) (float (.issues_opened | default 0))) (add (float (.reviews | default 0)) (float (.commits | default 0))) -}}
@@ -174,21 +187,22 @@
         {{ partial "ui/more.html" (dict "list" "people" "controls" "people-table" "n" (len $rows)) }}
       </div>
     </div>
-    {{- else }}
-    {{- /* Until D1-10: names only, grouped by this repository's maintainer set */}}
+    {{- if $roles.defined }}
     <div class="v-card">
+      {{ partial "ui/card-head.html" (dict "title" "Maintainers of this repository" "id" "maintainers-title" "right" $mRight) }}
+      <div class="v-card-body">{{ partial "pages/repo/maintainers.html" (dict "act" $actM "idle" $idleM "empty" $mEmpty) }}</div>
+    </div>
+    {{- end }}
+    {{- else }}
+    {{- /* Until D1-10: names only. Maintainers of this repository first (active as links, the rest by name), then everyone else. */}}
+    <div class="v-card" data-list id="people" data-limit="{{ $lim }}">
       {{ partial "ui/card-head.html" (dict "title" "Active in the last 30 days" "id" "people-title" "right" (cond (gt $nPeople 0) (partial "ui/plural.html" (dict "n" $nPeople "one" "person" "other" "people")) "")) }}
       <div class="v-card-body">
-        {{- if $logins }}
         <div class="v-flow">
           {{- if $roles.defined }}
           <div>
-            <h4 class="v-subhead">Maintainers <span class="v-muted">{{ len $maint }}</span></h4>
-            {{- if $maint }}
-            <ul class="v-chiplinks mt-2">{{ range $maint }}<li><a class="v-chiplink" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a></li>{{ end }}</ul>
-            {{- else }}
-            <p class="v-empty-text mt-2">No maintainer activity in the last 30 days.</p>
-            {{- end }}
+            <h4 class="v-subhead">Maintainers{{ with $roles.handles }} <span class="v-muted">{{ $nAct }} of {{ len . }} active</span>{{ end }}</h4>
+            <div class="mt-2">{{ partial "pages/repo/maintainers.html" (dict "act" $actM "idle" $idleM "empty" $mEmpty) }}</div>
           </div>
           {{- end }}
           {{- if $others }}
@@ -196,40 +210,16 @@
             {{- if $roles.defined }}
             <h4 class="v-subhead">Others <span class="v-muted">{{ len $others }}</span></h4>
             {{- end }}
-            <ul class="v-chiplinks{{ if $roles.defined }} mt-2{{ end }}">{{ range $others }}<li><a class="v-chiplink" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a></li>{{ end }}</ul>
+            <ul class="v-chiplinks{{ if $roles.defined }} mt-2{{ end }}" id="people-others">
+              {{- range $i, $o := $others }}<li data-row{{ if ge $i $lim }} data-over{{ end }}><a class="v-chiplink" href="https://github.com/{{ $o.h }}" target="_blank" rel="noopener">{{ $o.h }}<span class="sr-only"> (opens GitHub)</span></a></li>{{ end -}}
+            </ul>
           </div>
-          {{- end }}
-        </div>
-        {{- else }}
-        {{ partial "ui/empty.html" (dict "card" false "size" "none" "body" "No contributor activity in the last 30 days.") }}
-        {{- end }}
-      </div>
-    </div>
-    {{- end }}
-
-    {{- if $roles.defined }}
-    <div class="v-grid">
-      <div class="v-span-6">
-        <div class="v-card">
-          {{ partial "ui/card-head.html" (dict "title" "Maintainers of this repository" "id" "maintainers-title" "right" $mRight) }}
-          {{- if $mrows }}
-          <table class="v-dt is-fixed is-list" aria-labelledby="maintainers-title">
-            <colgroup><col class="v-col-auto"><col class="v-col-48"></colgroup>
-            <thead><tr><th scope="col">Maintainer</th><th scope="col">Last 30 days</th></tr></thead>
-            <tbody>
-              {{- range $mrows }}
-              <tr data-row-link>
-                <td class="v-title-cell"><a class="v-row-link" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a></td>
-                <td class="v-verdict{{ if not .on }} v-muted{{ end }}">{{ if .on }}Active{{ else }}No activity in 30 days{{ end }}</td>
-              </tr>
-              {{- end }}
-            </tbody>
-          </table>
-          {{- else }}
-          <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" $mEmpty) }}</div>
+          {{- else if not $logins }}
+          {{ partial "ui/empty.html" (dict "card" false "size" "none" "body" "No contributor activity in the last 30 days.") }}
           {{- end }}
         </div>
       </div>
+      {{ partial "ui/more.html" (dict "list" "people" "controls" "people-others" "n" (len $others) "limit" $lim) }}
     </div>
     {{- end }}
   </div>

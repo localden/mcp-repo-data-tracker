@@ -1,8 +1,9 @@
 {{- /* Null runs inside a charted window (§2.4, §5.3). Leading nulls (before a series starts) are not gaps; trailing ones are.
   Call: $g := partial "data/gaps.html" (dict "points" $s.points ["min" 3] ["gran" "day|week"])
     points: [{date, value|nil}], one per label, ascending; min: shortest run that counts (default 3 days; use 1 for weekly bins).
-  Returns []dict{from, to ("YYYY-MM-DD"; for weeks, to is the last week's Sunday), n (labels in the run), outage bool (intersects the
-  collection outage), text ("No data · Oct 8 – Nov 9, 2026 (collection outage)" or "No data · {from} – {to}")}. */ -}}
+  Returns []dict{from, to ("YYYY-MM-DD"; for weeks, to is the last week's Sunday), n (labels in the run), outage bool (the run lies
+  inside the collection outage, 6 days of slack), touches bool (it intersects the outage at all), text ("No data · Oct 8 – Nov 9, 2026
+  (collection outage)", "No data · Aug 31 – Oct 25, 2026 (includes the Oct 8 – Nov 9, 2026 collection outage)" or "No data · {from} – {to}")}. */ -}}
 {{- $gran := .gran | default "day" -}}
 {{- $min := int (.min | default (cond (eq $gran "week") 1 3)) -}}
 {{- $o := partial "data/outage.html" . -}}
@@ -21,7 +22,13 @@
 {{- range $runs -}}
   {{- $to := .last }}{{ if eq $gran "week" }}{{ $to = (time.AsTime .last).AddDate 0 0 6 | time.Format "2006-01-02" }}{{ end -}}
   {{- $hit := and (le .from $o.to) (ge $to $o.from) -}}
-  {{- $text := cond $hit $o.band (printf "No data · %s" (partial "data/date-range.html" (dict "from" .from "to" $to))) -}}
-  {{- $out = $out | append (dict "from" .from "to" $to "n" .n "outage" $hit "text" $text) -}}
+  {{- /* named the outage only when the run lies inside it (6 days of slack for week rounding); a longer run that merely touches
+       it keeps its own dates. Mirrors gapText() in static/js/charts.js. */ -}}
+  {{- $lo := ((time.AsTime $o.from).AddDate 0 0 -6).Format "2006-01-02" }}{{ $hiD := ((time.AsTime $o.to).AddDate 0 0 6).Format "2006-01-02" -}}
+  {{- $inside := and $hit (ge .from $lo) (le $to $hiD) -}}
+  {{- $rng := partial "data/date-range.html" (dict "from" .from "to" $to) -}}
+  {{- $text := $o.band -}}
+  {{- if not $inside }}{{ $text = printf "No data · %s%s" $rng (cond $hit (printf " (includes the %s collection outage)" $o.range) "") }}{{ end -}}
+  {{- $out = $out | append (dict "from" .from "to" $to "n" .n "outage" $inside "touches" $hit "text" $text) -}}
 {{- end -}}
 {{- return $out -}}

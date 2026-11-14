@@ -1,9 +1,12 @@
 {{- /* 4. Flow (brief 3.6-4): issues opened, closed and net; PRs opened, merged and closed without merging; last 7, 30 and 90 days from
   metrics.json. Plain numbers, no links (P6). Closed without merging is collected for 90 days only, so 7 and 30 days read "—".
-  A matrix table on desktop, one block per row on phones (7.1 R3). Context: the dict from pages/repo.html. */ -}}
+  Rendered as two cards, Issues and PRs, side by side at >= 64rem, so each sits under its Activity chart and the row is balanced:
+  one 4-column table at span 6 left half the row empty, and the phone blocks (one per measure) ran to six blocks. Each card is a
+  4-column table of short numbers that fits at 390px, so it stays a table on phones (no horizontal scroll, R1/R3).
+  Context: the dict from pages/repo.html. */ -}}
 {{- $m := .m -}}
 {{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
-{{- $heads := slice "Last 7 days" "30 days" "90 days" -}}
+{{- $heads := slice "7 days" "30 days" "90 days" -}}
 {{- $iOpened := slice }}{{ $iClosed := slice }}{{ $iNet := slice }}{{ $pOpened := slice }}{{ $pMerged := slice }}{{ $pClosed := slice -}}
 {{- range slice "7d" "30d" "90d" -}}
   {{- $o := index $is (printf "opened_%s" .) }}{{ $x := index $is (printf "closed_%s" .) -}}
@@ -16,39 +19,33 @@
   {{- if eq . "90d" }}{{ $pClosed = $pClosed | append (dict "v" $pr.closed_not_merged_90d) -}}
   {{- else }}{{ $pClosed = $pClosed | append (dict "v" nil "na" "tracked for 90 days only") }}{{ end -}}
 {{- end -}}
-{{- $groups := slice
-  (dict "label" "Issues" "rows" (slice
-    (dict "label" "Opened" "long" "Issues opened" "cells" $iOpened)
-    (dict "label" "Closed" "long" "Issues closed" "cells" $iClosed)
-    (dict "label" "Net change" "long" "Net change in issues" "cells" $iNet)))
-  (dict "label" "PRs" "rows" (slice
-    (dict "label" "Opened" "long" "PRs opened" "cells" $pOpened)
-    (dict "label" "Merged" "long" "PRs merged" "cells" $pMerged)
-    (dict "label" "Closed without merging" "long" "PRs closed without merging" "cells" $pClosed))) }}
+{{- $cards := slice
+  (dict "id" "flow-issues" "title" "Issues" "rows" (slice
+    (dict "label" "Opened" "cells" $iOpened)
+    (dict "label" "Closed" "cells" $iClosed)
+    (dict "label" "Net change" "cells" $iNet)))
+  (dict "id" "flow-pulls" "title" "PRs" "rows" (slice
+    (dict "label" "Opened" "cells" $pOpened)
+    (dict "label" "Merged" "cells" $pMerged)
+    (dict "label" "Closed without merging" "cells" $pClosed))) }}
 <section class="v-section" aria-labelledby="flow">
-  {{ partial "ui/section-head.html" (dict "title" "Flow" "id" "flow" "caption" "Issues and PRs opened and closed in each window") }}
+  {{ partial "ui/section-head.html" (dict "title" "Flow" "id" "flow" "caption" "Opened and closed in the last 7, 30 and 90 days") }}
   <div class="v-grid">
+    {{- range $cards }}
     <div class="v-span-6">
       <div class="v-card">
-        <table class="v-dt is-fixed v-desk-only" aria-labelledby="flow">
-          <colgroup><col class="v-col-auto"><col class="v-col-24"><col class="v-col-24"><col class="v-col-24"></colgroup>
-          <thead><tr><th scope="col"><span class="sr-only">Measure</span></th>{{ range $heads }}<th scope="col" class="num">{{ . }}</th>{{ end }}</tr></thead>
-          {{- range $groups }}
+        {{ partial "ui/card-head.html" (dict "title" .title "id" (printf "%s-title" .id)) }}
+        <table class="v-dt is-fixed" aria-labelledby="{{ .id }}-title">
+          <colgroup><col class="v-col-auto"><col class="v-col-20"><col class="v-col-20"><col class="v-col-20"></colgroup>
+          <thead><tr><th scope="col"><span class="sr-only">{{ .title }}</span></th>{{ range $heads }}<th scope="col" class="num">{{ . }}</th>{{ end }}</tr></thead>
           <tbody>
-            {{ partial "ui/group-row.html" (dict "label" .label "cols" 4) }}
             {{- range .rows }}
             <tr><th scope="row">{{ .label }}</th>{{ range .cells }}<td class="num">{{ partial "pages/repo/flow-cell.html" . }}</td>{{ end }}</tr>
             {{- end }}
           </tbody>
-          {{- end }}
         </table>
-        <ul class="v-blocks v-phone-only">
-          {{- range $groups }}{{ range .rows }}
-          <li class="v-block"><p class="v-block-title">{{ .long }}</p>
-            <dl class="v-kv">{{ range $i, $cell := .cells }}<div><dt>{{ index $heads $i }}</dt><dd>{{ partial "pages/repo/flow-cell.html" $cell }}</dd></div>{{ end }}</dl></li>
-          {{- end }}{{ end }}
-        </ul>
       </div>
     </div>
+    {{- end }}
   </div>
 </section>

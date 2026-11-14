@@ -1,9 +1,10 @@
 {{- /* Chip (brief 4.6 g). Dict {label, tag, pressed, count, group, for, href, title}.
   Without href: a filter toggle, button[aria-pressed][data-chip=tag]. ui.js keeps rows whose data-tags contain every pressed tag.
     group: chips in one group are mutually exclusive; for: the id of the [data-list] it filters when the chip sits outside it.
-  With href: a navigation chip (repo chips on org views), a .v-chiplink link with the count in muted. count 0 still prints "0". */ -}}
+  With href: a navigation chip (repo chips on org views), a .v-chiplink link with the count in muted. count 0 still prints "0".
+    Chip links are not in-text links: link colour, no underline at rest; on hover only the label (.v-chiplink-text) underlines. */ -}}
 {{- if .href -}}
-<a class="v-chiplink" href="{{ .href }}"{{ with .title }} title="{{ . }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-count">{{ partial "ui/num.html" (dict "v" .count "mode" "full") }}</span>{{ end }}</a>
+<a class="v-chiplink" href="{{ .href }}"{{ with .title }} title="{{ . }}"{{ end }}><span class="v-chiplink-text">{{ .label }}</span>{{ if ne .count nil }}<span class="v-count">{{ partial "ui/num.html" (dict "v" .count "mode" "full") }}</span>{{ end }}</a>
 {{- else -}}
 <button type="button" class="v-chip" data-chip="{{ .tag }}"{{ with .group }} data-chip-group="{{ . }}"{{ end }}{{ with .for }} data-for="{{ . }}"{{ end }}{{ with .title }} title="{{ . }}"{{ end }} aria-pressed="{{ if .pressed }}true{{ else }}false{{ end }}">{{ partial "ui/icon.html" (dict "name" "check" "class" "v-chip-check") }}{{ .label }}{{ if ne .count nil }}<span class="v-count">{{ partial "ui/num.html" (dict "v" .count "mode" "full") }}</span>{{ end }}</button>
 {{- end -}}

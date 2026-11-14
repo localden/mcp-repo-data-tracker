@@ -3,8 +3,9 @@
        0 page head (scope switcher; one "Data as of" = the older of metrics.json timestamp and actionability.json lastUpdated)
        1 Review SLAs (pulls/sla)  2 Queue (pulls/queue, or pulls/unclassified without actionability.json)
        3 Backlog (pulls/backlog)  4 Review speed (pulls/speed)  5 Where merged PRs land (pulls/hotspots)
-     Helpers: pulls/rows (actionability -> table rows), pulls/row, pulls/reason (the only reader of short_reason), pulls/state-label,
-     pulls/wait (whole days), pulls/typical-week, pulls/sep-stages. */ -}}
+     Helpers: pulls/rows (actionability -> table rows, partialCached per repo), pulls/row, pulls/reason (the only reader of
+     short_reason), pulls/state-label, pulls/meta (the dotted row meta line), pulls/wait (whole days), pulls/typical-week,
+     pulls/sep-stages. */ -}}
 {{- $key := .Params.repo | default "" -}}
 {{- if not $key }}
 {{ partial "pages/pulls/org.html" . }}
@@ -17,7 +18,8 @@
 {{- /* page head: sources, gap notice (GitHub data first; once that gap is backfilled, the classification gap that cannot be), definitions */ -}}
 {{- $use := slice "metrics" }}{{ if $classified }}{{ $use = $use | append "actionability" }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
-{{- $gap := dict "repos" (slice $r.key) "days" 182 -}}
+{{- /* the default tail adds "7-day comparisons use the nearest earlier snapshot"; this page shows no 7-day comparison, so it is left out */ -}}
+{{- $gap := dict "repos" (slice $r.key) "days" 182 "tail" "Charts show the gap." -}}
 {{- $notes := slice -}}
 {{- if $classified -}}
   {{- $gh := partial "ui/page-gaps.html" $gap -}}
@@ -32,14 +34,22 @@
 {{- end -}}
 {{- $defs := slice -}}
 {{- if $classified -}}
+  {{- /* the queue rows, cached per repo (pages/pulls/queue.html reads the same cache entry): Age until the classifier exports waiting_days */ -}}
+  {{- $q := partialCached "pages/pulls/rows.html" $a $r.key -}}
   {{- $defs = $defs | append
     (dict "term" "First review overdue" "text" "Classified PRs with no maintainer review yet (none, or community reviews only) waiting more than 7 days. Team SLA.")
     (dict "term" "Re-review overdue" "text" "The author updated the PR after a change request and no maintainer re-reviewed it within 24 hours. Team SLA.")
     (dict "term" "Maintainer PRs unreviewed" "text" "Maintainer-authored PRs with no review from another maintainer within 24 hours. Team SLA.")
     (dict "term" "Needs a maintainer" "text" "Open PRs whose next step is a maintainer's, according to the PR classifier. Duplicate PRs fold under their primary PR and still count.")
+    (dict "term" "Author waiting on us" "text" "PRs whose author is waiting on a maintainer: the author did what was asked, or a maintainer's own PR awaits a review.")
     (dict "term" "Housekeeping" "text" "Open PRs that need a nudge or a cleanup rather than a review.")
     (dict "term" "Close candidates" "text" "Open PRs the classifier suggests closing, such as inactive PRs with failing CI.")
     (dict "term" "Waiting on author" "text" "Open PRs whose next step is not a maintainer's, such as drafts, parked maintainer drafts and release PRs.") -}}
+  {{- if $q.wait -}}
+    {{- $defs = $defs | append (dict "term" "Waiting on us" "text" "Whole days since the next step moved to a maintainer, from the PR classifier.") -}}
+  {{- else -}}
+    {{- $defs = $defs | append (dict "term" "Age" "text" "Calendar days since the PR opened.") -}}
+  {{- end -}}
 {{- else -}}
   {{- $defs = $defs | append
     (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")

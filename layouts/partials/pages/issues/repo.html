@@ -26,7 +26,7 @@
 
 {{ partial "ui/page-head.html" (dict
     "title" .Title "repo" $r.key "switch" "issues" "links" $links "sources" $src
-    "gap" (dict "repos" (slice $r.key) "days" 182) "defs" $defs) }}
+    "gap" (dict "repos" (slice $r.key) "days" 182 "tail" "Charts show the gap.") "defs" $defs) }}
 
 {{- if not (reflect.IsMap $m) }}
 <section class="v-section" aria-label="No data">

@@ -1,5 +1,6 @@
 /* VISR ui.js: legacy ?repo= redirects, header height, row links, disclosures, Table toggles, tabs, list filtering
-   (tabs + chips + search + rule filter + "Show all"), sortable headers, scroll edge fades.
+   (tabs + chips + search + rule filter + "Show all"; data-url lists keep ?tab=, ?q= and ?chip=a,b in the URL), sortable headers,
+   scroll edge fades.
    Data-attribute contracts: build/wp0a-api.md. Never smooth-scrolls (brief 7.3 A8). */
 (function () {
   'use strict';
@@ -150,6 +151,7 @@
       var u = new URL(location.href), q = this.input ? this.input.value.trim() : '';
       if (this.tab && this.tab !== this.defaultTab) u.searchParams.set('tab', this.tab); else u.searchParams.delete('tab');
       if (q) u.searchParams.set('q', q); else u.searchParams.delete('q');
+      var ch = this.pressed(); if (ch.length) u.searchParams.set('chip', ch.join(',')); else u.searchParams.delete('chip');
       history.replaceState(history.state, '', u.pathname + u.search + u.hash);
     } catch (e) {}
   };
@@ -166,6 +168,14 @@
         var t = p.get('tab'), tab = t && this.tabs().filter(function (x) { return x.getAttribute('data-tab') === t; })[0];
         if (tab) { markTab(tab); this.tab = t; }
         if (this.input && p.get('q')) this.input.value = p.get('q');
+        /* ?chip=a,b presses those chips (deep links such as Overview "Author waiting on us" -> ?chip=waiting); one per group */
+        var want = (p.get('chip') || '').split(',').filter(Boolean), seen = {};
+        if (want.length) this.chips().forEach(function (c) {
+          var tok = c.getAttribute('data-chip'), g = c.getAttribute('data-chip-group');
+          if (want.indexOf(tok) === -1 || (g && seen[g])) return;
+          if (g) seen[g] = true;
+          c.setAttribute('aria-pressed', 'true');
+        });
       }
     }
     this.el.classList.add('is-ready');
@@ -299,7 +309,10 @@
 
   /* ---- right-edge fade while a scroller has more content (.v-scroll, .v-tabs) */
   var ro = window.ResizeObserver ? new ResizeObserver(function (es) { es.forEach(function (x) { edge(x.target); }); }) : null;
-  function edge(el) { el.classList.toggle('is-clipped', el.scrollLeft + el.clientWidth < el.scrollWidth - 1); }
+  function edge(el) {   /* is-scrollable gates the sticky first column (no rule beside a table that fits); is-clipped the fade */
+    el.classList.toggle('is-scrollable', el.scrollWidth > el.clientWidth + 1);
+    el.classList.toggle('is-clipped', el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
   all('.v-scroll, .v-tabs').forEach(function (el) {
     edge(el); el.addEventListener('scroll', function () { edge(el); }, { passive: true }); if (ro) ro.observe(el);
   });

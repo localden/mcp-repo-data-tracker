@@ -2,7 +2,10 @@
      (links to /pulls/<repo>/ with metrics › pulls.open_count), then one merged list "Waiting for first review": every repo's
      metrics › pulls.prs_without_maintainer_review with isDraft false, longest wait first, a search field (title, repository,
      author), 25 rows then "Show all" (the same list scope as /issues/).
-     Columns: Repository · # · Pull request · Author · Lines changed · Waiting. No row status (no SLA tier, never on age alone, 8a-8). */ -}}
+     Columns: Repository · # · Pull request · Author · Lines changed · Waiting. No row status (no SLA tier, never on age alone, 8a-8).
+     Phones (.is-list) keep the title and Waiting; one meta line (pages/pulls/meta.html) replaces the hidden columns and the tag row:
+     "MCP Bundles · #103 · stephaneberle9 · +256 −6 · enhancement". "Waiting" is defined in Data notes; no <caption> (a caption renders
+     one word per line in .is-list). */ -}}
 {{- $keys := slice }}{{ range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
 {{ partial "ui/page-head.html" (dict "title" .Title "repo" "" "switch" "pulls" "sources" $src
@@ -37,7 +40,7 @@
 
 <section class="v-section" aria-labelledby="waiting">
   {{ partial "ui/section-head.html" (dict "title" "Waiting for first review" "id" "waiting"
-      "caption" (printf "%s with no maintainer review, longest wait first" (partial "ui/plural.html" (dict "n" $n "one" "non-draft PR")))) }}
+      "caption" (printf "%s with no maintainer review" (partial "ui/plural.html" (dict "n" $n "one" "non-draft PR")))) }}
   {{- if $rows }}
   {{- /* the same list scope as /issues/ "Longest waiting for a maintainer reply": search, sortable Repository and Waiting, 25 rows */}}
   <div data-list id="pw" data-limit="25" data-url>
@@ -45,7 +48,6 @@
         "noun" "PRs" "one" "PR" "total" $n) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list" id="pw-table" aria-labelledby="waiting">
-        <caption>Waiting counts calendar days since the PR opened.</caption>
         <colgroup><col class="v-col-40"><col class="v-col-18"><col class="v-col-auto"><col class="v-col-40"><col class="v-col-28"><col class="v-col-24"></colgroup>
         <thead><tr>
           {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
@@ -68,14 +70,19 @@
             {{- end -}}
             {{- $adds := float ($pr.additions | default 0) }}{{ $dels := float ($pr.deletions | default 0) -}}
             {{- $lines := printf "+%s −%s" (lang.FormatNumber 0 $adds) (lang.FormatNumber 0 $dels) -}}
+            {{- /* phones: one meta line "MCP Bundles · #103 · stephaneberle9 · +256 −6 · enhancement" in place of the hidden columns and tag row */ -}}
+            {{- $phoneMeta := slice (htmlEscape $row.name) (htmlEscape (printf "#%d" $num)) -}}
+            {{- with $author }}{{ $phoneMeta = $phoneMeta | append (htmlEscape .) }}{{ end -}}
+            {{- $phoneMeta = $phoneMeta | append (htmlEscape $lines) -}}
+            {{- range $tags }}{{ $phoneMeta = $phoneMeta | append (partial "ui/tag.html" .) }}{{ end -}}
             {{- $wd := partial "pages/pulls/wait.html" ($pr.daysWaiting | default 0) }}
           <tr data-row data-row-link data-text="{{ lower (printf "%s|%s|%s" (string ($pr.title | default "")) $row.name $author) }}"{{ if ge $i 25 }} data-over{{ end }}>
             <td>{{ $row.name }}</td>
             <td class="v-muted">#{{ $num }}</td>
             <td class="v-title-cell">
               <a class="v-row-link v-clamp" href="{{ $pr.url }}" target="_blank" rel="noopener">{{ $pr.title }}<span class="sr-only"> (opens GitHub)</span></a>
-              {{- partial "ui/tag.html" $tags }}
-              <span class="v-listmeta"><span>{{ $row.name }}</span><span>#{{ $num }}</span><span>{{ $author }}</span><span>{{ $lines }}</span></span>
+              <span class="v-hide-list">{{ partial "ui/tag.html" $tags }}</span>
+              <span class="v-listmeta"><span class="whitespace-normal">{{ partial "pages/pulls/meta.html" $phoneMeta }}</span></span>
             </td>
             <td><span class="block truncate" title="{{ $author }}">{{ $author }}</span></td>
             <td class="num">{{ $lines }}</td>

@@ -4,7 +4,9 @@
      Other repos: one neutral tile, "PRs waiting for first review" (glossary 6.2; the brief's interim "No first review > 7 days" puts
        the window on line 1, against 6.1 rule 1), from metrics › pulls.without_review_7d over the non-draft rows of
        prs_without_maintainer_review (the same number as Overview's "No first review" column), then one muted line on the missing
-       classification. */ -}}
+       classification.
+     A one-tile card sits on a 4-column span (half below 64rem, full on phones), so it reads like one tile of the 3-up card instead of
+     a 1216px-wide tile with its 32px sparkline stretched across the page. */ -}}
 {{- $r := .r -}}
 {{- $tiles := slice -}}
 {{- if .classified -}}
@@ -46,7 +48,8 @@
   {{- $nd := 0 }}{{ range $pl.prs_without_maintainer_review | default slice }}{{ if not .isDraft }}{{ $nd = add $nd 1 }}{{ end }}{{ end -}}
   {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.without_review_7d") -}}
   {{- $ctx := "No open PRs are waiting for a maintainer review" -}}
-  {{- if gt $nd 0 }}{{ $ctx = printf "of %s with no maintainer review" (partial "ui/plural.html" (dict "n" $nd "one" "non-draft PR")) }}{{ end -}}
+  {{- /* worded like the classified tile ("of 238 waiting for a first review"), without repeating the qualifier's "no maintainer review" */ -}}
+  {{- if gt $nd 0 }}{{ $ctx = printf "of %s waiting for a first review" (lang.FormatNumber 0 (float $nd)) }}{{ end -}}
   {{- /* glossary label and qualifier (6.2), as on the Overview and repository KPI cards */ -}}
   {{- $tiles = slice
     (dict "label" "PRs waiting for first review" "value" $pl.without_review_7d "qualifier" "no maintainer review after 7 days"
@@ -56,7 +59,11 @@
 {{- end }}
 <section class="v-section" aria-labelledby="review-slas">
   {{ partial "ui/section-head.html" (dict "title" "Review SLAs" "id" "review-slas") }}
+  {{- if eq (len $tiles) 1 }}
+  <div class="v-grid"><div class="v-span-4">{{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}</div></div>
+  {{- else }}
   {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}
+  {{- end }}
   {{- if not .classified }}
   <p class="v-caption mt-3">Re-review and maintainer SLAs need PR classification, which does not run for this repository.</p>
   {{- end }}

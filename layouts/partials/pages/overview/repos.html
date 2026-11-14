@@ -5,7 +5,12 @@
   30 days; stars.
   First reply / First review (median) are the D1-8 cohort fields (issues.first_reply_90d, pulls.first_review_90d); each column is
   omitted until some repository has its field, never shown from the survivorship medians. No forks, no group row, no totals row
-  (people cannot be summed across repositories). Table at >= 64rem; blocks below (R3). */ -}}
+  (people cannot be summed across repositories).
+  Layout: table-layout fixed. The numeric columns get fixed widths sized to their content; Repository and Trend are the two auto
+  columns and split what is left, so at 1440 the sparkline is wide enough to read and there is no dead band between it and Open PRs
+  (auto layout gave the 7rem sparkline a ~350px empty neighbour). With the two cohort columns (after D1-8) the eight columns no longer
+  fit 960px, so the table starts at 80rem and the blocks serve 64-80rem too.
+  Phone/tablet blocks (R3): the name line carries the star count on the right, then three rows, so a block is four lines, not six. */ -}}
 {{- $nb := printf "%c" 160 -}}{{- /* no-break space: glues "·" to the word before it */ -}}
 {{- $rows := slice }}{{ $hasFR := false }}{{ $hasRV := false -}}
 {{- range site.Data.repos.repositories -}}
@@ -39,26 +44,37 @@
     "sort" (float ($iss.open_count | default -1))) -}}
 {{- end -}}
 {{- $rows = sort $rows "sort" "desc" -}}
+{{- $wide := or $hasFR $hasRV -}}
 <section class="v-section" aria-labelledby="repositories">
   {{ partial "ui/section-head.html" (dict "title" "Repositories" "id" "repositories" "caption" "Sorted by open issues.") }}
   <div class="v-card">
-    <ul class="v-blocks lg:hidden">
+    <ul class="v-blocks {{ if $wide }}xl:hidden{{ else }}lg:hidden{{ end }}">
       {{- range $rows }}
       <li class="v-block">
-        <p class="v-block-title"><a class="v-link" href="{{ printf "repos/%s/" .r.repo | relURL }}">{{ .r.name }}</a></p>
+        <p class="v-block-title flex items-baseline justify-between gap-3">
+          <a class="v-link" href="{{ printf "repos/%s/" .r.repo | relURL }}">{{ .r.name }}</a>
+          {{- if ne .stars nil }}<span class="v-caption whitespace-nowrap">{{ partial "ui/plural.html" (dict "n" .stars "one" "star") }}</span>{{ end }}
+        </p>
         <dl class="v-kv">
           <div><dt>Open issues</dt><dd>{{ partial "ui/num.html" (dict "v" .oi "mode" "full" "na" "not collected") }}{{ with .net }}<span class="v-muted"> (net {{ . }} in 30d)</span>{{ end }}</dd></div>
           <div><dt>Open PRs</dt><dd>{{ partial "ui/num.html" (dict "v" .op "mode" "full" "na" "not collected") }}{{ if ne .m7 nil }}<span class="v-muted"> (merged {{ lang.FormatNumber 0 (float .m7) }} in 7d)</span>{{ end }}</dd></div>
-          <div><dt>Contributors, last 30 days</dt><dd>{{ partial "ui/num.html" (dict "v" .ac "mode" "full" "na" "not collected") }}</dd></div>
-          <div><dt>Stars</dt><dd>{{ partial "ui/num.html" (dict "v" .stars "mode" "full" "na" "not collected") }}</dd></div>
+          {{- if $hasFR }}
+          <div><dt>First reply, median</dt><dd>{{ partial "pages/overview/cohort.html" (dict "c" .fr "unanswered" true "inline" true) }}</dd></div>
+          {{- end }}
+          {{- if $hasRV }}
+          <div><dt>First review, median</dt><dd>{{ partial "pages/overview/cohort.html" (dict "c" .rv "inline" true) }}</dd></div>
+          {{- end }}
+          <div><dt>Contributors, 30 days</dt><dd>{{ partial "ui/num.html" (dict "v" .ac "mode" "full" "na" "not collected") }}</dd></div>
         </dl>
       </li>
       {{- end }}
     </ul>
-    {{- /* the sparkline column gets a fixed 7rem (a 100%-wide cell sparkline has no width of its own, brief 5.12); the cohort
-         headers wrap (whitespace-normal), so the D1-8 columns fit at 1440 */}}
-    <table class="v-dt hidden lg:table" aria-labelledby="repositories">
-      <colgroup><col span="2"><col class="v-col-28"></colgroup>
+    <table class="v-dt is-fixed hidden {{ if $wide }}xl:table{{ else }}lg:table{{ end }}" aria-labelledby="repositories">
+      {{- if $wide }}
+      <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-auto"><col class="v-col-48">{{ if $hasFR }}<col class="v-col-36">{{ end }}{{ if $hasRV }}<col class="v-col-36">{{ end }}<col class="v-col-28"><col class="v-col-24"></colgroup>
+      {{- else }}
+      <colgroup><col class="v-col-auto"><col class="v-col-32"><col class="v-col-auto"><col class="v-col-60"><col class="v-col-32"><col class="v-col-24"></colgroup>
+      {{- end }}
       <thead>
         <tr>
           <th scope="col">Repository</th>
@@ -84,7 +100,7 @@
             {{- with .spark }}{{ . | safeHTML }}
             {{- else }}{{ with .since }}<span class="v-caption">{{ . }}</span>{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no data collected yet") }}{{ end }}{{ end -}}
           </td>
-          <td class="num">{{ partial "ui/num.html" (dict "v" .op "mode" "full" "na" "not collected") }}{{ with .prSub }}<span class="sub"{{ with $row.prTitle }} title="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}</td>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .op "mode" "full" "na" "not collected") }}{{ with .prSub }}<span class="sub{{ if $wide }} whitespace-normal{{ end }}"{{ with $row.prTitle }} title="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}</td>
           {{- if $hasFR }}
           <td class="num">{{ partial "pages/overview/cohort.html" (dict "c" .fr "unanswered" true) }}</td>
           {{- end }}
