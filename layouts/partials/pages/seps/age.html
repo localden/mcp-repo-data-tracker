@@ -1,5 +1,17 @@
-{{- /* Age in whole days -> string. Below 2 days: "0d" / "1d" (same as issues/row.html) (the data is day-granular, so no "24h");
-       from 2 days up: ui/dur.html of days x 24 ("5d", "96d", "1.4y"). */ -}}
-{{- $d := float . -}}{{- $out := "" -}}
-{{- if lt $d 1.0 }}{{ $out = "0d" }}{{ else if lt $d 2.0 }}{{ $out = "1d" }}{{ else }}{{ $out = partial "ui/dur.html" (mul $d 24.0) }}{{ end -}}
-{{- return $out -}}
+{{- /* Hours from a seps.json moment to seps.json lastUpdated, for every duration on the SEPs page (Age, Last updated, Last activity,
+  time in stage); print the result with ui/dur.html. Returns a float, or -1.0 when unknown. Never emits.
+  Dict {days, at, ref}: days = the pipeline's whole-day count (daysWaiting, daysInCurrentStatus, lastActivityDays, daysInStage);
+  at = the matching timestamp (createdAt, updatedAt, lastActivityAt); ref = Unix seconds of seps.json lastUpdated.
+  Whole days win, so a cell matches the pipeline's own count ("319d" for daysWaiting 319). Below 2 days the timestamp is used,
+  where whole days would print "<1h" for 0 and "24h" for 1. */ -}}
+{{- $h := -1.0 -}}
+{{- $at := 0 }}{{ with .at }}{{ $at = (time.AsTime .).Unix }}{{ end -}}
+{{- $exact := -1.0 -}}
+{{- if and (gt $at 0) .ref }}{{ $exact = math.Max 0.0 (div (float (sub .ref $at)) 3600.0) }}{{ end -}}
+{{- if ne .days nil -}}
+  {{- $h = math.Max 0.0 (mul (float .days) 24.0) -}}
+  {{- if and (lt $h 48.0) (ge $exact 0.0) }}{{ $h = $exact }}{{ end -}}
+{{- else if ge $exact 0.0 -}}
+  {{- $h = $exact -}}
+{{- end -}}
+{{- return $h -}}

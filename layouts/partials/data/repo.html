@@ -1,0 +1,24 @@
+{{- /* Resolve one repository reference (a repos.json entry, "owner/repo" or a bare repo name) to its config and data.
+  Call: $r := partial "data/repo.html" "typescript-sdk"
+  Returns dict: cfg (repos.json entry, or empty dict), owner, repo, key ("owner/repo"), name (display name), data (the
+  data/repos/<owner>/<repo> map, or empty dict), snapshots (map keyed "YYYY-MM-DD", or empty dict), package (map|nil),
+  sdk (bool), valid_from (map metric path -> "YYYY-MM-DD", or empty dict). Never errors on an unknown repo. */ -}}
+{{- $cfg := dict -}}
+{{- if reflect.IsMap . -}}{{- $cfg = . -}}
+{{- else -}}
+  {{- $s := string . -}}
+  {{- range site.Data.repos.repositories -}}
+    {{- if or (eq $s (printf "%s/%s" .owner .repo)) (eq $s .repo) }}{{ $cfg = . }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $owner := $cfg.owner | default "" }}{{ $repo := $cfg.repo | default "" -}}
+{{- $data := dict -}}
+{{- if and $owner $repo }}{{ with index site.Data.repos $owner }}{{ with index . $repo }}{{ $data = . }}{{ end }}{{ end }}{{ end -}}
+{{- /* sdk: repos.json › sdk when present (D1-6); until then (and if an aggregate run rewrites repos.json without it) a repo with a
+     registry package is an SDK, which is exactly the five SDK repos today. */ -}}
+{{- $sdk := false -}}
+{{- if isset $cfg "sdk" }}{{ $sdk = $cfg.sdk }}{{ else if $cfg.package }}{{ $sdk = true }}{{ end -}}
+{{- return dict
+  "cfg" $cfg "owner" $owner "repo" $repo "key" (printf "%s/%s" $owner $repo) "name" ($cfg.name | default $repo)
+  "data" $data "snapshots" ($data.snapshots | default dict) "package" $cfg.package
+  "sdk" $sdk "valid_from" ($cfg.valid_from | default dict) -}}

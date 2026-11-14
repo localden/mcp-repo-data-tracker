@@ -1,0 +1,9 @@
+{{ define "main" }}
+{{- /* Stub for a retired URL (layout: redirect). head.html emits the meta refresh to .Params.target; ui.js first sends legacy
+  ?repo=owner/repo links to the matching /repos/<repo>/ page. Front matter: title, layout, target, targetName. */ -}}
+{{- $u := .Params.target | default "repos/modelcontextprotocol/" | relURL -}}
+<article class="v-page">
+  {{ partial "ui/page-head.html" (dict "title" .Title) }}
+  <p class="v-prose">This page moved to <a class="v-link" href="{{ $u }}">{{ .Params.targetName | default "the MCP Specification repository page" }}</a>.</p>
+</article>
+{{ end }}

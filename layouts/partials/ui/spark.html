@@ -1,16 +1,42 @@
-{{- $vals := .values | default slice -}}
-{{- if ge (len $vals) 2 -}}
-{{- $w := 96.0 }}{{ $h := 28.0 }}{{ $pad := 5.0 -}}
-{{- $lo := float (index $vals 0) }}{{ $hi := $lo -}}
-{{- range $vals }}{{ $f := float . }}{{ if lt $f $lo }}{{ $lo = $f }}{{ end }}{{ if gt $f $hi }}{{ $hi = $f }}{{ end }}{{ end -}}
-{{- $minSpan := mul 0.1 (math.Abs $hi) -}}
-{{- if lt (sub $hi $lo) $minSpan }}{{ $mid := div (add $hi $lo) 2.0 }}{{ $lo = sub $mid (div $minSpan 2.0) }}{{ $hi = add $mid (div $minSpan 2.0) }}{{ end -}}
-{{- $span := sub $hi $lo }}{{ if le $span 0.0 }}{{ $span = 1.0 }}{{ $lo = sub $lo 0.5 }}{{ end -}}
-{{- $n := float (sub (len $vals) 1) }}{{ $pts := slice }}{{ $lx := 0.0 }}{{ $ly := 0.0 -}}
-{{- range $i, $v := $vals -}}
-  {{- $x := add $pad (mul (div (float $i) $n) (sub $w (mul 2.0 $pad))) -}}
-  {{- $y := sub (sub $h $pad) (mul (div (sub (float $v) $lo) $span) (sub $h (mul 2.0 $pad))) -}}
-  {{- $pts = $pts | append (printf "%.1f,%.1f" $x $y) }}{{ $lx = $x }}{{ $ly = $y -}}
+{{- /* SVG sparkline (§5.12). Emits nothing below 4 non-null points: the caller shows "Tracking since …" instead (§5.5).
+  Call: partial "ui/spark.html" (dict "points" $bins.points ["kind" "count|duration"] ["size" "tile|cell|mini"] ["crit" true])
+    points: [{date, value|nil}] (12 ISO weeks from data/week-bins.html or data/org-weekly.html); x is placed by date and a missing
+    week breaks the path. y spans at least max(25% of |max|, 4) for counts, 25% of |max| for durations, so flat data reads flat.
+    size: tile 100% x 32px, cell 100% x 24px (table cells), mini 80 x 20px (adoption table). crit: end dot in --status-critical.
+  Dots are zero-length round-capped strokes with non-scaling width, so they stay round under preserveAspectRatio="none". */ -}}
+{{- $pts := .points | default slice -}}
+{{- $h := index (dict "tile" 32.0 "cell" 24.0 "mini" 20.0) (.size | default "tile") | default 32.0 -}}
+{{- $n := 0 }}{{ $lo := 0.0 }}{{ $hi := 0.0 -}}
+{{- range $pts -}}
+  {{- if ne .value nil -}}
+    {{- $f := float .value -}}
+    {{- if or (eq $n 0) (lt $f $lo) }}{{ $lo = $f }}{{ end }}{{ if or (eq $n 0) (gt $f $hi) }}{{ $hi = $f }}{{ end }}{{ $n = add $n 1 -}}
+  {{- end -}}
 {{- end -}}
-<svg class="v-spark{{ if .crit }} is-crit{{ end }}" width="96" height="28" viewBox="0 0 96 28" aria-hidden="true" focusable="false"><polyline points="{{ delimit $pts " " }}"/><circle cx="{{ printf "%.1f" $lx }}" cy="{{ printf "%.1f" $ly }}" r="4"/></svg>
+{{- if ge $n 4 -}}
+  {{- /* x spans the whole requested window (first to last label), not only the weeks with data. */ -}}
+  {{- $t0 := (time.AsTime (index $pts 0).date).Unix }}{{ $t1 := (time.AsTime (index $pts (sub (len $pts) 1)).date).Unix -}}
+  {{- $minSpan := mul 0.25 (math.Abs $hi) -}}
+  {{- if ne .kind "duration" }}{{ $minSpan = math.Max $minSpan 4.0 }}{{ end -}}
+  {{- if le $minSpan 0.0 }}{{ $minSpan = 1.0 }}{{ end -}}
+  {{- if lt (sub $hi $lo) $minSpan -}}
+    {{- $nonNeg := ge $lo 0.0 -}}
+    {{- $mid := div (add $hi $lo) 2.0 }}{{ $lo = sub $mid (div $minSpan 2.0) }}{{ $hi = add $mid (div $minSpan 2.0) -}}
+    {{- if and $nonNeg (lt $lo 0.0) }}{{ $hi = sub $hi $lo }}{{ $lo = 0.0 }}{{ end -}}
+  {{- end -}}
+  {{- $pad := 6.0 }}{{ $span := sub $hi $lo }}{{ $tspan := float (math.Max 1 (sub $t1 $t0)) -}}
+  {{- $d := "" }}{{ $dots := slice }}{{ $run := 0 }}{{ $lx := 0.0 }}{{ $ly := 0.0 }}{{ $prevPt := "" -}}
+  {{- range $pts -}}
+    {{- if ne .value nil -}}
+      {{- $x := mul 100.0 (div (float (sub (time.AsTime .date).Unix $t0)) $tspan) -}}
+      {{- $y := sub (sub $h $pad) (mul (div (sub (float .value) $lo) $span) (sub $h (mul 2.0 $pad))) -}}
+      {{- $p := printf "%.2f,%.2f" $x $y -}}
+      {{- if eq $run 0 }}{{ $d = printf "%sM%s" $d $p }}{{ else }}{{ $d = printf "%s L%s" $d $p }}{{ end -}}
+      {{- $run = add $run 1 }}{{ $lx = $x }}{{ $ly = $y }}{{ $prevPt = $p -}}
+    {{- else -}}
+      {{- if eq $run 1 }}{{ $dots = $dots | append $prevPt }}{{ end }}{{ $run = 0 -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $end := printf "M%.2f,%.2f l0.01,0" $lx $ly -}}
+<svg class="v-spark is-{{ .size | default "tile" }}{{ if .crit }} is-crit{{ end }}" viewBox="0 0 100 {{ $h }}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="v-spark-line" d="{{ $d }}"/>{{ range $dots }}<path class="v-spark-pt" d="M{{ . }} l0.01,0"/>{{ end }}<path class="v-spark-ring" d="{{ $end }}"/><path class="v-spark-dot" d="{{ $end }}"/></svg>
 {{- end -}}

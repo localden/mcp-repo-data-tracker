@@ -1,0 +1,23 @@
+{{- /* Disclosure navigation menu (brief 4.6 q): button[aria-expanded][aria-controls] + a hidden list of links; static/js/menu.js
+  handles keys (Enter/Space/ArrowDown open on the current item, ArrowUp on the last; arrows wrap, Home/End, Escape returns focus;
+  Tab, focusout or an outside click close). No listbox/option roles.
+  Dict {id, label, labelHTML, items, align, variant, current}.
+    id: prefix (required, unique): button "{id}-btn", list "{id}-list".
+    label: visible button text ("Repository: TypeScript SDK"); labelHTML overrides it with markup.
+    items: slice of {text, href, current, sep}; current puts aria-current="page" on the link; sep adds a separator after the item.
+    align: "end" right-aligns the list under the button (default start). variant: "nav" styles the button as a header nav item, else a field-style button.
+    current: true marks the button itself with aria-current="true" (the header Repositories item on a repository page). */ -}}
+{{- $c := . -}}{{- $id := $c.id | default "menu" -}}
+<div class="v-menu-wrap" data-menu>
+  <button type="button" class="{{ if eq $c.variant "nav" }}v-nav-item{{ else }}v-menu-btn{{ end }}" id="{{ $id }}-btn" aria-expanded="false" aria-controls="{{ $id }}-list"{{ if $c.current }} aria-current="true"{{ end }}>
+    {{- with $c.labelHTML }}{{ . }}{{ else }}<span>{{ $c.label }}</span>{{ end }}{{ partial "ui/icon.html" "chevron-down" -}}
+  </button>
+  <ul class="v-menu{{ if eq $c.align "end" }} is-end{{ end }}" id="{{ $id }}-list" hidden>
+    {{- range $c.items }}
+    <li><a href="{{ .href }}"{{ if .current }} aria-current="page"{{ end }}><span>{{ .text }}</span>{{ partial "ui/icon.html" (dict "name" "check" "class" "v-menu-check") }}</a></li>
+    {{- if .sep }}
+    <li class="v-menu-sep" role="separator"></li>
+    {{- end }}
+    {{- end }}
+  </ul>
+</div>

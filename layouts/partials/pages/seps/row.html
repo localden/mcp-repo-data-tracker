@@ -1,75 +1,42 @@
-{{- /* One SEP row in the stage table (spec 8.6, section 2).
-       Context: dict "e" (a seps.json entry) "ref" (time.Time of seps.lastUpdated, used for "Merged {age} ago")
-       "more" (bool: hidden behind the group's Show all, spec 5.7). */ -}}
-{{- $e := .e -}}{{- $ref := .ref -}}
-{{- $num := int ($e.number | default 0) -}}
-{{- $raw := string ($e.title | default "") -}}
+{{- /* One row of the Open SEPs work list (brief 3.4-4, 4.6 e/f). Context: dict "r" (pages/seps/entry.html) "review" (bool: the
+  Maintainer review column, D1-11). The last cell is Last updated or Last activity; entry.html already picked the source.
+  The title is the only link. Below 640px (.is-list) the title cell and Age stay; SEP, author, sponsor and review move into the
+  meta row ("SEP-2028 · monahk · needs sponsor · no maintainer review"), each token nowrap with its "·" attached at the end. */ -}}
+{{- $r := .r }}{{ $review := .review -}}
+{{- $age := "" }}{{ if ge $r.age_h 0.0 }}{{ $age = (partial "ui/dur.html" (dict "h" $r.age_h "years" true)).html }}{{ end -}}
+{{- $upd := "" }}{{ if ge $r.upd_h 0.0 }}{{ $upd = (partial "ui/dur.html" (dict "h" $r.upd_h)).html }}{{ end -}}
 
-{{- /* SEP id: "SEP-NNNN" from the title prefix, else "#PR". PR number shown when it differs. */ -}}
-{{- $sepId := printf "#%d" $num -}}{{- $prNote := "" -}}
-{{- with findRE `^\s*SEP-[0-9]+` $raw 1 -}}
-  {{- $sepId = strings.TrimSpace (index . 0) -}}
-  {{- if ne (strings.TrimPrefix "SEP-" $sepId) (string $num) }}{{ $prNote = printf "PR #%d" $num }}{{ end -}}
-{{- end -}}
-
-{{- /* Title with the "SEP-NNNN:" / "SEP:" prefix stripped. */ -}}
-{{- $title := strings.TrimSpace (replaceRE `^\s*SEP(-[0-9]+)?\s*:\s*` "" $raw) -}}
-{{- if not $title }}{{ $title = strings.TrimSpace $raw }}{{ end -}}
-
-{{- /* Topic pills: labels minus the stage labels. wg-support-needed / deferred always shown, with a warn dot. Max 2 + "+N". */ -}}
-{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "in review" "accepted" "final" -}}
-{{- $warnNames := dict "wg-support-needed" "WG support needed" "deferred" "Deferred" -}}
-{{- $warn := slice }}{{ $topics := slice -}}
-{{- range ($e.labels | default slice) -}}
-  {{- $l := lower (string .) -}}
-  {{- if isset $warnNames $l }}{{ $warn = $warn | append $l }}{{ else if not (in $stageLabels $l) }}{{ $topics = $topics | append (string .) }}{{ end -}}
-{{- end -}}
-{{- $room := sub 2 (len $warn) }}{{ if lt $room 0 }}{{ $room = 0 }}{{ end -}}
-{{- $extra := sub (len $topics) $room }}{{ if lt $extra 0 }}{{ $extra = 0 }}{{ end -}}
-
-{{- /* People */ -}}
-{{- $author := string ($e.author | default "") -}}{{- $sponsor := string ($e.sponsor | default "") -}}
-{{- $whoA := "—" }}{{ if $author }}{{ $whoA = printf "@%s" $author }}{{ end -}}
-{{- $whoS := "—" }}{{ if $sponsor }}{{ $whoS = cond (eq $sponsor $author) "self" (printf "@%s" $sponsor) }}{{ end -}}
-{{- $reviews := $e.reviewCount -}}
-{{- $adds := $e.additions | default 0 }}{{ $dels := float ($e.deletions | default 0) -}}
-
-{{- /* Dates */ -}}
-{{- $opened := "" }}{{ with $e.createdAt }}{{ $opened = (time.AsTime .).Format "Jan 2, 2006" }}{{ end -}}
-{{- $updated := "" }}{{ with $e.updatedAt }}{{ $updated = (time.AsTime .).Format "Jan 2, 2006" }}{{ end -}}
-<tr data-row-link{{ if .more }} data-more hidden{{ end }}>
-  <td class="id"><a class="v-row-link" href="{{ $e.url }}" target="_blank" rel="noopener"{{ with $prNote }} title="{{ . }}"{{ end }}>{{ $sepId }}</a>{{ with $prNote }}<span class="sub">{{ . }}</span>{{ end }}</td>
-  <td class="title">
-    <a href="{{ $e.url }}" target="_blank" rel="noopener" title="{{ $title }}">{{ $title }}</a>
-    {{- if or $warn $topics }}
-    <span class="sub flex flex-wrap items-center gap-2">
-      {{- range $warn }}<span class="v-pill">{{ partial "ui/status.html" "warn" }}{{ index $warnNames . }}</span>{{ end -}}
-      {{- range $i, $t := $topics }}{{ if lt $i $room }}<span class="v-pill">{{ $t }}</span>{{ end }}{{ end -}}
-      {{- if gt $extra 0 }}<span class="v-pill">+{{ $extra }}</span>{{ end -}}
+{{- /* phone meta row tokens */ -}}
+{{- $meta := slice (dict "t" $r.sep) -}}
+{{- with $r.author }}{{ $meta = $meta | append (dict "t" .) }}{{ end -}}
+{{- if eq $r.sponsorKind "handle" }}{{ $meta = $meta | append (dict "t" (printf "sponsor %s" $r.sponsor)) -}}
+{{- else if eq $r.sponsorKind "self" }}{{ $meta = $meta | append (dict "t" "self-sponsored") -}}
+{{- else if $r.needsSponsor }}{{ $meta = $meta | append (dict "t" "needs sponsor" "warn" true) -}}
+{{- else }}{{ $meta = $meta | append (dict "t" "no sponsor assigned") }}{{ end -}}
+{{- if and $review $r.reviewKnown }}{{ $meta = $meta | append (dict "t" (cond $r.reviewed "maintainer reviewed" "no maintainer review")) }}{{ end -}}
+{{- $last := sub (len $meta) 1 }}
+<tr data-row data-row-link id="sep-{{ $r.num }}" data-tags="{{ delimit $r.tags " " }}" data-text="{{ $r.text }}">
+  <td class="v-nowrap{{ if $r.isPR }} v-muted{{ end }}"{{ if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }} id="sep-{{ $r.sepNum }}" title="PR #{{ $r.num }}"{{ end }}>{{ $r.sep }}</td>
+  <td class="v-title-cell">
+    <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener"{{ with $r.reviewTitle }} title="{{ . }}"{{ end }}>{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
+    {{- /* labels joined by " · ", with a no-break space before each dot so a wrapped line never starts with one */}}
+    {{- with $r.labels }}<span class="sub">{{ range $i, $l := . }}{{ if $i }}&nbsp;· {{ end }}{{ $l }}{{ end }}</span>{{ end }}
+    <span class="v-listmeta">
+      {{- range $i, $m := $meta -}}
+      <span>{{ if $m.warn }}<span class="text-warn">{{ $m.t }}</span>{{ else }}{{ $m.t }}{{ end }}{{ if lt $i $last }}&nbsp;·{{ end }}</span>
+      {{- end -}}
     </span>
-    {{- end }}
-    <span class="sub sm:hidden">{{ $whoA }} → {{ $whoS }} · {{ if eq $reviews nil }}—{{ else }}{{ partial "ui/num.html" (dict "v" $reviews) }}{{ end }} {{ if eq (float ($reviews | default 0)) 1.0 }}review{{ else }}reviews{{ end }} · +{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt $dels 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</span>
   </td>
-  <td class="hidden sm:table-cell">
-    {{- if $author }}<span class="font-mono">@{{ $author }}</span>{{ else }}<span class="v-na">—</span><span class="sr-only">unknown author</span>{{ end -}}
-    {{- " → " -}}
-    {{- if not $sponsor }}<span class="v-na">—</span><span class="sr-only">no sponsor</span>{{ else if eq $sponsor $author }}<span class="text-ink-2">self</span>{{ else }}<span class="font-mono">@{{ $sponsor }}</span>{{ end -}}
+  <td>{{ with $r.author }}<span class="block truncate" title="{{ . }}">{{ . }}</span>{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown author") }}{{ end }}</td>
+  <td>
+    {{- if eq $r.sponsorKind "handle" }}<span class="block truncate" title="{{ $r.sponsor }}">{{ $r.sponsor }}</span>
+    {{- else if eq $r.sponsorKind "self" }}<span class="v-muted" title="Sponsored by the author">self</span>
+    {{- else if $r.needsSponsor }}<span class="text-warn v-nowrap">Needs sponsor</span>
+    {{- else }}<span class="v-muted v-nowrap">Not assigned</span>{{ end -}}
   </td>
-  <td class="hidden sm:table-cell num">{{ partial "ui/num.html" (dict "v" $reviews) }}</td>
-  <td class="hidden sm:table-cell num text-ink-2">+{{ partial "ui/num.html" (dict "v" $adds) }}{{ if gt $dels 0.0 }} −{{ partial "ui/num.html" (dict "v" $dels) }}{{ end }}</td>
-  <td class="num">{{ if eq $e.daysWaiting nil }}<span class="v-na">—</span>{{ else }}<span{{ with $opened }} title="Opened {{ . }}"{{ end }}>{{ partial "pages/seps/age.html" $e.daysWaiting }}</span>{{ end }}</td>
-  {{- if $e.mergedAt }}
-  {{- $m := time.AsTime $e.mergedAt -}}
-  {{- $ago := div (sub $ref.Unix $m.Unix) 86400 }}
-  {{- /* "Merged" is visually carried by the group header (keeps the nowrap column narrow on phones); kept for screen readers and in title. */ -}}
-  <td class="num"><span title="Merged {{ $m.Format "Jan 2, 2006" }}"><span class="sr-only">Merged </span>{{ if lt $ago 1 }}today{{ else }}{{ partial "pages/seps/age.html" $ago }} ago{{ end }}</span>
-    {{- with $e.createdAt }}<span class="sub">cycle {{ partial "pages/seps/age.html" (div (sub $m.Unix (time.AsTime .).Unix) 86400) }}</span>{{ end -}}
-    {{- if ne $e.daysInCurrentStatus nil }}<span class="sub"{{ with $updated }} title="Updated {{ . }}"{{ end }}>updated {{ if lt (float $e.daysInCurrentStatus) 1.0 }}today{{ else }}{{ partial "pages/seps/age.html" $e.daysInCurrentStatus }} ago{{ end }}</span>{{ end -}}
-  </td>
-  {{- else if eq $e.daysInCurrentStatus nil }}
-  <td class="num"><span class="v-na">—</span></td>
-  {{- else }}
-  {{- $idle := float $e.daysInCurrentStatus }}
-  <td class="num">{{ if gt $idle 30.0 }}{{ partial "ui/status.html" "crit" }} {{ else if gt $idle 14.0 }}{{ partial "ui/status.html" "warn" }} {{ end }}<span{{ with $updated }} title="Updated {{ . }}"{{ end }}>{{ partial "pages/seps/age.html" $idle }}</span></td>
+  {{- if $review }}
+  <td>{{ if not $r.reviewKnown }}{{ partial "ui/num.html" (dict "v" nil "na" "not computed yet") }}{{ else if $r.reviewed }}Yes{{ else }}None{{ end }}</td>
   {{- end }}
+  <td class="num v-verdict"{{ if ge $r.age_h 0.0 }} data-v="{{ $r.age_h }}"{{ end }}>{{ with $age }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown") }}{{ end }}</td>
+  <td class="num"{{ if ge $r.upd_h 0.0 }} data-v="{{ $r.upd_h }}"{{ end }}>{{ with $upd }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no activity recorded") }}{{ end }}</td>
 </tr>

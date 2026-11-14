@@ -1,0 +1,110 @@
+name: Backfill GitHub Gap
+
+# One-off: rebuild GitHub metrics for snapshot dates lost to a CI outage by
+# rewinding today's issues/PRs/commits/stars/forks to each date
+# (src/backfill-github-gap.ts). Existing snapshot fields are kept and dates
+# that already have an issues block are skipped unless force is set. Dry run
+# by default: prints the per-repo summary and diff stat, commits nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First date to rebuild (YYYY-MM-DD)'
+        type: string
+        required: true
+      to:
+        description: 'Last date to rebuild (YYYY-MM-DD, before today)'
+        type: string
+        required: true
+      repo:
+        description: 'Only this repository (e.g. rust-sdk); empty for all'
+        type: string
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite dates that already have GitHub metrics'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Print the summary and diff stat without committing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: aggregate-data
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Backfill GitHub metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      changes: ${{ steps.commit.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      # Inputs reach the shell through env, never pasted into the script.
+      - name: Backfill gap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+          REPO: ${{ inputs.repo }}
+        run: node dist/backfill-github-gap.js --from="$FROM" --to="$TO" ${{ inputs.repo && '--repo="$REPO"' || '' }} ${{ inputs.force && '--force' || '' }}
+      - name: Dry-run report
+        if: ${{ inputs.dry_run }}
+        run: |
+          git add data/repos/*/*/snapshots/
+          git diff --staged --stat=160
+          # One TS and one spec snapshot in full, to review before the real run.
+          for repo in typescript-sdk modelcontextprotocol; do
+            f=$(git diff --staged --name-only -- "data/repos/modelcontextprotocol/$repo/snapshots/" | head -n 1)
+            if [ -n "$f" ]; then
+              echo "::group::$f"
+              git diff --staged -- "$f"
+              echo "::endgroup::"
+            fi
+          done
+          echo "Dry run: nothing committed."
+      - name: Commit and push data changes
+        id: commit
+        if: ${{ !inputs.dry_run }}
+        env:
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/repos/*/*/snapshots/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Backfill GitHub gap $FROM..$TO"
+            # -X theirs during rebase keeps OUR commit's version on conflict
+            # (rebase inverts ours/theirs). Only gap-date snapshots are staged.
+            for attempt in 1 2 3; do
+              git pull --rebase -X theirs origin main
+              git push origin HEAD:main && break
+              [ $attempt -eq 3 ] && exit 1
+              sleep 2
+            done
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: backfill
+    if: needs.backfill.outputs.changes == 'true'
+    uses: ./.github/workflows/deploy.yml

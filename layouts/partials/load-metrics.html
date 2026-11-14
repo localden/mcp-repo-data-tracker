@@ -23,6 +23,10 @@
     - repo: Repository name
     - repoKey: The owner/repo key for data attributes
     - allRepos: Array of all available repositories (for iterating)
+    - actionability, issuesTiers, versions, seps, downloadsDaily: the per-repo JSON files (nil when absent)
+    - cfg: the repos.json entry (pass it to the data/* partials as "repo")
+
+  New templates should prefer partial "data/repo.html", which returns the same files without the legacy branches.
 */}}
 
 {{ $result := dict "metrics" false "contributors" false "snapshots" false "repoName" "" "owner" "" "repo" "" "repoKey" "" "allRepos" slice }}
@@ -77,6 +81,9 @@
         "actionability" .actionability
         "issuesTiers" .issues
         "versions" .versions
+        "seps" .seps
+        "downloadsDaily" (index . "downloads-daily")
+        "cfg" $targetRepo
         "repoName" $repoName
         "owner" $owner
         "repo" $repo

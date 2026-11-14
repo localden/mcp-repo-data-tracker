@@ -1,0 +1,14 @@
+{{- /* Scope switcher (brief 2.3): "Repository: TypeScript SDK" disclosure menu listing sibling URLs of the same page kind.
+  Dict {repo, kind, id}. repo: the current "owner/repo" (or bare repo; "" = the org view). kind: "issues" | "pulls" | "repo".
+  issues and pulls lead with "All repositories" (/issues/, /pulls/); every kind then lists the repositories in repos.json order
+  (/issues/<repo>/, /pulls/<repo>/, /repos/<repo>/), with aria-current="page" on the current one. Built on ui/menu.html. */ -}}
+{{- $kind := .kind | default "repo" -}}{{- $cur := .repo | default "" -}}
+{{- $base := index (dict "issues" "issues" "pulls" "pulls" "repo" "repos") $kind | default "repos" -}}
+{{- $items := slice }}{{ $name := "All repositories" -}}
+{{- if ne $kind "repo" }}{{ $items = $items | append (dict "text" "All repositories" "href" (printf "%s/" $base | relURL) "current" (eq $cur "") "sep" true) }}{{ end -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $on := or (eq $cur (printf "%s/%s" .owner .repo)) (eq $cur .repo) -}}
+  {{- if $on }}{{ $name = .name | default .repo }}{{ end -}}
+  {{- $items = $items | append (dict "text" (.name | default .repo) "href" (printf "%s/%s/" $base .repo | relURL) "current" $on) -}}
+{{- end -}}
+{{- partial "ui/menu.html" (dict "id" (.id | default "scope") "label" (printf "Repository: %s" $name) "items" $items) -}}

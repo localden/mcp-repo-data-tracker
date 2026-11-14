@@ -1,0 +1,71 @@
+{{- /* Spec proposals (brief 3.1-6): where SEPs stand and what blocks them (Q6). Context: the page. Source: the spec repository's
+  seps.json. One stacked bar of OPEN SEPs in lifecycle order Proposal -> Draft -> In review -> Accepted on --ord-1..4 (merged SEPs are
+  a flow, not a stage, so they are a separate fact), with the stage labels and counts in the legend row (ui/stackbar.html; segments
+  of ~8% cannot hold "In review 2"). Beside it three facts: proposals without a sponsor (sponsor null and not self-sponsored, the
+  SEPs page rule), the oldest open SEP over every open stage (named with its stage), and SEPs that reached final in the
+  90 days before seps.json lastUpdated (mergedAt, not the inflated counts.merged). */ -}}
+{{- $r := partial "data/repo.html" "modelcontextprotocol/modelcontextprotocol" -}}
+<section class="v-section" aria-labelledby="spec-proposals">
+  {{ partial "ui/section-head.html" (dict "title" "Spec proposals" "id" "spec-proposals" "action" (dict "text" "All SEPs" "href" ("seps/" | relURL))) }}
+  {{- with $r.data.seps }}
+  {{- $s := . -}}
+  {{- $c := $s.counts | default dict -}}
+  {{- $stages := slice (slice "proposals" "Proposal" "proposal" "ord-1") (slice "drafts" "Draft" "draft" "ord-2") (slice "inReview" "In review" "inReview" "ord-3") (slice "accepted" "Accepted" "accepted" "ord-4") -}}
+  {{- $segs := slice }}{{ $open := 0.0 -}}
+  {{- $old := dict "days" -1.0 -}}
+  {{- range $st := $stages -}}
+    {{- $list := index $s (index $st 0) | default slice -}}
+    {{- $n := float (index $c (index $st 2) | default (len $list)) -}}
+    {{- $segs = $segs | append (dict "label" (index $st 1) "n" $n "role" (index $st 3)) }}{{ $open = add $open $n -}}
+    {{- range $list -}}
+      {{- $dw := float (.daysWaiting | default 0) -}}
+      {{- if gt $dw (float $old.days) }}{{ $old = dict "days" $dw "title" (.title | default "") "number" .number "stage" (index $st 1) }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* sponsor: the glossary rule the SEPs page applies (pages/seps/entry.html), so this count equals its "No sponsor" Proposal
+       row: no sponsor, and the author is not a core or lead maintainer (who sponsors their own SEP, "self") */ -}}
+  {{- $core := slice -}}
+  {{- with site.Data.maintainers }}{{ range (.maintainers | default slice) -}}
+    {{- $roles := .roles | default slice -}}
+    {{- if and .github (or (in $roles "ROLE_IDS.CORE_MAINTAINERS") (in $roles "ROLE_IDS.LEAD_MAINTAINERS")) }}{{ $core = $core | append (lower .github) }}{{ end -}}
+  {{- end }}{{ end -}}
+  {{- $props := $s.proposals | default slice }}{{ $noSp := 0 -}}
+  {{- range $props }}{{ if and (not .sponsor) (not (in $core (lower (string (.author | default ""))))) }}{{ $noSp = add $noSp 1 }}{{ end }}{{ end -}}
+  {{- /* oldest open: "SEP-1913", parsed anywhere in the title, else "PR 1913". Each "·" is glued to the word before it with a
+       no-break space (%c 160 = U+00A0), so the line never wraps to start with it. */ -}}
+  {{- $oldText := "" -}}
+  {{- if ge (float $old.days) 0.0 -}}
+    {{- $id := printf "PR %.0f" (float ($old.number | default 0)) -}}
+    {{- with findRE `(?i)SEP-[0-9]+` $old.title 1 }}{{ $id = upper (index . 0) }}{{ end -}}
+    {{- $oldText = printf "Oldest open: %s%c· %s%c· %s" $id 160 $old.stage 160 (partial "ui/plural.html" (dict "n" $old.days "one" "day")) -}}
+  {{- end -}}
+  {{- /* reached final in the 90 days before the file's own timestamp */ -}}
+  {{- $asof := $s.lastUpdated | default (partialCached "ui/latest-date.html" . "latest") -}}
+  {{- $cut := ((time.AsTime $asof).AddDate 0 0 -90).Unix -}}
+  {{- $final := 0 -}}
+  {{- range $s.merged | default slice }}{{ with .mergedAt }}{{ if ge (time.AsTime .).Unix $cut }}{{ $final = add $final 1 }}{{ end }}{{ end }}{{ end }}
+  <div class="v-card">
+    <div class="v-card-body">
+      <div class="v-grid">
+        <div class="v-span-6">
+          <p class="v-label mb-2">Open SEPs by stage</p>
+          {{- if gt $open 0.0 }}
+          {{ partial "ui/stackbar.html" (dict "segments" $segs "legend" "below") }}
+          {{- else }}
+          <p class="v-empty-text">No open SEPs.</p>
+          {{- end }}
+        </div>
+        <ul class="v-span-6 grid gap-2">
+          <li>{{ if $props }}{{ $noSp }} of {{ len $props }} {{ cond (eq (len $props) 1) "proposal has" "proposals have" }} no sponsor{{ else }}No open proposals{{ end }}</li>
+          {{- with $oldText }}
+          <li>{{ . }}</li>
+          {{- end }}
+          <li>Reached final in the last 90 days: {{ $final }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No SEP data collected for %s yet." $r.name)) }}
+  {{- end }}
+</section>

@@ -1,2 +1,24 @@
-{{- if eq . "crit" }}<span class="v-dot v-dot-crit" aria-hidden="true"></span><span class="sr-only">Over target: </span>
-{{- else if eq . "warn" }}<span class="v-dot v-dot-warn" aria-hidden="true"></span><span class="sr-only">Watch: </span>{{ end -}}
+{{- /* Overdue status (brief 4.6 j): a 12px filled alert triangle in a 16px leading slot, then the value in --bad-text 600.
+  There is one level only. Use it only for items past a published deadline (P4), never for drafts, waiting-on-author,
+  release, bot, close-candidate or housekeeping rows.
+  Dict {n, text, html, title, icon, mode, na}:
+    n: the overdue count (formatted with ui/num.html, mode default "full"); 0 -> muted "0"; nil (with no text/html) -> "—" + sr-only na.
+    text / html: the status text instead of a number ("P1 · 514d over"); html is pre-rendered markup.
+    title: names the rule ("Overdue: triage within 2 business days").
+    icon: false drops the icon and keeps the text (when more than 50% of a list's rows are overdue). */ -}}
+{{- $c := . -}}
+{{- $body := "" }}{{ $state := "status" }}{{ $icon := true -}}
+{{- /* the old "crit"/"warn" string form is retired: it renders nothing */ -}}
+{{- if not (reflect.IsMap $c) }}{{ $c = dict }}{{ $state = "none" }}{{ else if isset $c "icon" }}{{ $icon = $c.icon }}{{ end -}}
+{{- if eq $state "none" }}
+{{- else if $c.html }}{{ $body = $c.html -}}
+{{- else if $c.text }}{{ $body = $c.text -}}
+{{- else if eq $c.n nil }}{{ $state = "na" -}}
+{{- else if eq (float $c.n) 0.0 }}{{ $state = "zero" -}}
+{{- else }}{{ $body = partial "ui/num.html" (dict "v" $c.n "mode" ($c.mode | default "full")) }}{{ end -}}
+{{- if eq $state "none" -}}
+{{- else if eq $state "na" -}}{{ partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) }}
+{{- else if eq $state "zero" -}}<span class="v-zero">0</span>
+{{- else -}}
+<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" "alert-triangle" }}</span><span class="v-status-text">{{ $body }}</span></span>
+{{- end -}}

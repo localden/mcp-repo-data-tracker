@@ -1,0 +1,26 @@
+{{- /* Org-wide change of one snapshot metric against a dated earlier snapshot (brief 3.1-1: "−12 vs Nov 7"). Returns a dict, never prints.
+  Call: $d := partial "pages/overview/org-delta.html" "issues.without_response_7d"
+  Per repository, data/series.html finds the snapshot about 7 days back (cmp7). When no repository has one (the Oct 8 – Nov 9 outage
+  leaves nothing within 21 days of t-7), the nearest snapshot about 30 days back (cmp30) is used instead, so the tile still names a date.
+  Both sums cover only the repositories that have the current and the earlier reading, so like is compared with like.
+  Returns {cur, prev: float|nil (nil when no comparison exists), date ("YYYY-MM-DD", the oldest comparison date), k (repositories
+  compared), n (repositories with a current reading)}. */ -}}
+{{- $path := . -}}
+{{- $series := slice -}}
+{{- range site.Data.repos.repositories }}{{ $series = $series | append (partial "data/series.html" (dict "repo" . "path" $path "days" 35)) }}{{ end -}}
+{{- $n := 0 }}{{ range $series }}{{ if ne .cur nil }}{{ $n = add $n 1 }}{{ end }}{{ end -}}
+{{- $out := dict "cur" nil "prev" nil "date" "" "k" 0 "n" $n -}}
+{{- range $key := slice "cmp7" "cmp30" -}}
+  {{- if eq $out.prev nil -}}
+    {{- $cur := 0.0 }}{{ $prev := 0.0 }}{{ $k := 0 }}{{ $date := "" -}}
+    {{- range $series -}}
+      {{- $s := . -}}
+      {{- if ne $s.cur nil }}{{ with index $s $key -}}
+        {{- $cur = add $cur (float $s.cur) }}{{ $prev = add $prev (float .value) }}{{ $k = add $k 1 -}}
+        {{- if or (eq $date "") (lt .date $date) }}{{ $date = .date }}{{ end -}}
+      {{- end }}{{ end -}}
+    {{- end -}}
+    {{- if gt $k 0 }}{{ $out = dict "cur" $cur "prev" $prev "date" $date "k" $k "n" $n }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

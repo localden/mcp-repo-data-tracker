@@ -1,0 +1,13 @@
+{{- /* Sum of one metrics.json field over every tracked repository (brief 3.1-1). Returns a dict, never prints.
+  Call: $s := partial "pages/overview/sum.html" "issues.without_response_7d"
+  Returns {v: float|nil (nil when no repository has the field), n: int (repositories summed), all: bool (every repository has it)}.
+  A repository without metrics.json, or without the field, is skipped, never counted as 0. */ -}}
+{{- $path := split . "." -}}
+{{- $sum := 0.0 }}{{ $n := 0 }}{{ $total := 0 -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $total = add $total 1 -}}
+  {{- $v := (partial "data/repo.html" .).data.metrics | default "" -}}
+  {{- range $path }}{{ if reflect.IsMap $v }}{{ $v = index $v . }}{{ else }}{{ $v = "" }}{{ end }}{{ end -}}
+  {{- if in (slice "float64" "int" "int64") (printf "%T" $v) }}{{ $sum = add $sum (float $v) }}{{ $n = add $n 1 }}{{ end -}}
+{{- end -}}
+{{- return dict "v" (cond (gt $n 0) $sum nil) "n" $n "all" (and (gt $n 0) (eq $n $total)) -}}

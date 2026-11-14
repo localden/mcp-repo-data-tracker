@@ -1,0 +1,75 @@
+{{- /* Versions in use, ranked by recent volume, never lifetime (§3.5-3, §8a-11).
+  Call: $v := partialCached "data/versions.html" (dict "repo" "python-sdk" ["asof" "YYYY-MM-DD"] ["top" 8]) "versions" "python-sdk"
+    asof: the page's "Data as of" date (default the newest snapshot date); top: rows before "Other" (default 8).
+  Window per versions.json unit: "daily" (PyPI) sums the 30 newest complete dates (dates before the capture day; the capture day minus
+  one only after 06:00 UTC); "last_week" (npm) is the newest entry as is (7 days); "cumulative" (NuGet, RubyGems, crates.io) is the
+  change in per-version totals between the newest date and the date 30 days earlier, once both exist.
+  Returns dict: has bool (a versions.json exists), unit, last_updated ("YYYY-MM-DD"), stale bool (more than 3 days older than asof),
+    window_days int (30 or 7), from/to (window dates), rows [{version, n float, latest bool}] (top N by n, desc), other float|nil
+    (the rest summed), total float, ready bool (rows can be shown), ready_from ("YYYY-MM-DD" when a cumulative window will first
+    exist, for "Version shares appear after 30 days of tracking (from Dec 10, 2026)"), latest (the highest final release in the
+    window by numeric semver compare, pre-releases skipped; its row has latest = true and gets the "latest" tag). */ -}}
+{{- $r := partial "data/repo.html" .repo -}}
+{{- $asof := .asof | default (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- $top := int (.top | default 8) -}}
+{{- $nums := slice "float64" "int" "int64" -}}
+{{- $res := dict "has" false "unit" "" "last_updated" "" "stale" false "window_days" 0 "from" "" "to" "" "rows" slice "other" nil
+  "total" 0.0 "ready" false "ready_from" "" "latest" "" -}}
+{{- with $r.data.versions -}}{{- $vj := . -}}{{- if reflect.IsMap $vj.daily -}}
+  {{- $unit := .unit | default "" -}}
+  {{- $lu := time.AsTime (.lastUpdated | default $asof) }}{{ $luDay := $lu.Format "2006-01-02" -}}
+  {{- $stale := lt $luDay ((time.AsTime $asof).AddDate 0 0 -3 | time.Format "2006-01-02") -}}
+  {{- $dates := slice }}{{ range $d, $_ := .daily }}{{ $dates = $dates | append $d }}{{ end -}}
+  {{- $sc := newScratch }}{{ $from := "" }}{{ $to := "" }}{{ $win := 0 }}{{ $ready := false }}{{ $readyFrom := "" -}}
+  {{- if eq $unit "daily" -}}
+    {{- $limit := $luDay }}{{ if lt $lu.Hour 6 }}{{ $limit = ($lu.AddDate 0 0 -1).Format "2006-01-02" }}{{ end -}}
+    {{- $ok := slice }}{{ range $dates }}{{ if lt . $limit }}{{ $ok = $ok | append . }}{{ end }}{{ end -}}
+    {{- $win = 30 }}{{ $ready = ge (len $ok) 30 -}}
+    {{- if $ready -}}
+      {{- $use := last 30 $ok }}{{ $from = index $use 0 }}{{ $to = index $use 29 -}}
+      {{- range $d := $use }}{{ range $ver, $n := index $vj.daily $d }}{{ if in $nums (printf "%T" $n) }}{{ $sc.SetInMap "n" $ver (add (index ($sc.Get "n" | default dict) $ver | default 0.0) (float $n)) }}{{ end }}{{ end }}{{ end -}}
+    {{- end -}}
+  {{- else if eq $unit "last_week" -}}
+    {{- $win = 7 -}}
+    {{- with $dates }}{{ $to = index . (sub (len .) 1) }}{{ $from = $to }}{{ $ready = true -}}
+      {{- range $ver, $n := index $vj.daily $to }}{{ if in $nums (printf "%T" $n) }}{{ $sc.SetInMap "n" $ver (float $n) }}{{ end }}{{ end -}}
+    {{- end -}}
+  {{- else if eq $unit "cumulative" -}}
+    {{- $win = 30 -}}
+    {{- with $dates -}}
+      {{- $to = index . (sub (len .) 1) }}{{ $from = ((time.AsTime $to).AddDate 0 0 -30).Format "2006-01-02" -}}
+      {{- $readyFrom = ((time.AsTime (index . 0)).AddDate 0 0 30).Format "2006-01-02" -}}
+      {{- $old := index $vj.daily $from -}}
+      {{- if reflect.IsMap $old -}}
+        {{- $ready = true -}}
+        {{- range $ver, $n := index $vj.daily $to -}}
+          {{- if in $nums (printf "%T" $n) -}}
+            {{- $base := index $old $ver | default 0 -}}
+            {{- $diff := sub (float $n) (float $base) }}{{ if gt $diff 0.0 }}{{ $sc.SetInMap "n" $ver $diff }}{{ end -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* rank, top N + Other */ -}}
+  {{- $all := slice }}{{ $total := 0.0 -}}
+  {{- range $ver, $n := $sc.Get "n" | default dict }}{{ if gt $n 0.0 }}{{ $all = $all | append (dict "version" $ver "n" $n) }}{{ $total = add $total $n }}{{ end }}{{ end -}}
+  {{- $all = sort $all "n" "desc" -}}
+  {{- /* "latest" = the highest final release in the window (numeric parts only, zero-padded so 1.10 > 1.9; pre-releases skipped).
+       Parts are trimmed of leading zeros before int, which would otherwise read "010" as octal. */ -}}
+  {{- $latest := "" }}{{ $latestKey := "" -}}
+  {{- range $all -}}
+    {{- if findRE `^[0-9]+(\.[0-9]+)*$` .version -}}
+      {{- $key := "" }}{{ range split .version "." }}{{ $key = printf "%s%06d." $key (int (strings.TrimLeft "0" . | default "0")) }}{{ end -}}
+      {{- if gt $key $latestKey }}{{ $latestKey = $key }}{{ $latest = .version }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $rows := slice }}{{ $other := 0.0 }}{{ $hasOther := false -}}
+  {{- range $i, $row := $all -}}
+    {{- if lt $i $top }}{{ $rows = $rows | append (dict "version" $row.version "n" $row.n "latest" (eq $row.version $latest)) -}}
+    {{- else }}{{ $other = add $other $row.n }}{{ $hasOther = true }}{{ end -}}
+  {{- end -}}
+  {{- $res = dict "has" true "unit" $unit "last_updated" $luDay "stale" $stale "window_days" $win "from" $from "to" $to "rows" $rows
+    "other" (cond $hasOther $other nil) "total" $total "ready" (and $ready (gt (len $rows) 0)) "ready_from" $readyFrom "latest" $latest -}}
+{{- end }}{{ end -}}
+{{- return $res -}}

@@ -1,5 +1,0 @@
-{{- /* Age in days -> string (page-local copy of seps/age.html, spec 4.4 Age; one rule on every work list). Below 2 days: "0d" / "1d" (the data is day-granular, so no "24h");
-       from 2 days up: ui/dur.html of days x 24 ("5d", "96d", "1.4y"). */ -}}
-{{- $d := float . -}}{{- $out := "" -}}
-{{- if lt $d 1.0 }}{{ $out = "0d" }}{{ else if lt $d 2.0 }}{{ $out = "1d" }}{{ else }}{{ $out = partial "ui/dur.html" (mul $d 24.0) }}{{ end -}}
-{{- return $out -}}

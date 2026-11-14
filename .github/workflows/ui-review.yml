@@ -1,8 +1,11 @@
 name: UI review capture
 
-# Renders the site in CI and captures screenshots plus layout, accessibility and palette
-# reports for design review (.github/scripts/ui-capture.py). Deploys nothing; the result
-# is the "ui-review" artifact. Runs on every push to a ui/** branch, or on demand.
+# Renders the site in CI and captures screenshots plus layout, accessibility, keyboard and palette
+# checks for design review (.github/scripts/ui-capture.py). Deploys nothing; the result is the
+# "ui-review" artifact. Runs on every push to a ui/** branch, or on demand.
+# The typecheck, the design guard and the capture checks never fail the job (their output is in the
+# artifact: build/tsc.txt, build/guard.txt, checks.txt). A failed CSS or Hugo build does fail it, skips
+# the capture, and still uploads the artifact with the build logs and build/status.txt.
 
 on:
   push:
@@ -20,7 +23,7 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,12 +36,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Typecheck pipeline
+        id: tsc
+        continue-on-error: true
+        run: npm run build 2>&1 | tee tsc.txt; exit ${PIPESTATUS[0]}
+
       - name: Design-system guard
+        id: guard
         continue-on-error: true
         run: bash .github/scripts/design-guard.sh 2>&1 | tee guard.txt; exit ${PIPESTATUS[0]}
 
       - name: Build CSS
-        run: npm run css:build
+        id: css
+        run: npm run css:build 2>&1 | tee css.txt; exit ${PIPESTATUS[0]}
 
       - name: Setup Hugo
         run: |
@@ -46,10 +56,12 @@ jobs:
           wget -q "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb" -O hugo.deb
           sudo dpkg -i hugo.deb
 
+      # The logs are written as the builds run, so hugo.txt is complete even when the build fails.
       - name: Build site (as deployed, and unminified for reading)
+        id: hugo
         run: |
           hugo --minify --baseURL "http://127.0.0.1:8080/mcp-repo-data-tracker/" 2>&1 | tee hugo.txt; test ${PIPESTATUS[0]} -eq 0
-          hugo --baseURL "http://127.0.0.1:8080/mcp-repo-data-tracker/" -d public-src >/dev/null
+          hugo --baseURL "http://127.0.0.1:8080/mcp-repo-data-tracker/" -d public-src > hugo-src.txt 2>&1
 
       - name: Serve site
         run: |
@@ -82,15 +94,28 @@ jobs:
           pip install -q playwright==1.49.1
           python -m playwright install --with-deps chromium >/dev/null
 
+      # A step timeout (not the job's) so a slow run still reaches the upload with what it captured;
+      # ui-capture.py rewrites index.json and checks.json after every page.
       - name: Capture
+        id: capture
+        timeout-minutes: 55
         run: python .github/scripts/ui-capture.py --base "http://127.0.0.1:8080/mcp-repo-data-tracker/" --out ui-review
 
       - name: Collect build output
         if: always()
         run: |
           mkdir -p ui-review/build
-          cp guard.txt hugo.txt ui-review/build/ 2>/dev/null || true
-          cp -r public-src ui-review/build/html 2>/dev/null || true
+          for f in tsc.txt guard.txt css.txt hugo.txt hugo-src.txt; do
+            if [ -f "$f" ]; then cp "$f" ui-review/build/; fi
+          done
+          if [ -d public-src ]; then cp -r public-src ui-review/build/html; fi
+          cat > ui-review/build/status.txt <<EOF
+          typecheck  ${{ steps.tsc.outcome }}
+          guard      ${{ steps.guard.outcome }}
+          css        ${{ steps.css.outcome }}
+          hugo       ${{ steps.hugo.outcome }}
+          capture    ${{ steps.capture.outcome }}
+          EOF
 
       - name: Upload review artifact
         if: always()

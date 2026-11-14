@@ -1,0 +1,14 @@
+{{- /* Registry display name and link for a repos.json .package dict ({registry, name}). Returns a dict (empty for nil input):
+  {registry: "PyPI", key: "pypi", package: "mcp", url: "https://pypi.org/project/mcp", label: "PyPI · mcp"}.
+  Proper names per brief 6.1 rule 6: npm, PyPI, NuGet, crates.io, RubyGems. Never print the raw key. */ -}}
+{{- $names := dict "npm" "npm" "pypi" "PyPI" "nuget" "NuGet" "crates" "crates.io" "rubygems" "RubyGems" -}}
+{{- $base := dict "npm" "https://www.npmjs.com/package/" "pypi" "https://pypi.org/project/" "nuget" "https://www.nuget.org/packages/" "crates" "https://crates.io/crates/" "rubygems" "https://rubygems.org/gems/" -}}
+{{- $out := dict -}}
+{{- with . -}}
+  {{- $key := string (index . "registry" | default "") -}}
+  {{- $pkg := string (index . "name" | default "") -}}
+  {{- $disp := index $names $key | default $key -}}
+  {{- $url := "" }}{{ with index $base $key }}{{ $url = printf "%s%s" . $pkg }}{{ end -}}
+  {{- $out = dict "registry" $disp "key" $key "package" $pkg "url" $url "label" (printf "%s · %s" $disp $pkg) -}}
+{{- end -}}
+{{- return $out -}}

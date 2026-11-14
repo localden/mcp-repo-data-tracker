@@ -1,0 +1,24 @@
+{{- /* Backlog trend (brief 3.2b-3): one line of snapshots issues.open, 26 weeks of daily points, with the gap band and an end label
+  (charts.js); the 10% wash only when charts.js finds no gap run. Short history renders the value and "Tracking since …" (5.5).
+  Under the plot, the net flow strip from metrics.json: opened_Nd − closed_Nd for 7, 30 and 90 days (signed, neutral ink; "—" when missing).
+  Ctx: dict {r (data/repo.html)}. */ -}}
+{{- $r := .r -}}
+{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+{{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open") -}}
+{{- $items := slice -}}
+{{- range $w := slice "7" "30" "90" -}}
+  {{- $o := index $iss (printf "opened_%sd" $w) }}{{ $c := index $iss (printf "closed_%sd" $w) -}}
+  {{- $txt := `<span aria-hidden="true">—</span><span class="sr-only">not tracked</span>` -}}
+  {{- if and (ne $o nil) (ne $c nil) -}}
+    {{- $d := sub (float $o) (float $c) -}}
+    {{- $txt = cond (gt $d 0.0) (printf "+%s" (lang.FormatNumber 0 $d)) (cond (lt $d 0.0) (printf "−%s" (lang.FormatNumber 0 (math.Abs $d))) "0") -}}
+  {{- end -}}
+  {{- $items = $items | append (printf `<span>%s days <strong>%s</strong></span>` $w $txt) -}}
+{{- end -}}
+{{- $strip := printf `<span class="v-strip"><span>Net (opened − closed)</span>%s</span>` (delimit $items "") | safeHTML -}}
+<section class="v-section" aria-labelledby="backlog">
+  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "caption" "Open issues, last 26 weeks") }}
+  {{ partial "ui/chart.html" (dict "id" "issues-backlog" "metric" "open issues" "metric_one" "open issue" "scope" $r.name
+      "unit" "count" "gran" "day" "foot" $strip
+      "series" (slice (dict "label" "Open issues" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed))) }}
+</section>

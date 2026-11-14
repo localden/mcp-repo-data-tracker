@@ -1,0 +1,91 @@
+{{- /* SDK adoption (brief 3.1-5, 5.4): one row per SDK package, each compared with itself (Q5). Context: the page.
+  Every figure is a sum of complete days from data/downloads.html (never a snapshot "daily", never a partial day, a missing day is never
+  0). D is the common window end from data/downloads-end.html: the newest day every package with at least 7 complete days covers, so
+  the "Last 7 days" header names one window ("Nov 3–9"). A package with fewer than 7 complete days in total is read on its own newest
+  days; whenever a window is incomplete the row shows the partial sum muted with the Flag "3 of 7 days" and no change.
+  No Daily, Total, Share or cross-SDK sum. The 12-week sparkline is the last 12 complete ISO weeks (weekly sums). Table at >= 64rem;
+  blocks below (R3). */ -}}
+{{- $common := partialCached "data/downloads-end.html" . "dl-end" -}}
+{{- $win30 := "" -}}
+{{- with $common.end }}{{ $t := time.AsTime . }}{{ $win30 = partial "data/date-range.html" (dict "from" (($t.AddDate 0 0 -29).Format "2006-01-02") "to" . "year" false) }}{{ end -}}
+{{- $rows := slice -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- with $r.package -}}
+    {{- $reg := partial "ui/registry-name.html" . -}}
+    {{- $own := partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "" -}}
+    {{- $d := $own -}}
+    {{- if and (ge $own.days_total 7) $common.end }}{{ $d = partialCached "data/downloads.html" (dict "repo" $r.cfg "end" $common.end) "dl" $r.repo $common.end }}{{ end -}}
+    {{- /* the 30-day window's partial sum, for the flagged case (data/downloads.html returns dl30 only when all 30 days exist) */ -}}
+    {{- $sum30 := 0.0 }}{{ $w30 := "" -}}
+    {{- with $d.end -}}
+      {{- $end := . }}{{ $from30 := ((time.AsTime .).AddDate 0 0 -29).Format "2006-01-02" -}}
+      {{- $w30 = partial "data/date-range.html" (dict "from" $from30 "to" $end "year" false) -}}
+      {{- range $d.points }}{{ if and (ne .value nil) (ge .date $from30) (le .date $end) }}{{ $sum30 = add $sum30 (float .value) }}{{ end }}{{ end -}}
+    {{- end -}}
+    {{- /* sparkline; below 4 complete weeks ui/spark.html emits nothing: a package that started inside the window says since when,
+         an older one with too many incomplete weeks says so */ -}}
+    {{- $spark := "" }}{{ $wFrom := "" -}}
+    {{- with $d.weekly }}{{ with .points -}}
+      {{- $last12 := last 12 . }}{{ $wFrom = (index $last12 0).date -}}
+      {{- $spark = trim (string (partial "ui/spark.html" (dict "points" $last12 "size" "mini"))) " \n" -}}
+    {{- end }}{{ end -}}
+    {{- $since := "" -}}
+    {{- if and (not $spark) $d.first -}}
+      {{- if or (eq $wFrom "") (ge $d.first $wFrom) }}{{ $since = printf "Tracking since %s" (partial "ui/date.html" (dict "d" $d.first "style" "short")) }}
+      {{- else }}{{ $since = "Too few complete weeks" }}{{ end -}}
+    {{- end -}}
+    {{- $chg := and (ne $d.dl7 nil) (ne $d.prev7 nil) -}}
+    {{- if $chg }}{{ $chg = gt (float $d.prev7) 0.0 }}{{ end -}}
+    {{- /* registry sub-line "npm · @modelcontextprotocol/sdk": a no-break space (U+00A0) glues "·" to the registry name, so a
+         wrapped sub-line never starts with it */ -}}
+    {{- $label := printf "%s%c· %s" $reg.registry 160 $reg.package -}}
+    {{- $rows = $rows | append (dict "r" $r "reg" $reg "label" $label "d" $d "sum30" $sum30 "w30" $w30 "spark" $spark "since" $since "chg" $chg) -}}
+  {{- end -}}
+{{- end -}}
+{{- with $rows }}
+<section class="v-section" aria-labelledby="sdk-adoption">
+  {{ partial "ui/section-head.html" (dict "title" "SDK adoption" "id" "sdk-adoption" "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))
+      "caption" "Downloads over complete days only. Each SDK is compared with its own prior 7 days.") }}
+  <div class="v-card">
+    <ul class="v-blocks lg:hidden">
+      {{- range . }}
+      <li class="v-block">
+        <p class="v-block-title">{{ .r.name }}</p>
+        <p class="v-caption">{{ partial "ui/ext-link.html" (dict "href" .reg.url "text" .label "site" .reg.registry "class" "v-link-quiet") }}</p>
+        <dl class="v-kv">
+          <div><dt>Last 7 days{{ with .d.window }}, {{ . }}{{ end }}</dt><dd>{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl7 "sum" .d.sum7 "days" .d.days_covered "of" 7 "window" .d.window "total" .d.days_total) }}</dd></div>
+          <div><dt>Change vs prior 7 days</dt><dd>{{ if .chg }}{{ partial "ui/delta.html" (dict "cur" .d.dl7 "prev" .d.prev7 "unit" "percent" "polarity" "up") }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "needs two complete 7-day windows") }}{{ end }}</dd></div>
+          <div><dt>Last 30 days{{ with .w30 }}, {{ . }}{{ end }}</dt><dd>{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl30 "sum" .sum30 "days" .d.days_covered30 "of" 30 "window" .w30 "total" .d.days_total) }}</dd></div>
+        </dl>
+      </li>
+      {{- end }}
+    </ul>
+    <table class="v-dt hidden lg:table" aria-labelledby="sdk-adoption">
+      <thead>
+        <tr>
+          <th scope="col">SDK</th>
+          <th scope="col" class="num">Last 7 days{{ with $common.window }}<span class="sub">{{ . }}</span>{{ end }}</th>
+          <th scope="col" class="num">Change<span class="sub">vs prior 7 days</span></th>
+          <th scope="col">12 weeks<span class="sub">weekly totals</span></th>
+          <th scope="col" class="num">Last 30 days{{ with $win30 }}<span class="sub">{{ . }}</span>{{ end }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- range . }}
+        <tr>
+          <th scope="row">{{ .r.name }}<span class="sub">{{ partial "ui/ext-link.html" (dict "href" .reg.url "text" .label "site" .reg.registry "class" "v-link-quiet") }}</span></th>
+          <td class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl7 "sum" .d.sum7 "days" .d.days_covered "of" 7 "window" .d.window "total" .d.days_total "stack" true) }}</td>
+          <td class="num">{{ if .chg }}{{ partial "ui/delta.html" (dict "cur" .d.dl7 "prev" .d.prev7 "unit" "percent" "polarity" "up") }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "needs two complete 7-day windows") }}{{ end }}</td>
+          <td>
+            {{- with .spark }}{{ . | safeHTML }}
+            {{- else }}{{ with .since }}<span class="v-caption">{{ . }}</span>{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no download data yet") }}{{ end }}{{ end -}}
+          </td>
+          <td class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl30 "sum" .sum30 "days" .d.days_covered30 "of" 30 "window" .w30 "total" .d.days_total "stack" true) }}</td>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{- end }}

@@ -28,7 +28,7 @@ function getTimeToFirstMaintainerResponse(
       if (!author) return false;
       if (author === issueAuthor) return false; // Exclude self-comments
       if (isBot(author)) return false;
-      if (!maintainerSet.has(author)) return false;
+      if (!maintainerSet.has(author.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -42,12 +42,12 @@ function getTimeToFirstMaintainerResponse(
 }
 
 /**
- * Check if an issue has been reopened
+ * Check if an issue has been reopened. Match on the type name only: the
+ * timeline query selects createdAt on ClosedEvent too, so a field-presence
+ * check counts every closed issue as reopened.
  */
 function hasBeenReopened(issue: GitHubIssue): boolean {
-  return issue.timelineItems.nodes.some(
-    (event) => event.__typename === 'ReopenedEvent' || 'createdAt' in event
-  );
+  return issue.timelineItems.nodes.some((event) => event.__typename === 'ReopenedEvent');
 }
 
 /**
@@ -101,7 +101,7 @@ export function calculateIssueMetrics(
       // No maintainer response yet
       // Skip issues created by maintainers (they usually don't need a response)
       const issueAuthor = issue.author?.login;
-      if (issueAuthor && maintainerSet.has(issueAuthor)) {
+      if (issueAuthor && maintainerSet.has(issueAuthor.toLowerCase())) {
         continue;
       }
 

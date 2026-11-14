@@ -1,5 +1,0 @@
-{{- /* Count linked to a GitHub search; the missing mark (unlinked) when nil.
-     Ctx: (dict "v" number-or-nil "href" url "icon" bool) ; icon = true outside .v-dt rows (spec 4.7: trailing arrow-up-right). */ -}}
-{{- if eq .v nil -}}{{- partial "ui/num.html" (dict "v" nil) -}}
-{{- else if .icon -}}<a class="v-link-quiet tabular-nums" href="{{ .href }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" .v) }}{{ partial "ui/icon.html" "arrow-up-right" }}</a>
-{{- else -}}<a class="tabular-nums" href="{{ .href }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" .v) }}</a>{{- end -}}

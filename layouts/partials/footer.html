@@ -1,9 +1,16 @@
+{{- /* Footer (brief 4.6 r): one caption row, items separated only by gap. The build hash is the commit being built
+  (GITHUB_SHA in CI, allowed by hugo.toml security.funcs.getenv), else the page's last commit from GitInfo. */ -}}
+{{- $src := "https://github.com/localden/mcp-repo-data-tracker" -}}
+{{- $sha := os.Getenv "GITHUB_SHA" -}}
+{{- if not $sha }}{{ with .GitInfo }}{{ $sha = .Hash }}{{ end }}{{ end }}
 <footer class="v-footer">
   <div class="v-shell v-footer-row">
-    <span><a class="v-link-quiet" href="https://github.com/localden/mcp-repo-data-tracker" target="_blank" rel="noopener">VISR</a> · built by <a class="v-link-quiet" href="https://den.dev" target="_blank" rel="noopener">Den Delimarsky</a></span>
-    <span>All times UTC</span>
-    {{- with .GitInfo }}
-    <a class="v-link-quiet font-mono" href="https://github.com/localden/mcp-repo-data-tracker/commit/{{ .Hash }}" target="_blank" rel="noopener">{{ .AbbreviatedHash }}</a>
+    <span>Built by <a class="v-link-quiet" href="https://den.dev" target="_blank" rel="noopener">Den Delimarsky</a></span>
+    <span>Experimental</span>
+    {{ partial "ui/ext-link.html" (dict "href" $src "text" "Source" "site" "GitHub" "class" "v-link-quiet" "icon" false) }}
+    {{ partial "ui/ext-link.html" (dict "href" "https://github.com/modelcontextprotocol/access" "text" "Maintainer roles (modelcontextprotocol/access)" "site" "GitHub" "class" "v-link-quiet" "icon" false) }}
+    {{- with $sha }}
+    <span>Build <a class="v-link-quiet v-code" href="{{ $src }}/commit/{{ . }}" target="_blank" rel="noopener">{{ substr . 0 7 }}</a></span>
     {{- end }}
   </div>
 </footer>

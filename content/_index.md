@@ -1,3 +1,3 @@
 ---
-title: "MCP Repository Dashboard"
+title: "MCP repositories"
 ---

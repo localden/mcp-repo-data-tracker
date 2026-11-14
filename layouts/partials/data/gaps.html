@@ -1,0 +1,27 @@
+{{- /* Null runs inside a charted window (§2.4, §5.3). Leading nulls (before a series starts) are not gaps; trailing ones are.
+  Call: $g := partial "data/gaps.html" (dict "points" $s.points ["min" 3] ["gran" "day|week"])
+    points: [{date, value|nil}], one per label, ascending; min: shortest run that counts (default 3 days; use 1 for weekly bins).
+  Returns []dict{from, to ("YYYY-MM-DD"; for weeks, to is the last week's Sunday), n (labels in the run), outage bool (intersects the
+  collection outage), text ("No data · Oct 8 – Nov 9, 2026 (collection outage)" or "No data · {from} – {to}")}. */ -}}
+{{- $gran := .gran | default "day" -}}
+{{- $min := int (.min | default (cond (eq $gran "week") 1 3)) -}}
+{{- $o := partial "data/outage.html" . -}}
+{{- $runs := slice }}{{ $started := false }}{{ $from := "" }}{{ $len := 0 }}{{ $prev := "" -}}
+{{- range .points -}}
+  {{- if ne .value nil -}}
+    {{- if and $started (ge $len $min) }}{{ $runs = $runs | append (dict "from" $from "last" $prev "n" $len) }}{{ end -}}
+    {{- $started = true }}{{ $len = 0 -}}
+  {{- else if $started -}}
+    {{- if eq $len 0 }}{{ $from = .date }}{{ end }}{{ $len = add $len 1 -}}
+  {{- end -}}
+  {{- $prev = .date -}}
+{{- end -}}
+{{- if and $started (ge $len $min) }}{{ $runs = $runs | append (dict "from" $from "last" $prev "n" $len) }}{{ end -}}
+{{- $out := slice -}}
+{{- range $runs -}}
+  {{- $to := .last }}{{ if eq $gran "week" }}{{ $to = (time.AsTime .last).AddDate 0 0 6 | time.Format "2006-01-02" }}{{ end -}}
+  {{- $hit := and (le .from $o.to) (ge $to $o.from) -}}
+  {{- $text := cond $hit $o.band (printf "No data · %s" (partial "data/date-range.html" (dict "from" .from "to" $to))) -}}
+  {{- $out = $out | append (dict "from" .from "to" $to "n" .n "outage" $hit "text" $text) -}}
+{{- end -}}
+{{- return $out -}}

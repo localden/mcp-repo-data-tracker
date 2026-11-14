@@ -2,7 +2,7 @@
  * Package download metrics dispatcher.
  * Registry quirks:
  *   - npm/PyPI/crates.io report daily natively; NuGet/RubyGems only cumulative → daily derived
- *     from prev-snapshot diff.
+ *     from prev-snapshot diff, and only when that snapshot is yesterday's and the total moved.
  *   - npm cumulative isn't an API field; we carry a running sum forward from the previous snapshot
  *     (seeded by the backfill script's full-range sum).
  *   - crates.io reports both a native all-time total and 90 days of daily history.
@@ -101,10 +101,11 @@ export async function fetchDownloads(
         : await fetchRubygemsTotal(config.name);
       if (prev?.total === undefined || !prevDate) return { total };
       const gap = daysBetween(prevDate, today);
-      const delta = Math.max(0, total - prev.total);
-      // Gaps > 1 day mean the diff spans multiple days — report per-day average
-      // so the daily chart doesn't spike.
-      return { daily: gap > 0 ? Math.round(delta / gap) : undefined, total };
+      const delta = total - prev.total;
+      // Only a one-day diff is a day's downloads. A longer gap spans several
+      // days (an average would invent a flat series), and an unmoved total is a
+      // registry freeze, not a zero day: leave daily unset for both.
+      return { daily: gap === 1 && delta > 0 ? delta : undefined, total };
     }
   }
 }

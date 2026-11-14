@@ -31,7 +31,7 @@ function getTimeToFirstMaintainerReview(
       if (!author) return false;
       if (author === prAuthor) return false; // Exclude self-reviews
       if (isBot(author)) return false;
-      if (!maintainerSet.has(author)) return false;
+      if (!maintainerSet.has(author.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -116,7 +116,7 @@ export function calculatePRMetrics(
       // No maintainer review yet
       // Skip PRs created by maintainers (they usually don't need external review)
       const prAuthor = pr.author?.login;
-      if (prAuthor && maintainerSet.has(prAuthor)) {
+      if (prAuthor && maintainerSet.has(prAuthor.toLowerCase())) {
         continue;
       }
 

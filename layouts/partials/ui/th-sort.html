@@ -1,0 +1,6 @@
+{{- /* Sortable column header (brief 4.6 e, 7.3 A9): th[data-sort] > button with an always-visible aria-hidden sort icon;
+  the rule goes on line 2 as span.sub. aria-sort sits only on the active column; ui.js moves it on click.
+  Dict {label, sub, sort, active, num, class}. sort: "num" (default; cells sort by data-v as numbers, descending first) or "text"
+  (ascending first). active: "descending" | "ascending" for the column the server sorted by. num: true right-aligns (numeric columns). */ -}}
+{{- $c := . -}}
+<th scope="col" class="{{ if $c.num }}num{{ end }}{{ with $c.class }} {{ . }}{{ end }}" data-sort="{{ $c.sort | default "num" }}"{{ with $c.active }} aria-sort="{{ . }}"{{ end }}><button type="button">{{ $c.label }}{{ partial "ui/icon.html" (dict "name" "sort" "class" "v-sort-icon") }}</button>{{ with $c.sub }}<span class="sub">{{ . }}</span>{{ end }}</th>

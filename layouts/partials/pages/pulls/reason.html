@@ -1,0 +1,104 @@
+{{- /* Reason column text for one classified PR (brief 3.3b-2, 6.5 "Reason"). The ONLY template that reads short_reason (design guard).
+     Dict {pr, n}: pr = actionability PR dict; n = rows in its duplicate cluster (primary rows only). Returns a plain string ("" = no reason).
+     Order:
+       1. state "unknown" or a fetch error -> "Could not classify" (the raw text is never shown).
+       2. Structured fields when the classifier exports them (D3-4): primary_pr, linked_issue, pinged_user/pinged_days, ci_red_days,
+          idle_days, feedback_days.
+       3. Until then, a fixed replace list over short_reason that drops the leading age, "(SLA breach)" and GraphQL enums.
+       4. Anything else (D3-4 plain sentences) passes through with those same strips; text that still carries an enum is dropped. */ -}}
+{{- $pr := .pr | default dict -}}
+{{- $st := string ($pr.state | default "") -}}
+{{- $raw := strings.TrimSpace (string ($pr.short_reason | default "")) -}}
+{{- $out := "" }}{{ $done := false -}}
+
+{{- /* 1. never classified */ -}}
+{{- if or (eq $st "unknown") (hasPrefix $raw "fetch failed") (hasPrefix $raw "Could not classify") -}}
+  {{- $out = "Could not classify" }}{{ $done = true -}}
+{{- end -}}
+
+{{- /* 2. structured fields (D3-4). A day count counts only when it is at least 1, so a field the classifier exports as 0 on rows
+     it does not apply to never becomes "CI failing for 0 days"; those rows fall through to the text. */ -}}
+{{- $days := dict -}}
+{{- range $k := slice "pinged_days" "ci_red_days" "idle_days" "feedback_days" -}}
+  {{- with index $pr $k }}{{ if ge (math.Round (float .)) 1.0 }}{{ $days = merge $days (dict $k (math.Round (float .))) }}{{ end }}{{ end -}}
+{{- end -}}
+{{- if not $done -}}
+  {{- if and (eq $st "duplicate-cluster-member") (ne $pr.primary_pr nil) (ne $pr.linked_issue nil) -}}
+    {{- $out = printf "Duplicate of #%d (both fix #%d)" (int $pr.primary_pr) (int $pr.linked_issue) }}{{ $done = true -}}
+  {{- else if and (eq $st "duplicate-cluster") (ne $pr.linked_issue nil) -}}
+    {{- $out = printf "Primary PR for #%d" (int $pr.linked_issue) -}}
+    {{- with .n }}{{ if gt (int .) 1 }}{{ $out = printf "%s (%d PRs)" $out (int .) }}{{ end }}{{ end -}}
+    {{- $done = true -}}
+  {{- else if and (eq $st "backport-follows-primary") (ne $pr.primary_pr nil) -}}
+    {{- $out = printf "Backport of #%d" (int $pr.primary_pr) }}{{ $done = true -}}
+  {{- else if and $pr.pinged_user $days.pinged_days -}}
+    {{- $out = printf "Author pinged %s %s ago" (replace (string $pr.pinged_user) "@" "") (partial "ui/plural.html" (dict "n" $days.pinged_days "one" "day")) }}{{ $done = true -}}
+  {{- else if $days.ci_red_days -}}
+    {{- $out = printf "CI failing for %s" (partial "ui/plural.html" (dict "n" $days.ci_red_days "one" "day")) -}}
+    {{- if eq $st "stale-ci-abandoned" }}{{ $out = printf "%s, inactive" $out }}{{ end -}}
+    {{- $done = true -}}
+  {{- else if and $days.idle_days (hasPrefix $st "stale-draft") -}}
+    {{- $out = printf "Draft, idle %s" (partial "ui/plural.html" (dict "n" $days.idle_days "one" "day")) }}{{ $done = true -}}
+  {{- else if $days.feedback_days -}}
+    {{- $out = printf "Changes requested %s ago" (partial "ui/plural.html" (dict "n" $days.feedback_days "one" "day")) }}{{ $done = true -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* 3. interim replace list over short_reason; N is the first number in the match, as whole days */ -}}
+{{- if and (not $done) (findRE `^[0-9]+(\.[0-9]+)?d( old)?$` $raw) }}{{ $done = true }}{{ end -}}
+{{- if and (not $done) (findRE `^[0-9]+(\.[0-9]+)?d, no maintainer has looked yet$` $raw) }}{{ $out = "No maintainer review yet" }}{{ $done = true }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^[0-9]+(?:\.[0-9]+)?d, reviewed by (.+?)(?: \(SLA breach\))?$` $raw 1 -}}
+  {{- $out = printf "Reviewed by %s" (index (index . 0) 1) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^[0-9]+(?:\.[0-9]+)?d, community reviewed \((.+)\)$` $raw 1 -}}
+  {{- $out = printf "Reviewed by %s" (index (index . 0) 1) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^([0-9]+(?:\.[0-9]+)?)d since feedback$` $raw 1 -}}
+  {{- $out = printf "Changes requested %s ago" (partial "ui/plural.html" (dict "n" (math.Round (float (index (index . 0) 1))) "one" "day")) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if and (not $done) (hasPrefix $raw "author pushed after CHANGES_REQUESTED") }}{{ $out = "Author pushed changes after a change request" }}{{ $done = true }}{{ end -}}
+{{- if and (not $done) (hasPrefix $raw "maintainer COMMENTED") }}{{ $out = "A maintainer commented without approving or requesting changes" }}{{ $done = true }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^red CI ([0-9]+(?:\.[0-9]+)?)d(, no activity)?$` $raw 1 -}}
+  {{- $g := index . 0 -}}
+  {{- $out = printf "CI failing for %s" (partial "ui/plural.html" (dict "n" (math.Round (float (index $g 1))) "one" "day")) -}}
+  {{- if index $g 2 }}{{ $out = printf "%s, inactive" $out }}{{ end -}}
+  {{- $done = true -}}
+{{- end }}{{ end -}}
+{{- if and (not $done) (hasPrefix $raw "CI never ran") }}{{ $out = "CI never ran" }}{{ $done = true }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^draft idle ([0-9]+(?:\.[0-9]+)?)d$` $raw 1 -}}
+  {{- $out = printf "Draft, idle %s" (partial "ui/plural.html" (dict "n" (math.Round (float (index (index . 0) 1))) "one" "day")) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if and (not $done) (hasPrefix $raw "maintainer draft") }}{{ $out = "Maintainer draft" }}{{ $done = true }}{{ end -}}
+{{- if and (not $done) (eq $raw "release bot PR") }}{{ $out = "Release PR" }}{{ $done = true }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^cluster primary for issue #([0-9]+) \(([0-9]+) PRs?\)$` $raw 1 -}}
+  {{- $g := index . 0 }}{{ $out = printf "Primary PR for #%s (%s PRs)" (index $g 1) (index $g 2) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^shares linked issue #([0-9]+) with #([0-9]+)$` $raw 1 -}}
+  {{- $g := index . 0 }}{{ $out = printf "Duplicate of #%s (both fix #%s)" (index $g 2) (index $g 1) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^follows #([0-9]+)$` $raw 1 -}}
+  {{- $out = printf "Backport of #%s" (index (index . 0) 1) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^author pinged (.+) ([0-9]+(?:\.[0-9]+)?)d ago$` $raw 1 -}}
+  {{- $g := index . 0 -}}
+  {{- $out = printf "Author pinged %s %s ago" (replace (index $g 1) "@" "") (partial "ui/plural.html" (dict "n" (math.Round (float (index $g 2))) "one" "day")) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^author self-diagnosed CI ([0-9]+(?:\.[0-9]+)?)d ago, never fixed$` $raw 1 -}}
+  {{- $out = printf "Author found the CI failure %s ago, still failing" (partial "ui/plural.html" (dict "n" (math.Round (float (index (index . 0) 1))) "one" "day")) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^push after approval \(([0-9]+) commits?` $raw 1 -}}
+  {{- $out = printf "%s pushed after approval" (partial "ui/plural.html" (dict "n" (float (index (index . 0) 1)) "one" "commit")) }}{{ $done = true -}}
+{{- end }}{{ end -}}
+{{- if not $done }}{{ with findRESubmatch `^approved ([0-9]+(?:\.[0-9]+)?)d ago, (now conflicting|green)$` $raw 1 -}}
+  {{- $g := index . 0 -}}
+  {{- $out = printf "Approved %s ago, %s" (partial "ui/plural.html" (dict "n" (math.Round (float (index $g 1))) "one" "day")) (cond (eq (index $g 2) "green") "CI passing" "now has conflicts") }}{{ $done = true -}}
+{{- end }}{{ end -}}
+
+{{- /* 4. pass-through with the same strips (plain sentences from D3-4 land here) */ -}}
+{{- if not $done -}}
+  {{- $s := replaceRE `\s*\(SLA breach\)` "" $raw -}}
+  {{- $s = replaceRE `^[0-9]+(\.[0-9]+)?d,\s*` "" $s -}}
+  {{- $s = strings.TrimSpace $s -}}
+  {{- if not (findRE `\b(COMMENTED|APPROVED|DISMISSED|PENDING)\b|\b[A-Z]{2,}(_[A-Z]+)+\b` $s) }}{{ $out = strings.FirstUpper $s }}{{ end -}}
+{{- end -}}
+{{- return $out -}}

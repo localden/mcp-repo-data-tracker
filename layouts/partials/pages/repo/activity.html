@@ -1,0 +1,24 @@
+{{- /* 3. Activity, last 26 weeks (brief 3.6-3, 5.1, 5.8): issues and PRs, open vs waiting past 7 days, as two daily line charts that share
+  one x-domain and tick set (2-up at >= 64rem, stacked below). ui/chart.html draws the legend, end labels, gap band, reconstructed
+  caption and Table toggle, and shows the short-history body below 14 daily points. Context: the dict from pages/repo.html. */ -}}
+{{- $r := .r }}{{ $s := .s -}}
+{{- $from := $s.iOpen.from }}{{ $to := $s.iOpen.to }}
+<section class="v-section" aria-labelledby="activity">
+  {{ partial "ui/section-head.html" (dict "title" "Activity" "id" "activity" "caption" "Daily, last 26 weeks") }}
+  <div class="v-grid">
+    <div class="v-span-6">
+      {{ partial "ui/chart.html" (dict "id" "repo-issues" "title" "Issues" "metric" "issues" "metric_one" "issue" "scope" $r.name
+          "unit" "count" "gran" "day" "from" $from "to" $to
+          "series" (slice
+            (dict "label" "Open" "role" "accent" "points" $s.iOpen.points "reconstructed" $s.iOpen.reconstructed)
+            (dict "label" "Waiting for a reply > 7 days" "role" "series-2" "points" $s.iWait.points "reconstructed" $s.iWait.reconstructed))) }}
+    </div>
+    <div class="v-span-6">
+      {{ partial "ui/chart.html" (dict "id" "repo-pulls" "title" "PRs" "metric" "PRs" "metric_one" "PR" "scope" $r.name
+          "unit" "count" "gran" "day" "from" $from "to" $to
+          "series" (slice
+            (dict "label" "Open" "role" "accent" "points" $s.pOpen.points "reconstructed" $s.pOpen.reconstructed)
+            (dict "label" "Waiting for first review > 7 days" "role" "series-2" "points" $s.pWait.points "reconstructed" $s.pWait.reconstructed))) }}
+    </div>
+  </div>
+</section>

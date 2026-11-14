@@ -4,13 +4,14 @@
   {{- partial "head.html" . -}}
 </head>
 <body class="v-body">
-  {{- partial "header.html" . -}}
-  <main class="v-shell v-main">
+  <a class="v-skip" href="#main">Skip to content</a>
+  {{- partial "header.html" . }}
+  <main id="main" class="v-shell v-main" tabindex="-1">
     {{- block "main" . }}{{- end }}
   </main>
-  {{- partial "footer.html" . -}}
-  <script src="{{ "js/repo-picker.js" | relURL }}"></script>
+  {{- partial "footer.html" . }}
   <script src="{{ "js/theme-toggle.js" | relURL }}"></script>
+  <script src="{{ "js/menu.js" | relURL }}"></script>
   <script src="{{ "js/ui.js" | relURL }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
   <script src="{{ "js/charts.js" | relURL }}"></script>

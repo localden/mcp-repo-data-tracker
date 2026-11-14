@@ -1,0 +1,12 @@
+{{- /* Date range text per §6.3. Call: partial "data/date-range.html" (dict "from" "2026-11-06" "to" "2026-11-12" ["year" false])
+  -> "Nov 6–12, 2026" / "Oct 31 – Nov 6, 2026" / "Dec 30, 2025 – Jan 4, 2026" / "Nov 9, 2026" (same day).
+  year=false drops the trailing year when both ends share it ("Nov 6–12", "Oct 8 – Nov 9"). Returns a string. */ -}}
+{{- $a := time.AsTime .from }}{{ $b := time.AsTime (.to | default .from) -}}
+{{- $year := true }}{{ if isset . "year" }}{{ $year = .year }}{{ end -}}
+{{- $y := cond $year (printf ", %d" $b.Year) "" -}}
+{{- $out := "" -}}
+{{- if ne $a.Year $b.Year -}}{{- $out = printf "%s – %s" ($a.Format "Jan 2, 2006") ($b.Format "Jan 2, 2006") -}}
+{{- else if eq ($a.Format "2006-01-02") ($b.Format "2006-01-02") -}}{{- $out = printf "%s%s" ($a.Format "Jan 2") $y -}}
+{{- else if eq $a.Month $b.Month -}}{{- $out = printf "%s–%d%s" ($a.Format "Jan 2") $b.Day $y -}}
+{{- else -}}{{- $out = printf "%s – %s%s" ($a.Format "Jan 2") ($b.Format "Jan 2") $y -}}{{- end -}}
+{{- return $out -}}

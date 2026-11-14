@@ -1,0 +1,15 @@
+{{- /* Whole-day wait for the "Waiting" and "Waiting on us" columns (brief 3.3b-2, 6.3: d = calendar days, no decimals, no year unit;
+     Age columns use ui/dur.html with years instead). Input: a number of days, or nil. Returns dict {short, long, html, v}:
+     short "41d" / "<1d", long "41 days" for screen readers, html = short aria-hidden + long sr-only, v = the rounded number (or nil). */ -}}
+{{- $has := ne . nil -}}
+{{- $short := "—" }}{{ $long := "not tracked" }}{{ $d := 0.0 -}}
+{{- if $has -}}
+  {{- $d = math.Round (float .) -}}
+  {{- if lt $d 1.0 -}}
+    {{- $short = "<1d" }}{{ $long = "less than 1 day" -}}
+  {{- else -}}
+    {{- $short = printf "%sd" (lang.FormatNumber 0 $d) }}{{ $long = partial "ui/plural.html" (dict "n" $d "one" "day") -}}
+  {{- end -}}
+{{- end -}}
+{{- $html := printf `<span aria-hidden="true">%s</span><span class="sr-only">%s</span>` (htmlEscape $short) (htmlEscape $long) | safeHTML -}}
+{{- return dict "short" $short "long" $long "html" $html "v" (cond $has $d nil) -}}

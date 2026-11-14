@@ -1,0 +1,8 @@
+{{- /* The one collection outage the UI names (§2.4, §5.3). Single source for the gap band tooltip, table rows and gap notice.
+  Call: $o := partial "data/outage.html" .   Returns dict: from, to ("YYYY-MM-DD"), range ("Oct 8 – Nov 9, 2026"),
+  band ("No data · Oct 8 – Nov 9, 2026 (collection outage)"), notice (the page gap-notice sentence, before the backfill). */ -}}
+{{- $from := "2026-10-08" }}{{ $to := "2026-11-09" -}}
+{{- $range := partial "data/date-range.html" (dict "from" $from "to" $to) -}}
+{{- return dict "from" $from "to" $to "range" $range
+  "band" (printf "No data · %s (collection outage)" $range)
+  "notice" (printf "No GitHub data for %s (collection outage). Charts show the gap; 7-day comparisons use the nearest earlier snapshot." $range) -}}

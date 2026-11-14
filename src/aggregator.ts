@@ -99,7 +99,9 @@ export async function aggregate(args: CliArgs): Promise<void> {
   const maintainerSpinner = spinner('Fetching maintainers').start();
   const maintainers = await fetchMaintainers(client, verbose);
   maintainerSpinner.succeed(`Found ${style.bold(String(maintainers.maintainers.length))} maintainers`);
-  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github));
+  // Lowercased: the access repo's casing need not match the API's (it lists
+  // caitiem20 and daleseo), so every probe lowercases too.
+  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github.toLowerCase()));
 
   // Process each repository
   const repoCount = config.repositories.length;
@@ -302,7 +304,7 @@ async function aggregateSEPOnly(args: CliArgs): Promise<void> {
   const maintainerSpinner = spinner('Fetching maintainers').start();
   const maintainers = await fetchMaintainers(client, verbose);
   maintainerSpinner.succeed(`Found ${style.bold(String(maintainers.maintainers.length))} maintainers`);
-  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github));
+  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github.toLowerCase()));
 
   // Fetch PRs (only data needed for SEPs)
   const prSpinner = spinner('Fetching pull requests').start();

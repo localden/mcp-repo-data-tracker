@@ -204,6 +204,8 @@ export async function writeRepoIndex(repos: RepoConfig[]): Promise<void> {
       repo: r.repo,
       name: r.name || `${r.owner}/${r.repo}`,
       description: r.description || '',
+      ...(r.sdk && { sdk: true }),
+      ...(r.valid_from && { valid_from: r.valid_from }),
       ...(r.package && { package: r.package }),
     })),
   };

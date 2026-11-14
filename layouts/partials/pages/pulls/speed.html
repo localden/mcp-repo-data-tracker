@@ -1,0 +1,37 @@
+{{- /* Review speed (brief 3.3b-4, 6.2): one KPI card. Dict {r (data/repo.html), m (metrics.json)}.
+     After D1-8 (metrics › pulls.first_review_90d exists): Reviewed within 7 days, First review median ("≥" while censored: more than half
+       still unreviewed), Time to merge median over non-maintainer PRs merged in the last 90 days.
+     Until then only Time to merge, with its population named: today the pipeline still includes maintainer and bot PRs (D1-7).
+     The survivorship first-review median (pulls.review_time) is never shown. */ -}}
+{{- $r := .r -}}
+{{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
+{{- $fr := dict }}{{ with $pl.first_review_90d }}{{ if reflect.IsMap . }}{{ $fr = . }}{{ end }}{{ end -}}
+{{- $mt := dict }}{{ with $pl.merge_time }}{{ if reflect.IsMap . }}{{ $mt = . }}{{ end }}{{ end -}}
+{{- $sMerge := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.merge_time.median_hours") -}}
+{{- $wMerge := (partial "data/week-bins.html" (dict "points" $sMerge.points "agg" "last" "weeks" 12)).points -}}
+{{- $tiles := slice -}}
+{{- if $fr -}}
+  {{- $nTxt := "" }}{{ with $fr.n }}{{ $nTxt = printf ", n = %s" (lang.FormatNumber 0 (float .)) }}{{ end -}}
+  {{- $sFirst := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.first_review_90d.median_hours") -}}
+  {{- $tiles = slice
+    (dict "label" "Reviewed within 7 days" "value" $fr.within_7d_pct "format" "pct" "na" "not computed"
+      "labelTitle" "Share of PRs opened in the last 90 days that got a maintainer review within 7 days"
+      "context" (printf "PRs opened in the last 90 days%s" $nTxt))
+    (dict "label" "First review, median" "value" $fr.median_hours "format" "dur" "na" "not computed"
+      "prefix" (cond (eq $fr.censored true) "≥" "")
+      "labelTitle" "Median time to a first maintainer review; PRs still waiting count at their current age"
+      "context" "PRs opened in the last 90 days, still waiting included"
+      "points" (partial "data/week-bins.html" (dict "points" $sFirst.points "agg" "last" "weeks" 12)).points)
+    (dict "label" "Time to merge, median" "value" $mt.median_hours "format" "dur" "na" "not computed"
+      "labelTitle" "Median time from opening to merge"
+      "context" "non-maintainer PRs merged in the last 90 days" "points" $wMerge) -}}
+{{- else -}}
+  {{- $tiles = slice
+    (dict "label" "Time to merge, median" "value" $mt.median_hours "format" "dur" "na" "not computed"
+      "labelTitle" "Median time from opening to merge"
+      "context" "PRs merged in the last 90 days, maintainer and bot PRs included" "points" $wMerge) -}}
+{{- end }}
+<section class="v-section" aria-labelledby="review-speed">
+  {{ partial "ui/section-head.html" (dict "title" "Review speed" "id" "review-speed") }}
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review speed") }}
+</section>

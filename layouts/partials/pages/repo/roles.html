@@ -1,0 +1,54 @@
+{{- /* Maintainer groups of one repository (brief 3.6-6, 8b D1-5). Moved here from pages/contributors/role-map.html.
+  Call: $roles := partial "pages/repo/roles.html" $r   ($r = data/repo.html result)
+  Group ids: repos.json › roles when present (D1-6, "ROLE_IDS." prefix optional), else the page-local map below, which mirrors
+  D1-5: TS/Python/C#/Rust/Ruby -> their SDK group; spec -> core + lead + docs; ext-apps -> MCP Apps SDK; mcpb -> MCPB; conformance -> none.
+  This is the contributor maintainer set (repo groups only), not the responder set used for reply and review metrics.
+  Returns dict: ids []string, labels []string (display names, "TypeScript SDK"), handles []string (data/maintainers.json logins in any
+  of the groups, sorted ignoring case), lower []string (the same handles lowercased, for case-insensitive matching), defined bool. */ -}}
+{{- $r := . -}}
+{{- $map := dict
+  "modelcontextprotocol" (slice "CORE_MAINTAINERS" "LEAD_MAINTAINERS" "DOCS_MAINTAINERS")
+  "typescript-sdk" (slice "TYPESCRIPT_SDK")
+  "python-sdk" (slice "PYTHON_SDK")
+  "csharp-sdk" (slice "CSHARP_SDK")
+  "rust-sdk" (slice "RUST_SDK")
+  "ruby-sdk" (slice "RUBY_SDK")
+  "ext-apps" (slice "MCP_APPS_SDK")
+  "mcpb" (slice "MCPB_MAINTAINERS")
+-}}
+{{- $names := dict
+  "CORE_MAINTAINERS" "Core maintainers"
+  "LEAD_MAINTAINERS" "Lead maintainers"
+  "DOCS_MAINTAINERS" "Docs maintainers"
+  "TYPESCRIPT_SDK" "TypeScript SDK"
+  "PYTHON_SDK" "Python SDK"
+  "CSHARP_SDK" "C# SDK"
+  "RUST_SDK" "Rust SDK"
+  "RUBY_SDK" "Ruby SDK"
+  "MCP_APPS_SDK" "MCP Apps SDK"
+  "MCPB_MAINTAINERS" "MCPB maintainers"
+-}}
+{{- $ids := slice -}}
+{{- if isset ($r.cfg | default dict) "roles" -}}
+  {{- range $r.cfg.roles }}{{ $ids = $ids | append (strings.TrimPrefix "ROLE_IDS." (string .)) }}{{ end -}}
+{{- else -}}
+  {{- range index $map ($r.repo | default "") }}{{ $ids = $ids | append . }}{{ end -}}
+{{- end -}}
+{{- $labels := slice -}}
+{{- range $ids }}{{ $labels = $labels | append (index $names . | default (partial "ui/humanize.html" (lower .))) }}{{ end -}}
+
+{{- /* Every maintainers.json login in one of the groups, once, sorted ignoring case. */ -}}
+{{- $people := slice }}{{ $seen := slice -}}
+{{- if $ids -}}
+  {{- with site.Data.maintainers -}}{{- range .maintainers -}}
+    {{- $h := string (.github | default "") -}}
+    {{- $hit := false -}}
+    {{- range .roles | default slice }}{{ if in $ids (strings.TrimPrefix "ROLE_IDS." (string .)) }}{{ $hit = true }}{{ end }}{{ end -}}
+    {{- if and $h $hit (not (in $seen (lower $h))) -}}
+      {{- $people = $people | append (dict "k" (lower $h) "h" $h) }}{{ $seen = $seen | append (lower $h) -}}
+    {{- end -}}
+  {{- end -}}{{- end -}}
+{{- end -}}
+{{- $handles := slice }}{{ $lower := slice -}}
+{{- if $people }}{{ range sort $people "k" }}{{ $handles = $handles | append .h }}{{ $lower = $lower | append .k }}{{ end }}{{ end -}}
+{{- return dict "ids" $ids "labels" $labels "handles" $handles "lower" $lower "defined" (gt (len $ids) 0) -}}

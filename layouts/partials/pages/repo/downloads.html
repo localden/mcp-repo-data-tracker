@@ -1,0 +1,32 @@
+{{- /* 5. Downloads (brief 3.6-5, 5.4, 5.5): 26 complete ISO weeks as columns, under a header with the last 7 complete days, their window
+  and the change vs the prior 7 days. The unfinished week is stated as text, never plotted. With fewer than 4 complete weeks the card
+  shows the value and "Tracking since …" instead (Rust SDK and Ruby SDK today); with fewer than 7 complete days the value is the
+  partial sum, muted, with the Flag "n of 7 days" and no delta. Only rendered for repos with a registry package.
+  Context: the dict from pages/repo.html (dl = data/downloads.html for this package, window ending on its own complete_through). */ -}}
+{{- $r := .r }}{{ $d := .dl -}}
+{{- $w := partial "data/week-bins.html" (dict "points" ($d.points | default slice) "agg" "sum" "weeks" 26 "end" ($d.complete_through | default "")) -}}
+{{- $val := "" }}{{ $sub := "" }}{{ $flag := "" -}}
+{{- if ne $d.dl7 nil -}}
+  {{- $val = partial "ui/num.html" (dict "v" $d.dl7 "mode" "compact") -}}
+  {{- $sub = htmlEscape ($d.window | default "") -}}
+  {{- with trim (string (partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "vs" "prior 7 days" "polarity" "up"))) " \n" }}{{ $sub = printf "%s&nbsp;· %s" $sub . }}{{ end -}}
+{{- else if gt (int ($d.days_covered | default 0)) 0 -}}
+  {{- $val = printf `<span class="v-muted">%s</span>` (partial "ui/num.html" (dict "v" $d.sum7 "mode" "compact")) -}}
+  {{- $flag = partial "ui/flag.html" (printf "%d of 7 days" (int $d.days_covered)) -}}
+  {{- $sub = printf "%s %s" (htmlEscape ($d.window | default "")) $flag -}}
+{{- end -}}
+{{- $foot := "" -}}
+{{- with $w.wtd }}{{ if ne .value nil }}{{ $foot = printf "Week to date: %s (%d of 7 days)" (trim (string (partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true))) " \n") (int .days) }}{{ end }}{{ end }}
+<section class="v-section" aria-labelledby="downloads">
+  {{ partial "ui/section-head.html" (dict "title" "Downloads" "id" "downloads" "caption" "Weekly downloads, last 26 complete weeks"
+      "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
+  {{- if ge $w.n 4 }}
+  {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Last 7 days" "value" ($val | safeHTML) "sub" ($sub | safeHTML) "reserve_sub" true
+      "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column" "foot" $foot
+      "series" (slice (dict "label" "Downloads" "points" $w.points))) }}
+  {{- else if $d.first }}
+  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" (cond (ne (string $flag) "") (printf "%s %s" $val $flag) $val | safeHTML) "since" $d.first) }}
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "body" (printf "No data collected for %s yet." $r.name)) }}
+  {{- end }}
+</section>

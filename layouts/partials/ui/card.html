@@ -1,0 +1,12 @@
+{{- /* Card (brief 4.4, 4.6 c): the one box level. Dict {title, id, level, right, body, flush, foot, note, class, cardId}.
+  Header via ui/card-head.html (title, id, level, right). body: pre-rendered HTML (capture a partial's output and pass it);
+  flush: true drops the 16px body padding (tables). note: one caption sentence under the body, only for a caveat that changes how a
+  number reads. foot: pre-rendered foot row (ui/more.html renders its own .v-card-foot; pass it as body tail or foot-less).
+  For tables and lists, writing <div class="v-card"> by hand is equally fine; see build/wp0a-api.md for the anatomy. */ -}}
+{{- $c := . -}}
+<div class="v-card{{ with $c.class }} {{ . }}{{ end }}"{{ with $c.cardId }} id="{{ . }}"{{ end }}>
+  {{- partial "ui/card-head.html" $c -}}
+  {{- with $c.body }}<div class="v-card-body{{ if $c.flush }} is-flush{{ end }}">{{ . }}</div>{{ end -}}
+  {{- with $c.note }}<p class="v-card-note">{{ . }}</p>{{ end -}}
+  {{- with $c.foot }}<div class="v-card-foot">{{ . }}</div>{{ end -}}
+</div>

@@ -1,50 +1,38 @@
-{{- $page := "" -}}{{- with .File -}}{{- $page = .BaseFileName -}}{{- end -}}
-{{- $isHome := .IsHome -}}
-{{- $repos := site.Data.repos.repositories -}}
-<header class="v-header">
+{{- /* Header and nav (brief 2.2). Nav items are unscoped (org views); the current item is chosen by section:
+  home, issues, pulls, seps, downloads, repos (.Section, else the content file's base name). DOM order is the desktop order;
+  below 48rem the brand and theme toggle share row 1 and the six items form a 3 x 2 grid. Repositories is a ui/menu.html disclosure. */ -}}
+{{- $cur := "" -}}
+{{- if .IsHome }}{{ $cur = "home" }}{{ else }}{{ $cur = .Section }}{{ if not $cur }}{{ with .File }}{{ $cur = .BaseFileName }}{{ end }}{{ end }}{{ end -}}
+{{- $curRepo := "" }}{{ if eq $cur "repos" }}{{ $curRepo = .Params.repo | default "" }}{{ end -}}
+{{- $items := slice
+  (dict "key" "home" "href" site.Home.RelPermalink "long" "Overview" "short" "Overview")
+  (dict "key" "issues" "href" ("issues/" | relURL) "long" "Issues" "short" "Issues")
+  (dict "key" "pulls" "href" ("pulls/" | relURL) "long" "Pull requests" "short" "PRs")
+  (dict "key" "seps" "href" ("seps/" | relURL) "long" "SEPs" "short" "SEPs")
+  (dict "key" "downloads" "href" ("downloads/" | relURL) "long" "Downloads" "short" "Downloads") -}}
+{{- $repoItems := slice -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $repoItems = $repoItems | append (dict "text" (.name | default .repo) "href" (printf "repos/%s/" .repo | relURL)
+    "current" (or (eq $curRepo (printf "%s/%s" .owner .repo)) (eq $curRepo .repo))) -}}
+{{- end }}
+<header class="v-header" id="site-header">
   <div class="v-shell v-header-row">
-    <a href="{{ site.Home.RelPermalink }}" class="v-brand">{{ site.Title }}</a>
-    <span class="v-pill">Experimental</span>
-    <nav class="v-nav" aria-label="Sections">
-      <a class="v-nav-item" data-nav data-base="{{ site.Home.RelPermalink }}" href="{{ site.Home.RelPermalink }}"{{ if $isHome }} aria-current="page"{{ end }}>Overview</a>
-      {{- range slice (slice "issues" "Issues") (slice "pulls" "Pull requests") (slice "seps" "SEPs") (slice "contributors" "Contributors") (slice "health" "Trends") }}
-      {{- $key := index . 0 }}{{ $u := printf "%s/" $key | relURL }}
-      <a class="v-nav-item v-nav-repo" data-nav data-base="{{ $u }}" href="{{ $u }}"{{ if eq $key "seps" }} id="seps-nav-link"{{ end }}{{ if eq $page $key }} aria-current="page"{{ end }}>{{ index . 1 }}</a>
-      {{- end }}
+    <a class="v-brand" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
+    <span class="v-brand-sub">MCP repository health</span>
+    <nav class="v-nav" aria-label="Main">
+      <ul class="v-nav-list">
+        {{- range $items }}
+        <li><a class="v-nav-item" href="{{ .href }}"{{ if eq .key $cur }} aria-current="page"{{ end }}>
+          {{- if eq .long .short }}{{ .long }}{{ else }}<span class="v-nav-long">{{ .long }}</span><span class="v-nav-short">{{ .short }}</span>{{ end -}}
+        </a></li>
+        {{- end }}
+        <li>{{ partial "ui/menu.html" (dict "id" "nav-repos" "variant" "nav" "align" "end" "current" (eq $cur "repos")
+          "labelHTML" (`<span class="v-nav-long">Repositories</span><span class="v-nav-short">Repos</span>` | safeHTML) "items" $repoItems) }}</li>
+      </ul>
     </nav>
-    <div class="v-tools">
-      {{- if gt (len $repos) 1 }}
-      <div class="dropdown dropdown-end" id="repo-picker">
-        <div tabindex="0" role="button" class="v-nav-item v-picker" id="repo-picker-trigger" aria-haspopup="listbox" aria-label="Select repository">
-          <span class="v-picker-label">
-            <span class="v-scope-only" data-repo="__all__">All repositories</span>
-            {{- range $repos }}<span class="v-scope-only" data-repo="{{ .owner }}/{{ .repo }}">{{ .name | default .repo }}</span>{{ end }}
-          </span>
-          {{ partial "ui/icon.html" "chevron-down" }}
-        </div>
-        <ul tabindex="-1" class="dropdown-content v-menu" id="repo-picker-menu" role="listbox" aria-labelledby="repo-picker-trigger">
-          <li class="repo-picker-item" role="option" data-owner="" data-repo="" data-name="All repositories">
-            <a class="v-menu-item" href="{{ site.Home.RelPermalink }}">
-              <span class="v-menu-title">All repositories</span><span class="v-menu-sub">{{ len $repos }} tracked</span>{{ partial "ui/icon.html" "check" }}
-            </a>
-          </li>
-          <li class="v-menu-sep" role="separator"></li>
-          {{- range $repos }}
-          <li class="repo-picker-item" role="option" data-owner="{{ .owner }}" data-repo="{{ .repo }}" data-name="{{ .name | default .repo }}">
-            <a class="v-menu-item" href="?repo={{ printf "%s/%s" .owner .repo | urlquery }}">
-              <span class="v-menu-title">{{ .name | default .repo }}</span>
-              {{- with .package }}<span class="v-menu-sub">{{ .registry }}</span>{{ end }}
-              {{ partial "ui/icon.html" "check" }}
-            </a>
-          </li>
-          {{- end }}
-        </ul>
-      </div>
-      {{- end }}
-      <button id="theme-toggle" type="button" class="v-nav-item v-icon-btn" aria-label="Toggle dark mode">
-        <span class="theme-icon-dark">{{ partial "ui/icon.html" "moon" }}</span>
-        <span class="theme-icon-light">{{ partial "ui/icon.html" "sun" }}</span>
-      </button>
-    </div>
+    <button id="theme-toggle" type="button" class="v-icon-btn v-theme" aria-pressed="false" aria-label="Dark theme">
+      <span class="theme-icon-dark">{{ partial "ui/icon.html" "moon" }}</span>
+      <span class="theme-icon-light">{{ partial "ui/icon.html" "sun" }}</span>
+    </button>
   </div>
 </header>

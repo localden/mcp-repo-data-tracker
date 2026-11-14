@@ -1,5 +1,18 @@
+{{- /* Section head (brief 4.6 b): H2 on the left, one optional action link on the right, one optional caption line below. 12px to content.
+  Dict {title, id, action, caption}. id: the H2 id for aria-labelledby (default: anchorize title).
+  action: {text, href} ("All downloads", "/downloads/"); an arrow icon is appended. caption: one muted line, never a middot list. */ -}}
+{{- $c := . -}}
+{{- $id := $c.id | default (anchorize $c.title) -}}
+{{- $act := $c.action -}}
+{{- if and (not $act) $c.link }}{{ $act = dict "text" ($c.linkText | default "View all") "href" $c.link }}{{ end -}}
 <div class="v-section-head">
-  <h2 class="v-section-title" id="{{ .id }}">{{ .title }}</h2>
-  {{ with .meta }}<p class="v-section-meta">{{ . }}</p>{{ end }}
-  {{ with .link }}<a class="v-section-link" href="{{ . }}">{{ $.linkText }} {{ partial "ui/icon.html" "arrow-up-right" }}</a>{{ end }}
+  <div class="v-section-row">
+    <h2 class="v-section-title" id="{{ $id }}">{{ $c.title }}</h2>
+    {{- with $act }}
+    <a class="v-section-action" href="{{ .href }}">{{ .text }}{{ partial "ui/icon.html" "arrow-right" }}</a>
+    {{- end }}
+  </div>
+  {{- with $c.caption | default $c.meta }}
+  <p class="v-section-caption">{{ . }}</p>
+  {{- end }}
 </div>

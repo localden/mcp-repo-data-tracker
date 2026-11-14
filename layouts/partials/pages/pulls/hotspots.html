@@ -1,0 +1,66 @@
+{{- /* Where merged PRs land (brief 3.3b-5, 5.13, TR-05, DV-30): one full-width card, a Files | Directories segmented control in the header,
+     one fixed table per panel (path auto | merged PRs 7rem | ranking bar 6rem). Dict {m (metrics.json)}; source metrics › hotspots.
+     Paths are code: mono, wrapping anywhere (a <wbr> after every "/"). Counts are right-aligned and never clipped; the bar has no track,
+     is scaled to the top row, is aria-hidden and drops on phones. Until D1-12 lands, the paths the pipeline will exclude (lockfiles,
+     .changeset/, CHANGELOG*.md) are skipped here before taking the top 10. Omitted when metrics.json has no hotspots. */ -}}
+{{- $h := dict }}{{ with .m }}{{ with .hotspots }}{{ if reflect.IsMap . }}{{ $h = . }}{{ end }}{{ end }}{{ end -}}
+{{- if $h -}}
+{{- $skipFile := `(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|uv\.lock|Cargo\.lock|Gemfile\.lock)$|(^|/)\.changeset/|(^|/)CHANGELOG[^/]*\.md$` -}}
+{{- $files := slice -}}
+{{- range $h.by_file | default slice -}}
+  {{- $p := string (.path | default "") -}}
+  {{- if and $p (lt (len $files) 10) (not (findRE $skipFile $p)) }}{{ $files = $files | append . }}{{ end -}}
+{{- end -}}
+{{- $dirs := slice -}}
+{{- range $h.by_directory | default slice -}}
+  {{- $p := string (.path | default "") -}}
+  {{- if and $p (lt (len $dirs) 10) (not (findRE `(^|/)\.changeset/$` $p)) }}{{ $dirs = $dirs | append . }}{{ end -}}
+{{- end -}}
+{{- $panels := slice
+  (dict "key" "files" "label" "Files" "head" "File" "rows" $files "unit" "file")
+  (dict "key" "dirs" "label" "Directories" "head" "Directory" "rows" $dirs "unit" "directory") -}}
+{{- $title := cond (ge (len $files) 10) "Top 10 by merged PRs" "Paths by merged PRs" }}
+<section class="v-section" aria-labelledby="hotspots">
+  {{ partial "ui/section-head.html" (dict "title" "Where merged PRs land" "id" "hotspots" "caption" "Last 90 days") }}
+  {{- if or $files $dirs }}
+  <div class="v-card">
+    <div class="v-card-head">
+      <h3 class="v-card-title" id="hot-title">{{ $title }}</h3>
+      <div class="v-card-aside">{{ partial "ui/tabs.html" (dict "id" "hot" "label" "Files or directories" "panels" true "selected" "files"
+        "tabs" (slice (dict "key" "files" "label" "Files" "panel" "hot-files") (dict "key" "dirs" "label" "Directories" "panel" "hot-dirs"))) }}</div>
+    </div>
+    {{- range $panels }}
+    {{- $pn := . -}}
+    {{- $max := 1.0 }}{{ with $pn.rows }}{{ $max = float ((index . 0).pr_count | default 1) }}{{ end }}
+    <div role="tabpanel" id="hot-{{ $pn.key }}" aria-labelledby="hot-tab-{{ $pn.key }}"{{ if ne $pn.key "files" }} hidden{{ end }}>
+      {{- if $pn.rows }}
+      <table class="v-dt is-fixed" aria-labelledby="hot-title hot-tab-{{ $pn.key }}">
+        <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-24 v-desk-only"></colgroup>
+        <thead><tr>
+          <th scope="col">{{ $pn.head }}</th>
+          <th scope="col" class="num">Merged PRs</th>
+          <th scope="col" class="v-desk-only"><span class="sr-only">Compared with the top {{ $pn.unit }}</span></th>
+        </tr></thead>
+        <tbody>
+          {{- range $pn.rows }}
+          {{- $p := string .path -}}
+          {{- $tip := "" }}{{ with .total_changes }}{{ $tip = printf "%s lines changed" (lang.FormatNumber 0 (float .)) }}{{ end }}{{ with .file_count }}{{ $tip = partial "ui/plural.html" (dict "n" . "one" "file") }}{{ end }}
+          <tr>
+            <th scope="row" class="wrap-anywhere"><span class="v-code"{{ with $tip }} title="{{ . }}"{{ end }}>{{ if eq $p "/" }}/ (root){{ else }}{{ replace (htmlEscape $p) "/" "/<wbr>" | safeHTML }}{{ end }}</span></th>
+            <td class="num">{{ partial "ui/num.html" (dict "v" .pr_count "mode" "full") }}</td>
+            <td class="v-desk-only">{{ partial "ui/meter.html" (dict "value" .pr_count "max" $max "rank" true) }}</td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+      {{- else }}
+      <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" "No merged PRs in the last 90 days.") }}</div>
+      {{- end }}
+    </div>
+    {{- end }}
+  </div>
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" "No merged PRs in the last 90 days.") }}
+  {{- end }}
+</section>
+{{- end -}}

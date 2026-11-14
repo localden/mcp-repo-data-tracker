@@ -1,0 +1,10 @@
+{{- /* Signed whole count for a net change (brief 6.3): "+37", "−5" (real minus sign), "0". Returns a string, "" when n is nil.
+  Call: partial "pages/repo/signed.html" (dict "n" (sub (float $opened) (float $closed))) */ -}}
+{{- $out := "" -}}
+{{- if ne .n nil -}}
+  {{- $v := math.Round (float .n) -}}
+  {{- if gt $v 0.0 }}{{ $out = printf "+%s" (lang.FormatNumber 0 $v) -}}
+  {{- else if lt $v 0.0 }}{{ $out = printf "−%s" (lang.FormatNumber 0 (math.Abs $v)) -}}
+  {{- else }}{{ $out = "0" }}{{ end -}}
+{{- end -}}
+{{- return $out -}}

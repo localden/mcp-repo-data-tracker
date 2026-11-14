@@ -1,32 +1,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
-<meta name="description" content="{{ site.Params.description }}">
+{{- /* <title> is "{H1} · VISR" (brief 2.3): page titles equal their H1; the home page is "MCP repositories". */ -}}
+{{- $title := .Title -}}{{- if .IsHome }}{{ $title = "MCP repositories" }}{{ end }}
+<title>{{ $title }} · {{ site.Title }}</title>
+<meta name="description" content="{{ .Description | default site.Params.description }}">
+{{- if eq .Layout "redirect" }}
+{{- /* Retired URL (layout: redirect, brief 2.1). The script redirects first, so a legacy ?repo=owner/repo link lands on that repo's
+  page instead of racing a zero-second refresh; the meta refresh is the no-JS path. Only repos listed in repos.json are followed. */ -}}
+{{- $to := .Params.target | default "repos/modelcontextprotocol/" | relURL }}
+{{- $slugs := slice }}{{ range site.Data.repos.repositories }}{{ $slugs = $slugs | append .repo }}{{ end }}
+<script>
+(function () {
+  var to = {{ $to }}, base = {{ "repos/" | relURL }}, known = {{ $slugs }}, slug = null;
+  try { var k = new URLSearchParams(location.search).get('repo'); if (k) slug = k.split('/').pop(); } catch (e) {}
+  if (slug && known.indexOf(slug) !== -1) to = base + slug + '/';
+  location.replace(to + location.hash);
+})();
+</script>
+<noscript><meta http-equiv="refresh" {{ printf `content="0; url=%s"` $to | safeHTMLAttr }}></noscript>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="{{ $to | absURL }}">
+{{- end }}
 <link rel="icon" type="image/svg+xml" href="{{ "favicon.svg" | relURL }}">
+<script>
+(function () {
+  /* theme before first paint: a stored choice wins, else the system preference (brief 7.2 D6); html.js gates JS-only styles */
+  var d = document.documentElement, t = null;
+  d.classList.add('js');
+  try { t = localStorage.getItem('theme'); } catch (e) {}
+  if (t !== 'dark' && t !== 'light') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  d.setAttribute('data-theme', t);
+})();
+</script>
 {{- with resources.Get "gen/main.css" }}
-  {{- with . | fingerprint }}<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">{{ end }}
+  {{- with . | fingerprint }}
+<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">
+  {{- end }}
 {{- else }}
   {{- warnf "assets/gen/main.css is missing: run `npm run css:build` before hugo" }}
 {{- end }}
-{{- $repos := site.Data.repos.repositories -}}
-{{- $default := "__all__" -}}
-{{- if not .IsHome -}}{{- with index $repos 0 -}}{{- $default = printf "%s/%s" .owner .repo -}}{{- end -}}{{- end -}}
-<script>
-(function () {
-  var d = document.documentElement, t = null, r = null;
-  try { t = localStorage.getItem('theme'); } catch (e) {}
-  d.setAttribute('data-theme', (t === 'dark' || t === 'light') ? t : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
-  try { r = new URLSearchParams(location.search).get('repo'); } catch (e) {}
-  d.setAttribute('data-scope', r || {{ $default }});
-})();
-</script>
-{{- /* Per-repo visibility before first paint. Built as one string so html/template does not escape the selectors. */ -}}
-{{- $css := ".repo-content,.v-scope-only{display:none}" -}}
-{{- $keys := slice "__all__" -}}
-{{- range $repos }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
-{{- range $keys -}}
-  {{- $css = printf `%shtml[data-scope="%s"] .repo-content[data-repo="%s"],html[data-scope="%s"] .v-scope-only[data-repo="%s"]{display:block}` $css . . . . -}}
-{{- end }}
-<style>{{ $css | safeCSS }}</style>
-<noscript><style>.repo-content[data-default]{display:block}</style></noscript>

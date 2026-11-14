@@ -1,0 +1,42 @@
+{{- /* Labels on open issues (brief 3.2b-6): a disclosure, closed by default (button[aria-expanded][aria-controls] + hidden panel; ui.js
+  toggles it and Escape closes it). Top 10 of metrics.json issues.by_label without the labels the queue already carries: type
+  (bug, enhancement, question, documentation), priority (P0–P3) and status/workflow labels (ready for work, needs *, fix proposed,
+  potentially close, on hold, pending SEP approval). Columns Label · Open · Share; the share is text only (no meter) and an issue can
+  carry several labels. Omitted when no label is left. Ctx: dict {r (data/repo.html)}. */ -}}
+{{- $r := .r -}}
+{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+{{- $skip := slice "bug" "enhancement" "question" "documentation" "P0" "P1" "P2" "P3" "ready for work" "fix proposed" "potentially close" "on hold" "pending SEP approval" -}}
+{{- $all := slice -}}
+{{- range $k, $v := ($iss.by_label | default dict) -}}
+  {{- if not (or (in $skip $k) (hasPrefix (lower $k) "needs ")) }}{{ $all = $all | append (dict "label" $k "n" (float $v)) }}{{ end -}}
+{{- end -}}
+{{- if $all }}
+{{- $top := first 10 (sort $all "n" "desc") -}}
+{{- $open := float ($iss.open_count | default 0) -}}
+{{- $dec := 0 }}{{ range $top }}{{ if and (gt $open 0.0) (lt (mul (div .n $open) 100.0) 10.0) }}{{ $dec = 1 }}{{ end }}{{ end }}
+<section class="v-section" aria-labelledby="labels">
+  <div class="v-section-head">
+    <div class="v-section-row">
+      <h2 class="v-section-title" id="labels"><button type="button" class="v-disclosure font-semibold" data-disclosure aria-expanded="false" aria-controls="labels-panel">Labels on open issues{{ partial "ui/icon.html" "chevron-down" }}</button></h2>
+    </div>
+    <p class="v-section-caption">Top 10, without type, priority and status labels</p>
+  </div>
+  <div id="labels-panel" hidden>
+    <div class="v-card">
+      <table class="v-dt is-fixed" aria-labelledby="labels">
+        <colgroup><col class="v-col-auto"><col class="v-col-24"><col class="v-col-24"></colgroup>
+        <thead><tr><th scope="col">Label</th><th scope="col" class="num">Open</th><th scope="col" class="num">Share<span class="sub">of open issues</span></th></tr></thead>
+        <tbody>
+          {{- range $top }}
+          <tr>
+            <th scope="row">{{ .label }}</th>
+            <td class="num">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</td>
+            <td class="num">{{ if gt $open 0.0 }}{{ partial "ui/pct.html" (dict "v" (mul (div .n $open) 100.0) "dec" $dec) }}{{ else }}{{ partial "ui/num.html" (dict "v" nil) }}{{ end }}</td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{{- end }}

@@ -1,0 +1,87 @@
+{{- /* Day-by-day series of one snapshot metric (§8a-1, §8a-6). Replaces ui/series.html.
+  Call: $s := partial "data/series.html" (dict "repo" "typescript-sdk" "path" "issues.open" ["days" 182] ["anchor" "YYYY-MM-DD"])
+    repo: repos.json entry, "owner/repo" or repo name (or pass "snapshots" directly); path: dotted key inside a snapshot;
+    days: domain length ending on anchor (default 182 = 26 weeks); anchor: domain end (default the newest snapshot date site-wide);
+    valid_from: optional "YYYY-MM-DD" override (default repos.json valid_from[path]); earlier points are dropped.
+  A snapshot counts only when its "date" field equals its filename (mismatches are skipped with a build warning).
+  Returns dict:
+    labels []string (every date in the domain), points [{date, value float|nil}] (one per label), data string (JSON "[n,null,…]"),
+    n int (non-null points), cur float|nil + cur_date (latest non-null in the domain), first (first valid date with a value, any
+    domain; "" if none), from/to (domain), cmp7/cmp30 dict{date, value, delta, days}|nil (snapshot at t-N, else t-N+1, t-N-1, then the
+    nearest earlier within 21 days; t = cur_date), gaps (data/gaps.html), reconstructed [from, to]|nil (meta.source = reconstructed),
+    stale bool (cur_date more than 2 days before anchor), skipped []string (filenames whose date field mismatched). */ -}}
+{{- $r := partial "data/repo.html" (.repo | default "") -}}
+{{- $snaps := .snapshots | default $r.snapshots -}}
+{{- $path := split .path "." -}}
+{{- $vf := .valid_from | default (index $r.valid_from .path) | default "" -}}
+{{- $anchor := .anchor | default (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- $days := int (.days | default 182) -}}
+
+{{- /* One pass over every snapshot (map ranges in key order): numeric values by date, reconstructed dates, first date. */ -}}
+{{- $sc := newScratch }}{{ $first := "" }}{{ $bad := slice -}}
+{{- range $k, $snap := $snaps -}}
+  {{- if reflect.IsMap $snap -}}
+    {{- if eq (string $snap.date) $k -}}
+      {{- if or (eq $vf "") (ge $k $vf) -}}
+        {{- $v := $snap -}}
+        {{- range $path }}{{ if reflect.IsMap $v }}{{ $v = index $v . }}{{ else }}{{ $v = "" }}{{ end }}{{ end -}}
+        {{- if in (slice "float64" "int" "int64") (printf "%T" $v) -}}
+          {{- $sc.SetInMap "v" $k (float $v) -}}
+          {{- if eq $first "" }}{{ $first = $k }}{{ end -}}
+          {{- if eq (index $snap "meta" | default dict).source "reconstructed" }}{{ $sc.SetInMap "r" $k true }}{{ end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- else -}}
+      {{- $bad = $bad | append $k -}}
+      {{- warnf "VISR data/series: snapshot %s/%s has date %q, skipped" $r.key $k (string $snap.date) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $vals := $sc.Get "v" | default dict }}{{ $rec := $sc.Get "r" | default dict -}}
+
+{{- /* Fill every date in the domain; missing dates are null. */ -}}
+{{- $end := time.AsTime $anchor -}}
+{{- $labels := slice }}{{ $pts := slice }}{{ $cells := slice -}}
+{{- $n := 0 }}{{ $cur := 0.0 }}{{ $curDate := "" }}{{ $recFrom := "" }}{{ $recTo := "" -}}
+{{- range $i := seq 0 (sub $days 1) -}}
+  {{- $d := ($end.AddDate 0 0 (int (sub $i (sub $days 1)))).Format "2006-01-02" -}}
+  {{- $v := index $vals $d -}}
+  {{- $labels = $labels | append $d -}}
+  {{- if ne $v nil -}}
+    {{- $pts = $pts | append (dict "date" $d "value" $v) }}{{ $cells = $cells | append (string $v) -}}
+    {{- $n = add $n 1 }}{{ $cur = $v }}{{ $curDate = $d -}}
+    {{- if index $rec $d }}{{ if eq $recFrom "" }}{{ $recFrom = $d }}{{ end }}{{ $recTo = $d }}{{ end -}}
+  {{- else -}}
+    {{- $pts = $pts | append (dict "date" $d "value" nil) }}{{ $cells = $cells | append "null" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Dated comparisons: t-N exactly, then t-N+1, t-N-1, then the nearest earlier snapshot within 21 days of t-N. */ -}}
+{{- $cmp7 := dict }}{{ $cmp30 := dict -}}
+{{- if ne $curDate "" -}}
+  {{- $t := time.AsTime $curDate -}}
+  {{- range $N := slice 7 30 -}}
+    {{- $offs := slice $N (sub $N 1) (add $N 1) -}}
+    {{- range seq (add $N 2) (add $N 21) }}{{ $offs = $offs | append . }}{{ end -}}
+    {{- $hit := dict -}}
+    {{- range $offs -}}
+      {{- if eq (len $hit) 0 -}}
+        {{- $d := ($t.AddDate 0 0 (int (sub 0 .))).Format "2006-01-02" -}}
+        {{- $x := index $vals $d -}}
+        {{- if ne $x nil }}{{ $hit = dict "date" $d "value" $x "delta" (sub $cur $x) "days" . }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if eq $N 7 }}{{ $cmp7 = $hit }}{{ else }}{{ $cmp30 = $hit }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $stale := false -}}
+{{- if ne $curDate "" }}{{ $stale = lt $curDate ($end.AddDate 0 0 -2 | time.Format "2006-01-02") }}{{ end -}}
+{{- $gaps := partial "data/gaps.html" (dict "points" $pts "min" 3 "gran" "day") -}}
+{{- return dict
+  "path" .path "labels" $labels "points" $pts "data" (printf "[%s]" (delimit $cells ","))
+  "n" $n "cur" (cond (ne $curDate "") $cur nil) "cur_date" $curDate "first" $first
+  "from" (index $labels 0) "to" (index $labels (sub (len $labels) 1))
+  "cmp7" (cond (gt (len $cmp7) 0) $cmp7 nil) "cmp30" (cond (gt (len $cmp30) 0) $cmp30 nil)
+  "gaps" $gaps "reconstructed" (cond (ne $recFrom "") (slice $recFrom $recTo) nil)
+  "stale" $stale "skipped" $bad -}}

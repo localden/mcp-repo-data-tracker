@@ -1,0 +1,13 @@
+{{- /* Filter bar for one [data-list]: search field, toggle chips, live count (brief 4.6 g, m; 3.2b-2, 3.3b-2). Place it inside the [data-list].
+  Dict {id, label, placeholder, chips, noun, one, total}.
+    id/label/placeholder: passed to ui/field.html (omit id for chips only). chips: slice of ui/chip.html dicts (no href).
+    noun/one: plural and singular nouns for the count ("issues"/"issue"). total: the server-side row count for the initial text.
+  The count is role=status aria-live=polite; ui.js writes "Showing 12 of 294 issues" while a search, chip or rule filter is active. */ -}}
+{{- $c := . -}}
+<div class="v-filterbar">
+  {{- with $c.id }}{{ partial "ui/field.html" (dict "id" . "label" $c.label "placeholder" $c.placeholder) }}{{ end -}}
+  {{- with $c.chips }}<div class="v-chips" role="group" aria-label="Filters">{{ range . }}{{ partial "ui/chip.html" . }}{{ end }}</div>{{ end -}}
+  <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $c.noun | default "items" }}" data-noun-one="{{ $c.one | default ($c.noun | default "item") }}">
+    {{- if ne $c.total nil }}{{ partial "ui/plural.html" (dict "n" $c.total "one" ($c.one | default "item") "other" ($c.noun | default "items")) }}{{ end -}}
+  </p>
+</div>

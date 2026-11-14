@@ -50,6 +50,16 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run aggregate -- --only=downloads --registry=npm
+      # The checkout carries every repo's versions.json. Ship only this
+      # registry's, or the stale copies overwrite other jobs' fresh ones at merge.
+      - name: Keep only this registry's versions.json
+        env:
+          REGISTRY: npm
+        run: |
+          keep=$(jq -r --arg r "$REGISTRY" '.repositories[] | select(.package.registry == $r) | "data/repos/\(.owner)/\(.repo)/versions.json"' repos.json)
+          find data/repos -name versions.json | while read -r vf; do
+            grep -qxF "$vf" <<< "$keep" || rm "$vf"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-npm
@@ -71,6 +81,14 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run aggregate -- --only=downloads --registry=nuget
+      - name: Keep only this registry's versions.json
+        env:
+          REGISTRY: nuget
+        run: |
+          keep=$(jq -r --arg r "$REGISTRY" '.repositories[] | select(.package.registry == $r) | "data/repos/\(.owner)/\(.repo)/versions.json"' repos.json)
+          find data/repos -name versions.json | while read -r vf; do
+            grep -qxF "$vf" <<< "$keep" || rm "$vf"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-nuget
@@ -92,6 +110,14 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run aggregate -- --only=downloads --registry=crates
+      - name: Keep only this registry's versions.json
+        env:
+          REGISTRY: crates
+        run: |
+          keep=$(jq -r --arg r "$REGISTRY" '.repositories[] | select(.package.registry == $r) | "data/repos/\(.owner)/\(.repo)/versions.json"' repos.json)
+          find data/repos -name versions.json | while read -r vf; do
+            grep -qxF "$vf" <<< "$keep" || rm "$vf"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-crates
@@ -113,6 +139,14 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run aggregate -- --only=downloads --registry=rubygems
+      - name: Keep only this registry's versions.json
+        env:
+          REGISTRY: rubygems
+        run: |
+          keep=$(jq -r --arg r "$REGISTRY" '.repositories[] | select(.package.registry == $r) | "data/repos/\(.owner)/\(.repo)/versions.json"' repos.json)
+          find data/repos -name versions.json | while read -r vf; do
+            grep -qxF "$vf" <<< "$keep" || rm "$vf"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-rubygems
@@ -138,6 +172,14 @@ jobs:
           echo '${{ secrets.BQ_KEY }}' > /tmp/bq-key.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq-key.json" >> $GITHUB_ENV
       - run: npm run aggregate -- --only=bigquery
+      - name: Keep only this registry's versions.json
+        env:
+          REGISTRY: pypi
+        run: |
+          keep=$(jq -r --arg r "$REGISTRY" '.repositories[] | select(.package.registry == $r) | "data/repos/\(.owner)/\(.repo)/versions.json"' repos.json)
+          find data/repos -name versions.json | while read -r vf; do
+            grep -qxF "$vf" <<< "$keep" || rm "$vf"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: downloads-pypi
@@ -213,9 +255,14 @@ jobs:
               [ -f "$metrics" ] && jq --slurpfile d "$dl" '.downloads = $d[0]' "$metrics" > "$metrics.tmp" && mv "$metrics.tmp" "$metrics"
               [ -f "$snap" ]    && jq --slurpfile d "$dl" '.downloads = $d[0]' "$snap"    > "$snap.tmp"    && mv "$snap.tmp" "$snap"
             done
+            # Copy only when newer than data/'s copy, so a stale versions.json
+            # never overwrites a fresher one, whatever the artifact order.
             find "$art" -name versions.json | while read -r vf; do
               rel=${vf#$art/}
-              cp "$vf" "data/repos/${rel}"
+              dest="data/repos/${rel}"
+              if [ ! -f "$dest" ] || jq -e --slurpfile cur "$dest" '.lastUpdated > ($cur[0].lastUpdated // "")' "$vf" > /dev/null; then
+                cp "$vf" "$dest"
+              fi
             done
           done
 

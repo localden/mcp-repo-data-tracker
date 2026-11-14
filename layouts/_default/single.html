@@ -1,21 +1,19 @@
 {{ define "main" }}
-{{- $pageName := "" -}}{{- with .File -}}{{- $pageName = .BaseFileName -}}{{- end -}}
-{{- $repos := site.Data.repos.repositories -}}
-{{- $pages := slice "issues" "pulls" "contributors" "health" "seps" -}}
-<article class="v-sections-root">
-{{- if and $repos (in $pages $pageName) }}
-  {{- range $i, $rc := $repos }}
-    {{- $repoKey := printf "%s/%s" $rc.owner $rc.repo }}
-  <div class="repo-content" data-repo="{{ $repoKey }}"{{ if eq $i 0 }} data-default{{ end }}>
-    {{ partial (printf "pages/%s.html" $pageName) (dict "context" $ "repoKey" $repoKey) }}
-  </div>
-  {{- end }}
-  {{- if eq $pageName "contributors" }}{{ partial "pages/contributors-org.html" (dict "context" $) }}{{ end }}
-{{- else if eq $pageName "seps" }}
-  {{ partial "pages/seps.html" (dict "context" . "repoKey" "modelcontextprotocol/modelcontextprotocol") }}
-{{- else if in $pages $pageName }}
-  {{ partial (printf "pages/%s.html" $pageName) . }}
+{{- /*
+  Routing contract (build/wp0a-api.md): every regular page renders layouts/partials/pages/<name>.html with the page as context,
+  where name = .Params.page, else .Section, else the content file's base name (content/seps.md -> "seps").
+  Per-repo pages from content adapters carry params {repo: "owner/repo", page: "issues" | "pulls" | "repo"}.
+  The page partial renders ui/page-head.html and its sections; this wrapper only provides <article class="v-page">.
+  A page without a matching partial renders its title and Markdown body.
+*/ -}}
+{{- $name := .Params.page | default .Section -}}
+{{- if not $name }}{{ with .File }}{{ $name = .BaseFileName }}{{ end }}{{ end -}}
+{{- $p := printf "pages/%s.html" $name -}}
+<article class="v-page">
+{{- if and $name (templates.Exists (printf "partials/%s" $p)) }}
+  {{ partial $p . }}
 {{- else }}
+  {{ partial "ui/page-head.html" (dict "title" .Title) }}
   <div class="v-prose">{{ .Content }}</div>
 {{- end }}
 </article>

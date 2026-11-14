@@ -1,0 +1,15 @@
+{{- /* Card header (brief 4.6 c): 48px, title (subhead, h3) on the left, exactly one item in the right slot
+  (a count, a link, a Table toggle or a segmented control). Dict {title, id, level, right}.
+  id: the title id (for aria-labelledby); level: 2, 3 (default) or 4; right: text or pre-rendered HTML.
+  Renders nothing when both title and right are empty. A card gets a title only when its section holds 2 or more cards. */ -}}
+{{- $c := . -}}
+{{- if or $c.title $c.right -}}
+<div class="v-card-head">
+  {{- with $c.title -}}
+    {{- if eq $c.level 2 }}<h2 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h2>
+    {{- else if eq $c.level 4 }}<h4 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h4>
+    {{- else }}<h3 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h3>{{ end -}}
+  {{- else }}<span></span>{{ end -}}
+  {{- with $c.right }}<div class="v-card-aside">{{ . }}</div>{{ end -}}
+</div>
+{{- end -}}

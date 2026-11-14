@@ -1,0 +1,39 @@
+{{- /* "Waiting for a reply" for a repo without issue classification (brief 3.2b-2, glossary 6.2): the rows of metrics.json
+  issues.issues_without_maintainer_response opened 7 or more days ago (daysWaiting >= 7), oldest first. That is exactly
+  issues.without_response_7d, the Overview's "No reply" count (P6). Columns # · Issue · Age; 25 rows, then "Show all N".
+  Ctx: dict {r (data/repo.html), id (list id, default "iw")}. */ -}}
+{{- $r := .r }}{{ $id := .id | default "iw" -}}
+{{- $m := $r.data.metrics | default dict -}}
+{{- $rows := slice -}}
+{{- with $m.issues }}{{ range (.issues_without_maintainer_response | default slice) }}{{ if ge (float (.daysWaiting | default 0)) 7.0 }}{{ $rows = $rows | append (dict "age" (float .daysWaiting) "it" .) }}{{ end }}{{ end }}{{ end -}}
+{{- if $rows }}{{ $rows = sort $rows "age" "desc" }}{{ end -}}
+{{- $n := len $rows -}}
+<section class="v-section" aria-labelledby="queue">
+  {{ partial "ui/section-head.html" (dict "title" "Waiting for a reply" "id" "queue" "caption" "No maintainer reply after 7 days, oldest first") }}
+  {{- if eq $n 0 }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" "No open issue has waited more than 7 days for a maintainer reply.") }}
+  {{- else }}
+  <div data-list id="{{ $id }}" data-limit="25" data-url>
+    {{ partial "ui/filterbar.html" (dict "id" (printf "%s-search" $id) "label" "Search issues" "placeholder" "Search titles and labels"
+        "noun" "issues" "one" "issue" "total" $n) }}
+    <div class="v-card">
+      <table class="v-dt is-fixed is-list" id="{{ $id }}-table" aria-labelledby="queue">
+        <caption>Age is calendar days since the issue opened.</caption>
+        <colgroup><col class="v-col-18"><col class="v-col-auto"><col class="v-col-20"></colgroup>
+        <thead><tr>
+          <th scope="col"><span aria-hidden="true">#</span><span class="sr-only">Number</span></th>
+          <th scope="col">Issue</th>
+          {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true "active" "descending") }}
+        </tr></thead>
+        <tbody>
+          {{- range $i, $row := $rows }}
+          {{ partial "pages/issues/wait-row.html" (dict "it" $row.it "asof" $m.timestamp "over" (ge $i 25)) }}
+          {{- end }}
+        </tbody>
+      </table>
+      {{ partial "ui/more.html" (dict "list" $id "controls" (printf "%s-table" $id) "n" $n) }}
+    </div>
+    <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>
+  </div>
+  {{- end }}
+</section>

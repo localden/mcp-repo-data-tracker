@@ -1,0 +1,63 @@
+{{- /* Review SLAs (brief 3.3b-1, 4.6 d, 6.5): one KPI card. Dict {r (data/repo.html), a (actionability.json), m (metrics.json), classified}.
+     Classified repos: First review overdue (team SLA 7 days), Re-review overdue and Maintainer PRs unreviewed (team SLA 24h), from
+       actionability › summary.sla, as status tiles with a denominator line; sparklines from snapshots › actionability.sla.* (12 weeks).
+     Other repos: one neutral tile, "PRs waiting for first review" (glossary 6.2; the brief's interim "No first review > 7 days" puts
+       the window on line 1, against 6.1 rule 1), from metrics › pulls.without_review_7d over the non-draft rows of
+       prs_without_maintainer_review (the same number as Overview's "No first review" column), then one muted line on the missing
+       classification. */ -}}
+{{- $r := .r -}}
+{{- $tiles := slice -}}
+{{- if .classified -}}
+  {{- $sla := dict }}{{ with .a.summary }}{{ with .sla }}{{ if reflect.IsMap . }}{{ $sla = . }}{{ end }}{{ end }}{{ end -}}
+  {{- $bins := dict -}}
+  {{- range $k := slice "first_review_7d_breach" "re_review_24h_breach" "maint_24h_breach" -}}
+    {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" (printf "actionability.sla.%s" $k)) -}}
+    {{- $bins = merge $bins (dict $k (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points) -}}
+  {{- end -}}
+  {{- /* denominators: "of 238 waiting for a first review (95%)"; "All 11 waited more than 24 hours" when every eligible PR is over */ -}}
+  {{- $ctx := dict -}}
+  {{- range $k, $v := dict
+      "first_review_7d_breach" (slice "first_review_eligible" "waiting for a first review" "7 days" "No PRs waiting for a first review")
+      "re_review_24h_breach" (slice "re_review_eligible" "waiting for a re-review" "24 hours" "No PRs waiting for a re-review")
+      "maint_24h_breach" (slice "maint_eligible" "maintainer PRs waiting for review" "24 hours" "No maintainer PRs waiting for review") -}}
+    {{- $b := index $sla $k }}{{ $e := index $sla (index $v 0) }}{{ $t := "" -}}
+    {{- if and (ne $b nil) (ne $e nil) -}}
+      {{- if eq (float $e) 0.0 }}{{ $t = index $v 3 -}}
+      {{- else if and (eq (float $b) (float $e)) (ne $k "first_review_7d_breach") }}{{ $t = printf "All %s waited more than %s" (lang.FormatNumber 0 (float $e)) (index $v 2) -}}
+      {{- else }}{{ $t = printf "of %s %s (%s)" (lang.FormatNumber 0 (float $e)) (index $v 1) (partial "ui/pct.html" (mul (div (float $b) (float $e)) 100.0)) }}{{ end -}}
+    {{- end -}}
+    {{- $ctx = merge $ctx (dict $k $t) -}}
+  {{- end -}}
+  {{- $tiles = slice
+    (dict "label" "First review overdue" "value" $sla.first_review_7d_breach "na" "not computed"
+      "labelTitle" "Classified PRs with no maintainer review yet (none, or community reviews only) waiting more than 7 days"
+      "overdue" (dict "title" "Overdue: first review within 7 days (team SLA)") "qualifier" "team SLA · 7 days"
+      "context" (index $ctx "first_review_7d_breach") "points" (index $bins "first_review_7d_breach"))
+    (dict "label" "Re-review overdue" "value" $sla.re_review_24h_breach "na" "not computed"
+      "labelTitle" "The author updated the PR after a change request and no maintainer re-reviewed it within 24 hours"
+      "overdue" (dict "title" "Overdue: re-review within 24 hours (team SLA)") "qualifier" "team SLA · 24h"
+      "context" (index $ctx "re_review_24h_breach") "points" (index $bins "re_review_24h_breach"))
+    (dict "label" "Maintainer PRs unreviewed" "value" $sla.maint_24h_breach "na" "not computed"
+      "labelTitle" "Maintainer-authored PRs with no review from another maintainer within 24 hours"
+      "overdue" (dict "title" "Overdue: review of a maintainer PR within 24 hours (team SLA)") "qualifier" "team SLA · 24h"
+      "context" (index $ctx "maint_24h_breach") "points" (index $bins "maint_24h_breach")) -}}
+{{- else -}}
+  {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
+  {{- $nd := 0 }}{{ range $pl.prs_without_maintainer_review | default slice }}{{ if not .isDraft }}{{ $nd = add $nd 1 }}{{ end }}{{ end -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.without_review_7d") -}}
+  {{- $ctx := "No open PRs are waiting for a maintainer review" -}}
+  {{- if gt $nd 0 }}{{ $ctx = printf "of %s with no maintainer review" (partial "ui/plural.html" (dict "n" $nd "one" "non-draft PR")) }}{{ end -}}
+  {{- /* glossary label and qualifier (6.2), as on the Overview and repository KPI cards */ -}}
+  {{- $tiles = slice
+    (dict "label" "PRs waiting for first review" "value" $pl.without_review_7d "qualifier" "no maintainer review after 7 days"
+      "labelTitle" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago"
+      "context" $ctx
+      "points" (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points) -}}
+{{- end }}
+<section class="v-section" aria-labelledby="review-slas">
+  {{ partial "ui/section-head.html" (dict "title" "Review SLAs" "id" "review-slas") }}
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}
+  {{- if not .classified }}
+  <p class="v-caption mt-3">Re-review and maintainer SLAs need PR classification, which does not run for this repository.</p>
+  {{- end }}
+</section>

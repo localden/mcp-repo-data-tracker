@@ -1,0 +1,15 @@
+{{- /* Open SEP stage by PR number, for the "SEP · Proposal" tag on PR rows (brief 3.3b-2, 6.2 "SEP stage").
+     Input: a repo's data map (data/repo.html .data). Only the spec repo has seps.json; every other repo returns an empty dict.
+     Returns dict "2028" -> "Proposal" (Draft, In review, Accepted; Parked once seps.json lists it, D1-11). Merged SEPs are not open. */ -}}
+{{- $out := dict -}}
+{{- with index (. | default dict) "seps" -}}
+  {{- if reflect.IsMap . -}}
+    {{- $s := . -}}
+    {{- range $k, $label := dict "proposals" "Proposal" "drafts" "Draft" "inReview" "In review" "accepted" "Accepted" "parked" "Parked" -}}
+      {{- range index $s $k | default slice -}}
+        {{- with .number }}{{ $out = merge $out (dict (string (int .)) $label) }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

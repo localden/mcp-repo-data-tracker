@@ -1,0 +1,125 @@
+{{- /* Complete-day download series and windows for one package (§5.4, §8a-2). Replaces downloads-card.html:9-35 and rows.html:52-72.
+  Call: $d := partialCached "data/downloads.html" (dict "repo" "typescript-sdk" ["end" $common.end] ["weeks" 52]) "dl" "typescript-sdk" ($common.end | default "")
+    repo: repos.json entry, "owner/repo" or repo name; end: window end D (default this package's complete_through; pass the common D
+    from data/downloads-end.html so every SDK row shares one window); weeks: weekly bins returned (default 52); anchor: "today"
+    (default the newest snapshot date site-wide); days: daily domain length (default 371).
+  Sources, in order: data/repos/<o>/<r>/downloads-daily.json › days (D2-1); otherwise rebuilt from snapshots: npm daily keyed by
+  total_through; PyPI versions.json daily summed per date, complete UTC dates only; NuGet and RubyGems the change in lifetime total
+  between consecutive daily snapshots (unchanged total or a gap of more than a day = missing; today's snapshot dropped); crates.io daily
+  keyed by the snapshot date minus one. A missing day is never 0.
+  Returns dict:
+    registry, package (name), source ("daily-file"|"snapshots"), complete_through (newest complete day, "" if none), first (oldest),
+    days_total int (complete days known), end (D), from (D-6), window ("Nov 6–12"),
+    dl7 float|nil (7 complete days ending D), sum7 float (sum of the complete days in that window), days_covered int (of 7), complete7 bool,
+    prev7 float|nil (dl7 at D-7), delta7 float|nil (% change, only when both windows are complete),
+    dl30 float|nil, days_covered30 int, prev30 float|nil, delta30 float|nil, dl7_28 float|nil (dl7 at D-28), delta28 float|nil,
+    points [{date, value|nil}] (contiguous daily, ends at max(D, complete_through)), data string (JSON array),
+    weekly (data/week-bins.html "sum" bins ending on the last Sunday <= complete_through), wtd (weekly.wtd: the unfinished week),
+    lifetime float|nil, lifetime_date, lifetime_since ("YYYY-MM-DD", seeded_from when known, else the first snapshot with a total). */ -}}
+{{- $r := partial "data/repo.html" .repo -}}
+{{- $anchor := .anchor | default (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- $days := int (.days | default 371) -}}
+{{- $reg := "" }}{{ $pkg := "" }}{{ with $r.package }}{{ $reg = .registry | default "" }}{{ $pkg = .name | default "" }}{{ end -}}
+{{- $sc := newScratch }}{{ $src := "snapshots" }}{{ $ct := "" }}{{ $seeded := "" -}}
+{{- $nums := slice "float64" "int" "int64" -}}
+{{- $dd := index $r.data "downloads-daily" -}}
+
+{{- if and $dd (reflect.IsMap $dd.days) -}}
+  {{- $src = "daily-file" }}{{ $ct = $dd.complete_through | default "" }}{{ $seeded = $dd.seeded_from | default "" -}}
+  {{- range $d, $v := $dd.days }}{{ if in $nums (printf "%T" $v) }}{{ $sc.SetInMap "v" $d (float $v) }}{{ end }}{{ end -}}
+
+{{- else if eq $reg "npm" -}}
+  {{- range $k, $snap := $r.snapshots -}}{{- with $snap.downloads -}}
+    {{- if and .total_through (in $nums (printf "%T" .daily)) }}{{ $sc.SetInMap "v" (string .total_through) (float .daily) }}{{ end -}}
+  {{- end }}{{ end -}}
+
+{{- else if eq $reg "pypi" -}}
+  {{- /* Never the snapshot daily (it counts a partial day). versions.json is complete for dates before its capture day, and for the
+       capture day minus one only once the capture ran after 06:00 UTC. */ -}}
+  {{- with $r.data.versions -}}{{- if and (eq .unit "daily") .lastUpdated (reflect.IsMap .daily) -}}
+    {{- $lu := time.AsTime .lastUpdated -}}
+    {{- $limit := $lu.Format "2006-01-02" -}}
+    {{- if lt $lu.Hour 6 }}{{ $limit = ($lu.AddDate 0 0 -1).Format "2006-01-02" }}{{ end -}}
+    {{- if gt $limit $anchor }}{{ $limit = $anchor }}{{ end -}}
+    {{- $floor := ((time.AsTime $limit).AddDate 0 0 (int (sub -45 $days))).Format "2006-01-02" -}}
+    {{- range $d, $byVer := .daily -}}
+      {{- if and (lt $d $limit) (ge $d $floor) (reflect.IsMap $byVer) -}}
+        {{- $sum := 0.0 }}{{ range $byVer }}{{ if in $nums (printf "%T" .) }}{{ $sum = add $sum (float .) }}{{ end }}{{ end -}}
+        {{- $sc.SetInMap "v" $d $sum -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end }}{{ end -}}
+
+{{- else if in (slice "nuget" "rubygems") $reg -}}
+  {{- $pd := "" }}{{ $pt := 0.0 -}}
+  {{- range $k, $snap := $r.snapshots -}}
+    {{- if and (reflect.IsMap $snap) (eq (string $snap.date) $k) (lt $k $anchor) -}}{{- with $snap.downloads -}}
+      {{- if in $nums (printf "%T" .total) -}}
+        {{- $prevDay := ((time.AsTime $k).AddDate 0 0 -1).Format "2006-01-02" -}}
+        {{- if and (eq $pd $prevDay) (gt (float .total) $pt) }}{{ $sc.SetInMap "v" $pd (sub (float .total) $pt) }}{{ end -}}
+        {{- $pd = $k }}{{ $pt = float .total -}}
+      {{- end -}}
+    {{- end }}{{ end -}}
+  {{- end -}}
+
+{{- else if eq $reg "crates" -}}
+  {{- range $k, $snap := $r.snapshots -}}
+    {{- if and (reflect.IsMap $snap) (eq (string $snap.date) $k) -}}{{- with $snap.downloads -}}
+      {{- if in $nums (printf "%T" .daily) }}{{ $sc.SetInMap "v" (((time.AsTime $k).AddDate 0 0 -1).Format "2006-01-02") (float .daily) }}{{ end -}}
+    {{- end }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $vals := $sc.Get "v" | default dict -}}
+{{- $first := "" }}{{ $newest := "" -}}
+{{- range $d, $_ := $vals }}{{ if eq $first "" }}{{ $first = $d }}{{ end }}{{ $newest = $d }}{{ end -}}
+{{- if eq $ct "" }}{{ $ct = $newest }}{{ end -}}
+
+{{- /* Lifetime total: the newest snapshot total; its basis is seeded_from, else the first snapshot that carried a total. */ -}}
+{{- $life := 0.0 }}{{ $lifeDate := "" }}{{ $lifeSince := $seeded -}}
+{{- range $k, $snap := $r.snapshots -}}
+  {{- if and (reflect.IsMap $snap) (le $k $anchor) }}{{ with $snap.downloads }}{{ if in $nums (printf "%T" .total) -}}
+    {{- $life = float .total }}{{ $lifeDate = $k }}{{ if eq $lifeSince "" }}{{ $lifeSince = $k }}{{ end -}}
+  {{- end }}{{ end }}{{ end -}}
+{{- end -}}
+
+{{- $res := dict "registry" $reg "package" $pkg "source" $src "complete_through" $ct "first" $first "days_total" (len $vals)
+  "end" "" "from" "" "window" "" "dl7" nil "sum7" 0.0 "days_covered" 0 "complete7" false "prev7" nil "delta7" nil
+  "dl30" nil "days_covered30" 0 "prev30" nil "delta30" nil "dl7_28" nil "delta28" nil
+  "points" slice "data" "[]" "weekly" (partial "data/week-bins.html" (dict "points" slice)) "wtd" nil
+  "lifetime" (cond (ne $lifeDate "") $life nil) "lifetime_date" $lifeDate "lifetime_since" $lifeSince -}}
+
+{{- if ne $ct "" -}}
+  {{- $D := .end | default $ct -}}
+  {{- $domEnd := cond (gt $D $ct) $D $ct -}}
+  {{- $t := time.AsTime $domEnd -}}
+  {{- $pts := slice }}{{ $cells := slice -}}
+  {{- range $i := seq 0 (sub $days 1) -}}
+    {{- $d := ($t.AddDate 0 0 (int (sub $i (sub $days 1)))).Format "2006-01-02" -}}
+    {{- $v := index $vals $d -}}
+    {{- if ne $v nil }}{{ $pts = $pts | append (dict "date" $d "value" $v) }}{{ $cells = $cells | append (string $v) -}}
+    {{- else }}{{ $pts = $pts | append (dict "date" $d "value" nil) }}{{ $cells = $cells | append "null" }}{{ end -}}
+  {{- end -}}
+  {{- $tD := time.AsTime $D -}}
+  {{- $back := dict -}}
+  {{- range $k := slice 7 28 30 }}{{ $back = merge $back (dict (string $k) (($tD.AddDate 0 0 (int (sub 0 $k))).Format "2006-01-02")) }}{{ end -}}
+  {{- $w7 := partial "data/dl-window.html" (dict "vals" $vals "end" $D "n" 7) -}}
+  {{- $p7 := partial "data/dl-window.html" (dict "vals" $vals "end" (index $back "7") "n" 7) -}}
+  {{- $w28 := partial "data/dl-window.html" (dict "vals" $vals "end" (index $back "28") "n" 7) -}}
+  {{- $w30 := partial "data/dl-window.html" (dict "vals" $vals "end" $D "n" 30) -}}
+  {{- $p30 := partial "data/dl-window.html" (dict "vals" $vals "end" (index $back "30") "n" 30) -}}
+  {{- $pct := dict -}}
+  {{- range $k, $pair := dict "7" (slice $w7.value $p7.value) "28" (slice $w7.value $w28.value) "30" (slice $w30.value $p30.value) -}}
+    {{- $a := index $pair 0 }}{{ $b := index $pair 1 -}}
+    {{- if and (ne $a nil) (ne $b nil) }}{{ if gt (float $b) 0.0 }}{{ $pct = merge $pct (dict $k (mul (div (sub (float $a) (float $b)) (float $b)) 100.0)) }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- $weekly := partial "data/week-bins.html" (dict "points" $pts "agg" "sum" "weeks" (.weeks | default 52) "end" $ct) -}}
+  {{- $res = merge $res (dict
+    "end" $D "from" $w7.from "window" (partial "data/date-range.html" (dict "from" $w7.from "to" $D "year" false))
+    "dl7" $w7.value "sum7" $w7.sum "days_covered" $w7.days "complete7" (ne $w7.value nil)
+    "prev7" $p7.value "delta7" (index $pct "7")
+    "dl30" $w30.value "days_covered30" $w30.days "prev30" $p30.value "delta30" (index $pct "30")
+    "dl7_28" $w28.value "delta28" (index $pct "28")
+    "points" $pts "data" (printf "[%s]" (delimit $cells ",")) "weekly" $weekly "wtd" $weekly.wtd) -}}
+{{- end -}}
+{{- return $res -}}

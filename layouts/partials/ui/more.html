@@ -1,0 +1,6 @@
+{{- /* "Show all N" card foot (brief 3.2b-2, 7.3 A10): a full-width button[aria-expanded][aria-controls] in .v-card-foot.
+  Dict {list, controls, n, limit}. list: id of the [data-list] (its data-limit is the collapsed row count); controls: id of the
+  table or tbody it reveals; n: matching rows (server-side, for the first paint); limit: default 25.
+  Hidden when n <= limit; ui.js keeps the count and the hidden state current under tabs and filters and scrolls it into view on collapse. */ -}}
+{{- $n := int (.n | default 0) }}{{ $limit := int (.limit | default 25) -}}
+<div class="v-card-foot"{{ if le $n $limit }} hidden{{ end }}><button type="button" class="v-more" data-more data-for="{{ .list }}" aria-expanded="false" aria-controls="{{ .controls }}">Show all {{ lang.FormatNumber 0 $n }}</button></div>

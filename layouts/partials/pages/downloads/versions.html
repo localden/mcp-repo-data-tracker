@@ -1,0 +1,87 @@
+{{- /* Versions in use (brief 3.5-3, 8a-11): one card per SDK with a versions.json, top 8 versions plus Other ranked by recent
+  volume, never lifetime (TR-04). Cards are disclosures; TypeScript and Python (npm, PyPI) start expanded. Data more than 3 days
+  older than the page's Data as of shows one warn line instead of a table (TR-03); a cumulative registry without 30 days of
+  history says when shares appear. Below 40rem the table is a list: version and downloads, the percentage on the meta line.
+  Call: partial "pages/downloads/versions.html" (dict "pkgs" $pkgs "asof" "YYYY-MM-DD")
+    asof: the page's Data as of date; staleness is decided here, so data/versions.html keeps its shared cache key. */ -}}
+{{- $c := . -}}
+{{- $staleBefore := "" }}{{ with $c.asof }}{{ $staleBefore = ((time.AsTime .).AddDate 0 0 -3).Format "2006-01-02" }}{{ end -}}
+{{- $openRegs := slice "npm" "pypi" }}
+<div class="v-flow">
+  {{- range $p := $c.pkgs }}
+  {{- $v := partialCached "data/versions.html" (dict "repo" $p.r.cfg "asof" $c.asof) "versions" $p.r.repo -}}
+  {{- if $v.has }}
+  {{- $id := printf "ver-%s" $p.r.repo -}}
+  {{- $open := in $openRegs $p.d.registry -}}
+  {{- $stale := and $staleBefore $v.last_updated (lt $v.last_updated $staleBefore) -}}
+  {{- /* the card head's right slot: the state when stale or not ready, else the window the counts cover */ -}}
+  {{- $aside := "" -}}
+  {{- if $stale -}}
+    {{- $aside = partial "ui/flag.html" (dict "text" (printf "Stale since %s" (partial "ui/date.html" (dict "d" $v.last_updated "style" "short")))
+        "title" (printf "Version data stopped updating on %s" (partial "ui/date.html" $v.last_updated))) -}}
+  {{- else if $v.ready -}}
+    {{- if eq $v.unit "last_week" }}{{ $aside = printf "7 days to %s" (partial "ui/date.html" $v.to) -}}
+    {{- else if eq $v.unit "cumulative" }}{{ $aside = partial "data/date-range.html" (dict "from" (((time.AsTime $v.from).AddDate 0 0 1).Format "2006-01-02") "to" $v.to) -}}
+    {{- else }}{{ $aside = partial "data/date-range.html" (dict "from" $v.from "to" $v.to) }}{{ end -}}
+  {{- else if $v.ready_from -}}
+    {{- $aside = printf "Tracking since %s" (partial "ui/date.html" (dict "d" (((time.AsTime $v.ready_from).AddDate 0 0 -30).Format "2006-01-02") "style" "short")) -}}
+  {{- end }}
+  <div class="v-card">
+    <div class="v-card-body">
+      <div class="v-section-row">
+        {{- /* font-semibold keeps the card-title weight (.v-disclosure sets 500), as on the other card titles of this page */}}
+        <h3 class="v-card-title" id="{{ $id }}-title"><button type="button" class="v-disclosure font-semibold" data-disclosure aria-expanded="{{ $open }}" aria-controls="{{ $id }}">{{ $p.r.name }}{{ partial "ui/icon.html" "chevron-down" }}</button></h3>
+        {{- with $aside }}
+        <div class="v-card-aside">{{ . }}</div>
+        {{- end }}
+      </div>
+    </div>
+    <div class="v-card-foot" id="{{ $id }}"{{ if not $open }} hidden{{ end }}>
+      {{- if $stale }}
+      <div class="v-card-body"><p class="text-caption text-warn">Version data stopped updating on {{ partial "ui/date.html" $v.last_updated }}.</p></div>
+      {{- else if not $v.ready }}
+      {{- $txt := "Version shares appear after 30 days of tracking." -}}
+      {{- with $v.ready_from }}{{ $txt = printf "Version shares appear after 30 days of tracking (from %s)." (partial "ui/date.html" .) }}{{ end }}
+      <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" $txt) }}</div>
+      {{- else }}
+      {{- /* bars rank against the largest row (Other included); one decimal for every percentage when any is below 10 (6.3) */ -}}
+      {{- $max := 0.0 }}{{ range $v.rows }}{{ if gt .n $max }}{{ $max = .n }}{{ end }}{{ end -}}
+      {{- with $v.other }}{{ if gt . $max }}{{ $max = . }}{{ end }}{{ end -}}
+      {{- $dec := 0 }}{{ range $v.rows }}{{ if lt (mul (div .n $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end -}}
+      {{- with $v.other }}{{ if lt (mul (div . $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end }}
+      <table class="v-dt is-fixed is-list" aria-labelledby="{{ $id }}-title">
+        <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-36"></colgroup>
+        <thead>
+          <tr>
+            <th scope="col">Version</th>
+            <th scope="col" class="text-right">{{ cond (eq $v.window_days 7) "Last 7 days" "Last 30 days" }}</th>
+            <th scope="col" class="text-right">% of downloads</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{- range $v.rows }}
+          {{- $pct := partial "ui/pct.html" (dict "v" (mul (div .n $v.total) 100.0) "dec" $dec) }}
+          <tr>
+            <th scope="row" class="v-title-cell"><span class="v-code">{{ .version }}</span>{{ if .latest }} {{ partial "ui/tag.html" "latest" }}{{ end }}<span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
+            <td class="num v-verdict">{{ partial "ui/num.html" (dict "v" .n "mode" "compact") }}</td>
+            <td class="num">{{ partial "ui/meter.html" (dict "value" .n "max" $max "rank" true) }} <span class="v-meter-pct">{{ $pct }}</span></td>
+          </tr>
+          {{- end }}
+          {{- with $v.other }}
+          {{- $pct := partial "ui/pct.html" (dict "v" (mul (div . $v.total) 100.0) "dec" $dec) }}
+          {{- /* Other in --other: the ranking bar with the stacked-bar segment role (no meter variant for it exists); rounded-l-none
+               undoes the segment's :only-child radius, so only the data end is rounded like the version bars (4.4) */}}
+          <tr>
+            <th scope="row" class="v-title-cell"><span class="v-muted">Other versions</span><span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
+            <td class="num v-verdict">{{ partial "ui/num.html" (dict "v" . "mode" "compact") }}</td>
+            <td class="num"><span class="v-meter is-rank" aria-hidden="true"><i class="v-stack-seg is-other rounded-l-none" style="--v:{{ printf "%.1f" (math.Min 100.0 (mul (div . $max) 100.0)) }}%"></i></span> <span class="v-meter-pct">{{ $pct }}</span></td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+      {{- end }}
+    </div>
+  </div>
+  {{- end }}
+  {{- end }}
+</div>

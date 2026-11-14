@@ -1,4 +1,0 @@
-<div class="v-segbar" role="img" aria-label="{{ .aria }}">{{ range .segments }}{{ if gt (float .n) 0.0 }}<i class="{{ .cls }}" style="--n:{{ .n }}"></i>{{ end }}{{ end }}</div>
-<p class="v-legend mt-2">{{ range .segments }}{{ $seg := . }}<span><i class="v-key {{ $seg.cls }}"></i>{{ $seg.label }}
-  {{ if $seg.href }}<a class="v-link-quiet tabular-nums" href="{{ $seg.href }}" target="_blank" rel="noopener">{{ partial "ui/num.html" (dict "v" $seg.n) }}</a>{{ else }}<span class="tabular-nums">{{ partial "ui/num.html" (dict "v" $seg.n) }}</span>{{ end }}
-  {{ if and $.total (gt (float $.total) 0.0) }}<span class="text-ink-3">{{ partial "ui/pct.html" (mul (div (float $seg.n) (float $.total)) 100.0) }}</span>{{ end }}</span>{{ end }}</p>

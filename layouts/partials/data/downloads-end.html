@@ -1,0 +1,28 @@
+{{- /* The common download window end D (§3.1-5): the newest date for which every package with at least 7 complete days has data.
+  Call: $common := partialCached "data/downloads-end.html" . "dl-end"   (or pass dict "repos" $list ["anchor" "YYYY-MM-DD"])
+  Returns dict: end ("YYYY-MM-DD", "" when no package qualifies), from (end-6), window ("Nov 6–12"),
+    short [{name, days}] (packages left out because they have fewer than 7 complete days: show their value muted + "n of 7 days").
+  Each package is read through partialCached "data/downloads.html" (dict "repo" $cfg) "dl" <repo> "" so later calls with the same
+  variant keys reuse it. */ -}}
+{{- $refs := slice -}}
+{{- if and (reflect.IsMap .) .repos }}{{ $refs = .repos }}{{ else }}{{ $refs = site.Data.repos.repositories }}{{ end -}}
+{{- $anchor := "" }}{{ if reflect.IsMap . }}{{ $anchor = .anchor | default "" }}{{ end -}}
+{{- $end := "" }}{{ $short := slice -}}
+{{- range $refs -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- if $r.package -}}
+    {{- $args := dict "repo" $r.cfg }}{{ with $anchor }}{{ $args = merge $args (dict "anchor" .) }}{{ end -}}
+    {{- $d := partialCached "data/downloads.html" $args "dl" $r.repo "" -}}
+    {{- if ge $d.days_total 7 -}}
+      {{- if or (eq $end "") (lt $d.complete_through $end) }}{{ $end = $d.complete_through }}{{ end -}}
+    {{- else -}}
+      {{- $short = $short | append (dict "name" $r.name "days" $d.days_total) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $from := "" }}{{ $window := "" -}}
+{{- with $end -}}
+  {{- $from = ((time.AsTime .).AddDate 0 0 -6).Format "2006-01-02" -}}
+  {{- $window = partial "data/date-range.html" (dict "from" $from "to" . "year" false) -}}
+{{- end -}}
+{{- return dict "end" $end "from" $from "window" $window "short" $short -}}
