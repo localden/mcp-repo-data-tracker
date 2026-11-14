@@ -1,0 +1,101 @@
+name: UI review capture
+
+# Renders the site in CI and captures screenshots plus layout, accessibility and palette
+# reports for design review (.github/scripts/ui-capture.py). Deploys nothing; the result
+# is the "ui-review" artifact. Runs on every push to a ui/** branch, or on demand.
+
+on:
+  push:
+    branches:
+      - 'ui/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Design-system guard
+        continue-on-error: true
+        run: bash .github/scripts/design-guard.sh 2>&1 | tee guard.txt; exit ${PIPESTATUS[0]}
+
+      - name: Build CSS
+        run: npm run css:build
+
+      - name: Setup Hugo
+        run: |
+          HUGO_VERSION="0.141.0"
+          wget -q "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb" -O hugo.deb
+          sudo dpkg -i hugo.deb
+
+      - name: Build site (as deployed, and unminified for reading)
+        run: |
+          hugo --minify --baseURL "http://127.0.0.1:8080/mcp-repo-data-tracker/" 2>&1 | tee hugo.txt; test ${PIPESTATUS[0]} -eq 0
+          hugo --baseURL "http://127.0.0.1:8080/mcp-repo-data-tracker/" -d public-src >/dev/null
+
+      - name: Serve site
+        run: |
+          mkdir -p _serve && cp -r public _serve/mcp-repo-data-tracker
+          nohup python3 -m http.server 8080 -d _serve >/dev/null 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/mcp-repo-data-tracker/ >/dev/null && break; sleep 0.5; done
+
+      # system-ui resolves to DejaVu on a bare runner; Inter is a closer stand-in for SF/Segoe.
+      - name: Install fonts
+        run: |
+          sudo apt-get install -y -q fonts-inter fonts-noto-color-emoji >/dev/null
+          mkdir -p ~/.config/fontconfig
+          cat > ~/.config/fontconfig/fonts.conf <<'XML'
+          <?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+          <fontconfig>
+            <alias><family>system-ui</family><prefer><family>Inter</family></prefer></alias>
+            <alias><family>sans-serif</family><prefer><family>Inter</family></prefer></alias>
+            <alias><family>sans</family><prefer><family>Inter</family></prefer></alias>
+          </fontconfig>
+          XML
+          fc-cache -f >/dev/null
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          pip install -q playwright==1.49.1
+          python -m playwright install --with-deps chromium >/dev/null
+
+      - name: Capture
+        run: python .github/scripts/ui-capture.py --base "http://127.0.0.1:8080/mcp-repo-data-tracker/" --out ui-review
+
+      - name: Collect build output
+        if: always()
+        run: |
+          mkdir -p ui-review/build
+          cp guard.txt hugo.txt ui-review/build/ 2>/dev/null || true
+          cp -r public-src ui-review/build/html 2>/dev/null || true
+
+      - name: Upload review artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-review
+          path: ui-review
+          retention-days: 14
