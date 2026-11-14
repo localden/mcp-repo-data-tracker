@@ -113,22 +113,26 @@
       </li>
       {{- end }}
     </ul>
-    <p class="v-card-note lg:hidden">{{ $rules }} {{ $foot }}</p>
     <table class="v-dt hidden lg:table" aria-labelledby="needs-attention">
       <caption>{{ $foot }}</caption>
       <thead>
+        <tr class="v-dt-group">
+          <th scope="col" rowspan="2">Repository</th>
+          <th scope="colgroup" colspan="2" class="num">Waiting over 7 days</th>
+          <th scope="colgroup" colspan="{{ cond $showC4 3 2 }}" class="num">SEP-1730 overdue</th>
+          <th scope="colgroup" colspan="2" class="num">Team targets overdue</th>
+          <th scope="col" rowspan="2" class="num">Author waiting on us</th>
+        </tr>
         <tr>
-          <th scope="col">Repository</th>
-          <th scope="col" class="num whitespace-normal">Waiting for a reply<span class="sub">issues over 7 days</span></th>
-          <th scope="col" class="num whitespace-normal">Waiting for first review<span class="sub">PRs over 7 days</span></th>
+          <th scope="col" class="num" title="Issues with no maintainer reply after 7 days">Issues</th>
+          <th scope="col" class="num" title="PRs with no maintainer review after 7 days">PRs</th>
           {{- if $showC4 }}
-          <th scope="col" class="num whitespace-normal">First reply overdue<span class="sub">{{ $r2bd }}</span></th>
+          <th scope="col" class="num" title="{{ $r2bd }}">First reply</th>
           {{- end }}
-          <th scope="col" class="num whitespace-normal">Triage overdue<span class="sub">{{ $r2bd }}</span></th>
-          <th scope="col" class="num whitespace-normal">P0 overdue<span class="sub">{{ $r7 }}</span></th>
-          <th scope="col" class="num whitespace-normal">P1 overdue<span class="sub">{{ $rP1 }}</span></th>
-          <th scope="col" class="num whitespace-normal">First review overdue<span class="sub">{{ $rFR }}</span></th>
-          <th scope="col" class="num whitespace-normal">Author waiting on us</th>
+          <th scope="col" class="num" title="{{ $r2bd }}">Triage</th>
+          <th scope="col" class="num" title="{{ $r7 }}">P0</th>
+          <th scope="col" class="num" title="{{ $rP1 }}">P1</th>
+          <th scope="col" class="num" title="{{ $rFR }}">First review</th>
         </tr>
       </thead>
       <tbody>
@@ -162,5 +166,6 @@
         {{- end }}
       </tbody>
     </table>
+    <p class="v-card-note">{{ $rules }}<span class="lg:hidden"> {{ $foot }}</span></p>
   </div>
 </section>

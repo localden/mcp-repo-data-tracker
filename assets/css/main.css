@@ -67,7 +67,8 @@
     --border-strong: #d4d3cd;
     --text: #18181b;
     --text-2: #52525b;
-    --text-3: #71717a;
+    --text-3: #6b6b73;
+    --seg-track: #ebeae6;
     --accent: #2a78d6;
     --accent-text: #1f63b8;
     --accent-soft: #eaf2fc;
@@ -113,7 +114,7 @@
       color-scheme: dark;
       --bg: #09090b; --surface: #151518; --surface-2: #1c1c20; --surface-raised: #222227;
       --border: #26262b; --border-strong: #3a3a41;
-      --text: #f4f4f5; --text-2: #b4b4bc; --text-3: #8a8a94;
+      --text: #f4f4f5; --text-2: #b4b4bc; --text-3: #8a8a94; --seg-track: #1c1c20;
       --accent: #3987e5; --accent-text: #78b0f0; --accent-soft: rgba(57, 135, 229, 0.16);
       --danger: #f07171; --danger-soft: rgba(240, 113, 113, 0.14);
       --success: #4cc477; --success-soft: rgba(76, 196, 119, 0.14);
@@ -131,7 +132,7 @@
     color-scheme: dark;
     --bg: #09090b; --surface: #151518; --surface-2: #1c1c20; --surface-raised: #222227;
     --border: #26262b; --border-strong: #3a3a41;
-    --text: #f4f4f5; --text-2: #b4b4bc; --text-3: #8a8a94;
+    --text: #f4f4f5; --text-2: #b4b4bc; --text-3: #8a8a94; --seg-track: #1c1c20;
     --accent: #3987e5; --accent-text: #78b0f0; --accent-soft: rgba(57, 135, 229, 0.16);
     --danger: #f07171; --danger-soft: rgba(240, 113, 113, 0.14);
     --success: #4cc477; --success-soft: rgba(76, 196, 119, 0.14);
@@ -471,7 +472,7 @@
   @media (pointer: coarse) { .v-chiplink { padding-block: 10px; margin-block: -10px; } }
 
   /* ------------------------------------------------------------ segmented control (v3 §4.11) */
-  .v-tabs { position: relative; display: inline-flex; gap: 2px; max-width: 100%; padding: 3px; background: var(--surface-2); border-radius: 8px; }
+  .v-tabs { position: relative; display: inline-flex; gap: 2px; max-width: 100%; padding: 3px; background: var(--seg-track); border-radius: 8px; }
   .v-tab { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; flex: none; white-space: nowrap;
     font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 500; color: var(--text-2); border-radius: 6px; cursor: pointer; }
   .v-tab:hover { color: var(--text); }
@@ -515,6 +516,13 @@
   .v-dt thead th { height: 40px; padding: 8px 16px; text-align: left; vertical-align: middle; white-space: normal;
     font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--text-3); background: var(--surface-2); border-bottom: 1px solid var(--border); }
+  /* Two-row headers: the group row names the rule family, an inset rule ties it to its columns. */
+  .v-dt thead tr.v-dt-group th { border-bottom: 0; vertical-align: bottom; }
+  .v-dt thead tr.v-dt-group th[rowspan] { border-bottom: 1px solid var(--border); }
+  .v-dt thead tr.v-dt-group th[colspan] { height: 32px; padding-bottom: 6px; color: var(--text-2);
+    background-image: linear-gradient(var(--border-strong), var(--border-strong)); background-size: calc(100% - 32px) 1px;
+    background-position: center bottom; background-repeat: no-repeat; }
+  .v-dt thead tr.v-dt-group + tr th { height: 32px; padding-top: 6px; }
   .v-dt :is(td, tbody th) { height: 52px; padding: 12px 16px; text-align: left; vertical-align: middle; color: var(--text); border-top: 1px solid var(--border); }
   .v-dt thead + tbody > tr:first-child > *, .v-dt > tbody:first-of-type > tr:first-child > * { border-top: 0; }
   .v-dt tbody th[scope="row"] { font-weight: 500; white-space: normal; }
@@ -538,6 +546,7 @@
   .v-rowmeta, .v-listmeta { display: flex; flex-wrap: wrap; column-gap: 12px; row-gap: 0; margin-top: 2px;
     font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 400; color: var(--text-2); }
   .v-rowmeta > *, .v-listmeta > * { white-space: nowrap; }
+  .v-rowmeta .v-tag, .v-listmeta .v-tag { white-space: normal; min-width: 0; overflow-wrap: anywhere; }
   .v-rowmeta .v-tags, .v-listmeta .v-tags { display: contents; }
   .v-listmeta { display: none; }
   /* sort affordance: 12px chevron after the header text, text-3; the active column in text */
