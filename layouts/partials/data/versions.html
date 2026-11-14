@@ -6,7 +6,7 @@
   change in per-version totals between the newest date and the date 30 days earlier, once both exist.
   Returns dict: has bool (a versions.json exists), unit, last_updated ("YYYY-MM-DD"), stale bool (more than 3 days older than asof),
     window_days int (30 or 7), from/to (window dates), rows [{version, n float, latest bool}] (top N by n, desc), other float|nil
-    (the rest summed), total float, ready bool (rows can be shown), ready_from ("YYYY-MM-DD" when a cumulative window will first
+    (the rest summed), other_count int (versions folded into other), total float, ready bool (rows can be shown), ready_from ("YYYY-MM-DD" when a cumulative window will first
     exist, for "Version shares appear after 30 days of tracking (from Dec 10, 2026)"), latest (the highest final release in the
     window by numeric semver compare, pre-releases skipped; its row has latest = true and gets the "latest" tag). */ -}}
 {{- $r := partial "data/repo.html" .repo -}}
@@ -14,7 +14,7 @@
 {{- $top := int (.top | default 8) -}}
 {{- $nums := slice "float64" "int" "int64" -}}
 {{- $res := dict "has" false "unit" "" "last_updated" "" "stale" false "window_days" 0 "from" "" "to" "" "rows" slice "other" nil
-  "total" 0.0 "ready" false "ready_from" "" "latest" "" -}}
+  "other_count" 0 "total" 0.0 "ready" false "ready_from" "" "latest" "" -}}
 {{- with $r.data.versions -}}{{- $vj := . -}}{{- if reflect.IsMap $vj.daily -}}
   {{- $unit := .unit | default "" -}}
   {{- $lu := time.AsTime (.lastUpdated | default $asof) }}{{ $luDay := $lu.Format "2006-01-02" -}}
@@ -64,12 +64,12 @@
       {{- if gt $key $latestKey }}{{ $latestKey = $key }}{{ $latest = .version }}{{ end -}}
     {{- end -}}
   {{- end -}}
-  {{- $rows := slice }}{{ $other := 0.0 }}{{ $hasOther := false -}}
+  {{- $rows := slice }}{{ $other := 0.0 }}{{ $hasOther := false }}{{ $otherN := 0 -}}
   {{- range $i, $row := $all -}}
     {{- if lt $i $top }}{{ $rows = $rows | append (dict "version" $row.version "n" $row.n "latest" (eq $row.version $latest)) -}}
-    {{- else }}{{ $other = add $other $row.n }}{{ $hasOther = true }}{{ end -}}
+    {{- else }}{{ $other = add $other $row.n }}{{ $hasOther = true }}{{ $otherN = add $otherN 1 }}{{ end -}}
   {{- end -}}
   {{- $res = dict "has" true "unit" $unit "last_updated" $luDay "stale" $stale "window_days" $win "from" $from "to" $to "rows" $rows
-    "other" (cond $hasOther $other nil) "total" $total "ready" (and $ready (gt (len $rows) 0)) "ready_from" $readyFrom "latest" $latest -}}
+    "other" (cond $hasOther $other nil) "other_count" $otherN "total" $total "ready" (and $ready (gt (len $rows) 0)) "ready_from" $readyFrom "latest" $latest -}}
 {{- end }}{{ end -}}
 {{- return $res -}}

@@ -40,9 +40,10 @@
   {{- $sign := cond (gt $net 0.0) "+" (cond (lt $net 0.0) "−" "") -}}
   {{- $items = $items | append (printf `<span class="whitespace-normal">Net <strong>%s%s</strong> in 90 days (%s opened, %s merged, %s closed without merging)</span>`
       $sign (lang.FormatNumber 0 (math.Abs $net)) (lang.FormatNumber 0 $o) (lang.FormatNumber 0 $mg) (lang.FormatNumber 0 $cl)) -}}
+  {{- /* the share only: the count is already in the net item ("155 closed without merging"), so "(155 of 259)" would repeat it */ -}}
   {{- if gt (add $mg $cl) 0.0 -}}
-    {{- $items = $items | append (printf `<span>Closed without merging: <strong>%s</strong> (%s of %s)</span>`
-        (partial "ui/pct.html" (mul (div $cl (add $mg $cl)) 100.0)) (lang.FormatNumber 0 $cl) (lang.FormatNumber 0 (add $mg $cl))) -}}
+    {{- $items = $items | append (printf `<span>Closed without merging: <strong>%s</strong> of %s closed</span>`
+        (partial "ui/pct.html" (mul (div $cl (add $mg $cl)) 100.0)) (lang.FormatNumber 0 (add $mg $cl))) -}}
   {{- end -}}
 {{- end -}}
 {{- if ne $pl.merged_7d nil -}}

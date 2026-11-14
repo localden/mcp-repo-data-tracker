@@ -1,25 +1,40 @@
 {{- /* Needs attention (brief 3.1-2): one row per tracked repository, what waits on a maintainer and which published deadlines are
   missed (Q1, Q2). Replaces the Inbound triage panel. Context: the page.
-  Sorted by issues waiting for a reply plus PRs waiting for first review. Column headers carry the rule on line 2, so there is no
-  legend. Columns 2, 3 and 9 are neutral counts; columns 4-8 are status (icon + --bad-text) above 0 and a muted 0 (P4).
-  SEP-1730 columns (4-6) and the P1 team target (7) render for SDK repositories (data/repo.html sdk) that have issues.json; other SDK
-  repositories read "—" titled "Not computed yet", non-SDK ones "—" with "not tracked". first_reply_2bd_breach arrives with D1-9.
-  Columns 8 and 9 need PR classification (actionability.json); "Author waiting on us" is the classifier's tier 1, matched by name or
-  idx (by_tier[0] is not always that tier: python-sdk leads with idx 0).
-  At >= 64rem the matrix is a table; below, each repository is a block listing only its non-zero values (R3), so the 9 columns never
-  scroll sideways at tablet widths. */ -}}
-{{- $rows := slice }}{{ $classified := slice -}}
+  Sorted by issues waiting for a reply plus PRs waiting for first review. Columns 2, 3 and 9 are neutral counts; columns 4-8 are status
+  (icon + --bad-text) above 0 and a muted 0 (P4). No legend: the headers say the rule.
+  Header: the three SEP-1730 columns sit under one "SEP-1730 overdue" group header (scope=colgroup, brief 4.6 e), so their line 2 is
+  only the deadline ("2 business days"). With "SEP-1730 · 2 business days" on every line 2 the nine headers wrapped to three lines
+  and squeezed the repository names at 1440. P1 (team target) and First review (team SLA) keep their own rule on line 2 (P3: they
+  are never labeled SEP-1730).
+  Column 4 (First reply overdue) needs issues.json summary.sla.first_reply_2bd_breach (D1-9). Until some repository has it the column
+  is omitted, the way the Repositories table omits the D1-8 cohort columns, rather than printed as nine "not computed yet" dashes.
+  Where a whole group does not apply (issue classification runs only for SDK repositories; PR classification for a few), the row
+  shows one muted explanation spanning the group instead of a run of "—": "Not an SDK repository; no PR classification",
+  "No issue or PR classification yet". A single cell that does not apply inside a tracked group keeps the "—" with an sr-only reason
+  (a repo without priority labels, a repo still missing the D1-9 field).
+  "Author waiting on us" is the classifier's tier 1, matched by name or idx (by_tier[0] is not always that tier).
+  The counts in columns 2 and 3 link to the repo's queue; like the repository name they are ink and underline on hover (one quiet
+  link style per table), so nine rows of numbers do not read as a wall of underlines.
+  At >= 64rem the matrix is a table; below, each repository is a block listing only its non-zero values with the canonical labels
+  (R3), and the card note states the deadlines once. */ -}}
+{{- $rows := slice }}{{ $classified := slice }}{{ $issList := slice -}}
+{{- /* column 4 appears once the D1-9 field exists anywhere */ -}}
+{{- $showC4 := false -}}
+{{- range site.Data.repos.repositories -}}
+  {{- with (partial "data/repo.html" .).data.issues }}{{ with .summary }}{{ with .sla }}{{ if isset . "first_reply_2bd_breach" }}{{ $showC4 = true }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- end -}}
+{{- $nSep := cond $showC4 3 2 -}}
 {{- range site.Data.repos.repositories -}}
   {{- $r := partial "data/repo.html" . -}}
   {{- $m := $r.data.metrics | default dict -}}
   {{- $wait := ($m.issues | default dict).without_response_7d }}{{ $rev := ($m.pulls | default dict).without_review_7d -}}
-  {{- /* issue classification (SEP-1730 breach counts) */ -}}
+  {{- /* issue classification (SEP-1730 and P1 counts): SDK repositories with an issues.json summary */ -}}
   {{- $sla := dict }}{{ with $r.data.issues }}{{ with .summary }}{{ with .sla }}{{ $sla = . }}{{ end }}{{ end }}{{ end -}}
-  {{- $na := cond $r.sdk "not computed yet" "not tracked" -}}
+  {{- $iss := and $r.sdk (gt (len $sla) 0) -}}
+  {{- if $iss }}{{ $issList = $issList | append $r.name }}{{ end -}}
   {{- /* a repo without priority labels has no P0/P1 count to miss: "—" here, "Not tracked: no priority labels" on its Issues page */ -}}
   {{- $hasP := false }}{{ range $k, $_ := ($m.issues | default dict).by_label | default dict }}{{ if in (slice "P0" "P1" "P2" "P3") $k }}{{ $hasP = true }}{{ end }}{{ end -}}
-  {{- $noP := and $r.sdk (gt (len $sla) 0) (not $hasP) -}}
-  {{- $naP := cond $noP "not tracked: no priority labels" $na -}}
+  {{- $noP := and $iss (not $hasP) -}}
   {{- /* PR classification */ -}}
   {{- $act := dict }}{{ $cls := false -}}
   {{- with $r.data.actionability }}{{ with .summary }}{{ $act = . }}{{ $cls = true }}{{ end }}{{ end -}}
@@ -29,10 +44,15 @@
     {{- if and (not $found) (or (eq .name "We're blocking someone") (eq (float (.idx | default -1)) 1.0)) }}{{ $blk = .count | default 0 }}{{ $found = true }}{{ end -}}
   {{- end -}}
   {{- if $cls }}{{ $classified = $classified | append $r.name }}{{ end -}}
-  {{- $row := dict "r" $r "wait" $wait "rev" $rev "na" $na "naP" $naP
-    "c4" (cond $r.sdk $sla.first_reply_2bd_breach nil) "c5" (cond $r.sdk $sla.triage_2bd_breach nil)
-    "c6" (cond (and $r.sdk (not $noP)) $sla.p0_7d_breach nil) "c7" (cond (and $r.sdk (not $noP)) $sla.p1_90d_breach nil)
-    "cls" $cls "fr" $asla.first_review_7d_breach "fe" $asla.first_review_eligible "blk" $blk
+  {{- /* the muted explanations for groups that do not apply (PR classification is planned for SDK repositories only, D3-6) */ -}}
+  {{- $naIss := cond $r.sdk "No issue classification yet" "Not an SDK repository" -}}
+  {{- $naPR := cond $r.sdk "No PR classification yet" "No PR classification" -}}
+  {{- $naBoth := cond $r.sdk "No issue or PR classification yet" "Not an SDK repository; no PR classification" -}}
+  {{- $row := dict "r" $r "wait" $wait "rev" $rev "iss" $iss "cls" $cls "noP" $noP
+    "naIss" $naIss "naPR" $naPR "naBoth" $naBoth
+    "c4" (cond (and $iss $showC4) $sla.first_reply_2bd_breach nil) "c5" (cond $iss $sla.triage_2bd_breach nil)
+    "c6" (cond (and $iss (not $noP)) $sla.p0_7d_breach nil) "c7" (cond (and $iss (not $noP)) $sla.p1_90d_breach nil)
+    "fr" $asla.first_review_7d_breach "fe" $asla.first_review_eligible "blk" $blk
     "sort" (add (float ($wait | default 0)) (float ($rev | default 0))) -}}
   {{- /* phone blocks list only non-zero values */ -}}
   {{- $any := false -}}
@@ -40,48 +60,50 @@
   {{- $rows = $rows | append (merge $row (dict "any" $any)) -}}
 {{- end -}}
 {{- $rows = sort $rows "sort" "desc" -}}
-{{- $foot := "SEP-1730 columns cover SDK repositories; PR classification does not run for any repository yet." -}}
-{{- with $classified }}{{ $foot = printf "SEP-1730 columns cover SDK repositories; PR classification covers %s." (delimit . ", " " and ") }}{{ end -}}
-{{- /* Header line 2 (the rule) and the status title. The "·" is glued to the word before it with a no-break space (U+00A0), so a
-     wrapped header line never starts with it. */ -}}
-{{- $nb := printf "%c" 160 -}}
-{{- $r2bd := printf "SEP-1730%s· 2 business days" $nb }}{{ $r7d := printf "SEP-1730%s· 7 days" $nb -}}
-{{- $rP1 := printf "team target%s· 90 days" $nb }}{{ $rRev := printf "team SLA%s· 7 days" $nb -}}
+{{- /* coverage, generated from data (brief 3.1-2 footer caption) */ -}}
+{{- $covIss := "Issue classification does not run for any repository yet" -}}
+{{- with $issList }}{{ $covIss = printf "Issue classification runs for %s" (delimit . ", " " and ") }}{{ end -}}
+{{- $covPR := "PR classification does not run for any repository yet" -}}
+{{- with $classified }}{{ $covPR = printf "PR classification runs for %s" (delimit . ", " " and ") }}{{ end -}}
+{{- $foot := printf "%s; %s." $covIss $covPR -}}
+{{- /* phone: the deadlines once, in words, since the block labels carry only the names */ -}}
+{{- $rules := printf "Overdue counts are past SEP-1730 (%s within 2 business days, P0 within 7 days), the P1 team target (90 days) or the first-review team SLA (7 days)." (cond $showC4 "first reply and triage" "triage") -}}
 {{- /* status titles name the rule in the same words as the Issues page Response SLAs table (pages/issues/rules.html, CP-X4) */ -}}
 {{- $rt := dict }}{{ range partial "pages/issues/rules.html" "rules" }}{{ $rt = merge $rt (dict .key .title) }}{{ end -}}
 {{- $t4 := index $rt "first-reply" }}{{ $t5 := index $rt "triage" -}}
 {{- $t6 := index $rt "p0" }}{{ $t7 := index $rt "p1" -}}
 {{- $t8 := "Overdue: first review within 7 days (team SLA)" -}}
+{{- $nb := printf "%c" 160 -}}{{- /* no-break space: glues "·" to the word before it inside a header line 2 */ -}}
 <section class="v-section" aria-labelledby="needs-attention">
   {{ partial "ui/section-head.html" (dict "title" "Needs attention" "id" "needs-attention" "caption" "Sorted by issues waiting for a reply plus PRs waiting for first review.") }}
   <div class="v-card">
     <ul class="v-blocks lg:hidden">
       {{- range $rows }}
-      {{- $repoURL := printf "repos/%s/" .r.repo | relURL }}
+      {{- $issuesURL := printf "issues/%s/" .r.repo | relURL }}
       <li class="v-block">
-        <p class="v-block-title"><a class="v-link" href="{{ $repoURL }}">{{ .r.name }}</a></p>
+        <p class="v-block-title"><a class="v-link" href="{{ printf "repos/%s/" .r.repo | relURL }}">{{ .r.name }}</a></p>
         {{- if .any }}
         <dl class="v-kv">
           {{- if gt (float (.wait | default 0)) 0.0 }}
-          <div><dt>No reply, issues &gt; 7 days</dt><dd><a class="v-link-quiet" href="{{ printf "%s?tab=waiting" (printf "issues/%s/" .r.repo | relURL) }}">{{ partial "ui/num.html" (dict "v" .wait "mode" "full") }}</a></dd></div>
+          <div><dt>Issues waiting for a reply</dt><dd><a class="v-link-quiet" href="{{ $issuesURL }}?tab=waiting">{{ partial "ui/num.html" (dict "v" .wait "mode" "full") }}</a></dd></div>
           {{- end }}
           {{- if gt (float (.rev | default 0)) 0.0 }}
-          <div><dt>No first review, PRs &gt; 7 days</dt><dd><a class="v-link-quiet" href="{{ printf "pulls/%s/" .r.repo | relURL }}">{{ partial "ui/num.html" (dict "v" .rev "mode" "full") }}</a></dd></div>
+          <div><dt>PRs waiting for first review</dt><dd><a class="v-link-quiet" href="{{ printf "pulls/%s/" .r.repo | relURL }}">{{ partial "ui/num.html" (dict "v" .rev "mode" "full") }}</a></dd></div>
           {{- end }}
           {{- if gt (float (.c4 | default 0)) 0.0 }}
-          <div><dt>First reply overdue, 2 business days</dt><dd>{{ partial "ui/status.html" (dict "n" .c4 "title" $t4) }}</dd></div>
+          <div><dt>First reply overdue</dt><dd>{{ partial "ui/status.html" (dict "n" .c4 "title" $t4) }}</dd></div>
           {{- end }}
           {{- if gt (float (.c5 | default 0)) 0.0 }}
-          <div><dt>Triage overdue, 2 business days</dt><dd>{{ partial "ui/status.html" (dict "n" .c5 "title" $t5) }}</dd></div>
+          <div><dt>Triage overdue</dt><dd>{{ partial "ui/status.html" (dict "n" .c5 "title" $t5) }}</dd></div>
           {{- end }}
           {{- if gt (float (.c6 | default 0)) 0.0 }}
-          <div><dt>P0 overdue, 7 days</dt><dd>{{ partial "ui/status.html" (dict "n" .c6 "title" $t6) }}</dd></div>
+          <div><dt>P0 overdue</dt><dd>{{ partial "ui/status.html" (dict "n" .c6 "title" $t6) }}</dd></div>
           {{- end }}
           {{- if gt (float (.c7 | default 0)) 0.0 }}
-          <div><dt>P1 overdue, team target 90 days</dt><dd>{{ partial "ui/status.html" (dict "n" .c7 "title" $t7) }}</dd></div>
+          <div><dt>P1 overdue</dt><dd>{{ partial "ui/status.html" (dict "n" .c7 "title" $t7) }}</dd></div>
           {{- end }}
           {{- if gt (float (.fr | default 0)) 0.0 }}
-          <div><dt>First review overdue, team SLA 7 days</dt><dd>{{ partial "ui/status.html" (dict "n" .fr "title" $t8) }}{{ with .fe }}<span class="v-muted"> of {{ lang.FormatNumber 0 (float .) }}</span>{{ end }}</dd></div>
+          <div><dt>First review overdue</dt><dd>{{ partial "ui/status.html" (dict "n" .fr "title" $t8) }}{{ with .fe }}<span class="v-muted"> of {{ lang.FormatNumber 0 (float .) }}</span>{{ end }}</dd></div>
           {{- end }}
           {{- if gt (float (.blk | default 0)) 0.0 }}
           <div><dt>Author waiting on us</dt><dd>{{ partial "ui/num.html" (dict "v" .blk "mode" "full") }}</dd></div>
@@ -93,49 +115,65 @@
       </li>
       {{- end }}
     </ul>
-    <p class="v-card-note lg:hidden">{{ $foot }}</p>
-    {{- /* whitespace-normal: .num headers must wrap onto 2-3 lines (brief 4.6 e), or the 9 columns need ~1,380px and overflow the
-         1,216px card at 1440 (R1, R2); .v-dt .num (nowrap) otherwise outranks .v-dt thead th (normal) */}}
+    <p class="v-card-note lg:hidden">{{ $rules }} {{ $foot }}</p>
     <table class="v-dt hidden lg:table" aria-labelledby="needs-attention">
       <caption>{{ $foot }}</caption>
       <thead>
         <tr>
-          <th scope="col">Repository</th>
-          <th scope="col" class="num whitespace-normal">No reply<span class="sub">issues &gt; 7 days</span></th>
-          <th scope="col" class="num whitespace-normal">No first review<span class="sub">PRs &gt; 7 days</span></th>
-          <th scope="col" class="num whitespace-normal">First reply overdue<span class="sub">{{ $r2bd }}</span></th>
-          <th scope="col" class="num whitespace-normal">Triage overdue<span class="sub">{{ $r2bd }}</span></th>
-          <th scope="col" class="num whitespace-normal">P0 overdue<span class="sub">{{ $r7d }}</span></th>
-          <th scope="col" class="num whitespace-normal">P1 overdue<span class="sub">{{ $rP1 }}</span></th>
-          <th scope="col" class="num whitespace-normal">First review overdue<span class="sub">{{ $rRev }}</span></th>
-          <th scope="col" class="num whitespace-normal">Author waiting on us</th>
+          <th scope="col" rowspan="2">Repository</th>
+          <th scope="col" rowspan="2" class="num">No reply<span class="sub">issues &gt; 7 days</span></th>
+          <th scope="col" rowspan="2" class="num whitespace-normal">No first review<span class="sub">PRs &gt; 7 days</span></th>
+          <th scope="colgroup" colspan="{{ $nSep }}" class="h-auto text-center border-b border-line pt-2 pb-2">SEP-1730 overdue</th>
+          <th scope="col" rowspan="2" class="num whitespace-normal">P1 overdue<span class="sub">team target{{ $nb }}· 90 days</span></th>
+          <th scope="col" rowspan="2" class="num whitespace-normal">First review overdue<span class="sub">team SLA{{ $nb }}· 7 days</span></th>
+          <th scope="col" rowspan="2" class="num whitespace-normal">Author waiting on us</th>
+        </tr>
+        <tr>
+          {{- if $showC4 }}
+          <th scope="col" class="num whitespace-normal pl-3">First reply<span class="sub">2 business days</span></th>
+          <th scope="col" class="num whitespace-normal">Triage<span class="sub">2 business days</span></th>
+          {{- else }}
+          <th scope="col" class="num whitespace-normal pl-3">Triage<span class="sub">2 business days</span></th>
+          {{- end }}
+          <th scope="col" class="num whitespace-normal pr-3">P0<span class="sub">7 days</span></th>
         </tr>
       </thead>
       <tbody>
         {{- range $rows }}
+        {{- $issuesURL := printf "issues/%s/" .r.repo | relURL }}
         <tr>
-          <th scope="row"><a class="v-row-link" href="{{ printf "repos/%s/" .r.repo | relURL }}" title="{{ .r.key }}">{{ .r.name }}</a></th>
+          <th scope="row" class="whitespace-nowrap"><a class="v-row-link" href="{{ printf "repos/%s/" .r.repo | relURL }}" title="{{ .r.key }}">{{ .r.name }}</a></th>
           <td class="num">
-            {{- if ne .wait nil }}<a class="v-link-quiet" href="{{ printf "%s?tab=waiting" (printf "issues/%s/" .r.repo | relURL) }}">{{ partial "ui/num.html" (dict "v" .wait "mode" "full") }}</a>
+            {{- if ne .wait nil }}<a class="v-row-link" href="{{ $issuesURL }}?tab=waiting">{{ partial "ui/num.html" (dict "v" .wait "mode" "full") }}</a>
             {{- else }}{{ partial "ui/num.html" (dict "v" nil "na" "not collected") }}{{ end -}}
           </td>
           <td class="num">
-            {{- if ne .rev nil }}<a class="v-link-quiet" href="{{ printf "pulls/%s/" .r.repo | relURL }}">{{ partial "ui/num.html" (dict "v" .rev "mode" "full") }}</a>
+            {{- if ne .rev nil }}<a class="v-row-link" href="{{ printf "pulls/%s/" .r.repo | relURL }}">{{ partial "ui/num.html" (dict "v" .rev "mode" "full") }}</a>
             {{- else }}{{ partial "ui/num.html" (dict "v" nil "na" "not collected") }}{{ end -}}
           </td>
-          <td class="num">{{ partial "ui/status.html" (dict "n" .c4 "na" .na "title" $t4) }}</td>
-          <td class="num">{{ partial "ui/status.html" (dict "n" .c5 "na" .na "title" $t5) }}</td>
-          <td class="num">{{ partial "ui/status.html" (dict "n" .c6 "na" .naP "title" $t6) }}</td>
-          <td class="num">{{ partial "ui/status.html" (dict "n" .c7 "na" .naP "title" $t7) }}</td>
+          {{- if and (not .iss) (not .cls) }}
+          <td colspan="{{ add $nSep 3 }}"><span class="v-muted">{{ .naBoth }}</span></td>
+          {{- else }}
+          {{- if .iss }}
+          {{- if $showC4 }}
+          <td class="num">{{ partial "ui/status.html" (dict "n" .c4 "na" "not computed yet" "title" $t4) }}</td>
+          {{- end }}
+          <td class="num">{{ partial "ui/status.html" (dict "n" .c5 "na" "not computed yet" "title" $t5) }}</td>
+          <td class="num">{{ partial "ui/status.html" (dict "n" .c6 "na" (cond .noP "not tracked: no priority labels" "not computed yet") "title" $t6) }}</td>
+          <td class="num">{{ partial "ui/status.html" (dict "n" .c7 "na" (cond .noP "not tracked: no priority labels" "not computed yet") "title" $t7) }}</td>
+          {{- else }}
+          <td colspan="{{ add $nSep 1 }}"><span class="v-muted">{{ .naIss }}</span></td>
+          {{- end }}
+          {{- if .cls }}
           <td class="num">
-            {{- if not .cls }}{{ partial "ui/num.html" (dict "v" nil "na" "PR classification not run for this repo") }}
-            {{- else if eq .fr nil }}{{ partial "ui/num.html" (dict "v" nil "na" "not computed yet") }}
+            {{- if eq .fr nil }}{{ partial "ui/num.html" (dict "v" nil "na" "not computed yet") }}
             {{- else }}{{ partial "ui/status.html" (dict "n" .fr "title" $t8) }}{{ with .fe }}<span class="v-muted"> of {{ lang.FormatNumber 0 (float .) }}</span>{{ end }}{{ end -}}
           </td>
-          <td class="num">
-            {{- if .cls }}{{ partial "ui/num.html" (dict "v" .blk "mode" "full") }}
-            {{- else }}{{ partial "ui/num.html" (dict "v" nil "na" "PR classification not run for this repo") }}{{ end -}}
-          </td>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .blk "mode" "full") }}</td>
+          {{- else }}
+          <td colspan="2"><span class="v-muted">{{ .naPR }}</span></td>
+          {{- end }}
+          {{- end }}
         </tr>
         {{- end }}
       </tbody>

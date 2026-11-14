@@ -1,8 +1,12 @@
 {{- /* Queue for a classified repo (brief 3.3b-2): one table, segmented tabs, search, toggle chips, 25 rows then "Show all".
-     Dict {r (data/repo.html), a (actionability.json)}. Tab counts come from the rendered rows (pages/pulls/rows.html) and the
-     segments sum to All (TS today: Needs a maintainer 287 · Housekeeping 10 · Close candidates 12 · Waiting on author 65 · All 374).
-     Default tab: Needs a maintainer. Rows outside it, beyond its first 25, and collapsed cluster members carry data-over. */ -}}
-{{- $q := partial "pages/pulls/rows.html" .a -}}
+     Dict {r (data/repo.html), a (actionability.json)}. Tab counts come from the rendered rows (pages/pulls/rows.html, cached per repo)
+     and the segments sum to All (TS today: Needs a maintainer 287 · Housekeeping 10 · Close candidates 12 · Waiting on author 65 · All 374).
+     Default tab: Needs a maintainer. Rows outside it, beyond its first 25, and collapsed cluster members carry data-over.
+     Chips: Overdue · Author waiting on us · Touches auth · Maintainer · Bot, each shown only when a row carries it. "Author waiting on
+     us" (glossary 6.2, classifier tier 1, 17 on TS today) is the one addition to the brief's chip list: the Overview Needs attention
+     column with that name links here, and without the chip those PRs (the old page's first group) sit behind "Show all" in an age sort.
+     The Age / Waiting on us definition lives in the header title and Data notes, not in a <caption> (4.6 n). */ -}}
+{{- $q := partialCached "pages/pulls/rows.html" .a .r.key -}}
 {{- $stages := partial "pages/pulls/sep-stages.html" .r.data -}}
 {{- $needs := index $q.count "needs" -}}
 {{- /* more than half the needs tab overdue: the header says so and row status drops the icon (4.6 j) */ -}}
@@ -22,9 +26,12 @@
 {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $q.all) -}}
 {{- $chips := slice -}}
 {{- if gt $q.over 0 }}{{ $chips = $chips | append (dict "label" "Overdue" "tag" "overdue" "title" "Past a team review SLA") }}{{ end -}}
+{{- if gt $q.waiting 0 }}{{ $chips = $chips | append (dict "label" "Author waiting on us" "tag" "waiting" "title" "The author did what was asked, or a maintainer's own PR awaits a review") }}{{ end -}}
 {{- if gt $q.auth 0 }}{{ $chips = $chips | append (dict "label" "Touches auth" "tag" "auth") }}{{ end -}}
 {{- if gt $q.maint 0 }}{{ $chips = $chips | append (dict "label" "Maintainer" "tag" "maint" "title" "Authored by a maintainer") }}{{ end -}}
-{{- if gt $q.bot 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end }}
+{{- if gt $q.bot 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end -}}
+{{- $verdict := cond $q.wait "Waiting on us" "Age" -}}
+{{- $verdictTitle := cond $q.wait "Days since the next step moved to a maintainer" "Calendar days since the PR opened" }}
 <section class="v-section" aria-labelledby="queue">
   {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" (delimit $parts " " | safeHTML)) }}
   <div data-list id="pq" data-limit="25" data-url>
@@ -33,13 +40,12 @@
         "chips" $chips "noun" "PRs" "one" "PR" "total" $needs) }}
     <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-needs">
       <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">
-        <caption>{{ if $q.wait }}Waiting on us counts the days since the next step moved to a maintainer.{{ else }}Age is calendar days since the PR opened.{{ end }}</caption>
         <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-60"><col class="v-col-24"></colgroup>
         <thead><tr>
           <th scope="col">Pull request</th>
           <th scope="col">State</th>
           <th scope="col">Reason</th>
-          <th scope="col" class="num">{{ if $q.wait }}Waiting on us{{ else }}Age{{ end }}</th>
+          <th scope="col" class="num" title="{{ $verdictTitle }}">{{ $verdict }}</th>
         </tr></thead>
         <tbody>
           {{- $seen := 0 -}}

@@ -1,0 +1,18 @@
+{{- /* Maintainers of this repository, compact (brief 3.6-6, glossary "Maintainers active"): the maintainers active in the last 30 days
+  as profile links, then the others by name under "No activity in the last 30 days". Replaces a half-width table with one row per
+  person (21 rows on the spec repo, most of them repeating "No activity in 30 days") whose active rows duplicated the name list above it.
+  Dict {act []string (display handles, activity spelling), idle []string, empty string (shown when the group has no members)}.
+  Emits HTML with no outer margin; the caller places it under a heading or as a card body. */ -}}
+{{- if or .act .idle -}}
+  {{- if .act }}
+<ul class="v-chiplinks">{{ range .act }}<li><a class="v-chiplink" href="https://github.com/{{ . }}" target="_blank" rel="noopener">{{ . }}<span class="sr-only"> (opens GitHub)</span></a></li>{{ end }}</ul>
+  {{- else }}
+<p class="v-empty-text">No maintainer activity in the last 30 days.</p>
+  {{- end }}
+  {{- with .idle }}
+<p class="v-label mt-3">No activity in the last 30 days</p>
+<ul class="v-chiplinks v-caption mt-1">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>
+  {{- end }}
+{{- else -}}
+<p class="v-empty-text">{{ .empty }}</p>
+{{- end -}}

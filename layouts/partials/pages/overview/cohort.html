@@ -1,7 +1,8 @@
 {{- /* First reply / first review (median) cell for the Repositories table (brief 3.1-4, 6.2), from the D1-8 cohort fields
   issues.first_reply_90d {median_hours, censored, answered_pct, n} and pulls.first_review_90d {median_hours, censored, n}.
-  Call: partial "pages/overview/cohort.html" (dict "c" $metrics.issues.first_reply_90d ["unanswered" true])
+  Call: partial "pages/overview/cohort.html" (dict "c" $metrics.issues.first_reply_90d ["unanswered" true] ["inline" true])
   "≥" leads the value when the median is censored (more than half still unanswered); sub-line "n=64, 41% unanswered".
+  inline: the sub-line follows the value in parentheses (phone blocks, where .sub has no style) instead of a block .sub line.
   A repository without the field reads "—" (not computed yet). Emits HTML. */ -}}
 {{- $c := . -}}
 {{- with $c.c -}}
@@ -14,7 +15,7 @@
   {{- $sub := slice -}}
   {{- if ne $f.n nil }}{{ $sub = $sub | append (printf "n=%s" (lang.FormatNumber 0 (float $f.n))) }}{{ end -}}
   {{- if and $c.unanswered (ne $f.answered_pct nil) }}{{ $sub = $sub | append (printf "%s unanswered" (partial "ui/pct.html" (sub 100.0 (float $f.answered_pct)))) }}{{ end -}}
-  {{- with $sub }}<span class="sub">{{ delimit . ", " }}</span>{{ end -}}
+  {{- with $sub }}{{ if $c.inline }}<span class="v-muted"> ({{ delimit . ", " }})</span>{{ else }}<span class="sub">{{ delimit . ", " }}</span>{{ end }}{{ end -}}
 {{- else -}}
   {{- partial "ui/num.html" (dict "v" nil "na" "not computed yet") -}}
 {{- end -}}

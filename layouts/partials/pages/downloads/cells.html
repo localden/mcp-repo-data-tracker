@@ -1,12 +1,20 @@
 {{- /* Values for one SDK package (brief 3.5-1), shared by the packages table, its phone blocks and the small-multiple headers.
   Call: $cells := partial "pages/downloads/cells.html" (dict "p" $pkg "weeks" $last12)
     p: one entry of the page's package list {r (data/repo.html), reg (ui/registry-name.html), d (data/downloads.html), short bool};
-    weeks: the 12 ISO week starts the sparklines share, so every row covers the same weeks (empty: no sparkline).
-  Returns a dict of HTML: value + flag (Last 7 days; when the window is not complete, the days collected in muted plus the
-    "n of 7 days" Flag, §3.1-5), chg7 / chg28 + has7 / has28 (change vs prior 7 days and vs 4 weeks earlier; "—" unless both
-    windows are complete, §5.4), spark (12 weeks, or "Tracking since …"), life + lifeSub (Lifetime and its basis), through
-    (Complete through). Emits nothing. */ -}}
+    weeks: the 12 ISO week starts the strips share, so every row covers the same weeks (empty: no strip).
+  Returns a dict of HTML: win (the row's window label, a string), value + flag (Last 7 days; when the window is not complete,
+    the days collected in muted plus the "n of 7 days" Flag, §3.1-5), chg7 / chg28 + has7 / has28 (change vs prior 7 days and vs 4 weeks earlier; "—" unless both
+    windows are complete, §5.4), spark (12-week column strip, or a caption saying why there is none), life + lifeSub + hasLife
+    (Lifetime; lifeSub only when the basis is not the registry's all-time total), through (Complete through). Emits nothing. */ -}}
 {{- $p := .p }}{{ $d := $p.d }}{{ $weeks := .weeks | default slice -}}
+
+{{- /* The row's window label. Shared-window rows use the header window; a package with fewer than 7 complete days names the days
+     it actually has ("Nov 9–13", not its 7-day frame "Nov 7–13"), so the phone label, the chart header and the table note agree. */ -}}
+{{- $win := $d.window -}}
+{{- if and $p.short $d.complete_through -}}
+  {{- $from := $d.from }}{{ if and $d.first (gt $d.first $from) }}{{ $from = $d.first }}{{ end -}}
+  {{- $win = partial "data/date-range.html" (dict "from" $from "to" $d.complete_through "year" false) -}}
+{{- end -}}
 
 {{- /* Last 7 days: dl7 only when all 7 days are complete. A partial window is never shown as a full one. */ -}}
 {{- $value := "" }}{{ $flag := "" -}}
@@ -15,7 +23,7 @@
 {{- else if gt $d.days_covered 0 -}}
   {{- $value = printf `<span class="v-muted">%s</span>` (partial "ui/num.html" (dict "v" $d.sum7 "mode" "compact")) | safeHTML -}}
   {{- $flag = partial "ui/flag.html" (dict "text" (printf "%d of 7 days" $d.days_covered)
-      "title" (printf "%s: %d of 7 complete days" $d.window $d.days_covered)) -}}
+      "title" (printf "%s: %d of 7 complete days" $win $d.days_covered)) -}}
 {{- else if $d.complete_through -}}
   {{- $value = partial "ui/num.html" (dict "v" nil "na" (printf "no complete days in %s" $d.window)) -}}
   {{- $flag = partial "ui/flag.html" (dict "text" "0 of 7 days" "title" (printf "%s: no complete days" $d.window)) -}}
@@ -31,7 +39,10 @@
 {{- $chg28 := partial "ui/num.html" (dict "v" nil "na" "needs complete 7-day windows 4 weeks apart") -}}
 {{- if $has28 }}{{ $chg28 = partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.dl7_28 "unit" "percent" "polarity" "up") }}{{ end -}}
 
-{{- /* 12-week sparkline on the shared weeks: complete weekly sums only; a missing week breaks the line. */ -}}
+{{- /* 12 weeks on the shared week starts: complete weekly sums only, drawn as columns (pages/downloads/strip.html); a missing week
+     is an empty slot. Below 4 complete weeks (5.5) there is no strip and the cell says why in words: since when the package has
+     been tracked when it started inside the window, else how many of the 12 weeks are complete (the npm fallback misses a day
+     most weeks until the D4 range backfill; "Too few complete weeks" read like a fault on the busiest SDK). */ -}}
 {{- $sc := newScratch -}}
 {{- range $d.weekly.points }}{{ if ne .value nil }}{{ $sc.SetInMap "w" .date .value }}{{ end }}{{ end -}}
 {{- $wm := $sc.Get "w" | default dict -}}
@@ -46,28 +57,28 @@
 {{- end -}}
 {{- $spark := "" -}}
 {{- if ge $n 4 -}}
-  {{- $spark = printf `%s<span class="sr-only">Lowest week %s, highest week %s</span>` (partial "ui/spark.html" (dict "points" $pts "size" "cell"))
-      (partial "ui/num.html" (dict "v" $lo "mode" "compact" "plain" true)) (partial "ui/num.html" (dict "v" $hi "mode" "compact" "plain" true)) | safeHTML -}}
+  {{- $missing := "" }}{{ if lt $n (len $weeks) }}{{ $missing = printf "; %d of %d weeks complete" $n (len $weeks) }}{{ end -}}
+  {{- $spark = printf `%s<span class="sr-only">Lowest week %s, highest week %s%s</span>` (partial "pages/downloads/strip.html" (dict "points" $pts))
+      (partial "ui/num.html" (dict "v" $lo "mode" "compact" "plain" true)) (partial "ui/num.html" (dict "v" $hi "mode" "compact" "plain" true)) $missing | safeHTML -}}
 {{- else if $weeks -}}
   {{- if not $d.first }}{{ $spark = partial "ui/num.html" (dict "v" nil "na" "no data collected yet") -}}
   {{- else if ge $d.first (index $weeks 0) }}{{ $spark = printf `<span class="v-caption">Tracking since %s</span>` (partial "ui/date.html" (dict "d" $d.first "style" "short")) | safeHTML -}}
-  {{- else }}{{ $spark = `<span class="v-caption">Too few complete weeks</span>` | safeHTML }}{{ end -}}
+  {{- else }}{{ $spark = printf `<span class="v-caption">%d of %d weeks complete</span>` $n (len $weeks) | safeHTML }}{{ end -}}
 {{- else -}}
   {{- /* no package has a complete week yet, so there are no shared weeks: missing, not empty (6.1 rule 8) */ -}}
   {{- $spark = partial "ui/num.html" (dict "v" nil "na" "no complete weeks yet") -}}
 {{- end -}}
 
-{{- /* Lifetime: the registry's own lifetime total. npm has none; its running sum is labeled with its basis until D2-6 seeds it
-     from Nov 2024 (downloads-daily.json › seeded_from), then "all time" like the others (brief 3.5-1, OV-27, DV-X1). */ -}}
+{{- /* Lifetime: the registry's own lifetime total, which the header already names, so no "all time" under every row. Only npm's
+     running sum carries its basis ("since Jan 15, 2026") until D2-6 seeds it from Nov 2024 (downloads-daily.json › seeded_from);
+     then it reads like the others (brief 3.5-1, OV-27, DV-X1). */ -}}
+{{- $hasLife := ne $d.lifetime nil -}}
 {{- $life := partial "ui/num.html" (dict "v" $d.lifetime "mode" "compact" "na" "no registry total") -}}
 {{- $lifeSub := "" -}}
-{{- if ne $d.lifetime nil -}}
-  {{- $lifeSub = "all time" -}}
-  {{- if eq $d.registry "npm" -}}
-    {{- $seed := "" }}{{ with index $p.r.data "downloads-daily" }}{{ $seed = .seeded_from | default "" }}{{ end -}}
-    {{- if or (eq $seed "") (gt $seed "2024-11-01") -}}
-      {{- with $d.lifetime_since }}{{ $lifeSub = printf "since %s" (partial "ui/date.html" .) }}{{ end -}}
-    {{- end -}}
+{{- if and $hasLife (eq $d.registry "npm") -}}
+  {{- $seed := "" }}{{ with index $p.r.data "downloads-daily" }}{{ $seed = .seeded_from | default "" }}{{ end -}}
+  {{- if or (eq $seed "") (gt $seed "2024-11-01") -}}
+    {{- with $d.lifetime_since }}{{ $lifeSub = printf "since %s" (partial "ui/date.html" .) }}{{ end -}}
   {{- end -}}
 {{- end -}}
 
@@ -76,5 +87,5 @@
   {{- $through = printf `<span title="%s">%s</span>` (partial "ui/date.html" .) (partial "ui/date.html" (dict "d" . "style" "short")) | safeHTML -}}
 {{- end -}}
 
-{{- return dict "value" $value "flag" $flag "chg7" $chg7 "chg28" $chg28 "has7" $has7 "has28" $has28 "spark" $spark
-  "life" $life "lifeSub" $lifeSub "through" $through -}}
+{{- return dict "win" $win "value" $value "flag" $flag "chg7" $chg7 "chg28" $chg28 "has7" $has7 "has28" $has28 "spark" $spark
+  "life" $life "lifeSub" $lifeSub "hasLife" $hasLife "through" $through -}}

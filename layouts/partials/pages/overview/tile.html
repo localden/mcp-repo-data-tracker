@@ -4,10 +4,11 @@
           "weekly" (partial "data/org-weekly.html" (dict "path" path "weeks" 12)))
   Context line 1 is line1. Line 2 is the dated delta (down is good: these are waiting counts) when cmp found an earlier snapshot.
   When the comparison, or else the newest sparkline week, covers fewer than every tracked repository, the last line ends with
-  "· 7 of 9 repos" (brief 3.1: one gapped repository never blanks the tile, and the reader is told what the number covers).
-  The separator is glued to the text before it with a no-break space (U+00A0), so a wrapped line never starts with "·". */ -}}
+  "(7 of 9 repos)" (brief 3.1: one gapped repository never blanks the tile, and the reader is told what the number covers).
+  Parentheses, not "·": ui/delta.html ends in an sr-only ", worsening" span, which text extraction (and some screen readers) treat
+  as its own line, so a separator after it would start a line (text-ban check, brief 4.6 a). On phones the tail is hidden so the
+  delta stays on one line and the tile stays short (R6). */ -}}
 {{- $c := . -}}
-{{- $nb := printf "%c" 160 -}}
 {{- $total := len site.Data.repos.repositories -}}
 {{- $pts := slice }}{{ $latestN := $total -}}
 {{- with $c.weekly }}{{ $pts = .points | default slice }}{{ if gt .n 0 }}{{ $latestN = .n_latest }}{{ end }}{{ end -}}
@@ -16,15 +17,14 @@
   {{- $line2 = trim (string (partial "ui/delta.html" (dict "cur" .cur "prev" .prev "date" .date "polarity" "down"))) " \n" -}}
   {{- $k = .k -}}
 {{- end }}{{ end -}}
-{{- $cover := "" }}{{ if lt $k $total }}{{ $cover = printf "%d of %d repos" $k $total }}{{ end -}}
+{{- $cover := "" }}{{ if lt $k $total }}{{ $cover = printf "(%d of %d repos)" (int $k) $total }}{{ end -}}
 {{- $line1 := $c.line1 | default "" -}}
 {{- $tile := dict "label" $c.label "labelTitle" $c.title "value" $c.value "points" $pts -}}
 {{- if $line2 -}}
-  {{- /* on phones the tail is dropped so the delta stays on one line and the tile within 96px (R6) */ -}}
-  {{- with $cover }}{{ $line2 = printf `%s<span class="v-muted max-sm:hidden">%s· %s</span>` $line2 $nb . }}{{ end -}}
+  {{- with $cover }}{{ $line2 = printf `%s<span class="v-muted max-sm:hidden"> %s</span>` $line2 . }}{{ end -}}
   {{- $tile = merge $tile (dict "qualifier" $line1 "context" ($line2 | safeHTML)) -}}
 {{- else -}}
-  {{- with $cover }}{{ $line1 = cond (ne $line1 "") (printf "%s%s· %s" $line1 $nb .) . }}{{ end -}}
+  {{- with $cover }}{{ $line1 = cond (ne $line1 "") (printf "%s %s" $line1 .) . }}{{ end -}}
   {{- $tile = merge $tile (dict "qualifier" $line1) -}}
 {{- end -}}
 {{- return $tile -}}

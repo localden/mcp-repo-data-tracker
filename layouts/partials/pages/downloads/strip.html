@@ -1,0 +1,25 @@
+{{- /* 12-week column strip for the packages table (brief 3.5-1). Downloads are a flow (5.1: one column per complete ISO week), so the
+  row's 12 weeks are drawn as columns, the same form as the weekly charts below, instead of a line: a week with a missing day is an
+  empty slot, never a zero bar and never a broken line with a stray end dot far from its value (the C# row on the first render).
+  Zero baseline drawn as a 1px --line rule across all 12 slots, so an empty slot reads as a week without a bar inside a visible
+  12-week frame; bars scale to the row's own largest week, and a complete week never drops below a visible sliver.
+  Call: partial "pages/downloads/strip.html" (dict "points" $pts)
+    points: [{date, value|nil}] on the 12 shared week starts. Emits nothing when no week has a value.
+  aria-hidden: the caller prints the numbers beside it (sr-only lowest/highest week). Each slot's title names its week, for
+  pointer users. Markup only from existing tokens: a .v-stack turned vertical (spacer + .is-accent segment, sized by --n),
+  so no colour or size is new. Candidate for a "column" kind in ui/spark.html (reported to WP0). */ -}}
+{{- $pts := .points | default slice -}}
+{{- $max := 0.0 }}{{ range $pts }}{{ if ne .value nil }}{{ $max = math.Max $max (float .value) }}{{ end }}{{ end -}}
+{{- if gt $max 0.0 -}}
+<span class="flex h-6 gap-0.5 border-b border-line" aria-hidden="true">
+  {{- range $pts -}}
+  {{- $wk := (time.AsTime .date).Format "Jan 2" -}}
+  {{- if ne .value nil -}}
+    {{- $n := math.Max 60.0 (math.Round (mul (div (float .value) $max) 1000.0)) -}}
+    <span class="v-stack flex-1 flex-col h-full" title="Week of {{ $wk }}: {{ partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true) }}"><i class="v-stack-seg" style="--n:{{ printf "%.0f" (sub 1000.0 $n) }}"></i><i class="v-stack-seg is-accent rounded-t-xs rounded-b-none" style="--n:{{ printf "%.0f" $n }}"></i></span>
+  {{- else -}}
+    <span class="flex-1" title="Week of {{ $wk }}: a day missing"></span>
+  {{- end -}}
+  {{- end -}}
+</span>
+{{- end -}}

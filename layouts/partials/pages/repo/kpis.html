@@ -1,7 +1,8 @@
 {{- /* 1. KPI card (brief 3.6-1, 4.6 d): issues waiting for a reply, PRs waiting for first review, open issues (net change in 30 days),
   then downloads in the last 7 complete days for package repos or active contributors for the others. Glossary labels (6.2).
   Deltas are dated (data/series cmp7, nearest earlier snapshot); a package with fewer than 7 complete days shows its partial sum
-  muted with the Flag "n of 7 days" and no delta (5.4). Context: the dict from pages/repo.html. */ -}}
+  muted with the Flag "n of 7 days" and no delta (5.4). The downloads window is the one shared with the Overview and the Downloads
+  page (pages/repo.html), so an SDK's "Last 7 days" is the same number everywhere. Context: the dict from pages/repo.html. */ -}}
 {{- $r := .r }}{{ $m := .m }}{{ $c := .c }}{{ $d := .dl }}{{ $s := .s -}}
 {{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
 {{- $iw := $s.iWait }}{{ $pw := $s.pWait }}{{ $io := $s.iOpen -}}
@@ -20,14 +21,20 @@
         "points" (partial "data/week-bins.html" (dict "points" $io.points "agg" "last" "weeks" 12)).points "since" $io.first) -}}
 
 {{- if $r.package -}}
-  {{- /* 12 complete ISO weeks of downloads for the sparkline; the unfinished week is never plotted */ -}}
-  {{- $pts := slice }}{{ with $d.points }}{{ $pts = (partial "data/week-bins.html" (dict "points" . "agg" "sum" "weeks" 12 "end" $d.complete_through)).points }}{{ end -}}
-  {{- $t := dict "label" "Downloads, last 7 days" "value" nil "na" "no complete days yet" "since" ($d.first | default "") -}}
+  {{- /* 12 complete ISO weeks of downloads for the sparkline; the unfinished week is never plotted. A week with a missing registry day
+       is void (5.4), so a package tracked for months can still have fewer than 4 complete weeks (npm before D2-6): its slot collapses
+       instead of claiming "Tracking since Jan 15". "Tracking since" is shown only when tracking really began inside the 12 weeks. */ -}}
+  {{- $pts := slice }}{{ $nW := 0 -}}
+  {{- with $d.points }}{{ $wb := partial "data/week-bins.html" (dict "points" . "agg" "sum" "weeks" 12 "end" $d.complete_through) }}{{ $pts = $wb.points }}{{ $nW = $wb.n }}{{ end -}}
+  {{- $since := "" -}}
+  {{- with $d.first }}{{ $f := . }}{{ with $pts }}{{ if ge $f (index . 0).date }}{{ $since = $f }}{{ end }}{{ end }}{{ end -}}
+  {{- if lt (int $nW) 4 }}{{ $pts = slice }}{{ end -}}
+  {{- $t := dict "label" "Downloads, last 7 days" "value" nil "na" "no complete days yet" "since" $since -}}
   {{- if ne $d.dl7 nil -}}
-    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "value" $d.dl7 "format" "compact" "points" $pts "since" ($d.first | default "")
+    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "value" $d.dl7 "format" "compact" "points" $pts "since" $since
         "delta" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "vs" "prior 7 days" "polarity" "up") -}}
   {{- else if gt (int ($d.days_covered | default 0)) 0 -}}
-    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "points" $pts "since" ($d.first | default "")
+    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "points" $pts "since" $since
         "valueHTML" (printf `<span class="v-muted">%s</span>` (partial "ui/num.html" (dict "v" $d.sum7 "mode" "compact")) | safeHTML)
         "context" (partial "ui/flag.html" (printf "%d of 7 days" (int $d.days_covered))) -}}
   {{- end -}}

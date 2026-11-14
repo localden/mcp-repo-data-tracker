@@ -1,0 +1,10 @@
+{{- /* Sans meta line for PR rows (brief 3.3b-2 "#2017 · ankitvirdi4 · +179 −14", 4.6 f, 6.1 rule 2, R10).
+     Input: a slice of tokens, each HTML-safe (htmlEscape plain text first; a ui/tag.html result, which keeps a SEP tag's link and a
+     strong P0/P1, can go in as is). Returns template.HTML: one nowrap span per token, each but the last ending in " ·", joined by
+     spaces, so the line wraps only between tokens and a wrapped line never starts with a separator. An empty slice returns "". */ -}}
+{{- $t := . | default slice -}}
+{{- $out := slice -}}
+{{- range $i, $m := $t -}}
+  {{- $out = $out | append (printf `<span class="v-nowrap">%s%s</span>` $m (cond (lt $i (sub (len $t) 1)) " ·" "")) -}}
+{{- end -}}
+{{- return (delimit $out " " | safeHTML) -}}

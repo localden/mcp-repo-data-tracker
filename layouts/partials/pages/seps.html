@@ -3,8 +3,9 @@
   Open SEPs (work list); Final in the last 90 days; one foot line.
   Source: seps.json (data/repo.html). The D1-11 fields (isDraft, maintainerReviewed, coreReviewed, lastActivity*, daysInStage,
   parked, closed, needsLabel, sponsoredButProposal) are read when they exist; until then each module renders the brief's fallback:
-  "No maintainer review" reads "—" (not computed yet), the review column and chips, Longest in stage, the Parked row, Closed
-  without merging and the label-hygiene line are omitted, and the activity column is "Last updated" (includes label edits). */ -}}
+  the "No maintainer review" tile (Data notes says it is not shown yet), the review column and chips, Longest in stage, the Parked
+  row, Closed without merging and the label-hygiene line are omitted, and the activity column is "Last updated" (includes label
+  edits). */ -}}
 {{- $page := . -}}
 
 {{- /* the repository that carries seps.json (the spec repo) */ -}}
@@ -120,14 +121,22 @@
 {{- if ge $o4 0.0 }}{{ $p4 = $p4 | append (printf "oldest %s" (partial "ui/dur.html" (dict "h" $o4)).long) }}{{ end -}}
 {{- $t1 := dict "label" "Need a sponsor" "labelTitle" "Proposals with no sponsor, not authored by a core or lead maintainer"
   "value" $n1 "context" (partial "pages/seps/ctx.html" $p1) "filter" (cond (gt $n1 0) "t-sponsor" "") "for" "sep-list" -}}
-{{- /* before D1-11 (maintainerReviewed) the count is unknown: "—", not computed yet, and no filter */ -}}
-{{- $t2 := dict "label" "No maintainer review" "labelTitle" "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer"
-  "na" "not computed yet" -}}
-{{- if $review }}{{ $t2 = merge $t2 (dict "value" $n2 "context" (partial "pages/seps/ctx.html" $p2) "filter" (cond (gt $n2 0) "t-review" "") "for" "sep-list") }}{{ end -}}
 {{- $t3 := dict "label" "Awaiting decision" "labelTitle" "SEPs in review, waiting for a core-maintainer decision"
   "value" $n3 "context" (partial "pages/seps/ctx.html" $p3) "filter" (cond (gt $n3 0) "t-decision" "") "for" "sep-list" -}}
 {{- $t4 := dict "label" "Accepted, not merged" "labelTitle" "Accepted SEPs whose PR has not merged yet"
   "value" $n4 "context" (partial "pages/seps/ctx.html" $p4) "filter" (cond (gt $n4 0) "t-accepted" "") "for" "sep-list" -}}
+{{- /* "No maintainer review" needs maintainerReviewed (D1-11). Until the data has it the tile is omitted, like the other D1-11
+     modules: a 28px "—" in the second slot of the page's first row read as a rendering bug. Data notes says why it is missing.
+     With only stage-based tiles the SEPs cannot overlap, so the "counts once" caption appears only with the review tile. */ -}}
+{{- $tiles := slice $t1 -}}
+{{- $wHead := dict "title" "Waiting on maintainers" "id" "waiting" -}}
+{{- if $review -}}
+  {{- $tiles = $tiles | append (dict "label" "No maintainer review" "labelTitle" "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer"
+      "value" $n2 "context" (partial "pages/seps/ctx.html" $p2) "filter" (cond (gt $n2 0) "t-review" "") "for" "sep-list") -}}
+  {{- $wHead = merge $wHead (dict "caption" "Each open SEP counts once, in the first of these it matches.") -}}
+{{- end -}}
+{{- $tiles = $tiles | append $t3 -}}
+{{- $tiles = $tiles | append $t4 -}}
 {{- /* label hygiene tokens: each rule's phrase rides on its first PR number, and every token is one nowrap span */ -}}
 {{- $hyg := slice -}}
 {{- range $i, $n := $hygLabel }}{{ $hyg = $hyg | append (cond (eq $i 0) (printf "titled SEP without the SEP label %s" $n) $n) }}{{ end -}}
@@ -183,7 +192,7 @@
 {{- $lastDef := cond $act "Days since the last comment, review or commit by a person." "Days since the PR last changed on GitHub. Label edits count, so a SEP can look recent without new discussion." -}}
 {{- $defs := slice
   (dict "term" "Need a sponsor" "text" "Proposals with no sponsor whose author is not a core or lead maintainer.")
-  (dict "term" "No maintainer review" "text" "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer.")
+  (dict "term" "No maintainer review" "text" (cond $review "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer." "Not shown yet. The SEP data does not record which SEPs a maintainer has reviewed."))
   (dict "term" "Awaiting decision" "text" "SEPs in review, waiting for a core-maintainer decision.")
   (dict "term" "Accepted, not merged" "text" "Accepted SEPs whose PR has not merged yet.")
   (dict "term" "Sponsor" "text" "The first assignee. A SEP written by a core or lead maintainer is self-sponsored.")
@@ -196,50 +205,77 @@
 
 {{- /* 1. Waiting on maintainers */}}
 <section class="v-section" aria-labelledby="waiting">
-  {{ partial "ui/section-head.html" (dict "title" "Waiting on maintainers" "id" "waiting" "caption" "Each open SEP counts once, in the first of these it matches.") }}
-  {{ partial "ui/kpis.html" (dict "tiles" (slice $t1 $t2 $t3 $t4) "label" "Waiting on maintainers") }}
+  {{ partial "ui/section-head.html" $wHead }}
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Waiting on maintainers") }}
   {{- with $hyg }}
   {{- $last := sub (len .) 1 }}
   <p class="v-caption mt-3">Label hygiene: {{ range $i, $t := . }}<span class="v-nowrap">{{ $t }}{{ if lt $i $last }}&nbsp;·{{ end }}</span>{{ if lt $i $last }} {{ end }}{{ end }}</p>
   {{- end }}
 </section>
 
-{{- /* 2. Open SEPs by stage: one shared bar scale (the largest stage), ordinal ramp in pipeline order (5.1) */}}
+{{- /* 2. Open SEPs by stage: one shared bar scale (the largest stage), ordinal ramp in pipeline order (5.1).
+     Full width at every size. As a 6-span "compact table" (4.3) it left the right half of the row empty and squeezed the bars into
+     4rem, where a 2-SEP stage drew an 8px dot. Here the numbers sit in fixed right-hand columns and the bar fills the free Open
+     column: the meter grows (utility "grow"), its track corners are squared (utility "rounded-none", so overflow does not round the
+     baseline end) and the bar keeps its 4px data end ("rounded-l-none", as on the versions bars). Phones get the same table without
+     bars while it has 3 numeric columns; with the D1-11 columns it falls back to per-stage blocks (R3). */}}
+{{- $extra := or $inStage $review }}
 <section class="v-section" aria-labelledby="by-stage">
   {{ partial "ui/section-head.html" (dict "title" "Open SEPs by stage" "id" "by-stage") }}
-  <div class="v-grid"><div class="{{ if or $inStage $review }}v-span-12{{ else }}v-span-6{{ end }}">
-    <div class="v-card">
-      <table class="v-dt v-desk-only" aria-labelledby="by-stage">
-        <thead><tr>
-          <th scope="col">Stage</th>
-          <th scope="col" class="num">Open</th>
-          <th scope="col" class="num">Median age</th>
+  <div class="v-card">
+    <table class="v-dt is-fixed v-desk-only" aria-labelledby="by-stage">
+      <colgroup><col class="v-col-32"><col class="v-col-auto"><col class="v-col-28">{{ if $inStage }}<col class="v-col-32">{{ end }}<col class="v-col-28">{{ if $review }}<col class="v-col-36">{{ end }}</colgroup>
+      <thead><tr>
+        <th scope="col">Stage</th>
+        <th scope="col">Open</th>
+        <th scope="col" class="num">Median age</th>
+        {{- if $inStage }}
+        <th scope="col" class="num">Longest in stage</th>
+        {{- end }}
+        <th scope="col" class="num">No sponsor</th>
+        {{- if $review }}
+        <th scope="col" class="text-right">No maintainer review</th>
+        {{- end }}
+      </tr></thead>
+      <tbody>
+        {{- range $groups }}
+        {{- $pct := 0.0 }}{{ if gt $max 0 }}{{ $pct = mul (div (float .n) (float $max)) 100.0 }}{{ end }}
+        <tr>
+          <th scope="row">{{ .label }}</th>
+          <td><div class="flex items-center gap-3"><span class="v-meter-pct">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</span><span class="v-meter is-rank grow rounded-none" aria-hidden="true">{{ if gt .n 0 }}<i class="v-stack-seg is-{{ .role }} rounded-l-none" style="--v:{{ printf "%.1f" $pct }}%"></i>{{ end }}</span></div></td>
+          <td class="num">{{ .medHTML }}</td>
           {{- if $inStage }}
-          <th scope="col" class="num">Longest in stage</th>
+          <td class="num">{{ .longHTML }}</td>
           {{- end }}
-          <th scope="col" class="num">No sponsor</th>
+          <td class="num">{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</td>
           {{- if $review }}
-          <th scope="col" class="num">No maintainer review</th>
+          <td class="num">{{ if eq .noReview 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noReview "mode" "full") }}{{ end }}</td>
           {{- end }}
-        </tr></thead>
-        <tbody>
-          {{- range $groups }}
-          {{- $pct := 0.0 }}{{ if gt $max 0 }}{{ $pct = mul (div (float .n) (float $max)) 100.0 }}{{ end }}
-          <tr>
-            <th scope="row">{{ .label }}</th>
-            <td class="num"><span class="v-meter is-rank" aria-hidden="true">{{ if gt .n 0 }}<i class="v-stack-seg is-{{ .role }}" style="--v:{{ printf "%.1f" $pct }}%"></i>{{ end }}</span> <span class="v-meter-pct">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</span></td>
-            <td class="num">{{ .medHTML }}</td>
-            {{- if $inStage }}
-            <td class="num">{{ .longHTML }}</td>
-            {{- end }}
-            <td class="num">{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</td>
-            {{- if $review }}
-            <td class="num">{{ if eq .noReview 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noReview "mode" "full") }}{{ end }}</td>
-            {{- end }}
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+    {{- if not $extra }}
+    {{- /* phone: headers may wrap (text-right, not .num) so the 4 columns always fit 358px */}}
+    <table class="v-dt v-phone-only" aria-labelledby="by-stage">
+      <thead><tr>
+        <th scope="col">Stage</th>
+        <th scope="col" class="text-right">Open</th>
+        <th scope="col" class="text-right">Median age</th>
+        <th scope="col" class="text-right">No sponsor</th>
+      </tr></thead>
+      <tbody>
+        {{- range $groups }}
+        <tr>
+          <th scope="row">{{ .label }}</th>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</td>
+          <td class="num">{{ .medHTML }}</td>
+          <td class="num">{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</td>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+    {{- else }}
       <ul class="v-blocks v-phone-only">
         {{- range $groups }}
         <li class="v-block">
@@ -258,8 +294,8 @@
         </li>
         {{- end }}
       </ul>
-    </div>
-  </div></div>
+    {{- end }}
+  </div>
 </section>
 
 {{- /* 3. Last 90 days */}}
@@ -278,7 +314,9 @@
         "chips" $chips "noun" "SEPs" "one" "SEP" "total" (len $open)) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list is-sticky-groups" id="sep-table" aria-labelledby="open-seps">
-        <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-32"><col class="v-col-32">{{ if $review }}<col class="v-col-24">{{ end }}<col class="v-col-20"><col class="v-col-24"></colgroup>
+        {{- /* Author and Sponsor 9rem: 8rem truncated "SamMorrowDrums"; the last column 8rem: at 6rem the nowrap header
+             "Last updated" plus its sort icon ran past the card edge */}}
+        <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-36"><col class="v-col-36">{{ if $review }}<col class="v-col-24">{{ end }}<col class="v-col-20"><col class="v-col-32"></colgroup>
         <thead><tr>
           <th scope="col">SEP</th>
           <th scope="col">Title</th>
@@ -317,7 +355,9 @@
   {{- if $final }}
   <div class="v-card">
     <table class="v-dt is-fixed is-list" aria-labelledby="final-90">
-      <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-32"><col class="v-col-20"><col class="v-col-24"></colgroup>
+      {{- /* Sponsor, Merged and Time to final share the widths and right edges of Sponsor, Age and Last updated in the work list
+           above, so the two tables line up */}}
+      <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-36"><col class="v-col-20"><col class="v-col-32"></colgroup>
       <thead><tr>
         <th scope="col">SEP</th>
         <th scope="col">Title</th>

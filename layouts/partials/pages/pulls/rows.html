@@ -1,8 +1,11 @@
 {{- /* Flatten actionability.json into the one queue table's rows (brief 3.3b-2, 8a-8, P6). Input: the actionability map. Returns dict:
-     rows: top-level rows sorted by wait, longest first; each {pr, tab, state, n, over, bot, id, kids}. kids are the other PRs of a
-       duplicate cluster as rows of the same shape (rendered right after their primary, collapsed behind its "2 PRs" expander).
+     rows: top-level rows sorted by wait, longest first; each {pr, tab, state, n, over, waiting, bot, id, kids}. kids are the other PRs of
+       a duplicate cluster as rows of the same shape (rendered right after their primary, collapsed behind its "2 PRs" expander).
      count: rendered rows per tab {needs, housekeeping, close, author}; all: every rendered row; over: overdue rows (needs tab only);
+     waiting: rows of classifier tier 1, glossary "Author waiting on us" (the author did what was asked; Overview Needs attention
+       column 9 counts summary.by_tier[0] = this tier), cluster members excluded so the chip count matches that column;
      auth / maint / bot: rows carrying each chip token; wait: true once the classifier exports waiting_days (D3-2), else rows sort by age.
+   Called with partialCached (variant key = the repo key) by pages/pulls.html and pages/pulls/queue.html, so it runs once per page.
    Tabs (6.5 "PR tier labels"): tiers 0-3 and unclassified rows -> needs ("Needs a maintainer"); tier 4 and bot rows -> housekeeping;
      tier 5 -> close; not_our_move -> author ("Waiting on author"). Tab counts and the segments sum to all, because every rendered row
      (cluster members included) belongs to exactly one tab.
@@ -14,15 +17,15 @@
   {{- $i := float (.idx | default 0) -}}
   {{- $tab := "housekeeping" -}}
   {{- if le $i 3.0 }}{{ $tab = "needs" }}{{ else if eq $i 5.0 }}{{ $tab = "close" }}{{ end -}}
-  {{- $groups = $groups | append (dict "tab" $tab "states" (.states | default slice)) -}}
+  {{- $groups = $groups | append (dict "tab" $tab "tier" $i "states" (.states | default slice)) -}}
 {{- end -}}
-{{- $groups = $groups | append (dict "tab" "needs" "states" ($a.untriaged | default slice)) -}}
-{{- $groups = $groups | append (dict "tab" "housekeeping" "states" ($a.bot_corner | default slice)) -}}
-{{- $groups = $groups | append (dict "tab" "author" "states" ($a.not_our_move | default slice)) -}}
+{{- $groups = $groups | append (dict "tab" "needs" "tier" -1.0 "states" ($a.untriaged | default slice)) -}}
+{{- $groups = $groups | append (dict "tab" "housekeeping" "tier" -1.0 "states" ($a.bot_corner | default slice)) -}}
+{{- $groups = $groups | append (dict "tab" "author" "tier" -1.0 "states" ($a.not_our_move | default slice)) -}}
 
 {{- $top := slice }}{{ $wait := false -}}
 {{- $cnt := dict "needs" 0 "housekeeping" 0 "close" 0 "author" 0 -}}
-{{- $all := 0 }}{{ $over := 0 }}{{ $auth := 0 }}{{ $maint := 0 }}{{ $bots := 0 -}}
+{{- $all := 0 }}{{ $over := 0 }}{{ $auth := 0 }}{{ $maint := 0 }}{{ $bots := 0 }}{{ $waiting := 0 -}}
 {{- range $g := $groups -}}
   {{- range $s := $g.states -}}
     {{- $clusters := $s.clusters | default slice -}}
@@ -42,12 +45,14 @@
         {{- $author := string ($p.author | default "") -}}
         {{- $bot := or $p.is_bot (hasPrefix $author "app/") (hasSuffix $author "[bot]") -}}
         {{- $o := and $p.sla_breach (eq $g.tab "needs") (ne $st "duplicate-cluster-member") -}}
+        {{- $aw := and (eq (float $g.tier) 1.0) (eq $j 0) -}}
         {{- if ne $p.waiting_days nil }}{{ $wait = true }}{{ end -}}
         {{- $w := float ($p.age_days | default 0) }}{{ if ne $p.waiting_days nil }}{{ $w = float $p.waiting_days }}{{ end -}}
-        {{- $built = $built | append (dict "pr" $p "tab" $g.tab "state" $st "n" (cond (eq $j 0) (len $members) 0) "over" $o "bot" $bot "w" $w
-              "id" (printf "pq-%d" (int ($p.number | default 0)))) -}}
+        {{- $built = $built | append (dict "pr" $p "tab" $g.tab "state" $st "n" (cond (eq $j 0) (len $members) 0) "over" $o "waiting" $aw
+              "bot" $bot "w" $w "id" (printf "pq-%d" (int ($p.number | default 0)))) -}}
         {{- $all = add $all 1 }}{{ $cnt = merge $cnt (dict $g.tab (add (index $cnt $g.tab) 1)) -}}
         {{- if $o }}{{ $over = add $over 1 }}{{ end -}}
+        {{- if $aw }}{{ $waiting = add $waiting 1 }}{{ end -}}
         {{- if $p.is_auth }}{{ $auth = add $auth 1 }}{{ end -}}
         {{- if $p.is_maintainer }}{{ $maint = add $maint 1 }}{{ end -}}
         {{- if $bot }}{{ $bots = add $bots 1 }}{{ end -}}
@@ -58,4 +63,4 @@
   {{- end -}}
 {{- end -}}
 {{- if $top }}{{ $top = sort $top "w" "desc" }}{{ end -}}
-{{- return dict "rows" $top "count" $cnt "all" $all "over" $over "auth" $auth "maint" $maint "bot" $bots "wait" $wait -}}
+{{- return dict "rows" $top "count" $cnt "all" $all "over" $over "waiting" $waiting "auth" $auth "maint" $maint "bot" $bots "wait" $wait -}}

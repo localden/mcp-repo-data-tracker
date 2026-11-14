@@ -32,7 +32,7 @@
     {{- if $c.date }}{{ $vs = printf "vs %s" (partial "ui/date.html" (dict "d" $c.date "style" "short")) }}
     {{- else if $c.vs }}{{ $vs = printf "vs %s" $c.vs }}
     {{- else if $c.suffix }}{{ $vs = $c.suffix }}{{ end -}}
-    <span class="v-delta is-{{ $state }}">{{ $txt }}{{ with $vs }} <span class="v-delta-vs">{{ . }}</span>{{ end }}
-    {{- if eq $state "good" }}<span class="sr-only">, improving</span>{{ else if eq $state "bad" }}<span class="sr-only">, worsening</span>{{ end }}</span>
+    {{- /* the polarity word leads (sr-only), so nothing a caller appends after the delta is split from it */ -}}
+    <span class="v-delta is-{{ $state }}">{{ if eq $state "good" }}<span class="sr-only">Improving: </span>{{ else if eq $state "bad" }}<span class="sr-only">Worsening: </span>{{ end }}{{ $txt }}{{ with $vs }} <span class="v-delta-vs">{{ . }}</span>{{ end }}</span>
   {{- end -}}
 {{- end -}}

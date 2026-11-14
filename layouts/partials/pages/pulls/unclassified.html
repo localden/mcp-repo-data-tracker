@@ -2,7 +2,11 @@
      table with two tabs, "Waiting for first review" (isDraft false, the default) and "Drafts" (isDraft true). Drafts are decided by
      isDraft only, never by the "draft" label (#1913 carries the label and is not a draft). Dict {r (data/repo.html), m (metrics.json)}.
      No row status: these rows have no SLA tier, and status is never set on age alone (8a-8). SEP PRs on the spec repo get a
-     "SEP · Proposal" tag linking to /seps/. */ -}}
+     "SEP · Proposal" tag linking to /seps/.
+     Title cell: the title, then one sans meta line (pages/pulls/meta.html) with the tags folded in, as on classified rows. Desktop:
+     "#1913 · SEP · Draft · security" (author and lines changed have columns); phones (.is-list) hide those columns, so the line becomes
+     "#1913 · SamMorrowDrums · +2,347 −0 · SEP · Draft · security". "Waiting" is defined in Data notes and the header title; no
+     <caption> (a caption renders one word per line in .is-list). */ -}}
 {{- $r := .r -}}
 {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
 {{- $list := $pl.prs_without_maintainer_review | default slice -}}
@@ -19,7 +23,7 @@
 {{- $chips := slice }}{{ if gt $bots 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end -}}
 {{- /* the tabs carry the counts (6.5); the caption only says what the list holds, never the open total it does not hold */}}
 <section class="v-section" aria-labelledby="queue">
-  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" "Open PRs with no maintainer review, longest wait first") }}
+  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" "Open PRs with no maintainer review") }}
   {{- if $list }}
   <div data-list id="pq" data-limit="25" data-url>
     <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" "pq" "label" "PR queue" "panel" "pq-panel" "selected" "review" "tabs" $tabs) }}</div>
@@ -27,13 +31,12 @@
         "chips" $chips "noun" "PRs" "one" "PR" "total" $nOpen) }}
     <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-review">
       <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">
-        <caption>Waiting counts calendar days since the PR opened.</caption>
         <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-28"><col class="v-col-24"></colgroup>
         <thead><tr>
           <th scope="col">Pull request</th>
           <th scope="col">Author</th>
           <th scope="col" class="num">Lines changed</th>
-          <th scope="col" class="num">Waiting</th>
+          <th scope="col" class="num" title="Calendar days since the PR opened">Waiting</th>
         </tr></thead>
         <tbody>
           {{- range $i, $pr := $open | append $drafts -}}
@@ -53,15 +56,20 @@
             {{- end -}}
             {{- $adds := float ($pr.additions | default 0) }}{{ $dels := float ($pr.deletions | default 0) -}}
             {{- $lines := printf "+%s −%s" (lang.FormatNumber 0 $adds) (lang.FormatNumber 0 $dels) -}}
+            {{- /* meta tokens: desktop "#1913 · SEP · Draft · security" (author and lines have columns); phones add author and lines */ -}}
+            {{- $tagHTML := slice }}{{ range $tags }}{{ $tagHTML = $tagHTML | append (partial "ui/tag.html" .) }}{{ end -}}
+            {{- $phoneMeta := slice (htmlEscape (printf "#%d" $num)) -}}
+            {{- with $author }}{{ $phoneMeta = $phoneMeta | append (htmlEscape .) }}{{ end -}}
+            {{- $phoneMeta = $phoneMeta | append (htmlEscape $lines) -}}
+            {{- range $tagHTML }}{{ $phoneMeta = $phoneMeta | append . }}{{ end -}}
             {{- $wd := partial "pages/pulls/wait.html" ($pr.daysWaiting | default 0) -}}
             {{- $reviews := "" }}{{ with $pr.reviewCount }}{{ $reviews = printf "%s from non-maintainers" (partial "ui/plural.html" (dict "n" . "one" "review")) }}{{ end -}}
             {{- $more := or $draft (ge $i 25) }}
           <tr data-row data-row-link id="pq-{{ $num }}" data-tags="{{ delimit $tok " " }}" data-text="{{ lower (printf "%s|%s" (string ($pr.title | default "")) $author) }}"{{ if $more }} data-over{{ end }}>
             <td class="v-title-cell">
               <a class="v-row-link v-clamp" href="{{ $pr.url }}" target="_blank" rel="noopener"{{ with $reviews }} title="{{ . }}"{{ end }}>{{ $pr.title }}<span class="sr-only"> (opens GitHub)</span></a>
-              <span class="sub v-hide-list">#{{ $num }}</span>
-              {{- partial "ui/tag.html" $tags }}
-              <span class="v-listmeta"><span>#{{ $num }}</span><span>{{ $author }}</span><span>{{ $lines }}</span></span>
+              <span class="sub v-hide-list">{{ partial "pages/pulls/meta.html" (slice (htmlEscape (printf "#%d" $num)) | append $tagHTML) }}</span>
+              <span class="v-listmeta"><span class="whitespace-normal">{{ partial "pages/pulls/meta.html" $phoneMeta }}</span></span>
             </td>
             <td><span class="block truncate" title="{{ $author }}">{{ $author }}</span></td>
             <td class="num">{{ $lines }}</td>

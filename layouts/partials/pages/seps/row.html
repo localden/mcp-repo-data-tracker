@@ -1,7 +1,9 @@
 {{- /* One row of the Open SEPs work list (brief 3.4-4, 4.6 e/f). Context: dict "r" (pages/seps/entry.html) "review" (bool: the
   Maintainer review column, D1-11). The last cell is Last updated or Last activity; entry.html already picked the source.
-  The title is the only link. Below 640px (.is-list) the title cell and Age stay; SEP, author, sponsor and review move into the
-  meta row ("SEP-2028 · monahk · needs sponsor · no maintainer review"), each token nowrap with its "·" attached at the end. */ -}}
+  The title is the only link. Below 640px (.is-list) the title cell and Age stay; SEP, author, sponsor, review and the topic labels
+  share one meta row ("SEP-2028 · monahk · needs sponsor · WG support needed"), so the separate labels sub-line is hidden there
+  (.v-hide-list). Each token is nowrap with its "·" attached at the end after an en space: with the row's 8px column gap after it, the
+  dot sits centred between tokens and a wrapped line never starts with one. */ -}}
 {{- $r := .r }}{{ $review := .review -}}
 {{- $age := "" }}{{ if ge $r.age_h 0.0 }}{{ $age = (partial "ui/dur.html" (dict "h" $r.age_h "years" true)).html }}{{ end -}}
 {{- $upd := "" }}{{ if ge $r.upd_h 0.0 }}{{ $upd = (partial "ui/dur.html" (dict "h" $r.upd_h)).html }}{{ end -}}
@@ -14,16 +16,17 @@
 {{- else if $r.needsSponsor }}{{ $meta = $meta | append (dict "t" "needs sponsor" "warn" true) -}}
 {{- else }}{{ $meta = $meta | append (dict "t" "no sponsor assigned") }}{{ end -}}
 {{- if and $review $r.reviewKnown }}{{ $meta = $meta | append (dict "t" (cond $r.reviewed "maintainer reviewed" "no maintainer review")) }}{{ end -}}
+{{- range ($r.labels | default slice) }}{{ $meta = $meta | append (dict "t" .) }}{{ end -}}
 {{- $last := sub (len $meta) 1 }}
 <tr data-row data-row-link id="sep-{{ $r.num }}" data-tags="{{ delimit $r.tags " " }}" data-text="{{ $r.text }}">
   <td class="v-nowrap{{ if $r.isPR }} v-muted{{ end }}"{{ if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }} id="sep-{{ $r.sepNum }}" title="PR #{{ $r.num }}"{{ end }}>{{ $r.sep }}</td>
   <td class="v-title-cell">
     <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener"{{ with $r.reviewTitle }} title="{{ . }}"{{ end }}>{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
     {{- /* labels joined by " · ", with a no-break space before each dot so a wrapped line never starts with one */}}
-    {{- with $r.labels }}<span class="sub">{{ range $i, $l := . }}{{ if $i }}&nbsp;· {{ end }}{{ $l }}{{ end }}</span>{{ end }}
+    {{- with $r.labels }}<span class="sub v-hide-list">{{ range $i, $l := . }}{{ if $i }}&nbsp;· {{ end }}{{ $l }}{{ end }}</span>{{ end }}
     <span class="v-listmeta">
       {{- range $i, $m := $meta -}}
-      <span>{{ if $m.warn }}<span class="text-warn">{{ $m.t }}</span>{{ else }}{{ $m.t }}{{ end }}{{ if lt $i $last }}&nbsp;·{{ end }}</span>
+      <span>{{ if $m.warn }}<span class="text-warn">{{ $m.t }}</span>{{ else }}{{ $m.t }}{{ end }}{{ if lt $i $last }}&ensp;·{{ end }}</span>
       {{- end -}}
     </span>
   </td>

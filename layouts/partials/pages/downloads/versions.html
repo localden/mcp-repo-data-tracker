@@ -1,31 +1,51 @@
-{{- /* Versions in use (brief 3.5-3, 8a-11): one card per SDK with a versions.json, top 8 versions plus Other ranked by recent
-  volume, never lifetime (TR-04). Cards are disclosures; TypeScript and Python (npm, PyPI) start expanded. Data more than 3 days
-  older than the page's Data as of shows one warn line instead of a table (TR-03); a cumulative registry without 30 days of
-  history says when shares appear. Below 40rem the table is a list: version and downloads, the percentage on the meta line.
+{{- /* Versions in use (brief 3.5-3, 5.1, 8a-11): top 8 versions plus Other per SDK, ranked by recent volume, never lifetime (TR-04).
   Call: partial "pages/downloads/versions.html" (dict "pkgs" $pkgs "asof" "YYYY-MM-DD")
-    asof: the page's Data as of date; staleness is decided here, so data/versions.html keeps its shared cache key. */ -}}
+    asof: the page's Data as of date; staleness is decided here, so data/versions.html keeps its shared cache key.
+  Layout:
+  - An SDK with rows to rank gets a card: a disclosure (npm and PyPI start expanded) over a table whose first column holds the
+    version and a horizontal ranking bar (--chart-1, Other in --other) stretched across the free width, then the count and the
+    percentage side by side at the right. The first render put a 4rem meter at the far right of a 1,200px row, so the bars read as
+    dots and the version column was mostly empty; the brief's form for this metric is horizontal bars (5.1).
+  - An SDK without a table (data more than 3 days older than Data as of, TR-03; or a cumulative registry without 30 days of history)
+    is one row in a single status card: name, then the one line the brief gives it. Four collapsed cards whose only content was
+    that line (and a Flag repeating it) were boxes for nothing; the line is now visible without a click.
+  Below 40rem the table is a list: version and bar, the count on the right, the percentage on the meta line. */ -}}
 {{- $c := . -}}
 {{- $staleBefore := "" }}{{ with $c.asof }}{{ $staleBefore = ((time.AsTime .).AddDate 0 0 -3).Format "2006-01-02" }}{{ end -}}
-{{- $openRegs := slice "npm" "pypi" }}
-<div class="v-flow">
-  {{- range $p := $c.pkgs }}
+{{- $openRegs := slice "npm" "pypi" -}}
+{{- $tables := slice }}{{ $status := slice -}}
+{{- range $p := $c.pkgs -}}
   {{- $v := partialCached "data/versions.html" (dict "repo" $p.r.cfg "asof" $c.asof) "versions" $p.r.repo -}}
-  {{- if $v.has }}
+  {{- if $v.has -}}
+    {{- $stale := and $staleBefore $v.last_updated (lt $v.last_updated $staleBefore) -}}
+    {{- if $stale -}}
+      {{- $status = $status | append (dict "name" $p.r.name "warn" true "text" (printf "Version data stopped updating on %s." (partial "ui/date.html" $v.last_updated))) -}}
+    {{- else if not $v.ready -}}
+      {{- $txt := "Version shares appear after 30 days of tracking." -}}
+      {{- with $v.ready_from }}{{ $txt = printf "Version shares appear after 30 days of tracking (from %s)." (partial "ui/date.html" .) }}{{ end -}}
+      {{- $status = $status | append (dict "name" $p.r.name "warn" false "text" $txt) -}}
+    {{- else -}}
+      {{- $tables = $tables | append (dict "p" $p "v" $v) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if or $tables $status }}
+<div class="v-flow">
+  {{- range $t := $tables }}
+  {{- $p := $t.p }}{{ $v := $t.v -}}
   {{- $id := printf "ver-%s" $p.r.repo -}}
   {{- $open := in $openRegs $p.d.registry -}}
-  {{- $stale := and $staleBefore $v.last_updated (lt $v.last_updated $staleBefore) -}}
-  {{- /* the card head's right slot: the state when stale or not ready, else the window the counts cover */ -}}
+  {{- /* the card head's right slot: the window the counts cover */ -}}
   {{- $aside := "" -}}
-  {{- if $stale -}}
-    {{- $aside = partial "ui/flag.html" (dict "text" (printf "Stale since %s" (partial "ui/date.html" (dict "d" $v.last_updated "style" "short")))
-        "title" (printf "Version data stopped updating on %s" (partial "ui/date.html" $v.last_updated))) -}}
-  {{- else if $v.ready -}}
-    {{- if eq $v.unit "last_week" }}{{ $aside = printf "7 days to %s" (partial "ui/date.html" $v.to) -}}
-    {{- else if eq $v.unit "cumulative" }}{{ $aside = partial "data/date-range.html" (dict "from" (((time.AsTime $v.from).AddDate 0 0 1).Format "2006-01-02") "to" $v.to) -}}
-    {{- else }}{{ $aside = partial "data/date-range.html" (dict "from" $v.from "to" $v.to) }}{{ end -}}
-  {{- else if $v.ready_from -}}
-    {{- $aside = printf "Tracking since %s" (partial "ui/date.html" (dict "d" (((time.AsTime $v.ready_from).AddDate 0 0 -30).Format "2006-01-02") "style" "short")) -}}
-  {{- end }}
+  {{- if eq $v.unit "last_week" }}{{ $aside = printf "7 days to %s" (partial "ui/date.html" $v.to) -}}
+  {{- else if eq $v.unit "cumulative" }}{{ $aside = partial "data/date-range.html" (dict "from" (((time.AsTime $v.from).AddDate 0 0 1).Format "2006-01-02") "to" $v.to) -}}
+  {{- else }}{{ $aside = partial "data/date-range.html" (dict "from" $v.from "to" $v.to) }}{{ end -}}
+  {{- /* bars rank against the largest row (Other included); one decimal for every percentage when any is below 10 (6.3) */ -}}
+  {{- $max := 0.0 }}{{ range $v.rows }}{{ if gt .n $max }}{{ $max = .n }}{{ end }}{{ end -}}
+  {{- with $v.other }}{{ if gt . $max }}{{ $max = . }}{{ end }}{{ end -}}
+  {{- if le $max 0.0 }}{{ $max = 1.0 }}{{ end -}}
+  {{- $dec := 0 }}{{ range $v.rows }}{{ if lt (mul (div .n $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end -}}
+  {{- with $v.other }}{{ if lt (mul (div . $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end }}
   <div class="v-card">
     <div class="v-card-body">
       <div class="v-section-row">
@@ -37,20 +57,8 @@
       </div>
     </div>
     <div class="v-card-foot" id="{{ $id }}"{{ if not $open }} hidden{{ end }}>
-      {{- if $stale }}
-      <div class="v-card-body"><p class="text-caption text-warn">Version data stopped updating on {{ partial "ui/date.html" $v.last_updated }}.</p></div>
-      {{- else if not $v.ready }}
-      {{- $txt := "Version shares appear after 30 days of tracking." -}}
-      {{- with $v.ready_from }}{{ $txt = printf "Version shares appear after 30 days of tracking (from %s)." (partial "ui/date.html" .) }}{{ end }}
-      <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" $txt) }}</div>
-      {{- else }}
-      {{- /* bars rank against the largest row (Other included); one decimal for every percentage when any is below 10 (6.3) */ -}}
-      {{- $max := 0.0 }}{{ range $v.rows }}{{ if gt .n $max }}{{ $max = .n }}{{ end }}{{ end -}}
-      {{- with $v.other }}{{ if gt . $max }}{{ $max = . }}{{ end }}{{ end -}}
-      {{- $dec := 0 }}{{ range $v.rows }}{{ if lt (mul (div .n $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end -}}
-      {{- with $v.other }}{{ if lt (mul (div . $v.total) 100.0) 10.0 }}{{ $dec = 1 }}{{ end }}{{ end }}
       <table class="v-dt is-fixed is-list" aria-labelledby="{{ $id }}-title">
-        <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-36"></colgroup>
+        <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-32"></colgroup>
         <thead>
           <tr>
             <th scope="col">Version</th>
@@ -62,9 +70,9 @@
           {{- range $v.rows }}
           {{- $pct := partial "ui/pct.html" (dict "v" (mul (div .n $v.total) 100.0) "dec" $dec) }}
           <tr>
-            <th scope="row" class="v-title-cell"><span class="v-code">{{ .version }}</span>{{ if .latest }} {{ partial "ui/tag.html" "latest" }}{{ end }}<span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
+            <th scope="row" class="v-title-cell"><span class="flex items-center gap-4"><span class="w-32 shrink-0"><span class="v-code">{{ .version }}</span>{{ if .latest }} {{ partial "ui/tag.html" "latest" }}{{ end }}</span><span class="v-meter is-rank flex-1" aria-hidden="true"><i style="--v:{{ printf "%.1f" (math.Min 100.0 (mul (div .n $max) 100.0)) }}%"></i></span></span><span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
             <td class="num v-verdict">{{ partial "ui/num.html" (dict "v" .n "mode" "compact") }}</td>
-            <td class="num">{{ partial "ui/meter.html" (dict "value" .n "max" $max "rank" true) }} <span class="v-meter-pct">{{ $pct }}</span></td>
+            <td class="num">{{ $pct }}</td>
           </tr>
           {{- end }}
           {{- with $v.other }}
@@ -72,16 +80,27 @@
           {{- /* Other in --other: the ranking bar with the stacked-bar segment role (no meter variant for it exists); rounded-l-none
                undoes the segment's :only-child radius, so only the data end is rounded like the version bars (4.4) */}}
           <tr>
-            <th scope="row" class="v-title-cell"><span class="v-muted">Other versions</span><span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
+            <th scope="row" class="v-title-cell"><span class="flex items-center gap-4"><span class="w-32 shrink-0 v-muted">Other versions</span><span class="v-meter is-rank flex-1" aria-hidden="true"><i class="v-stack-seg is-other rounded-l-none" style="--v:{{ printf "%.1f" (math.Min 100.0 (mul (div . $max) 100.0)) }}%"></i></span></span><span class="v-listmeta"><span>{{ $pct }} of downloads</span></span></th>
             <td class="num v-verdict">{{ partial "ui/num.html" (dict "v" . "mode" "compact") }}</td>
-            <td class="num"><span class="v-meter is-rank" aria-hidden="true"><i class="v-stack-seg is-other rounded-l-none" style="--v:{{ printf "%.1f" (math.Min 100.0 (mul (div . $max) 100.0)) }}%"></i></span> <span class="v-meter-pct">{{ $pct }}</span></td>
+            <td class="num">{{ $pct }}</td>
           </tr>
           {{- end }}
         </tbody>
       </table>
-      {{- end }}
     </div>
   </div>
   {{- end }}
+  {{- with $status }}
+  <div class="v-card">
+    <ul class="v-blocks">
+      {{- range . }}
+      <li class="v-block v-section-row">
+        <p class="v-block-title">{{ .name }}</p>
+        <p class="{{ if .warn }}text-caption text-warn{{ else }}v-caption{{ end }}">{{ .text }}</p>
+      </li>
+      {{- end }}
+    </ul>
+  </div>
   {{- end }}
 </div>
+{{- end }}

@@ -4,7 +4,7 @@
     from data/downloads-end.html so every SDK row shares one window); weeks: weekly bins returned (default 52); anchor: "today"
     (default the newest snapshot date site-wide); days: daily domain length (default 371).
   Sources, in order: data/repos/<o>/<r>/downloads-daily.json › days (D2-1); otherwise rebuilt from snapshots: npm daily keyed by
-  total_through; PyPI versions.json daily summed per date, complete UTC dates only; NuGet and RubyGems the change in lifetime total
+  total_through (a single skipped day recovered from the running total when it carries it); PyPI versions.json daily summed per date, complete UTC dates only; NuGet and RubyGems the change in lifetime total
   between consecutive daily snapshots (unchanged total or a gap of more than a day = missing; today's snapshot dropped); crates.io daily
   keyed by the snapshot date minus one. A missing day is never 0.
   Returns dict:
@@ -29,9 +29,22 @@
   {{- range $d, $v := $dd.days }}{{ if in $nums (printf "%T" $v) }}{{ $sc.SetInMap "v" $d (float $v) }}{{ end }}{{ end -}}
 
 {{- else if eq $reg "npm" -}}
-  {{- range $k, $snap := $r.snapshots -}}{{- with $snap.downloads -}}
-    {{- if and .total_through (in $nums (printf "%T" .daily)) }}{{ $sc.SetInMap "v" (string .total_through) (float .daily) }}{{ end -}}
-  {{- end }}{{ end -}}
+  {{- range $k, $snap := $r.snapshots -}}{{- with $snap.downloads -}}{{- if .total_through -}}
+    {{- if in $nums (printf "%T" .daily) }}{{ $sc.SetInMap "v" (string .total_through) (float .daily) }}{{ end -}}
+    {{- if in $nums (printf "%T" .total) }}{{ $sc.SetInMap "t" (string .total_through) (float .total) }}{{ end -}}
+  {{- end }}{{ end }}{{ end -}}
+  {{- /* One skipped day D (total_through went D-1 -> D+1) is recovered as total(D+1) - total(D-1) - daily(D+1) when the collector's
+       running total included it (it did on 2026-07-16; it did not when total_through repeated, e.g. 2026-09-03, which yields 0 and
+       stays missing). Kept only when it is a plausible day (0.25x-4x its neighbour), so a total re-seed can never become a day. */ -}}
+  {{- $have := $sc.Get "v" | default dict }}{{ $tot := $sc.Get "t" | default dict -}}
+  {{- range $tt, $t1 := $tot -}}
+    {{- $tm := time.AsTime $tt }}{{ $d0 := ($tm.AddDate 0 0 -1).Format "2006-01-02" }}{{ $dm := ($tm.AddDate 0 0 -2).Format "2006-01-02" -}}
+    {{- if and (not (isset $have $d0)) (isset $have $tt) (isset $tot $dm) -}}
+      {{- $nb := float (index $have $tt) -}}
+      {{- $v := sub (sub (float $t1) (float (index $tot $dm))) $nb -}}
+      {{- if and (gt $nb 0.0) (ge $v (mul $nb 0.25)) (le $v (mul $nb 4.0)) }}{{ $sc.SetInMap "v" $d0 $v }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
 
 {{- else if eq $reg "pypi" -}}
   {{- /* Never the snapshot daily (it counts a partial day). versions.json is complete for dates before its capture day, and for the

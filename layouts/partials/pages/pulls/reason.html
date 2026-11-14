@@ -5,7 +5,8 @@
        2. Structured fields when the classifier exports them (D3-4): primary_pr, linked_issue, pinged_user/pinged_days, ci_red_days,
           idle_days, feedback_days.
        3. Until then, a fixed replace list over short_reason that drops the leading age, "(SLA breach)" and GraphQL enums.
-       4. Anything else (D3-4 plain sentences) passes through with those same strips; text that still carries an enum is dropped. */ -}}
+       4. Anything else (D3-4 plain sentences) passes through with those same strips; text that still carries an enum is dropped.
+       5. Whatever the State column already says is dropped (see step 5). */ -}}
 {{- $pr := .pr | default dict -}}
 {{- $st := string ($pr.state | default "") -}}
 {{- $raw := strings.TrimSpace (string ($pr.short_reason | default "")) -}}
@@ -100,5 +101,30 @@
   {{- $s = replaceRE `^[0-9]+(\.[0-9]+)?d,\s*` "" $s -}}
   {{- $s = strings.TrimSpace $s -}}
   {{- if not (findRE `\b(COMMENTED|APPROVED|DISMISSED|PENDING)\b|\b[A-Z]{2,}(_[A-Z]+)+\b` $s) }}{{ $out = strings.FirstUpper $s }}{{ end -}}
+{{- end -}}
+
+{{- /* 5. say only what the State column does not. The 6.5 strings were written one column at a time; side by side in the queue
+     they repeat ("Draft, idle" | "Draft, idle 458 days", "Could not classify" | "Could not classify"). The reason drops when it is
+     the state label or part of it ("Maintainer draft" next to "Parked maintainer draft", "Release PR", "CI never ran", "No maintainer
+     review yet" next to "No review yet" or "Maintainer PR, needs review"), and otherwise keeps only its new fact:
+       "Draft, idle 458 days" -> "No activity for 458 days"; "CI failing for 325 days, inactive" -> "Failing for 325 days";
+       "Changes requested 227 days ago" -> "Requested 227 days ago"; "Approved 12 days ago, now has conflicts" -> "Approved 12 days ago".
+     A duplicate-cluster primary drops "(2 PRs)" when its row has the "2 PRs" expander (n > 1). */ -}}
+{{- if $out -}}
+  {{- $label := lower (partial "pages/pulls/state-label.html" $st) -}}
+  {{- $lo := lower $out -}}
+  {{- if or (eq $lo $label) (strings.Contains $label $lo) (and (eq $out "No maintainer review yet") (in (slice "needs-first-review" "maintainer-intake") $st)) -}}
+    {{- $out = "" -}}
+  {{- else if hasPrefix $st "stale-draft" -}}
+    {{- $out = replaceRE `^Draft, idle (.+)$` "No activity for $1" $out -}}
+  {{- else if in (slice "stale-ci-abandoned" "ci-red-silent" "bot-broke-ci") $st -}}
+    {{- $out = replaceRE `^CI failing for (.+?)(, inactive)?$` "Failing for $1" $out -}}
+  {{- else if eq $st "stale-awaiting-author" -}}
+    {{- $out = replaceRE `^Changes requested (.+ ago)$` "Requested $1" $out -}}
+  {{- else if eq $st "approved-rotted" -}}
+    {{- $out = replaceRE `^(Approved .+ ago), now has conflicts$` "$1" $out -}}
+  {{- else if and (eq $st "duplicate-cluster") (gt (int (.n | default 0)) 1) -}}
+    {{- $out = replaceRE ` \([0-9]+ PRs\)$` "" $out -}}
+  {{- end -}}
 {{- end -}}
 {{- return $out -}}

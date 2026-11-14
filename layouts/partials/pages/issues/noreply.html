@@ -1,6 +1,7 @@
 {{- /* "Waiting for a reply" for a repo without issue classification (brief 3.2b-2, glossary 6.2): the rows of metrics.json
   issues.issues_without_maintainer_response opened 7 or more days ago (daysWaiting >= 7), oldest first. That is exactly
   issues.without_response_7d, the Overview's "No reply" count (P6). Columns # · Issue · Age; 25 rows, then "Show all N".
+  The age definition is a card note under the table, not a <caption> (a caption inside a phone list table shrinks to one word per line).
   Ctx: dict {r (data/repo.html), id (list id, default "iw")}. */ -}}
 {{- $r := .r }}{{ $id := .id | default "iw" -}}
 {{- $m := $r.data.metrics | default dict -}}
@@ -18,7 +19,6 @@
         "noun" "issues" "one" "issue" "total" $n) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list" id="{{ $id }}-table" aria-labelledby="queue">
-        <caption>Age is calendar days since the issue opened.</caption>
         <colgroup><col class="v-col-18"><col class="v-col-auto"><col class="v-col-20"></colgroup>
         <thead><tr>
           <th scope="col"><span aria-hidden="true">#</span><span class="sr-only">Number</span></th>
@@ -31,6 +31,7 @@
           {{- end }}
         </tbody>
       </table>
+      <p class="v-card-note">Age is calendar days since the issue opened.</p>
       {{ partial "ui/more.html" (dict "list" $id "controls" (printf "%s-table" $id) "n" $n) }}
     </div>
     <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>

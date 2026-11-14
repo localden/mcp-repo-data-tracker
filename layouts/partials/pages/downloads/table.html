@@ -1,15 +1,21 @@
 {{- /* SDK packages table (brief 3.5-1, 5.4): one row per package, each compared with itself. No cross-registry total or share
   (IA-18). A matrix table from 64rem, where all 7 columns fit; one block per package below that (R3).
+  Column widths: every column has a .v-col-* width and they sum to 59rem (944px, under the 958px a 1024px viewport leaves), so
+  with table-layout: fixed the browser hands any extra width out in proportion. At 1440 each numeric header then sits on one line
+  with its rule on line 2, instead of the name column taking all the slack and the numbers wrapping to 3 lines.
   Call: partial "pages/downloads/table.html" (dict "pkgs" $pkgs "window" "Nov 3–9" "weeks" $last12 "id" "packages")
     pkgs: the page's package list, each with its cells (pages/downloads/cells.html); window: the common Last 7 days window, named
-    once in the header; weeks: the 12 shared week starts behind the sparklines; id: the section H2 that labels the table. */ -}}
+    once in the header; weeks: the 12 shared week starts behind the strips; id: the section H2 that labels the table. */ -}}
 {{- $c := . -}}
-{{- $short := slice }}{{ range $c.pkgs }}{{ if and .short .d.complete_through }}{{ $short = $short | append .r.name }}{{ end }}{{ end -}}
 {{- $span := "" -}}
 {{- with $c.weeks -}}
   {{- $end := ((time.AsTime (index . (sub (len .) 1))).AddDate 0 0 6).Format "2006-01-02" -}}
   {{- $span = partial "data/date-range.html" (dict "from" (index . 0) "to" $end "year" false) -}}
-{{- end }}
+{{- end -}}
+{{- /* Packages with fewer than 7 complete days are read on their own newest days, not on the header window. The note names the
+     days each one actually counts ("Nov 9–13 for Rust SDK"), so the reader never has to work out a second window. */ -}}
+{{- $short := slice -}}
+{{- range $c.pkgs }}{{ if and .short .d.complete_through .cells.win }}{{ $short = $short | append (printf "%s for %s" .cells.win .r.name) }}{{ end }}{{ end }}
 <div class="v-card">
   {{- /* blocks first, so the card note follows the table directly and gets its top padding (.v-dt + .v-card-note) */}}
   <ul class="v-blocks lg:hidden" aria-labelledby="{{ $c.id }}">
@@ -20,16 +26,17 @@
       {{- with $p.reg.url }}
       <p class="v-caption">{{ partial "ui/ext-link.html" (dict "href" . "text" $label "site" $p.reg.registry "class" "v-link-quiet") }}</p>
       {{- end }}
+      {{- /* values stay short (the dd column is as wide as the widest value), so the labels never wrap; a basis goes in the label */}}
       <dl class="v-kv">
-        <div><dt>Last 7 days{{ with $p.d.window }}, {{ . }}{{ end }}</dt><dd>{{ $x.value }}{{ with $x.flag }} {{ . }}{{ end }}</dd></div>
+        <div><dt>Last 7 days{{ with $x.win }}, {{ . }}{{ end }}</dt><dd>{{ $x.value }}{{ with $x.flag }} {{ . }}{{ end }}</dd></div>
         {{- if $x.has7 }}
         <div><dt>Change vs prior 7 days</dt><dd>{{ $x.chg7 }}</dd></div>
         {{- end }}
         {{- if $x.has28 }}
         <div><dt>Change vs 4 weeks earlier</dt><dd>{{ $x.chg28 }}</dd></div>
         {{- end }}
-        {{- with $x.lifeSub }}
-        <div><dt>Lifetime</dt><dd>{{ $x.life }} <span class="v-muted">{{ . }}</span></dd></div>
+        {{- if $x.hasLife }}
+        <div><dt>Lifetime{{ with $x.lifeSub }}, {{ . }}{{ end }}</dt><dd>{{ $x.life }}</dd></div>
         {{- end }}
         {{- with $p.d.complete_through }}
         <div><dt>Complete through</dt><dd>{{ $x.through }}</dd></div>
@@ -39,7 +46,7 @@
     {{- end }}
   </ul>
   <table class="v-dt is-fixed hidden lg:table" aria-labelledby="{{ $c.id }}">
-    <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-24"><col class="v-col-24"><col class="v-col-24"><col class="v-col-36"><col class="v-col-24"></colgroup>
+    <colgroup><col class="v-col-48"><col class="v-col-28"><col class="v-col-32"><col class="v-col-36"><col class="v-col-32"><col class="v-col-32"><col class="v-col-28"></colgroup>
     <thead>
       <tr>
         <th scope="col">SDK</th>
@@ -68,10 +75,7 @@
       {{- end }}
     </tbody>
   </table>
-  {{- /* short packages are read on their own newest days (their window is in the Flag's title), so the header window does not
-       apply to them; the note says so once */}}
   {{- with $short }}
-  {{- $one := eq (len .) 1 }}
-  <p class="v-card-note">{{ delimit . ", " " and " }} {{ cond $one "has" "have" }} fewer than 7 complete days, so {{ cond $one "its" "their" }} Last 7 days sums the days collected in the 7 days to {{ cond $one "its" "their" }} Complete through date{{ with $c.window }}, not {{ . }}{{ end }}.</p>
+  <p class="v-card-note">Last 7 days covers {{ delimit . ", " " and " }}, the days collected so far.</p>
   {{- end }}
 </div>

@@ -3,23 +3,32 @@
     repo + switch: the current "owner/repo" and the page kind ("issues" | "pulls" | "repo") for ui/scope-switcher.html.
     links: slice of ui/ext-link.html dicts {text, href, site}, first in the meta line ("modelcontextprotocol/typescript-sdk", GitHub).
     meta: slice of short strings after the links ("Tracking since Nov 10, 2026", "13.8K stars"); each is one nowrap item.
-    sources: ui/sources.html output (plus your own dicts). "Data as of" is the oldest at; a source more than 2 days old adds the
-      Flag "{noun} is N days old". The "Data notes" button appears when there are sources, gaps, notes or defs.
+    sources: ui/sources.html output (plus your own dicts). The meta line says "Data as of {oldest GitHub metrics at}" when a
+      kind "metrics" source is present; else "Complete through {oldest through}" when every source is a registry; else "Data as of
+      {oldest at}". A source more than 2 days old adds the Flag "{noun} is N days old". Pass registry sources with their at; they
+      never move "Data as of" on a GitHub page. The "Data notes" button appears when there are sources, gaps, notes or defs.
     gap: a ui/page-gaps.html dict {repos, days, key, noun, tail} for the charted window, or a string printed verbatim as the notice.
       noun default "GitHub data"; tail default (key "issues") "Charts show the gap; 7-day comparisons use the nearest earlier snapshot."
+      The tail is hidden in the notice below 40rem (R5) and is always repeated in Data notes.
     notes / defs: extra Data notes paragraphs and {term, text} definitions (see ui/data-notes.html).
     id: element id prefix (default "page"): H1 "{id}-title", panel "{id}-notes". */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default "page" -}}
 {{- $srcs := $c.sources | default slice -}}
-{{- /* oldest source and the stalest one past 2 days */ -}}
-{{- $oldU := 0 }}{{ $oldT := "" }}{{ $flag := "" }}{{ $flagAge := 2 -}}
+{{- /* "Data as of" (§2.4, revised after the first render): the GitHub metrics time (oldest across the page's repos) when the page
+     has GitHub metrics, so one slow registry never pins a GitHub page to its date; a registry-only page says "Complete through
+     {oldest through day}" (date only: registries are day-granular, a midnight timestamp is false precision); any other page uses
+     its oldest source. Lagging sources are named by the stale Flag and listed in Data notes either way. */ -}}
+{{- $oldU := 0 }}{{ $oldT := "" }}{{ $ghU := 0 }}{{ $ghT := "" }}{{ $thru := "" }}{{ $allThru := gt (len $srcs) 0 -}}
+{{- $flag := "" }}{{ $flagAge := 2 -}}
 {{- range $srcs -}}
   {{- $s := . -}}
   {{- with $s.at -}}
     {{- $t := time.AsTime . -}}
     {{- if or (eq $oldU 0) (lt $t.Unix $oldU) }}{{ $oldU = $t.Unix }}{{ $oldT = $t }}{{ end -}}
+    {{- if eq $s.kind "metrics" }}{{ if or (eq $ghU 0) (lt $t.Unix $ghU) }}{{ $ghU = $t.Unix }}{{ $ghT = $t }}{{ end }}{{ end -}}
   {{- end -}}
+  {{- with $s.through }}{{ if or (eq $thru "") (lt (string .) $thru) }}{{ $thru = string . }}{{ end }}{{ else }}{{ $allThru = false }}{{ end -}}
   {{- /* age: from the timestamp, or from the "complete through" day for registries */ -}}
   {{- $ref := $s.at }}{{ with $s.through }}{{ $ref = time.AsTime . }}{{ end -}}
   {{- with $ref -}}
@@ -27,8 +36,12 @@
     {{- if gt $age $flagAge }}{{ $flagAge = $age }}{{ $flag = printf "%s is %d days old" ($s.noun | default $s.label | default "Data") $age }}{{ end -}}
   {{- end -}}
 {{- end -}}
+{{- $asOf := "" -}}
+{{- if ne $ghU 0 }}{{ $asOf = printf "Data as of %s" (partial "ui/date.html" (dict "d" $ghT "style" "ts")) -}}
+{{- else if and $allThru $thru }}{{ $asOf = printf "Complete through %s" (partial "ui/date.html" (dict "d" $thru)) -}}
+{{- else if $oldT }}{{ $asOf = printf "Data as of %s" (partial "ui/date.html" (dict "d" $oldT "style" "ts")) }}{{ end -}}
 {{- /* gap notice */ -}}
-{{- $gapText := "" }}{{ $gaps := dict -}}
+{{- $gapText := "" }}{{ $gapTail := "" }}{{ $gaps := dict -}}
 {{- if reflect.IsMap $c.gap -}}
   {{- $gaps = partial "ui/page-gaps.html" $c.gap -}}
   {{- $key := $c.gap.key | default "issues" -}}
@@ -39,7 +52,7 @@
   {{- range $gaps.runs }}{{ $ranges = $ranges | append (partial "data/date-range.html" (dict "from" .from "to" .to)) }}{{ if .outage }}{{ $outage = true }}{{ end }}{{ end -}}
   {{- if $ranges -}}
     {{- $gapText = printf "No %s for %s%s." $noun (delimit $ranges ", " " and ") (cond $outage " (collection outage)" "") -}}
-    {{- with $tail }}{{ $gapText = printf "%s %s" $gapText . }}{{ end -}}
+    {{- $gapTail = $tail -}}
   {{- end -}}
 {{- else if $c.gap -}}
   {{- $gapText = $c.gap -}}
@@ -56,19 +69,22 @@
   {{- with $c.switch }}
   <div class="v-page-scope">{{ partial "ui/scope-switcher.html" (dict "repo" ($c.repo | default "") "kind" . "id" (printf "%s-scope" $id)) }}</div>
   {{- end }}
-  {{- if or $c.links $c.meta $oldT $hasNotes }}
+  {{- if or $c.links $c.meta $asOf $hasNotes }}
   <div class="v-page-meta">
     {{- range $c.links }}{{ partial "ui/ext-link.html" (merge (dict "class" "v-link-quiet") .) }}{{ end -}}
     {{- range $c.meta }}<span>{{ . }}</span>{{ end -}}
-    {{- with $oldT }}<span>Data as of {{ partial "ui/date.html" (dict "d" . "style" "ts") }}</span>{{ end -}}
+    {{- with $asOf }}<span>{{ . }}</span>{{ end -}}
     {{- with $flag }}{{ partial "ui/flag.html" . }}{{ end -}}
     {{- if $hasNotes }}<button type="button" class="v-notes-btn" data-disclosure aria-expanded="false" aria-controls="{{ $id }}-notes">Data notes{{ partial "ui/icon.html" "chevron-down" }}</button>{{ end -}}
   </div>
   {{- end }}
   {{- with $gapText }}
-  <p class="v-gap-note">{{ partial "ui/icon.html" "alert-circle" }}<span>{{ . }}</span></p>
+  <p class="v-gap-note">{{ partial "ui/icon.html" "alert-circle" }}<span>{{ . }}{{ with $gapTail }}<span class="v-gap-tail"> {{ . }}</span>{{ end }}</span></p>
   {{- end }}
   {{- if $hasNotes }}
-  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $c.notes "defs" $c.defs) }}
+  {{- /* the gap notice's method sentence also goes to Data notes: phones hide it in the notice (R5) */ -}}
+  {{- $notes := $c.notes | default slice }}{{ if not (reflect.IsSlice $notes) }}{{ $notes = slice $notes }}{{ end -}}
+  {{- with $gapTail }}{{ $notes = $notes | append . }}{{ end }}
+  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $notes "defs" $c.defs) }}
   {{- end }}
 </header>

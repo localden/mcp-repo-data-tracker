@@ -16,7 +16,7 @@
     {{- range $c.items }}
     <li><a href="{{ .href }}"{{ if .current }} aria-current="page"{{ end }}><span>{{ .text }}</span>{{ partial "ui/icon.html" (dict "name" "check" "class" "v-menu-check") }}</a></li>
     {{- if .sep }}
-    <li class="v-menu-sep" role="separator"></li>
+    <li class="v-menu-sep" aria-hidden="true"></li>
     {{- end }}
     {{- end }}
   </ul>

@@ -1,8 +1,10 @@
 {{- /* 5. Downloads (brief 3.6-5, 5.4, 5.5): 26 complete ISO weeks as columns, under a header with the last 7 complete days, their window
   and the change vs the prior 7 days. The unfinished week is stated as text, never plotted. With fewer than 4 complete weeks the card
-  shows the value and "Tracking since …" instead (Rust SDK and Ruby SDK today); with fewer than 7 complete days the value is the
-  partial sum, muted, with the Flag "n of 7 days" and no delta. Only rendered for repos with a registry package.
-  Context: the dict from pages/repo.html (dl = data/downloads.html for this package, window ending on its own complete_through). */ -}}
+  shows the value instead: "Tracking since …" when tracking began less than 4 weeks ago (Rust SDK and Ruby SDK today), otherwise a
+  plain statement that too few weeks are complete (a week with a missing registry day is void, 5.4). The card is compact (no plot
+  height): it stands alone at full width, so there is no neighbour to keep level with. With fewer than 7 complete days the value is
+  the partial sum, muted, with the Flag "n of 7 days" and no delta. Only rendered for repos with a registry package.
+  Context: the dict from pages/repo.html (dl = data/downloads.html for this package, on the window shared with the Overview). */ -}}
 {{- $r := .r }}{{ $d := .dl -}}
 {{- $w := partial "data/week-bins.html" (dict "points" ($d.points | default slice) "agg" "sum" "weeks" 26 "end" ($d.complete_through | default "")) -}}
 {{- $val := "" }}{{ $sub := "" }}{{ $flag := "" -}}
@@ -25,8 +27,16 @@
       "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column" "foot" $foot
       "series" (slice (dict "label" "Downloads" "points" $w.points))) }}
   {{- else if $d.first }}
-  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" (cond (ne (string $flag) "") (printf "%s %s" $val $flag) $val | safeHTML) "since" $d.first) }}
+  {{- $young := gt (((time.AsTime $d.first).AddDate 0 0 28).Format "2006-01-02") ($d.complete_through | default $d.first) -}}
+  {{- $value := $val }}{{ with $flag }}{{ $value = printf "%s %s" $val . }}{{ end -}}
+  {{- $value = printf "%s" $value | safeHTML -}}
+  {{- if $young }}
+  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" $value "since" $d.first "size" "none") }}
   {{- else }}
-  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "body" (printf "No data collected for %s yet." $r.name)) }}
+  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" $value "size" "none"
+      "body" "Too few complete weeks for a trend. A week counts only when the registry reported all 7 days.") }}
+  {{- end }}
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "body" (printf "No data collected for %s yet." $r.name) "size" "none") }}
   {{- end }}
 </section>

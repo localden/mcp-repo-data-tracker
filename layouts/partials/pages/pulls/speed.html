@@ -2,7 +2,8 @@
      After D1-8 (metrics › pulls.first_review_90d exists): Reviewed within 7 days, First review median ("≥" while censored: more than half
        still unreviewed), Time to merge median over non-maintainer PRs merged in the last 90 days.
      Until then only Time to merge, with its population named: today the pipeline still includes maintainer and bot PRs (D1-7).
-     The survivorship first-review median (pulls.review_time) is never shown. */ -}}
+     The survivorship first-review median (pulls.review_time) is never shown.
+     A one-tile card sits on a 4-column span, lined up under the first Review SLAs tile, instead of stretching across the page. */ -}}
 {{- $r := .r -}}
 {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
 {{- $fr := dict }}{{ with $pl.first_review_90d }}{{ if reflect.IsMap . }}{{ $fr = . }}{{ end }}{{ end -}}
@@ -33,5 +34,9 @@
 {{- end }}
 <section class="v-section" aria-labelledby="review-speed">
   {{ partial "ui/section-head.html" (dict "title" "Review speed" "id" "review-speed") }}
+  {{- if eq (len $tiles) 1 }}
+  <div class="v-grid"><div class="v-span-4">{{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review speed") }}</div></div>
+  {{- else }}
   {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review speed") }}
+  {{- end }}
 </section>

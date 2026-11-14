@@ -1,8 +1,10 @@
 {{- /* KPI tile (brief 4.6 d): four fixed slots, label / value / context / sparkline. Tiles live inside one ui/kpis.html card.
   Dict {label, labelTitle, value, format, valueHTML, prefix, na, overdue, qualifier, delta, context, points, spark, since, filter, for, group, id}.
-    label: plain words, no middot. labelTitle: tooltip with the definition.
+    label: plain words, no middot. labelTitle: tooltip with the definition. labelShort: optional phone label (< 40rem) for labels
+      that would wrap in a 2-up tile ("Issues waiting"); the full label stays in the title when labelTitle is not set.
     value: number or nil; format "num" (default: full below 10,000, compact above), "full", "compact", "dur" (value in hours), "pct" (0-100).
-    valueHTML: pre-rendered value instead (e.g. "≥ 5.9d"); prefix: text before the value ("≥"). nil value -> "—" + sr-only na.
+    valueHTML: pre-rendered value instead (e.g. "≥ 5.9d"); prefix: text before the value ("≥"). nil value -> "—" + sr-only na when a
+      qualifier or context explains the tile; with neither, the na text ("Not tracked") becomes the visible context line instead.
     overdue: {title} marks an SLA tile: a value > 0 renders as status (icon + --bad-text, title names the rule), 0 renders muted.
       Put the words in the context line ("of 238 waiting for a first review (95%)"); never repeat them as sr-only text.
     context line, at most 2 lines: qualifier (line 1, e.g. "no maintainer reply after 7 days"), then delta (a ui/delta.html dict,
@@ -10,7 +12,8 @@
       second line shows when both exist.
     points: 12 weekly bins [{date, value|nil}] (data/week-bins.html or data/org-weekly.html .points); the tile renders ui/spark.html
       itself (size tile; end dot in --status-critical when an overdue tile is above 0; duration y-span for format "dur"). Below 4 bins
-      the slot shows "Tracking since {since, else the first bin with a value}".
+      the slot shows "Tracking since {since}" when the caller passes since, else it collapses. Bins are dated by ISO Monday, so a bin
+      date is never used as "since": pass since = data/series.html .first (the first day with data).
     spark: pre-rendered ui/spark.html output instead of points; without either, since ("YYYY-MM-DD") prints "Tracking since Nov 10";
       else the slot collapses.
     filter: a data-tags token; the tile becomes button[aria-pressed][data-chip] with a funnel icon (SEPs). for: id of the [data-list] it
@@ -18,9 +21,12 @@
 {{- $c := . -}}
 {{- $f := $c.format | default "num" -}}
 {{- $v := $c.value -}}
-{{- $val := "" -}}
+{{- $val := "" }}{{ $naLine := "" -}}
 {{- if $c.valueHTML }}{{ $val = $c.valueHTML -}}
-{{- else if eq $v nil }}{{ $val = partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) -}}
+{{- else if eq $v nil -}}
+  {{- /* a nil tile with nothing else to say shows its reason visibly as the context line (once, not also as sr-only) */ -}}
+  {{- if or $c.qualifier $c.context }}{{ $val = partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) -}}
+  {{- else }}{{ $val = `<span class="v-na" aria-hidden="true">—</span>` | safeHTML }}{{ $naLine = $c.na | default "not tracked" }}{{ end -}}
 {{- else if eq $f "dur" }}{{ $val = (partial "ui/dur.html" (dict "h" $v)).html -}}
 {{- else if eq $f "pct" }}{{ $val = partial "ui/pct.html" $v | htmlEscape | safeHTML -}}
 {{- else }}{{ $val = partial "ui/num.html" (dict "v" $v "mode" (cond (eq $f "num") "tile" $f)) }}{{ end -}}
@@ -31,7 +37,6 @@
 {{- if and (not $spark) $c.points -}}
   {{- $spark = partial "ui/spark.html" (dict "points" $c.points "size" "tile" "crit" (eq $state "bad") "kind" (cond (eq $f "dur") "duration" "count")) -}}
   {{- $spark = trim (string $spark) " \n" | safeHTML -}}
-  {{- if and (not $spark) (not $since) }}{{ range $c.points }}{{ if and (not $since) (ne .value nil) }}{{ $since = .date }}{{ end }}{{ end }}{{ end -}}
 {{- end -}}
 {{- $delta := "" }}{{ with $c.delta }}{{ $delta = partial "ui/delta.html" . }}{{ end -}}
 {{- $delta = trim (string $delta) " \n" -}}
@@ -40,17 +45,20 @@
 {{- else -}}
 <div class="v-kpi"{{ with $c.id }} id="{{ . }}"{{ end }}>
 {{- end -}}
-  <span class="v-kpi-label"{{ with $c.labelTitle }} title="{{ . }}"{{ end }}>{{ $c.label }}</span>
+  <span class="v-kpi-label"{{ with $c.labelTitle | default (cond (ne ($c.labelShort | default "") "") $c.label "") }} title="{{ . }}"{{ end }}>
+    {{- with $c.labelShort }}<span class="v-kpi-label-full">{{ $c.label }}</span><span class="v-kpi-label-short">{{ . }}</span>{{ else }}{{ $c.label }}{{ end -}}
+  </span>
   {{- if $c.filter }}{{ partial "ui/icon.html" (dict "name" "funnel" "class" "v-kpi-funnel") }}{{ end -}}
   <span class="v-kpi-value">
     {{- if eq $state "bad" }}{{ partial "ui/status.html" (dict "html" (printf "%s%s" (cond (ne ($c.prefix | default "") "") (printf "%s " (htmlEscape $c.prefix)) "") $val | safeHTML) "title" $rule) }}
     {{- else if eq $state "zero" }}<span class="v-zero">0</span>
     {{- else }}{{ with $c.prefix }}{{ . }} {{ end }}{{ $val }}{{ end -}}
   </span>
-  {{- if or $c.qualifier $delta $c.context }}
+  {{- if or $c.qualifier $delta $c.context $naLine }}
   <span class="v-kpi-ctx">
     {{- with $c.qualifier }}<span class="v-kpi-qual">{{ . }}</span>{{ end -}}
-    {{- if $delta }}<span class="v-kpi-line">{{ $delta | safeHTML }}</span>{{ else if $c.context }}<span class="v-kpi-line">{{ $c.context }}</span>{{ end -}}
+    {{- if $delta }}<span class="v-kpi-line">{{ $delta | safeHTML }}</span>{{ else if $c.context }}<span class="v-kpi-line">{{ $c.context }}</span>
+    {{- else if $naLine }}<span class="v-kpi-line">{{ strings.FirstUpper $naLine }}</span>{{ end -}}
   </span>
   {{- end -}}
   {{- if $c.filter }}<span class="v-kpi-filtering">Filtering · clear{{ partial "ui/icon.html" "x" }}</span>{{ end -}}

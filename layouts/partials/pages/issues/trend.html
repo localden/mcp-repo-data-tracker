@@ -15,7 +15,8 @@
   {{- end -}}
   {{- $items = $items | append (printf `<span>%s days <strong>%s</strong></span>` $w $txt) -}}
 {{- end -}}
-{{- $strip := printf `<span class="v-strip"><span>Net (opened − closed)</span>%s</span>` (delimit $items "") | safeHTML -}}
+{{- /* phone: the label takes its own line so the three windows wrap as one row, never "90 days" alone on a second line */ -}}
+{{- $strip := printf `<span class="v-strip"><span class="basis-full sm:basis-auto">Net (opened − closed)</span>%s</span>` (delimit $items "") | safeHTML -}}
 <section class="v-section" aria-labelledby="backlog">
   {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "caption" "Open issues, last 26 weeks") }}
   {{ partial "ui/chart.html" (dict "id" "issues-backlog" "metric" "open issues" "metric_one" "open issue" "scope" $r.name
