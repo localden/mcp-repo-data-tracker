@@ -12,4 +12,7 @@
   {{- $on := or (eq $cur (printf "%s/%s" .owner .repo)) (eq $cur .repo) -}}
   {{- $items = $items | append (dict "text" (.name | default .repo) "href" (printf "%s/%s/" $base .repo | relURL) "current" $on) -}}
 {{- end -}}
-{{- partial "ui/menu.html" (dict "id" (.id | default "scope") "label" (.label | default "Switch repository") "items" $items) -}}
+{{- /* phones keep the switcher on the H1 row, so the label shortens there */ -}}
+{{- $lbl := .label | default "Switch repository" -}}
+{{- $html := cond (eq $lbl "Switch repository") (safeHTML `<span class="max-sm:hidden">Switch repository</span><span class="sm:hidden">Switch</span>`) "" -}}
+{{- partial "ui/menu.html" (dict "id" (.id | default "scope") "label" $lbl "labelHTML" $html "items" $items) -}}

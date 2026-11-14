@@ -315,8 +315,8 @@
   .v-callout-lead { font-weight: 600; }
   .v-page-head > .v-notes { grid-area: notes; }
   @media (width < 40rem) {
-    .v-page-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "eyebrow" "title" "desc" "meta" "scope" "callout" "notes"; }
-    .v-page-scope { margin: 12px 0 0; justify-self: start; }
+    .v-page-title { font-size: var(--fs-title); }
+    .v-page-scope { margin-left: 12px; }
   }
 
   /* Data notes panel: opens below the head */
@@ -528,7 +528,7 @@
   .v-dt tbody th[scope="row"] { font-weight: 500; white-space: normal; }
   .v-dt .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .v-dt .sub { display: block; font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-3); }
-  .v-dt thead th .sub { margin-top: 2px; }
+  .v-dt thead th .sub { margin-top: 2px; font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 500; }
   .v-dt thead th.num, .v-dt .num .sub { font-variant-numeric: normal; }
   .v-dt :is(td, th) > .v-btn { margin-block: -6px; }
   .v-dt tbody th[scope="row"] .v-code { color: var(--text); }

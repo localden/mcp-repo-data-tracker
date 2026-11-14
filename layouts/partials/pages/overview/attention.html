@@ -114,7 +114,7 @@
       {{- end }}
     </ul>
     <table class="v-dt hidden lg:table" aria-labelledby="needs-attention">
-      <caption>{{ $foot }}</caption>
+      <caption class="sr-only">{{ $foot }}</caption>
       <thead>
         <tr class="v-dt-group">
           <th scope="col" rowspan="2">Repository</th>
@@ -166,6 +166,6 @@
         {{- end }}
       </tbody>
     </table>
-    <p class="v-card-note">{{ $rules }}<span class="lg:hidden"> {{ $foot }}</span></p>
+    <p class="v-card-note">{{ $foot }} {{ $rules }}</p>
   </div>
 </section>
