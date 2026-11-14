@@ -1,10 +1,14 @@
-{{- /* Pull requests (brief 3.3). Context: the page. /pulls/ (3.3a, .Params.repo empty) renders pages/pulls/org.html; /pulls/<repo>/ (3.3b)
-     renders the same skeleton for every repo, classification only changes what fills it:
-       0 page head (scope switcher; one "Data as of" = the older of metrics.json timestamp and actionability.json lastUpdated)
-       1 Review SLAs (pulls/sla)  2 Queue (pulls/queue, or pulls/unclassified without actionability.json)
-       3 Backlog (pulls/backlog)  4 Review speed (pulls/speed)  5 Where merged PRs land (pulls/hotspots)
+{{- /* Pull requests (brief 3.3). Context: the page; its title is the bare scope, the H1 ("All repositories", "TypeScript SDK"), and
+     the eyebrow "Pull requests" comes from the switcher kind. /pulls/ (3.3a, .Params.repo empty) renders pages/pulls/org.html;
+     /pulls/<repo>/ (3.3b) renders the same skeleton for every repo, classification only changes what fills it:
+       0 page head (scope switcher; one "Updated" time = the older of metrics.json timestamp and actionability.json lastUpdated)
+       1 Review SLAs (pulls/sla)
+       2 Queue (pulls/queue, or pulls/unclassified without actionability.json)
+       3 Backlog trend (pulls/backlog)
+       4 Review speed (pulls/speed)
+       5 Where merged PRs land (pulls/hotspots)
      Helpers: pulls/rows (actionability -> table rows, partialCached per repo), pulls/row, pulls/reason (the only reader of
-     short_reason), pulls/state-label, pulls/meta (the dotted row meta line), pulls/wait (whole days), pulls/typical-week,
+     short_reason), pulls/state-label, pulls/meta (the row meta line under a PR title), pulls/wait (whole days), pulls/typical-week,
      pulls/sep-stages. */ -}}
 {{- $key := .Params.repo | default "" -}}
 {{- if not $key }}
@@ -62,7 +66,7 @@
   (dict "term" "Time to merge" "text" "Median time from opening to merge.")
   (dict "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that touched each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
 {{ partial "ui/page-head.html" (dict
-    "title" .Title "repo" $r.key "switch" "pulls"
+    "title" .Title "eyebrow" "Pull requests" "repo" $r.key "switch" "pulls"
     "links" (slice (dict "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))
     "sources" $src "gap" $gap "notes" $notes "defs" $defs) }}
 

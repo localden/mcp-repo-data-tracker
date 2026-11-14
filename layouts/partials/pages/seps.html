@@ -1,6 +1,8 @@
-{{- /* /seps/ (brief 3.4): Specification Enhancement Proposals for the spec repo, rendered once (no scope switcher). Context: the page.
-  Modules: page head; Waiting on maintainers (4 disjoint filter tiles for the work list); Open SEPs by stage; Last 90 days;
-  Open SEPs (work list); Final in the last 90 days; one foot line.
+{{- /* /seps/ (brief 3.4, design system v3): Specification Enhancement Proposals for the spec repo, rendered once (no scope switcher).
+  Context: the page.
+  Modules: page head (eyebrow "SEPs", H1 "Specification Enhancement Proposals"); Waiting on maintainers (a KPI strip of 3 or 4
+  disjoint filter tiles for the work list); Open SEPs by stage (one accent bar scale; the description names where stages come from);
+  Last 90 days (a stat list); Open SEPs (work list); Final in the last 90 days.
   Source: seps.json (data/repo.html). The D1-11 fields (isDraft, maintainerReviewed, coreReviewed, lastActivity*, daysInStage,
   parked, closed, needsLabel, sponsoredButProposal) are read when they exist; until then each module renders the brief's fallback:
   the "No maintainer review" tile (Data notes says it is not shown yet), the review column and chips, Longest in stage, the Parked
@@ -23,7 +25,7 @@
 {{- $src := partial "ui/sources.html" (dict "repo" $key "use" (slice "seps")) -}}
 
 {{- if not (reflect.IsMap $seps) }}
-{{ partial "ui/page-head.html" (dict "title" $page.Title "links" $links "sources" $src) }}
+{{ partial "ui/page-head.html" (dict "title" $page.Title "eyebrow" "SEPs" "links" $links "sources" $src) }}
 <section class="v-section" aria-labelledby="page-title">
   {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." $name)) }}
 </section>
@@ -38,7 +40,7 @@
   {{- end -}}
 {{- end -}}
 
-{{- /* every age and window is measured from seps.json lastUpdated, so the page agrees with its "Data as of" */ -}}
+{{- /* every age and window is measured from seps.json lastUpdated, so the page agrees with its "Updated" time */ -}}
 {{- $ref := now.UTC -}}{{- with $seps.lastUpdated }}{{ $ref = (time.AsTime .).UTC }}{{ end -}}
 {{- $refU := $ref.Unix -}}
 {{- $cut := sub $refU 7776000 -}}
@@ -46,11 +48,11 @@
 
 {{- /* open stages in pipeline order; Parked only once seps.json has it (D1-11) */ -}}
 {{- $stageDefs := slice
-  (dict "key" "proposal" "label" "Proposal" "list" "proposals" "role" "ord-1")
-  (dict "key" "draft" "label" "Draft" "list" "drafts" "role" "ord-2")
-  (dict "key" "in-review" "label" "In review" "list" "inReview" "role" "ord-3")
-  (dict "key" "accepted" "label" "Accepted" "list" "accepted" "role" "ord-4") -}}
-{{- if isset $seps "parked" }}{{ $stageDefs = $stageDefs | append (dict "key" "parked" "label" "Parked" "list" "parked" "role" "seg-neutral") }}{{ end -}}
+  (dict "key" "proposal" "label" "Proposal" "list" "proposals")
+  (dict "key" "draft" "label" "Draft" "list" "drafts")
+  (dict "key" "in-review" "label" "In review" "list" "inReview")
+  (dict "key" "accepted" "label" "Accepted" "list" "accepted") -}}
+{{- if isset $seps "parked" }}{{ $stageDefs = $stageDefs | append (dict "key" "parked" "label" "Parked" "list" "parked") }}{{ end -}}
 
 {{- /* which D1-11 fields the data carries: each switches a module from its fallback to the real column */ -}}
 {{- $act := false }}{{ $review := false }}{{ $inStage := false -}}
@@ -85,7 +87,7 @@
   {{- if ge $med 0.0 }}{{ $medHTML = (partial "ui/dur.html" (dict "h" $med "years" true)).html }}{{ end -}}
   {{- $longHTML := partial "ui/num.html" (dict "v" nil "na" $na) -}}
   {{- if ge $longest 0.0 }}{{ $longHTML = (partial "ui/dur.html" (dict "h" $longest "years" true)).html }}{{ end -}}
-  {{- $groups = $groups | append (dict "key" $st.key "label" $st.label "role" $st.role "rows" $rows "n" (len $rows)
+  {{- $groups = $groups | append (dict "key" $st.key "label" $st.label "rows" $rows "n" (len $rows)
       "medHTML" $medHTML "longHTML" $longHTML "noSponsor" $noSp "noReview" $noRev) -}}
 {{- end -}}
 
@@ -110,8 +112,8 @@
   {{- if .sponsoredButProposal }}{{ $hygSponsor = $hygSponsor | append (printf "#%d" .num) }}{{ end -}}
 {{- end -}}
 
-{{- /* context: one caption line per tile, "oldest 319 days · 12 need WG support" (3.4-1); pages/seps/ctx.html keeps phones to the
-     first item (R6) */ -}}
+{{- /* tile captions (3.4-1): the age of the oldest SEP is caption line 1, a second fact ("12 need WG support") is line 2
+     (pages/seps/ctx.html), so no separator is needed and a phone tile keeps line 1 */ -}}
 {{- $p1 := slice }}{{ $p2 := slice }}{{ $p3 := slice }}{{ $p4 := slice -}}
 {{- if ge $o1 0.0 }}{{ $p1 = $p1 | append (printf "oldest %s" (partial "ui/dur.html" (dict "h" $o1)).long) }}{{ end -}}
 {{- if gt $wg1 0 }}{{ $p1 = $p1 | append (printf "%d %s WG support" $wg1 (cond (eq $wg1 1) "needs" "need")) }}{{ end -}}
@@ -119,30 +121,31 @@
 {{- if ge $o3 0.0 }}{{ $p3 = $p3 | append (printf "oldest %s" (partial "ui/dur.html" (dict "h" $o3)).long) }}{{ end -}}
 {{- if $ck3 }}{{ $p3 = $p3 | append (printf "%d without a core review" $nc3) }}{{ end -}}
 {{- if ge $o4 0.0 }}{{ $p4 = $p4 | append (printf "oldest %s" (partial "ui/dur.html" (dict "h" $o4)).long) }}{{ end -}}
-{{- $t1 := dict "label" "Need a sponsor" "labelTitle" "Proposals with no sponsor, not authored by a core or lead maintainer"
-  "value" $n1 "context" (partial "pages/seps/ctx.html" $p1) "filter" (cond (gt $n1 0) "t-sponsor" "") "for" "sep-list" -}}
-{{- $t3 := dict "label" "Awaiting decision" "labelTitle" "SEPs in review, waiting for a core-maintainer decision"
-  "value" $n3 "context" (partial "pages/seps/ctx.html" $p3) "filter" (cond (gt $n3 0) "t-decision" "") "for" "sep-list" -}}
-{{- $t4 := dict "label" "Accepted, not merged" "labelTitle" "Accepted SEPs whose PR has not merged yet"
-  "value" $n4 "context" (partial "pages/seps/ctx.html" $p4) "filter" (cond (gt $n4 0) "t-accepted" "") "for" "sep-list" -}}
+{{- $t1 := merge (dict "label" "Need a sponsor" "labelTitle" "Proposals with no sponsor, not authored by a core or lead maintainer"
+  "value" $n1 "filter" (cond (gt $n1 0) "t-sponsor" "") "for" "sep-list") (partial "pages/seps/ctx.html" $p1) -}}
+{{- $t3 := merge (dict "label" "Awaiting decision" "labelTitle" "SEPs in review, waiting for a core-maintainer decision"
+  "value" $n3 "filter" (cond (gt $n3 0) "t-decision" "") "for" "sep-list") (partial "pages/seps/ctx.html" $p3) -}}
+{{- $t4 := merge (dict "label" "Accepted, not merged" "labelTitle" "Accepted SEPs whose PR has not merged yet"
+  "value" $n4 "filter" (cond (gt $n4 0) "t-accepted" "") "for" "sep-list") (partial "pages/seps/ctx.html" $p4) -}}
 {{- /* "No maintainer review" needs maintainerReviewed (D1-11). Until the data has it the tile is omitted, like the other D1-11
-     modules: a 28px "—" in the second slot of the page's first row read as a rendering bug. Data notes says why it is missing.
-     With only stage-based tiles the SEPs cannot overlap, so the "counts once" caption appears only with the review tile. */ -}}
+     modules, and Data notes says why. With only stage-based tiles the SEPs cannot overlap, so the "counts once" description appears
+     only with the review tile. The strip has 3 tiles before D1-11 and 4 after (v3 §4.5). */ -}}
 {{- $tiles := slice $t1 -}}
 {{- $wHead := dict "title" "Waiting on maintainers" "id" "waiting" -}}
 {{- if $review -}}
-  {{- $tiles = $tiles | append (dict "label" "No maintainer review" "labelTitle" "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer"
-      "value" $n2 "context" (partial "pages/seps/ctx.html" $p2) "filter" (cond (gt $n2 0) "t-review" "") "for" "sep-list") -}}
-  {{- $wHead = merge $wHead (dict "caption" "Each open SEP counts once, in the first of these it matches.") -}}
+  {{- $tiles = $tiles | append (merge (dict "label" "No maintainer review" "labelTitle" "Open SEPs whose PR is ready for review, past Proposal or sponsored, with no review from a maintainer"
+      "value" $n2 "filter" (cond (gt $n2 0) "t-review" "") "for" "sep-list") (partial "pages/seps/ctx.html" $p2)) -}}
+  {{- $wHead = merge $wHead (dict "description" "Each open SEP counts once, in the first of these it matches.") -}}
 {{- end -}}
 {{- $tiles = $tiles | append $t3 -}}
 {{- $tiles = $tiles | append $t4 -}}
-{{- /* label hygiene tokens: each rule's phrase rides on its first PR number, and every token is one nowrap span */ -}}
+{{- /* label hygiene (D1-11): one sentence, each rule followed by its PR numbers, rules joined with a semicolon */ -}}
 {{- $hyg := slice -}}
-{{- range $i, $n := $hygLabel }}{{ $hyg = $hyg | append (cond (eq $i 0) (printf "titled SEP without the SEP label %s" $n) $n) }}{{ end -}}
-{{- range $i, $n := $hygSponsor }}{{ $hyg = $hyg | append (cond (eq $i 0) (printf "sponsored but labeled Proposal %s" $n) $n) }}{{ end -}}
+{{- with $hygLabel }}{{ $hyg = $hyg | append (printf "titled SEP without the SEP label %s" (delimit . ", ")) }}{{ end -}}
+{{- with $hygSponsor }}{{ $hyg = $hyg | append (printf "sponsored but labeled Proposal %s" (delimit . ", ")) }}{{ end -}}
 
-{{- /* Last 90 days (3.4-3): opened across every list (each PR once), reached final by mergedAt, closed unmerged (D1-11) */ -}}
+{{- /* Last 90 days (3.4-3): opened across every list (each PR once), reached final by mergedAt, closed unmerged (D1-11). Two or
+     three facts, so a stat list (v3 §4.6), not a KPI strip. */ -}}
 {{- $opened := 0 }}{{ $seen := slice -}}
 {{- range $l := slice "proposals" "drafts" "inReview" "accepted" "parked" "merged" "closed" -}}
   {{- range $e := (index $seps $l | default slice) -}}
@@ -166,16 +169,16 @@
 {{- $final = sort $final "merged_unix" "desc" -}}
 {{- $medF := partial "pages/seps/median.html" $ttfs -}}
 {{- $cF := "" }}{{ if ge $medF 0.0 }}{{ $cF = printf "median %s to final" (partial "ui/plural.html" (dict "n" (math.Round $medF) "one" "day")) }}{{ end -}}
-{{- $tiles90 := slice
-  (dict "label" "Opened" "labelTitle" "SEP PRs opened in the last 90 days, whatever their stage now" "value" $opened)
-  (dict "label" "Reached final" "labelTitle" "SEP PRs merged in the last 90 days" "value" (len $final) "context" $cF) -}}
+{{- $stats90 := slice
+  (dict "label" "Opened" "title" "SEP PRs opened in the last 90 days, whatever their stage now" "value" $opened)
+  (dict "label" "Reached final" "title" "SEP PRs merged in the last 90 days" "value" (len $final) "caption" $cF) -}}
 {{- if isset $seps "closed" -}}
   {{- $nClosed := 0 -}}
   {{- range ($seps.closed | default slice) -}}
     {{- $in := true }}{{ with .closedAt }}{{ $in = ge (time.AsTime .).Unix $cut }}{{ end -}}
     {{- if $in }}{{ $nClosed = add $nClosed 1 }}{{ end -}}
   {{- end -}}
-  {{- $tiles90 = $tiles90 | append (dict "label" "Closed without merging" "labelTitle" "SEP PRs closed without merging in the last 90 days" "value" $nClosed) -}}
+  {{- $stats90 = $stats90 | append (dict "label" "Closed without merging" "title" "SEP PRs closed without merging in the last 90 days" "value" $nClosed) -}}
 {{- end -}}
 
 {{- /* work-list chips (3.4-4), each only when it matches a row; D1-11 ones only once the field exists */ -}}
@@ -186,7 +189,12 @@
 {{- if gt $cNotReady 0 }}{{ $chips = $chips | append (dict "label" "Marked not ready" "tag" "not-ready" "count" $cNotReady) }}{{ end -}}
 {{- if gt $cParked 0 }}{{ $chips = $chips | append (dict "label" "Parked" "tag" "parked" "count" $cParked) }}{{ end -}}
 {{- $lastLabel := cond $act "Last activity" "Last updated" -}}
-{{- $cols := cond $review 7 6 -}}
+{{- /* work-list columns: SEP (title + row meta), Sponsor, [Maintainer review], Age, Last updated */ -}}
+{{- $cols := cond $review 5 4 -}}
+
+{{- /* where stages come from (the brief's foot line), now the stage table's description; "deferred" joins once Parked exists */ -}}
+{{- $stageWords := slice "proposal" "draft" "in-review" "accepted" }}{{ if isset $seps "parked" }}{{ $stageWords = $stageWords | append "deferred" }}{{ end -}}
+{{- $stageSrc := printf "Stage comes from PR labels (%s)." (delimit $stageWords ", ") -}}
 
 {{- /* Data notes: definitions in place of footnotes (4.6 n) */ -}}
 {{- $lastDef := cond $act "Days since the last comment, review or commit by a person." "Days since the PR last changed on GitHub. Label edits count, so a SEP can look recent without new discussion." -}}
@@ -201,48 +209,47 @@
   (dict "term" "Reached final" "text" "SEP PRs merged in the last 90 days. Time to final counts calendar days from opening the PR to merging it.") -}}
 {{- if gt $cNotReady 0 }}{{ $defs = $defs | append (dict "term" "Marked not ready" "text" "The author has not marked the PR ready for review on GitHub. This is separate from the Draft stage label.") }}{{ end -}}
 
-{{ partial "ui/page-head.html" (dict "title" $page.Title "links" $links "sources" $src "defs" $defs) }}
+{{ partial "ui/page-head.html" (dict "title" $page.Title "eyebrow" "SEPs" "links" $links "sources" $src "defs" $defs) }}
 
-{{- /* 1. Waiting on maintainers */}}
+{{- /* 1. Waiting on maintainers: the filter tiles drive the work list in module 4 */}}
 <section class="v-section" aria-labelledby="waiting">
   {{ partial "ui/section-head.html" $wHead }}
+  {{- if $hyg }}
+  <div class="v-flow">
+    {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Waiting on maintainers") }}
+    <p class="v-caption">Label hygiene: {{ delimit $hyg "; " }}.</p>
+  </div>
+  {{- else }}
   {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Waiting on maintainers") }}
-  {{- with $hyg }}
-  {{- $last := sub (len .) 1 }}
-  <p class="v-caption mt-3">Label hygiene: {{ range $i, $t := . }}<span class="v-nowrap">{{ $t }}{{ if lt $i $last }}&nbsp;·{{ end }}</span>{{ if lt $i $last }} {{ end }}{{ end }}</p>
   {{- end }}
 </section>
 
-{{- /* 2. Open SEPs by stage: one shared bar scale (the largest stage), ordinal ramp in pipeline order (5.1).
-     Full width at every size. As a 6-span "compact table" (4.3) it left the right half of the row empty and squeezed the bars into
-     4rem, where a 2-SEP stage drew an 8px dot. Here the numbers sit in fixed right-hand columns and the bar fills the free Open
-     column: the meter grows (utility "grow"), its track corners are squared (utility "rounded-none", so overflow does not round the
-     baseline end) and the bar keeps its 4px data end ("rounded-l-none", as on the versions bars). Phones get the same table without
-     bars while it has 3 numeric columns; with the D1-11 columns it falls back to per-stage blocks (R3). */}}
-{{- $extra := or $inStage $review }}
+{{- /* 2. Open SEPs by stage: the count, then a ranking bar (v3 §4.17: accent for every row, no track, scaled to the largest stage)
+     in its own column, as on the Pull requests hotspots table. Phones get one block per stage (8.6 matrix tables). */}}
 <section class="v-section" aria-labelledby="by-stage">
-  {{ partial "ui/section-head.html" (dict "title" "Open SEPs by stage" "id" "by-stage") }}
+  {{ partial "ui/section-head.html" (dict "title" "Open SEPs by stage" "id" "by-stage" "description" $stageSrc) }}
   <div class="v-card">
     <table class="v-dt is-fixed v-desk-only" aria-labelledby="by-stage">
-      <colgroup><col class="v-col-32"><col class="v-col-auto"><col class="v-col-28">{{ if $inStage }}<col class="v-col-32">{{ end }}<col class="v-col-28">{{ if $review }}<col class="v-col-36">{{ end }}</colgroup>
+      <colgroup><col class="v-col-32"><col class="v-col-20"><col class="v-col-auto"><col class="v-col-28">{{ if $inStage }}<col class="v-col-40">{{ end }}<col class="v-col-28">{{ if $review }}<col class="v-col-36">{{ end }}</colgroup>
       <thead><tr>
         <th scope="col">Stage</th>
-        <th scope="col">Open</th>
+        <th scope="col" class="num">Open</th>
+        <th scope="col"><span class="sr-only">Open SEPs compared with the largest stage</span></th>
         <th scope="col" class="num">Median age</th>
         {{- if $inStage }}
         <th scope="col" class="num">Longest in stage</th>
         {{- end }}
         <th scope="col" class="num">No sponsor</th>
         {{- if $review }}
-        <th scope="col" class="text-right">No maintainer review</th>
+        <th scope="col" class="num">No review<span class="sub">by a maintainer</span></th>
         {{- end }}
       </tr></thead>
       <tbody>
         {{- range $groups }}
-        {{- $pct := 0.0 }}{{ if gt $max 0 }}{{ $pct = mul (div (float .n) (float $max)) 100.0 }}{{ end }}
         <tr>
           <th scope="row">{{ .label }}</th>
-          <td><div class="flex items-center gap-3"><span class="v-meter-pct">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</span><span class="v-meter is-rank grow rounded-none" aria-hidden="true">{{ if gt .n 0 }}<i class="v-stack-seg is-{{ .role }} rounded-l-none" style="--v:{{ printf "%.1f" $pct }}%"></i>{{ end }}</span></div></td>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</td>
+          <td><span class="flex">{{ if gt .n 0 }}{{ partial "ui/meter.html" (dict "value" .n "max" $max "fill" true) }}{{ end }}</span></td>
           <td class="num">{{ .medHTML }}</td>
           {{- if $inStage }}
           <td class="num">{{ .longHTML }}</td>
@@ -255,57 +262,36 @@
         {{- end }}
       </tbody>
     </table>
-    {{- if not $extra }}
-    {{- /* phone: headers may wrap (text-right, not .num) so the 4 columns always fit 358px */}}
-    <table class="v-dt v-phone-only" aria-labelledby="by-stage">
-      <thead><tr>
-        <th scope="col">Stage</th>
-        <th scope="col" class="text-right">Open</th>
-        <th scope="col" class="text-right">Median age</th>
-        <th scope="col" class="text-right">No sponsor</th>
-      </tr></thead>
-      <tbody>
-        {{- range $groups }}
-        <tr>
-          <th scope="row">{{ .label }}</th>
-          <td class="num">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</td>
-          <td class="num">{{ .medHTML }}</td>
-          <td class="num">{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</td>
-        </tr>
-        {{- end }}
-      </tbody>
-    </table>
-    {{- else }}
-      <ul class="v-blocks v-phone-only">
-        {{- range $groups }}
-        <li class="v-block">
-          <p class="v-block-title">{{ .label }}</p>
-          <dl class="v-kv">
-            <div><dt>Open</dt><dd>{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</dd></div>
-            <div><dt>Median age</dt><dd>{{ .medHTML }}</dd></div>
-            {{- if $inStage }}
-            <div><dt>Longest in stage</dt><dd>{{ .longHTML }}</dd></div>
-            {{- end }}
-            <div><dt>No sponsor</dt><dd>{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</dd></div>
-            {{- if $review }}
-            <div><dt>No maintainer review</dt><dd>{{ if eq .noReview 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noReview "mode" "full") }}{{ end }}</dd></div>
-            {{- end }}
-          </dl>
-        </li>
-        {{- end }}
-      </ul>
-    {{- end }}
+    <ul class="v-blocks v-phone-only" aria-label="Open SEPs by stage">
+      {{- range $groups }}
+      <li class="v-block">
+        <p class="v-block-title">{{ .label }}</p>
+        <dl class="v-kv">
+          <div><dt>Open</dt><dd class="num">{{ partial "ui/num.html" (dict "v" .n "mode" "full") }}</dd></div>
+          <div><dt>Median age</dt><dd>{{ .medHTML }}</dd></div>
+          {{- if $inStage }}
+          <div><dt>Longest in stage</dt><dd>{{ .longHTML }}</dd></div>
+          {{- end }}
+          <div><dt>No sponsor</dt><dd class="num">{{ if eq .noSponsor 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noSponsor "mode" "full") }}{{ end }}</dd></div>
+          {{- if $review }}
+          <div><dt>No maintainer review</dt><dd class="num">{{ if eq .noReview 0 }}<span class="v-zero">0</span>{{ else }}{{ partial "ui/num.html" (dict "v" .noReview "mode" "full") }}{{ end }}</dd></div>
+          {{- end }}
+        </dl>
+      </li>
+      {{- end }}
+    </ul>
   </div>
 </section>
 
-{{- /* 3. Last 90 days */}}
+{{- /* 3. Last 90 days: a stat list in a card (v3 §4.6) */}}
 <section class="v-section" aria-labelledby="last-90">
-  {{ partial "ui/section-head.html" (dict "title" "Last 90 days" "id" "last-90" "caption" $window) }}
-  {{ partial "ui/kpis.html" (dict "tiles" $tiles90 "label" "Last 90 days") }}
+  {{ partial "ui/section-head.html" (dict "title" "Last 90 days" "id" "last-90" "description" (printf "SEP pull requests from %s." $window)) }}
+  {{ partial "ui/stats.html" (dict "items" $stats90 "label" "Last 90 days" "card" true) }}
 </section>
 
 {{- /* 4. Open SEPs: one table grouped by stage (sticky group rows: the table sits in no scroll container), filtered by the tiles
-     above, the chips and the search; below 640px each row is the title plus Age (.is-list) */}}
+     above, the chips and the search. The title cell carries the SEP id, the author and the topic labels as row meta; below 640px
+     each row is the title plus Age (.is-list) and the sponsor moves to the phone-only meta line. */}}
 <section class="v-section" aria-labelledby="open-seps">
   {{ partial "ui/section-head.html" (dict "title" "Open SEPs" "id" "open-seps") }}
   {{- if $open }}
@@ -314,23 +300,15 @@
         "chips" $chips "noun" "SEPs" "one" "SEP" "total" (len $open)) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list is-sticky-groups" id="sep-table" aria-labelledby="open-seps">
-        {{- /* Author and Sponsor 9rem: 8rem truncated "SamMorrowDrums"; the last column 8rem: at 6rem the nowrap header
-             "Last updated" plus its sort icon ran past the card edge */}}
-        <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-36"><col class="v-col-36">{{ if $review }}<col class="v-col-24">{{ end }}<col class="v-col-20"><col class="v-col-32"></colgroup>
+        <colgroup><col class="v-col-auto"><col class="v-col-40">{{ if $review }}<col class="v-col-28">{{ end }}<col class="v-col-20"><col class="v-col-32"></colgroup>
         <thead><tr>
           <th scope="col">SEP</th>
-          <th scope="col">Title</th>
-          <th scope="col">Author</th>
           <th scope="col">Sponsor</th>
           {{- if $review }}
           <th scope="col">Maintainer review</th>
           {{- end }}
           {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true "active" "descending") }}
-          {{- if $act }}
-          {{ partial "ui/th-sort.html" (dict "label" "Last activity" "num" true) }}
-          {{- else }}
-          <th scope="col" class="num" data-sort="num" title="Includes label edits"><button type="button">Last updated{{ partial "ui/icon.html" (dict "name" "sort" "class" "v-sort-icon") }}</button></th>
-          {{- end }}
+          {{ partial "ui/th-sort.html" (dict "label" $lastLabel "num" true) }}
         </tr></thead>
         {{- range $groups }}{{ if .rows }}
         <tbody data-group>
@@ -342,25 +320,23 @@
         {{- end }}{{ end }}
       </table>
     </div>
-    <p class="v-empty-text mt-3" data-filter-empty hidden>No open SEPs match.</p>
+    <p class="v-empty-text" data-filter-empty hidden>No open SEPs match.</p>
   </div>
   {{- else }}
-  {{ partial "ui/empty.html" (dict "size" "none" "body" "No open SEPs.") }}
+  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No open SEPs.") }}
   {{- end }}
 </section>
 
-{{- /* 5. Final in the last 90 days: merged SEPs by mergedAt (SE-01), newest first */}}
+{{- /* 5. Final in the last 90 days: merged SEPs by mergedAt (SE-01), newest first. Sponsor, Merged and Time to final share the widths
+     of Sponsor, Age and Last updated in the work list, so the two tables line up. */}}
 <section class="v-section" aria-labelledby="final-90">
-  {{ partial "ui/section-head.html" (dict "title" "Final in the last 90 days" "id" "final-90" "caption" $window) }}
+  {{ partial "ui/section-head.html" (dict "title" "Final in the last 90 days" "id" "final-90" "description" (printf "SEPs merged from %s, newest first." $window)) }}
   {{- if $final }}
   <div class="v-card">
     <table class="v-dt is-fixed is-list" aria-labelledby="final-90">
-      {{- /* Sponsor, Merged and Time to final share the widths and right edges of Sponsor, Age and Last updated in the work list
-           above, so the two tables line up */}}
-      <colgroup><col class="v-col-24"><col class="v-col-auto"><col class="v-col-36"><col class="v-col-20"><col class="v-col-32"></colgroup>
+      <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-20"><col class="v-col-32"></colgroup>
       <thead><tr>
         <th scope="col">SEP</th>
-        <th scope="col">Title</th>
         <th scope="col">Sponsor</th>
         <th scope="col" class="num">Merged</th>
         <th scope="col" class="num">Time to final</th>
@@ -373,11 +349,7 @@
     </table>
   </div>
   {{- else }}
-  {{ partial "ui/empty.html" (dict "size" "none" "body" "No SEPs reached final in the last 90 days.") }}
+  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No SEPs reached final in the last 90 days.") }}
   {{- end }}
 </section>
-
-{{- /* 6. Foot: where stages come from; "deferred" joins the list once Parked is a stage (D1-11) */}}
-{{- $stageWords := slice "proposal" "draft" "in-review" "accepted" }}{{ if isset $seps "parked" }}{{ $stageWords = $stageWords | append "deferred" }}{{ end }}
-<p class="v-caption mt-6">Stage comes from PR labels ({{ delimit $stageWords ", " }}).</p>
 {{- end }}

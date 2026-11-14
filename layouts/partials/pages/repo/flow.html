@@ -1,8 +1,11 @@
 {{- /* 4. Flow (brief 3.6-4): issues opened, closed and net; PRs opened, merged and closed without merging; last 7, 30 and 90 days from
-  metrics.json. Plain numbers, no links (P6). Closed without merging is collected for 90 days only, so 7 and 30 days read "—".
-  Rendered as two cards, Issues and PRs, side by side at >= 64rem, so each sits under its Activity chart and the row is balanced:
-  one 4-column table at span 6 left half the row empty, and the phone blocks (one per measure) ran to six blocks. Each card is a
-  4-column table of short numbers that fits at 390px, so it stays a table on phones (no horizontal scroll, R1/R3).
+  metrics.json. Plain numbers, no links (P6). Net change is opened minus closed inside each window, a signed count ("+9", "−1") in
+  a table of per-window counts; the KPI strip shows the 30-day figure as the Open issues delta badge. Badges here would put a
+  5rem column of "No change" badges past their cells.
+  Closed without merging is collected for 90 days only: its 7- and 30-day cells stay blank and the reason is said once, under the
+  row label (design system v3 §4.8: blank cells with one reason, no walls of dashes).
+  Rendered as two cards, Issues and PRs, side by side at >= 64rem, so each sits under its Activity chart. Each card is a 4-column
+  table of short numbers that fits at 390px, so it stays a table on phones (no horizontal scroll, R1/R3).
   Context: the dict from pages/repo.html. */ -}}
 {{- $m := .m -}}
 {{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
@@ -17,7 +20,7 @@
   {{- $pOpened = $pOpened | append (dict "v" (index $pr (printf "opened_%s" .))) -}}
   {{- $pMerged = $pMerged | append (dict "v" (index $pr (printf "merged_%s" .))) -}}
   {{- if eq . "90d" }}{{ $pClosed = $pClosed | append (dict "v" $pr.closed_not_merged_90d) -}}
-  {{- else }}{{ $pClosed = $pClosed | append (dict "v" nil "na" "tracked for 90 days only") }}{{ end -}}
+  {{- else }}{{ $pClosed = $pClosed | append (dict "blank" true "na" "tracked for 90 days only") }}{{ end -}}
 {{- end -}}
 {{- $cards := slice
   (dict "id" "flow-issues" "title" "Issues" "rows" (slice
@@ -27,9 +30,9 @@
   (dict "id" "flow-pulls" "title" "PRs" "rows" (slice
     (dict "label" "Opened" "cells" $pOpened)
     (dict "label" "Merged" "cells" $pMerged)
-    (dict "label" "Closed without merging" "cells" $pClosed))) }}
+    (dict "label" "Closed without merging" "sub" "Tracked for 90 days only" "cells" $pClosed))) }}
 <section class="v-section" aria-labelledby="flow">
-  {{ partial "ui/section-head.html" (dict "title" "Flow" "id" "flow" "caption" "Opened and closed in the last 7, 30 and 90 days") }}
+  {{ partial "ui/section-head.html" (dict "title" "Flow" "id" "flow" "description" "Issues and PRs opened and closed in the last 7, 30 and 90 days.") }}
   <div class="v-grid">
     {{- range $cards }}
     <div class="v-span-6">
@@ -40,7 +43,7 @@
           <thead><tr><th scope="col"><span class="sr-only">{{ .title }}</span></th>{{ range $heads }}<th scope="col" class="num">{{ . }}</th>{{ end }}</tr></thead>
           <tbody>
             {{- range .rows }}
-            <tr><th scope="row">{{ .label }}</th>{{ range .cells }}<td class="num">{{ partial "pages/repo/flow-cell.html" . }}</td>{{ end }}</tr>
+            <tr><th scope="row">{{ .label }}{{ with .sub }}<span class="sub">{{ . }}</span>{{ end }}</th>{{ range .cells }}<td class="num">{{ partial "pages/repo/flow-cell.html" . }}</td>{{ end }}</tr>
             {{- end }}
           </tbody>
         </table>

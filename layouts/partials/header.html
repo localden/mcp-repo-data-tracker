@@ -1,6 +1,7 @@
-{{- /* Header and nav (brief 2.2). Nav items are unscoped (org views); the current item is chosen by section:
-  home, issues, pulls, seps, downloads, repos (.Section, else the content file's base name). DOM order is the desktop order;
-  below 48rem the brand and theme toggle share row 1 and the six items form a 3 x 2 grid. Repositories is a ui/menu.html disclosure. */ -}}
+{{- /* Header (design system v3 §4.1): 56px, "VISR" brand (no subtitle), six nav items, icon-only theme toggle (.v-btn). Nav items
+  are unscoped (org views); the current item is chosen by section: home, issues, pulls, seps, downloads, repos (.Section, else the
+  content file's base name). DOM order is the desktop order; below 48rem the brand and toggle share row 1 and the six items form a
+  3 x 2 grid of 40px cells. Repositories is a ui/menu.html disclosure. */ -}}
 {{- $cur := "" -}}
 {{- if .IsHome }}{{ $cur = "home" }}{{ else }}{{ $cur = .Section }}{{ if not $cur }}{{ with .File }}{{ $cur = .BaseFileName }}{{ end }}{{ end }}{{ end -}}
 {{- $curRepo := "" }}{{ if eq $cur "repos" }}{{ $curRepo = .Params.repo | default "" }}{{ end -}}
@@ -18,7 +19,6 @@
 <header class="v-header" id="site-header">
   <div class="v-shell v-header-row">
     <a class="v-brand" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
-    <span class="v-brand-sub">MCP repository health</span>
     <nav class="v-nav" aria-label="Main">
       <ul class="v-nav-list">
         {{- range $items }}
@@ -30,7 +30,7 @@
           "labelHTML" (`<span class="v-nav-long">Repositories</span><span class="v-nav-short">Repos</span>` | safeHTML) "items" $repoItems) }}</li>
       </ul>
     </nav>
-    <button id="theme-toggle" type="button" class="v-icon-btn v-theme" aria-pressed="false" aria-label="Dark theme">
+    <button id="theme-toggle" type="button" class="v-btn is-icon v-theme" aria-pressed="false" aria-label="Dark theme">
       <span class="theme-icon-dark">{{ partial "ui/icon.html" "moon" }}</span>
       <span class="theme-icon-light">{{ partial "ui/icon.html" "sun" }}</span>
     </button>

@@ -1,0 +1,41 @@
+{{- /* Stat list (design system v3 §4.6): 2-3 facts that are not a KPI strip (SEPs "Last 90 days", stat strips under charts, flow
+  summaries). A row of items with gap 32; each item = label (label role) above value (heading, tabular), then an optional caption
+  (small, text-3). Put it inside a card body or directly under a section head.
+  Dict {items, label, card}.
+    items: slice of {label, value, valueHTML, format, na, caption, delta, title}.
+      value: number or nil, formatted like a tile: format "num" (default), "full", "compact", "dur" (hours), "pct" (0-100);
+        nil -> "—" + sr-only na (default "not tracked"). valueHTML: pre-rendered value instead (text or HTML).
+      caption: one line under the value (text or HTML, e.g. "merged 1 in 7d, typical week 5" or a ui/note.html note).
+      delta: a ui/delta.html dict; the badge follows the value, its comparison follows on the caption line.
+      title: tooltip on the label (the definition).
+    label: optional aria-label for the list. card: true wraps it in a .v-card with body padding.
+  Markup (hand-written equivalent): dl.v-stats > div.v-stat > dt (label) + dd (value) + dd.v-stat-caption. */ -}}
+{{- $c := . -}}
+{{- $items := $c.items | default slice -}}
+{{- if $items -}}
+{{- if $c.card }}<div class="v-card"><div class="v-card-body">{{ end -}}
+<dl class="v-stats"{{ with $c.label }} aria-label="{{ . }}"{{ end }}>
+  {{- range $items -}}
+    {{- $it := . -}}
+    {{- $f := $it.format | default "num" -}}
+    {{- $val := "" -}}
+    {{- if $it.valueHTML }}{{ $val = $it.valueHTML -}}
+    {{- else if eq $it.value nil }}{{ $val = partial "ui/num.html" (dict "v" nil "na" ($it.na | default "not tracked")) -}}
+    {{- else if eq $f "dur" }}{{ $val = (partial "ui/dur.html" (dict "h" $it.value)).html -}}
+    {{- else if eq $f "pct" }}{{ $val = partial "ui/pct.html" $it.value -}}
+    {{- else }}{{ $val = partial "ui/num.html" (dict "v" $it.value "mode" (cond (eq $f "num") "tile" $f)) }}{{ end -}}
+    {{- $badge := "" }}{{ $cmp := "" -}}
+    {{- with $it.delta -}}
+      {{- $badge = trim (string (partial "ui/delta.html" (merge . (dict "bare" true)))) " \n" -}}
+      {{- if $badge }}{{ if .date }}{{ $cmp = printf "vs %s" (partial "ui/date.html" (dict "d" .date "style" "short")) }}{{ else if .vs }}{{ $cmp = printf "vs %s" .vs }}{{ end }}{{ end -}}
+    {{- end }}
+  <div class="v-stat">
+    <dt{{ with $it.title }} title="{{ . }}"{{ end }}>{{ $it.label }}</dt>
+    <dd>{{ $val }}{{ with $badge }} {{ . | safeHTML }}{{ end }}</dd>
+    {{- with $it.caption }}<dd class="v-stat-caption">{{ . }}</dd>{{ end -}}
+    {{- with $cmp }}<dd class="v-stat-caption">{{ . }}</dd>{{ end }}
+  </div>
+  {{- end }}
+</dl>
+{{- if $c.card }}</div></div>{{ end -}}
+{{- end -}}

@@ -16,7 +16,7 @@
   <div class="v-card">
     <ul class="v-blocks">
       {{- range . }}
-      <li class="v-block"><a class="v-link" href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      <li class="v-block"><p class="v-block-title"><a href="{{ .RelPermalink }}">{{ (partial "ui/page-name.html" .).h1 }}</a></p></li>
       {{- end }}
     </ul>
   </div>

@@ -9,7 +9,7 @@
     pages/repo/community.html  6. Community (pages/repo/maintainers.html: the compact maintainer list)
   Definitions go to Data notes (7), never footnotes. Fields that later data packages add are used once present, with the brief's
   fallback until then: summary.sla.first_reply_2bd_breach (D1-9), contributors.maintainers_present_30d (D1-5),
-  contributors.active_people / retained_30d (D1-10), repos.json roles (D1-6), downloads-daily.json (D2-1, via data/downloads.html). */ -}}
+  contributors.active_people and retained_30d (D1-10), repos.json roles (D1-6), downloads-daily.json (D2-1, via data/downloads.html). */ -}}
 {{- if not .Params.repo -}}
 {{ partial "pages/repo/index.html" . }}
 {{- else -}}
@@ -34,8 +34,8 @@
 
 {{- /* Complete-day downloads. A package with at least 7 complete days uses the window end every such SDK shares
      (data/downloads-end.html), exactly as the Overview SDK adoption table and the Downloads page do, so one SDK never shows two
-     different "Last 7 days" numbers; a package with fewer keeps its own days (muted, Flag "n of 7 days"). Same partialCached keys
-     as those pages and ui/sources.html, so each package is read once per build. */ -}}
+     different "Last 7 days" numbers; a package with fewer keeps its own days (with the data-quality note "n of 7 days"). Same
+     partialCached keys as those pages and ui/sources.html, so each package is read once per build. */ -}}
 {{- $d := dict -}}
 {{- if $r.package -}}
   {{- $d = partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "" -}}
@@ -44,15 +44,17 @@
 {{- end -}}
 {{- $reg := partial "ui/registry-name.html" ($r.package | default dict) -}}
 
-{{- /* Page head (brief 2.4, 3.6-0): GitHub and registry links, tracking start, stars, Data as of, Data notes, scope switcher */ -}}
-{{- $links := slice (dict "text" "GitHub" "href" (printf "https://github.com/%s" $r.key) "site" "GitHub") -}}
-{{- with $reg.url }}{{ $links = $links | append (dict "text" $reg.registry "href" . "site" $reg.registry) }}{{ end -}}
+{{- /* Page head (brief 2.4, 3.6-0, design system v3 §4.2): eyebrow "Repository", H1 = the display name, the description, then the meta
+     row in v3 order: GitHub repo link, registry link (registry name in text-3 before the package), "Updated …" (page-head adds it
+     from the sources), stars, "Tracking since …", Data notes; the scope switcher sits at the end of the H1 row. */ -}}
+{{- $links := slice (dict "text" $r.key "href" (printf "https://github.com/%s" $r.key) "site" "GitHub") -}}
+{{- with $reg.url }}{{ $links = $links | append (dict "prefix" $reg.registry "text" $reg.package "href" . "site" $reg.registry) }}{{ end -}}
 {{- $meta := slice -}}
-{{- $first := "" }}{{ range $k, $v := $r.snapshots }}{{ if and (eq $first "") (reflect.IsMap $v) }}{{ $first = $k }}{{ end }}{{ end -}}
-{{- with $first }}{{ $meta = $meta | append (printf "Tracking since %s" (partial "ui/date.html" .)) }}{{ end -}}
 {{- with $m.repository }}{{ with .stars -}}
-  {{- $meta = $meta | append (printf "%s %s" (trim (string (partial "ui/num.html" (dict "v" . "plain" true))) " \n") (cond (eq (float .) 1.0) "star" "stars")) -}}
+  {{- $meta = $meta | append (dict "icon" "star" "text" (printf "%s %s" (trim (string (partial "ui/num.html" (dict "v" . "plain" true))) " \n") (cond (eq (float .) 1.0) "star" "stars"))) -}}
 {{- end }}{{ end -}}
+{{- $first := "" }}{{ range $k, $v := $r.snapshots }}{{ if and (eq $first "") (reflect.IsMap $v) }}{{ $first = $k }}{{ end }}{{ end -}}
+{{- with $first }}{{ $meta = $meta | append (dict "icon" "calendar" "text" (printf "Tracking since %s" (partial "ui/date.html" .))) }}{{ end -}}
 {{- $use := slice "metrics" -}}
 {{- if $slaLine }}{{ $use = $use | append "issues" }}{{ end -}}
 {{- if $r.package }}{{ $use = $use | append "downloads" }}{{ end -}}
@@ -74,13 +76,13 @@
   (dict "term" "Net change" "text" "Opened minus closed in the window.") -}}
 {{- if $slaLine -}}
   {{- /* replies overdue is listed only once D1-9 computes it: until then the Needs attention line leaves it out */ -}}
-  {{- if $d19 }}{{ $defs = $defs | append (dict "term" "Replies overdue" "text" "SEP-1730: open issues by non-maintainers with no maintainer comment after 2 business days.") }}{{ end -}}
+  {{- if $d19 }}{{ $defs = $defs | append (dict "term" "First reply overdue" "text" "SEP-1730: open issues by non-maintainers with no maintainer comment after 2 business days.") }}{{ end -}}
   {{- $defs = $defs | append (dict "term" "Triage overdue" "text" (cond $d19
       "SEP-1730: open issues without a type label and a priority or status label after 2 business days."
       "SEP-1730: open issues without a type label after 2 business days.")) -}}
   {{- $defs = $defs | append (dict "term" "P0 overdue" "text" "SEP-1730: open P0 issues older than 7 days.") -}}
 {{- end -}}
-{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "Sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported, so the number matches the Overview and the Downloads page; a package tracked for less than a week shows the days it has, flagged. A day the registry has not reported is missing, never 0.") }}{{ end -}}
+{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "Sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported, so the number matches the Overview and the Downloads page. A package tracked for less than a week shows the sum of the days it has, with a note that says how many (5 of 7 days). A day the registry has not reported is missing, never 0.") }}{{ end -}}
 {{- $defs = $defs | append (dict "term" "Active contributors" "text" (cond $d110
     "Distinct people, known bots excluded, who opened an issue or PR, authored a commit, reviewed or commented in the last 30 days."
     "Distinct people, known bots excluded, who opened an issue or PR or authored a commit in the last 30 days. Reviews and comments are not counted yet.")) -}}

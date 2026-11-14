@@ -205,7 +205,7 @@
     c.setAttribute('aria-pressed', String(on));
     L.expanded = false; L.apply();
   });
-  /* "Show all N" / "Show fewer" */
+  /* "Show all N" and "Show fewer" */
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-more]'); if (!b) return;
     var L = listFor(b); if (!L) return;

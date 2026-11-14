@@ -78,29 +78,32 @@
         {{- $od := math.Floor $topOver -}}
         {{- $over = cond (ge $od 1.0) (printf "%.0fd over" $od) "Overdue" -}}
         {{- $orule = (index $rule $top.key | default dict).short | default (partial "ui/humanize.html" $top.id) -}}
-        {{- $otext = printf "%s · %s" $orule $over -}}
+        {{- $otext = printf "%s, %s" $orule $over -}}
         {{- $sc.Add "overdue" 1 -}}
       {{- end -}}
       {{- $k := add (add (cond (gt (len $flags) 0) (mul (math.Floor $topOver) 100000.0) -100000.0) (mul (float (index $prioScore (string $i.priority) | default 0)) 10000.0)) (math.Min $age 9999.0) -}}
 
-      {{- /* tags (3.2b-2): priority (P0/P1 strong), linked PRs, conflicting type labels, missing priority */ -}}
+      {{- /* tags (3.2b-2): Maintainer (the author is one), priority (P0/P1 strong), linked PRs ("Fix proposed in #2051"),
+           conflicting type labels, missing priority */ -}}
       {{- $tags := slice -}}
+      {{- if $i.is_maintainer }}{{ $tags = $tags | append "Maintainer" }}{{ end -}}
       {{- with $i.priority }}{{ $tags = $tags | append (dict "text" . "strong" (or (eq . "P0") (eq . "P1"))) }}{{ end -}}
       {{- with $i.linked_prs -}}
         {{- $prs := slice }}{{ range . }}{{ $prs = $prs | append (printf "#%d" (int .)) }}{{ end -}}
-        {{- $tags = $tags | append (printf "Fix proposed · %s" (delimit $prs ", ")) -}}
+        {{- $tags = $tags | append (printf "Fix proposed in %s" (delimit $prs ", ")) -}}
       {{- end -}}
       {{- $conflict := slice -}}
       {{- if reflect.IsSlice $i.type_conflict }}{{ $conflict = $i.type_conflict }}{{ else }}{{ range $types }}{{ if in $labels . }}{{ $conflict = $conflict | append . }}{{ end }}{{ end }}{{ end -}}
       {{- if gt (len $conflict) 1 }}{{ $tags = $tags | append (printf "Conflicting type labels: %s" (delimit $conflict ", ")) }}{{ end -}}
       {{- if and $i.type (not $i.priority) (not $i.status) }}{{ $tags = $tags | append "Missing priority" }}{{ end -}}
 
-      {{- /* Waiting on: us once the reporter replied (business days until D1-9 adds a calendar wait), the reporter while a repro is owed */ -}}
-      {{- $waitOn := "" }}{{ $waitSub := "" -}}
+      {{- /* Waiting on, as one row meta phrase (design system v3 §4.8, no column of mostly blank cells): us once the reporter replied
+           ("Waiting on us for 275 business days"; business days until D1-9 adds a calendar wait), the reporter while a repro is owed */ -}}
+      {{- $waitText := "" -}}
       {{- if $replied -}}
-        {{- $waitOn = "Us" -}}
-        {{- if ne $i.reply_wait_days nil }}{{ $waitSub = partial "ui/plural.html" (dict "n" (math.Floor $rwd) "one" "business day" "other" "business days") }}{{ end -}}
-      {{- else if $waitRep }}{{ $waitOn = "Reporter" }}{{ end -}}
+        {{- $waitText = "Waiting on us" -}}
+        {{- if ne $i.reply_wait_days nil }}{{ $waitText = printf "Waiting on us for %s" (partial "ui/plural.html" (dict "n" (math.Floor $rwd) "one" "business day" "other" "business days")) }}{{ end -}}
+      {{- else if $waitRep }}{{ $waitText = "Waiting on the reporter" }}{{ end -}}
 
       {{- /* tab and chip tokens */ -}}
       {{- $num := string (int ($i.number | default 0)) -}}
@@ -116,7 +119,7 @@
       {{- with $gkey }}{{ $sc.Add . 1 }}{{ end -}}
 
       {{- /* Next step: the tier's dictionary label; the waiting tier also holds issues whose reporter replied, that have a linked PR or
-           that are on hold / pending SEP approval, so those rows take the matching label from the same dictionary (none for on hold)
+           that are on hold or pending SEP approval, so those rows take the matching label from the same dictionary (none for on hold)
            instead of "Waiting on reporter" */ -}}
       {{- $next := index $tierLabel (string $tr.name) | default "" -}}
       {{- if and (eq (string $tr.name) "waiting") (not $waitRep) -}}
@@ -127,8 +130,7 @@
         "n" $num "title" (string ($i.title | default "")) "url" $i.url "author" $author "maint" ($i.is_maintainer | default false)
         "ctitle" (partial "ui/plural.html" (dict "n" ($i.comment_count | default 0) "one" "comment"))
         "text" (lower (printf "%s|%s|%s" (string ($i.title | default "")) $author (delimit $labels "|")))
-        "tags" $tags "next" $next
-        "waiton" $waitOn "waitsub" $waitSub
+        "tags" $tags "next" $next "wait" $waitText
         "age" $age "ageHTML" (partial "ui/dur.html" (dict "d" $age "years" true)).html
         "ageTitle" (partial "ui/plural.html" (dict "n" $abd "one" "business day" "other" "business days"))
         "over" $over "orule" $orule "otext" $otext "otitle" (delimit $titles "; ") "k" $k

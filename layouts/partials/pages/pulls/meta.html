@@ -1,10 +1,7 @@
-{{- /* Sans meta line for PR rows (brief 3.3b-2 "#2017 · ankitvirdi4 · +179 −14", 4.6 f, 6.1 rule 2, R10).
-     Input: a slice of tokens, each HTML-safe (htmlEscape plain text first; a ui/tag.html result, which keeps a SEP tag's link and a
-     strong P0/P1, can go in as is). Returns template.HTML: one nowrap span per token, each but the last ending in " ·", joined by
-     spaces, so the line wraps only between tokens and a wrapped line never starts with a separator. An empty slice returns "". */ -}}
-{{- $t := . | default slice -}}
-{{- $out := slice -}}
-{{- range $i, $m := $t -}}
-  {{- $out = $out | append (printf `<span class="v-nowrap">%s%s</span>` $m (cond (lt $i (sub (len $t) 1)) " ·" "")) -}}
-{{- end -}}
-{{- return (delimit $out " " | safeHTML) -}}
+{{- /* Row meta for PR rows (brief 3.3b-2; design system v3 §4.8): the line under the title, span.v-rowmeta = small text-2 spans in a
+     flex row with a 12px gap ("#1521", "LucaButBoring", "+417 −0"), then the tags as text-3 spans in the same row ("Touches auth",
+     "Maintainer", "SEP: Draft", GitHub labels verbatim). No separator glyphs: the gap separates the items. Tags are plain text, so the
+     title stays the row's single link.
+     Dict {num (int), repo, author, lines, tags}. repo: a phone-only span (.v-phone-only) for /pulls/, where the Repository column
+     hides below 40rem. tags: a slice for ui/tag.html. Emits HTML. */ -}}
+<span class="v-rowmeta"><span>#{{ .num }}</span>{{ with .repo }}<span class="v-phone-only">{{ . }}</span>{{ end }}{{ with .author }}<span>{{ . }}</span>{{ end }}{{ with .lines }}<span>{{ . }}</span>{{ end }}{{ partial "ui/tag.html" (.tags | default slice) }}</span>

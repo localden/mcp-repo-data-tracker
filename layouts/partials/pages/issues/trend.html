@@ -1,25 +1,29 @@
 {{- /* Backlog trend (brief 3.2b-3): one line of snapshots issues.open, 26 weeks of daily points, with the gap band and an end label
   (charts.js); the 10% wash only when charts.js finds no gap run. Short history renders the value and "Tracking since …" (5.5).
-  Under the plot, the net flow strip from metrics.json: opened_Nd − closed_Nd for 7, 30 and 90 days (signed, neutral ink; "—" when missing).
-  Ctx: dict {r (data/repo.html)}. */ -}}
+  The net flow from metrics.json is a stat list (design system v3 §4.6) directly under the section head, above the chart card: one
+  item per window (7, 30 and 90 days), label "Net change, 7 days", value opened_Nd minus closed_Nd (signed, neutral text; "—" when a
+  count is missing), caption "12 opened, 3 closed". A stat list cannot sit inside the chart's foot line (a paragraph), so it leads the
+  section instead. Ctx: dict {r (data/repo.html)}. */ -}}
 {{- $r := .r -}}
 {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
 {{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open") -}}
 {{- $items := slice -}}
 {{- range $w := slice "7" "30" "90" -}}
   {{- $o := index $iss (printf "opened_%sd" $w) }}{{ $c := index $iss (printf "closed_%sd" $w) -}}
-  {{- $txt := `<span aria-hidden="true">—</span><span class="sr-only">not tracked</span>` -}}
+  {{- $it := dict "label" (printf "Net change, %s days" $w) "value" nil "na" "not tracked" "title" "Issues opened minus issues closed" -}}
   {{- if and (ne $o nil) (ne $c nil) -}}
     {{- $d := sub (float $o) (float $c) -}}
-    {{- $txt = cond (gt $d 0.0) (printf "+%s" (lang.FormatNumber 0 $d)) (cond (lt $d 0.0) (printf "−%s" (lang.FormatNumber 0 (math.Abs $d))) "0") -}}
+    {{- $txt := cond (gt $d 0.0) (printf "+%s" (lang.FormatNumber 0 $d)) (cond (lt $d 0.0) (printf "−%s" (lang.FormatNumber 0 (math.Abs $d))) "0") -}}
+    {{- $it = merge $it (dict "valueHTML" $txt "caption" (printf "%s opened, %s closed" (lang.FormatNumber 0 (float $o)) (lang.FormatNumber 0 (float $c)))) -}}
   {{- end -}}
-  {{- $items = $items | append (printf `<span>%s days <strong>%s</strong></span>` $w $txt) -}}
-{{- end -}}
-{{- /* phone: the label takes its own line so the three windows wrap as one row, never "90 days" alone on a second line */ -}}
-{{- $strip := printf `<span class="v-strip"><span class="basis-full sm:basis-auto">Net (opened − closed)</span>%s</span>` (delimit $items "") | safeHTML -}}
+  {{- $items = $items | append $it -}}
+{{- end }}
 <section class="v-section" aria-labelledby="backlog">
-  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "caption" "Open issues, last 26 weeks") }}
-  {{ partial "ui/chart.html" (dict "id" "issues-backlog" "metric" "open issues" "metric_one" "open issue" "scope" $r.name
-      "unit" "count" "gran" "day" "foot" $strip
-      "series" (slice (dict "label" "Open issues" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed))) }}
+  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "description" "Open issues over the last 26 weeks.") }}
+  <div class="v-flow">
+    {{ partial "ui/stats.html" (dict "label" "Net change in open issues" "items" $items) }}
+    {{ partial "ui/chart.html" (dict "id" "issues-backlog" "metric" "open issues" "metric_one" "open issue" "scope" $r.name
+        "unit" "count" "gran" "day"
+        "series" (slice (dict "label" "Open issues" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed))) }}
+  </div>
 </section>

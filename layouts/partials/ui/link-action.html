@@ -1,0 +1,8 @@
+{{- /* Link-action (design system v3 §4.10): navigation to another page only. small 500 accent-text, 14px arrow-right after,
+  no underline at rest, underline on hover. "View all", "All downloads", "All SEPs", "Issues".
+  Dict {text, href, sr}. sr: sr-only words that finish the link name ("issues waiting for a reply" after "View all").
+  Renders nothing without href. Hand-written equivalent: a.v-link-action holding the text then the arrow-right icon at size 14. */ -}}
+{{- $c := . -}}
+{{- with $c.href -}}
+<a class="v-link-action" href="{{ . }}">{{ $c.text }}{{ with $c.sr }}<span class="sr-only"> {{ . }}</span>{{ end }}{{ partial "ui/icon.html" (dict "name" "arrow-right" "size" 14) }}</a>
+{{- end -}}

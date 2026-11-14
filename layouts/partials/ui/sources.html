@@ -4,7 +4,7 @@
     use: any of "metrics" (metrics.json timestamp), "issues" (issues.json lastUpdated), "actionability" (actionability.json lastUpdated),
     "seps" (seps.json lastUpdated), "downloads" (one entry per package: downloads-daily.json complete_through, else the newest
     complete day data/downloads.html rebuilds from snapshots; repos without a package are skipped).
-  Each source: {kind, label ("GitHub metrics"), noun (for the stale Flag, "GitHub data"), at (time), through ("YYYY-MM-DD", registries only)}.
+  Each source: {kind, label ("GitHub metrics"), noun (for the staleness sentence in the page callout, "GitHub data"), at (time), through ("YYYY-MM-DD", registries only)}.
   A registry "through" date D is complete to the end of D, so its at is D + 1 day 00:00 UTC. Append your own dicts of the same shape. */ -}}
 {{- $keys := .repo | default slice -}}{{- if not (reflect.IsSlice $keys) }}{{ $keys = slice $keys }}{{ end -}}
 {{- $use := .use | default (slice "metrics") -}}

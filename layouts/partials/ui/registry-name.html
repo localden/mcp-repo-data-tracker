@@ -1,6 +1,9 @@
 {{- /* Registry display name and link for a repos.json .package dict ({registry, name}). Returns a dict (empty for nil input):
-  {registry: "PyPI", key: "pypi", package: "mcp", url: "https://pypi.org/project/mcp", label: "PyPI · mcp"}.
-  Proper names per brief 6.1 rule 6: npm, PyPI, NuGet, crates.io, RubyGems. Never print the raw key. */ -}}
+  {registry: "PyPI", key: "pypi", package: "mcp", url: "https://pypi.org/project/mcp", label: "PyPI mcp", labelHTML}.
+  label is plain text, the registry then the package separated by a space. labelHTML is the v3 form (design system §0.1): two spans
+  with a 6px gap, the registry in text-3 then the package name: span.v-reg > span.v-reg-name + span. In the page-head meta row pass
+  the link as {text: package, prefix: registry, href: url, site: registry}. Proper names: npm, PyPI, NuGet, crates.io, RubyGems.
+  Never print the raw key. */ -}}
 {{- $names := dict "npm" "npm" "pypi" "PyPI" "nuget" "NuGet" "crates" "crates.io" "rubygems" "RubyGems" -}}
 {{- $base := dict "npm" "https://www.npmjs.com/package/" "pypi" "https://pypi.org/project/" "nuget" "https://www.nuget.org/packages/" "crates" "https://crates.io/crates/" "rubygems" "https://rubygems.org/gems/" -}}
 {{- $out := dict -}}
@@ -9,6 +12,7 @@
   {{- $pkg := string (index . "name" | default "") -}}
   {{- $disp := index $names $key | default $key -}}
   {{- $url := "" }}{{ with index $base $key }}{{ $url = printf "%s%s" . $pkg }}{{ end -}}
-  {{- $out = dict "registry" $disp "key" $key "package" $pkg "url" $url "label" (printf "%s · %s" $disp $pkg) -}}
+  {{- $html := printf `<span class="v-reg"><span class="v-reg-name">%s</span><span>%s</span></span>` (htmlEscape $disp) (htmlEscape $pkg) | safeHTML -}}
+  {{- $out = dict "registry" $disp "key" $key "package" $pkg "url" $url "label" (printf "%s %s" $disp $pkg) "labelHTML" $html -}}
 {{- end -}}
 {{- return $out -}}

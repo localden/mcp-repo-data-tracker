@@ -1,41 +1,36 @@
-{{- /* One row of the Open SEPs work list (brief 3.4-4, 4.6 e/f). Context: dict "r" (pages/seps/entry.html) "review" (bool: the
-  Maintainer review column, D1-11). The last cell is Last updated or Last activity; entry.html already picked the source.
-  The title is the only link. Below 640px (.is-list) the title cell and Age stay; SEP, author, sponsor, review and the topic labels
-  share one meta row ("SEP-2028 · monahk · needs sponsor · WG support needed"), so the separate labels sub-line is hidden there
-  (.v-hide-list). Each token is nowrap with its "·" attached at the end after an en space: with the row's 8px column gap after it, the
-  dot sits centred between tokens and a wrapped line never starts with one. */ -}}
+{{- /* One row of the Open SEPs work list (brief 3.4-4, design system v3 §4.8). Context: dict "r" (pages/seps/entry.html) "review" (bool:
+  the Maintainer review column, D1-11). The last cell is Last updated or Last activity; entry.html already picked the source.
+  The title is the row's single link. Under it the row meta, always visible, as separate spans in a gap-12 row: the SEP id ("SEP-2028",
+  or "PR 3440" when the title names none), the author, then up to 3 topic labels as tags. Below 640px (.is-list) only the title cell
+  and Age stay, so the sponsor (and the review, D1-11) go to a second meta line that only phone lists show (.v-listmeta).
+  Sponsor cell: the handle; "Needs sponsor" in text; "self" and "Not assigned" in text-3. No colour (v3 §0.3: colour is for
+  overdue, deltas and data quality). */ -}}
 {{- $r := .r }}{{ $review := .review -}}
 {{- $age := "" }}{{ if ge $r.age_h 0.0 }}{{ $age = (partial "ui/dur.html" (dict "h" $r.age_h "years" true)).html }}{{ end -}}
 {{- $upd := "" }}{{ if ge $r.upd_h 0.0 }}{{ $upd = (partial "ui/dur.html" (dict "h" $r.upd_h)).html }}{{ end -}}
-
-{{- /* phone meta row tokens */ -}}
-{{- $meta := slice (dict "t" $r.sep) -}}
-{{- with $r.author }}{{ $meta = $meta | append (dict "t" .) }}{{ end -}}
-{{- if eq $r.sponsorKind "handle" }}{{ $meta = $meta | append (dict "t" (printf "sponsor %s" $r.sponsor)) -}}
-{{- else if eq $r.sponsorKind "self" }}{{ $meta = $meta | append (dict "t" "self-sponsored") -}}
-{{- else if $r.needsSponsor }}{{ $meta = $meta | append (dict "t" "needs sponsor" "warn" true) -}}
-{{- else }}{{ $meta = $meta | append (dict "t" "no sponsor assigned") }}{{ end -}}
-{{- if and $review $r.reviewKnown }}{{ $meta = $meta | append (dict "t" (cond $r.reviewed "maintainer reviewed" "no maintainer review")) }}{{ end -}}
-{{- range ($r.labels | default slice) }}{{ $meta = $meta | append (dict "t" .) }}{{ end -}}
-{{- $last := sub (len $meta) 1 }}
+{{- $spLine := "No sponsor assigned" -}}
+{{- if eq $r.sponsorKind "handle" }}{{ $spLine = printf "Sponsor %s" $r.sponsor -}}
+{{- else if eq $r.sponsorKind "self" }}{{ $spLine = "Self-sponsored" -}}
+{{- else if $r.needsSponsor }}{{ $spLine = "Needs sponsor" }}{{ end }}
 <tr data-row data-row-link id="sep-{{ $r.num }}" data-tags="{{ delimit $r.tags " " }}" data-text="{{ $r.text }}">
-  <td class="v-nowrap{{ if $r.isPR }} v-muted{{ end }}"{{ if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }} id="sep-{{ $r.sepNum }}" title="PR #{{ $r.num }}"{{ end }}>{{ $r.sep }}</td>
   <td class="v-title-cell">
     <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener"{{ with $r.reviewTitle }} title="{{ . }}"{{ end }}>{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    {{- /* labels joined by " · ", with a no-break space before each dot so a wrapped line never starts with one */}}
-    {{- with $r.labels }}<span class="sub v-hide-list">{{ range $i, $l := . }}{{ if $i }}&nbsp;· {{ end }}{{ $l }}{{ end }}</span>{{ end }}
+    <span class="v-rowmeta">
+      {{- if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }}<span id="sep-{{ $r.sepNum }}" title="PR #{{ $r.num }}">{{ $r.sep }}</span>
+      {{- else }}<span>{{ $r.sep }}</span>{{ end -}}
+      {{- with $r.author }}<span>{{ . }}</span>{{ end -}}
+      {{- partial "ui/tag.html" ($r.labels | default slice) -}}
+    </span>
     <span class="v-listmeta">
-      {{- range $i, $m := $meta -}}
-      <span>{{ if $m.warn }}<span class="text-warn">{{ $m.t }}</span>{{ else }}{{ $m.t }}{{ end }}{{ if lt $i $last }}&ensp;·{{ end }}</span>
-      {{- end -}}
+      {{- if $r.needsSponsor }}<span class="v-ink">{{ $spLine }}</span>{{ else }}<span>{{ $spLine }}</span>{{ end -}}
+      {{- if and $review $r.reviewKnown }}<span>{{ cond $r.reviewed "Maintainer reviewed" "No maintainer review" }}</span>{{ end -}}
     </span>
   </td>
-  <td>{{ with $r.author }}<span class="block truncate" title="{{ . }}">{{ . }}</span>{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown author") }}{{ end }}</td>
   <td>
-    {{- if eq $r.sponsorKind "handle" }}<span class="block truncate" title="{{ $r.sponsor }}">{{ $r.sponsor }}</span>
-    {{- else if eq $r.sponsorKind "self" }}<span class="v-muted" title="Sponsored by the author">self</span>
-    {{- else if $r.needsSponsor }}<span class="text-warn v-nowrap">Needs sponsor</span>
-    {{- else }}<span class="v-muted v-nowrap">Not assigned</span>{{ end -}}
+    {{- if eq $r.sponsorKind "handle" }}{{ $r.sponsor -}}
+    {{- else if eq $r.sponsorKind "self" }}<span class="v-faint" title="Sponsored by the author">self</span>
+    {{- else if $r.needsSponsor }}Needs sponsor
+    {{- else }}<span class="v-faint">Not assigned</span>{{ end -}}
   </td>
   {{- if $review }}
   <td>{{ if not $r.reviewKnown }}{{ partial "ui/num.html" (dict "v" nil "na" "not computed yet") }}{{ else if $r.reviewed }}Yes{{ else }}None{{ end }}</td>

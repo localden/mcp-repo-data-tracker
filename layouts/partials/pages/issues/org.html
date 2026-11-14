@@ -1,9 +1,11 @@
-{{- /* /issues/ (brief 3.2a): all repositories. Context: the section page (content/issues/_index.md, .Params.repo empty).
-    1 Repo chips: links to /issues/<repo>/ with metrics.json issues.open_count (navigation, not filters), led by a visible
+{{- /* /issues/ (brief 3.2a): all repositories. Context: the section page (content/issues/_index.md, .Params.repo empty; title
+  "All repositories", the H1; the eyebrow "Issues" comes from the switcher kind).
+    1 Repo chips: navigation chips to /issues/<repo>/ with metrics.json issues.open_count (links, not filters), led by an
       "Open issues" label so the bare counts are not read as waiting counts.
     2 Longest waiting for a maintainer reply: the union of every repo's metrics.json issues.issues_without_maintainer_response,
-      oldest first; Repository · # · Issue (at most 2 tags) · Age · Comments; 25 rows, then "Show all N". No status markers (P4).
-  Data as of = the oldest metrics.json timestamp across the repositories. No chart, so no gap notice. */ -}}
+      oldest first. Columns Repository, Issue (title, then the row meta: number and at most 2 tags), Age, Comments; 25 rows, then
+      "Show all N". No status markers (P4).
+  Updated = the oldest metrics.json timestamp across the repositories. No chart, so no gap callout. */ -}}
 {{- $keys := slice }}{{ $chips := slice }}{{ $rows := slice -}}
 {{- range site.Data.repos.repositories -}}
   {{- $r := partial "data/repo.html" . -}}
@@ -18,7 +20,7 @@
 {{- if $rows }}{{ $rows = sort $rows "age" "desc" }}{{ end -}}
 {{- $n := len $rows -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
-{{ partial "ui/page-head.html" (dict "title" .Title "switch" "issues" "sources" $src
+{{ partial "ui/page-head.html" (dict "title" .Title "eyebrow" "Issues" "repo" "" "switch" "issues" "sources" $src
     "defs" (slice
       (dict "term" "Age" "text" "Calendar days since the issue opened.")
       (dict "term" "Longest waiting for a maintainer reply" "text" "Open issues by non-maintainers with no comment from a maintainer of their repository, at any age, oldest first."))) }}
@@ -28,19 +30,19 @@
 </nav>
 
 <section class="v-section" aria-labelledby="longest-waiting">
-  {{ partial "ui/section-head.html" (dict "title" "Longest waiting for a maintainer reply" "id" "longest-waiting" "caption" "Open issues with no maintainer comment, oldest first") }}
+  {{ partial "ui/section-head.html" (dict "title" "Longest waiting for a maintainer reply" "id" "longest-waiting"
+      "description" "Open issues with no maintainer comment, oldest first.") }}
   {{- if eq $n 0 }}
-  {{ partial "ui/empty.html" (dict "size" "none" "body" "No open issue is waiting for a maintainer reply.") }}
+  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No open issues are waiting for a maintainer reply.") }}
   {{- else }}
   <div data-list id="io" data-limit="25" data-url>
     {{ partial "ui/filterbar.html" (dict "id" "io-search" "label" "Search issues" "placeholder" "Search titles, repositories, labels"
         "noun" "issues" "one" "issue" "total" $n) }}
     <div class="v-card">
       <table class="v-dt is-fixed is-list" id="io-table" aria-labelledby="longest-waiting">
-        <colgroup><col class="v-col-40"><col class="v-col-18"><col class="v-col-auto"><col class="v-col-20"><col class="v-col-24"></colgroup>
+        <colgroup><col class="v-col-40"><col class="v-col-auto"><col class="v-col-20"><col class="v-col-24"></colgroup>
         <thead><tr>
           {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
-          <th scope="col"><span aria-hidden="true">#</span><span class="sr-only">Number</span></th>
           <th scope="col">Issue</th>
           {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true "active" "descending") }}
           {{ partial "ui/th-sort.html" (dict "label" "Comments" "num" true) }}

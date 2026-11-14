@@ -1,18 +1,29 @@
-{{- /* Maintainers of this repository, compact (brief 3.6-6, glossary "Maintainers active"): the maintainers active in the last 30 days
-  as profile links, then the others by name under "No activity in the last 30 days". Replaces a half-width table with one row per
-  person (21 rows on the spec repo, most of them repeating "No activity in 30 days") whose active rows duplicated the name list above it.
-  Dict {act []string (display handles, activity spelling), idle []string, empty string (shown when the group has no members)}.
-  Emits HTML with no outer margin; the caller places it under a heading or as a card body. */ -}}
-{{- if or .act .idle -}}
-  {{- if .act }}
-<ul class="v-chiplinks">{{ range .act }}<li><a class="v-chiplink" href="https://github.com/{{ . }}" target="_blank" rel="noopener">{{ . }}<span class="sr-only"> (opens GitHub)</span></a></li>{{ end }}</ul>
+{{- /* Maintainers of this repository (brief 3.6-6, glossary "Maintainers active", design system v3 §4.8): one card holding a table with
+  one row per maintainer, the active ones first. The GitHub login is the row's single link; the second column reads "Active" or, in
+  text-3, "No activity" for the last 30 days (phones keep it as the row's right-hand value). 10 rows show, "Show all N" reveals the
+  rest (the spec repo has 21). A group with no members says so in the card body. The "n of N active" count lives in the KPI strip.
+  Dict {act []string (display handles, the activity list's spelling), idle []string, empty string}. Emits the card. */ -}}
+{{- $rows := slice -}}
+{{- range .act }}{{ $rows = $rows | append (dict "h" . "on" true) }}{{ end -}}
+{{- range .idle }}{{ $rows = $rows | append (dict "h" . "on" false) }}{{ end -}}
+{{- $lim := 10 }}
+<div class="v-card" data-list id="maintainers" data-limit="{{ $lim }}">
+  {{ partial "ui/card-head.html" (dict "title" "Maintainers of this repository" "id" "maintainers-title") }}
+  {{- if $rows }}
+  <table class="v-dt is-fixed is-list" id="maintainers-table" aria-labelledby="maintainers-title">
+    <colgroup><col class="v-col-auto"><col class="v-col-36"></colgroup>
+    <thead><tr><th scope="col">Maintainer</th><th scope="col">Last 30 days</th></tr></thead>
+    <tbody>
+      {{- range $i, $m := $rows }}
+      <tr data-row data-row-link{{ if ge $i $lim }} data-over{{ end }}>
+        <td class="v-title-cell"><a class="v-row-link" href="https://github.com/{{ $m.h }}" target="_blank" rel="noopener">{{ $m.h }}<span class="sr-only"> (opens GitHub)</span></a></td>
+        <td class="v-verdict">{{ if $m.on }}Active{{ else }}<span class="v-faint">No activity</span>{{ end }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+  {{ partial "ui/more.html" (dict "list" "maintainers" "controls" "maintainers-table" "n" (len $rows) "limit" $lim) }}
   {{- else }}
-<p class="v-empty-text">No maintainer activity in the last 30 days.</p>
+  <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "icon" false "body" .empty) }}</div>
   {{- end }}
-  {{- with .idle }}
-<p class="v-label mt-3">No activity in the last 30 days</p>
-<ul class="v-chiplinks v-caption mt-1">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>
-  {{- end }}
-{{- else -}}
-<p class="v-empty-text">{{ .empty }}</p>
-{{- end -}}
+</div>

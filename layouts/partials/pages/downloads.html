@@ -1,12 +1,17 @@
-{{- /* /downloads/ (brief 3.5): the SDK packages, each compared with itself (question 5). Context: the page.
-  Modules in render order: page head (Data as of = the oldest registry's complete-through day; per-registry method notes and
-  definitions in Data notes), SDK packages table (3.5-1), weekly small multiples (3.5-2), versions in use (3.5-3).
+{{- /* /downloads/ (brief 3.5; design system v3): the SDK packages, each compared with itself (question 5). Context: the page.
+  Modules in render order:
+    page head (v3 §4.2): eyebrow "Downloads", H1 "SDK packages" (the scope, no count); the meta row's clock item is "Complete
+      through" the oldest registry's complete-through day; the one callout carries the gap sentence and the staleness; per-registry
+      method notes and definitions in Data notes
+    Package summary table (3.5-1)
+    Weekly downloads, small multiples (3.5-2)
+    Versions in use (3.5-3)
   Every figure comes from data/downloads.html (complete days only; a missing day is never 0, 5.4) and data/versions.html.
   Nothing is summed or shared across registries (3.1-5, IA-18). */ -}}
 
 {{- /* Packages. One common window end D for every package with at least 7 complete days (3.1-5); a package with fewer keeps its
-     own days and shows them muted with the "n of 7 days" Flag. Same partialCached keys as data/downloads-end.html and
-     ui/sources.html, so each package is read once per build. */ -}}
+     own days and shows them in text-2 with the "n of 7 days" data-quality note. Same partialCached keys as
+     data/downloads-end.html and ui/sources.html, so each package is read once per build. */ -}}
 {{- $common := partialCached "data/downloads-end.html" . "dl-end" -}}
 {{- $base := slice }}{{ $keys := slice }}{{ $regs := slice }}{{ $hasVer := false -}}
 {{- range site.Data.repos.repositories -}}
@@ -35,17 +40,18 @@
   {{- $pkgs = $pkgs | append (dict "r" .r "reg" .reg "d" .d "short" .short "cells" (partial "pages/downloads/cells.html" (dict "p" . "weeks" $last12))) -}}
 {{- end -}}
 
-{{- /* Freshness: one source per registry (complete-through day); Data as of is the oldest, and it is the date the versions
-     staleness rule compares against (3.5-3). */ -}}
+{{- /* Freshness: one source per registry (complete-through day); the oldest is the page's "Complete through" day, and it is the
+     date the versions staleness rule compares against (3.5-3). */ -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
 {{- $asof := "" -}}
 {{- range $src }}{{ with .at }}{{ $day := (time.AsTime .).Format "2006-01-02" }}{{ if or (eq $asof "") (lt $day $asof) }}{{ $asof = $day }}{{ end }}{{ end }}{{ end -}}
 
-{{- /* Gap notice (2.4), built from what the weekly charts leave out. A weekly bin needs all 7 days (5.4), so a 1- or 2-day npm miss
-     blanks a week as surely as the outage does; a notice about 3-day runs only named C# while the TypeScript chart showed five gap
-     bands. Per package with a chart: the weeks in the shared domain, from its first complete day on (earlier weeks are before
-     tracking, not gaps), that have a missing day. The notice counts them and names the outage when one touches it; Data notes list
-     the weeks. After the backfill only what cannot be rebuilt remains (NuGet freeze days, the outage for NuGet). */ -}}
+{{- /* Gap sentence for the page callout (2.4, v3 §4.2), built from what the weekly charts leave out. A weekly bin needs all 7 days
+     (5.4), so a 1- or 2-day npm miss blanks a week as surely as the outage does. Per package with a chart: the weeks in the shared
+     domain, from its first complete day on (earlier weeks are before tracking, not gaps), that have a missing day. The sentence
+     counts them and names the outage when one touches it; Data notes list the weeks. page-head prints a string gap after the
+     "Data gap:" lead, so it starts lower-case. After the backfill only what cannot be rebuilt remains (NuGet freeze days, the outage
+     for NuGet). */ -}}
 {{- $o := partial "data/outage.html" . -}}
 {{- $gapParts := slice }}{{ $gapNotes := slice }}{{ $gapOutage := false -}}
 {{- if $wTo -}}
@@ -78,7 +84,7 @@
 {{- end -}}
 {{- $gap := "" -}}
 {{- with $gapParts -}}
-  {{- $gap = printf "Weeks with a missing day are not plotted: %s%s." (delimit . ", " " and ") (cond $gapOutage (printf ", including %s (collection outage)" $o.range) "") -}}
+  {{- $gap = printf "weeks with a missing day are not plotted (%s)%s." (delimit . ", " " and ") (cond $gapOutage (printf ", including the %s collection outage" $o.range) "") -}}
 {{- end -}}
 
 {{- /* Data notes: how each registry counts a day (3.5-0), then the definitions behind the columns (4.6 n). */ -}}
@@ -97,26 +103,26 @@
   (dict "term" "Lifetime" "text" "The registry's lifetime total. npm reports none, so its figure is a running sum of daily counts since tracking began.")
   (dict "term" "Versions in use" "text" "PyPI: downloads per version over the last 30 complete days. npm: the registry's count for the last 7 days. NuGet, RubyGems and crates.io: the change in each version's lifetime total over 30 days.") -}}
 
-{{- $h1 := printf "Downloads · %s" (partial "ui/plural.html" (dict "n" (len $base) "one" "SDK package")) }}
-{{ partial "ui/page-head.html" (dict "title" $h1 "sources" $src "gap" $gap "notes" $notes "defs" $defs) }}
+{{- /* H1 = the scope (v3 §4.2); the package count is in the table, not the title */ -}}
+{{ partial "ui/page-head.html" (dict "title" (.Title | default "SDK packages") "eyebrow" "Downloads" "sources" $src "gap" $gap "notes" $notes "defs" $defs) }}
 
 {{- if $pkgs }}
 <section class="v-section" aria-labelledby="packages">
-  {{ partial "ui/section-head.html" (dict "title" "SDK packages" "id" "packages"
-      "caption" "Complete days only. Registries count downloads differently, so each package is compared with itself.") }}
+  {{ partial "ui/section-head.html" (dict "title" "Package summary" "id" "packages"
+      "description" "Complete days only; registries count downloads differently, so each package is compared with itself.") }}
   {{ partial "pages/downloads/table.html" (dict "pkgs" $pkgs "window" $common.window "weeks" $last12 "id" "packages") }}
 </section>
 
 <section class="v-section" aria-labelledby="weekly-downloads">
   {{ partial "ui/section-head.html" (dict "title" "Weekly downloads" "id" "weekly-downloads"
-      "caption" "Complete weeks, Monday to Sunday, with the last 7 days beside each name. Each chart has its own scale.") }}
+      "description" "Complete Monday-to-Sunday weeks, with the last 7 days beside each name; each chart has its own scale.") }}
   {{ partial "pages/downloads/weekly.html" (dict "pkgs" $pkgs "from" $wFrom "to" $wTo) }}
 </section>
 {{- if $hasVer }}
 
 <section class="v-section" aria-labelledby="versions-in-use">
   {{ partial "ui/section-head.html" (dict "title" "Versions in use" "id" "versions-in-use"
-      "caption" "Top 8 versions by downloads in the last 30 days; npm reports the last 7 days.") }}
+      "description" "Top 8 versions by downloads in the last 30 days; npm reports the last 7 days.") }}
   {{ partial "pages/downloads/versions.html" (dict "pkgs" $pkgs "asof" $asof) }}
 </section>
 {{- end }}

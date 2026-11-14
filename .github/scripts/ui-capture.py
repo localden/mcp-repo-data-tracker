@@ -46,9 +46,11 @@ MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('mobile', 'dark', 3, ('menu',))]
 AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 SERIOUS = ('serious', 'critical')
-# brief §4.1 defines eight size/weight roles (title, heading, subhead, body 400, body 500, label, caption, figure); the check
-# counts text inside <main> only, so header/footer chrome (brand, nav, build hash) is outside the page's type budget.
-MAX_FONT_COMBOS = 8
+# design system v3 §2: seven roles (display 30/600, title 24/600, heading 17/600, subhead 14/600, body 14/400, small 13/400,
+# label 11/600) plus body 500 (row titles) and small 500 (buttons, segments, chips, data-quality notes) = 9; v3 §4.7 and §4.2 add
+# two fixed combinations the role table does not list: the delta badge (12/600) and the page callout's lead (13/600). Phone sizes
+# swap within the same combinations. The check counts text inside <main> only, so header/footer chrome is outside the budget.
+MAX_FONT_COMBOS = 11
 # brief §5.10 / §7.4 item 8: (check name, tokens in slot order, validator flags). Backlog age is a one-hue ramp, light = young.
 PALETTE_SETS = [('categorical', ['--chart-1', '--chart-2'], []),
                 ('ordinal-stages', ['--ord-1', '--ord-2', '--ord-3', '--ord-4'], ['--ordinal']),
@@ -57,7 +59,9 @@ PALETTE_SETS = [('categorical', ['--chart-1', '--chart-2'], []),
 TEXT_BANS = [(re.compile(r'\b1000(?:\.0+)?K\b'), '1000K'), (re.compile(r'\bNaN\b'), 'NaN'),
              (re.compile(r'\bundefined\b'), 'undefined'), (re.compile('Suspect'), 'Suspect'),
              (re.compile('Over target'), 'Over target'), (re.compile('Past SLA'), 'Past SLA'),
-             (re.compile(r'\d[¹²³⁰⁴-⁹]'), 'superscript digit on a number')]
+             (re.compile(r'\d[¹²³⁰⁴-⁹]'), 'superscript digit on a number'),
+             # design system v3 §0.1: no glyph separators anywhere in rendered text (U+00B7 middot, U+2022 bullet)
+             (re.compile('[' + chr(0xB7) + chr(0x2022) + ']'), 'glyph separator (middot or bullet)')]
 RULES = {
     'capture': 'the capture itself ran (an error here means the page could not be rendered or probed)',
     'states': 'the state captures ran (an error here stopped the remaining states of that capture)',
@@ -72,10 +76,11 @@ RULES = {
     'kbd-menu-open': 'Enter on the scope switcher (or the Repositories menu) expands it and focuses the current item',
     'kbd-menu-escape': 'ArrowDown then Escape collapses it and returns focus to the button',
     'kbd-menu-activate': 'activating a repo link loads a page whose document.title names the repo',
-    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations inside <main> (brief 4.1 roles: title, heading, '
-                   'subhead, body, body 500, label, caption, figure); reports/<capture>.json fontSamples names one element per combo',
-    'text-bans': '1000K, NaN, undefined, Suspect, Over target, Past SLA, a superscript digit on a number, a · that starts a '
-                 'rendered line (layout probe: real line boxes, so sr-only spans never fake a line break)',
+    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations inside <main> (design system v3 §2 roles: display, '
+                   'title, heading, subhead, body, small, label, plus body 500, small 500, the delta badge and the callout lead); '
+                   'reports/<capture>.json fontSamples names one element per combo',
+    'text-bans': '1000K, NaN, undefined, Suspect, Over target, Past SLA, a superscript digit on a number, and any middot or bullet '
+                 'glyph anywhere in the rendered text (design system v3 §0.1)',
     'cell-overflow': 'no table cell content runs past its cell (a fixed column narrower than its header or value)',
     'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
@@ -113,7 +118,7 @@ PROBE = r"""() => {
   // table cells whose content runs past the cell (fixed columns narrower than a header or value)
   const cellOverflow = [...document.querySelectorAll('.v-dt th, .v-dt td')].filter(shown).filter(c => c.scrollWidth > c.clientWidth + 1)
     .slice(0, 25).map(c => ({ el: path(c), text: (c.innerText || '').trim().slice(0, 60), over: c.scrollWidth - c.clientWidth }));
-  // a "·" that starts a visual line: the previous visible character sits on an earlier line (wrapped meta lines)
+  // a middot (U+00B7) that starts a visual line: the previous visible character sits on an earlier line (wrapped meta lines)
   const dots = [], tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const at = (n, i) => { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1); const b = r.getClientRects(); return b.length ? b[0] : null; };
   const visible = el => (el.checkVisibility ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true, opacityProperty: true, visibilityProperty: true }) : shown(el)) && !tiny(el);
@@ -123,7 +128,7 @@ PROBE = r"""() => {
     if (!p || !t.trim() || !visible(p)) continue;
     for (let i = 0; i < t.length; i++) {
       if (/\s/.test(t[i])) continue;
-      if (t[i] === '·') { const d = at(n, i), q = prev && at(prev[0], prev[1]);
+      if (t.charCodeAt(i) === 0xB7) { const d = at(n, i), q = prev && at(prev[0], prev[1]);
         if (d && d.width > 0 && (!q || q.bottom <= d.top + 1)) dots.push({ el: path(p), text: (p.innerText || t).trim().slice(0, 80) }); }
       prev = [n, i];
     }
@@ -528,8 +533,7 @@ def text_bans(text):
     for rx, label in TEXT_BANS:
         for m in list(rx.finditer(text))[:3]:
             hits.append(f"{label}: '...{text[max(0, m.start() - 30):m.end() + 30]}...'".replace('\n', ' '))
-    # "a line starting with ·" is judged on rendered line boxes (rep['lineStartDots']), not on innerText: innerText breaks lines
-    # around position:absolute sr-only spans, which faked "· 7 of 9 repos" lines that never render.
+    # any middot/bullet is a hit now (TEXT_BANS); rep['lineStartDots'] still names where a dot starts a rendered line.
     return hits
 
 
@@ -550,7 +554,7 @@ def page_checks(cid, vp, rep, page_text):
     record('font-combos', cid, len(fonts) <= MAX_FONT_COMBOS, detail)
     co = rep.get('cellOverflow', [])
     record('cell-overflow', cid, not co, '; '.join(f"{c['el']} {c['text']!r} +{c['over']}px" for c in co[:5]) or 'none')
-    hits = text_bans(page_text) + [f"· starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']]
+    hits = text_bans(page_text) + [f"a middot starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']]
     record('text-bans', cid, not hits, '; '.join(hits[:8]) + (f' (+{len(hits) - 8} more)' if len(hits) > 8 else '') or 'none')
     cv = rep['canvases']
     bad = [c for c in cv if not c['metric'] or not c['label'] or c['metric'].lower() not in c['label'].lower()

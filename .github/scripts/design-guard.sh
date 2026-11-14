@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# VISR design-system guard (redesign brief §4, §6.4, §7.3, §9 WP0). Fails the build on banned patterns.
+# VISR design-system guard (design system v3 §5; redesign brief §6.4, §7.3). Fails the build on banned patterns.
 # The layouts/ rules grep a copy of layouts/ with {{/* */}} and <!-- --> comments blanked (line numbers
-# kept), so a comment that names a banned pattern never fires. main.css and static/js have their own checks.
+# kept), so a comment that names a banned pattern never fires. Exception: the glyph-separator rule reads the raw
+# files in layouts/, static/js/ and content/, comments included (v3 §0.1: the dot is banned everywhere).
+# main.css has its own checks.
 set -u
 root=$(cd "$(dirname "$0")/../.." && pwd)
 tmp=$(mktemp -d)
@@ -44,30 +46,49 @@ check "emoji / glyph controls"                                 '💬|🤖|⭐|�
 check "inline style (only the --v/--n custom properties)"      'style="' 'style="--(v|n):'
 report "<script> outside head.html/baseof.html" "$(grep -rln --include='*.html' '<script' layouts/ 2>/dev/null | grep -vE '^layouts/(partials/head|_default/baseof)\.html$')"
 
-# ---------------------------------------------------------------- deleted components and markup (§4.6, §4.7)
-check "deleted component class: .v-pill is a plain caption tag, .v-dot/.v-edge-crit are the status icon + text, .v-fn goes to Data notes, .v-twin is the Table toggle (§4.7)" \
+# ---------------------------------------------------------------- deleted components and markup (brief §4.7, design system v3 §5)
+check "deleted component class: .v-pill is a plain tag (ui/tag.html), .v-dot/.v-edge-crit are the status icon + text (ui/status.html), .v-fn goes to Data notes, .v-twin is the Table toggle" \
   'class="([^"]*[^a-z0-9-])?v-(pill|dot|edge-crit|fn|twin)([^a-z0-9]|$)'
+check "retired v2 class: .v-flag is the inline data-quality note (ui/note.html, .v-dq); .v-gap-note is the page callout (ui/page-head.html); .v-tt/.v-notes-btn/.v-menu-btn/.v-icon-btn are .v-btn (v3 §4.9, §4.18)" \
+  'class="([^"]*[^a-z0-9-])?v-(flag|gap-note|gap-tail|tt|notes-btn|menu-btn|icon-btn|kpi-funnel|kpi-filtering|kpi-ctx)([^a-z0-9-]|$)'
+check "inverted segmented control: the selected segment is surface on the surface-2 track, never black (v3 §4.11)" \
+  'class="[^"]*\b(v-tabs?-(inverted|dark|solid)|is-inverted)\b'
+check "button that is not a v3 component: use .v-btn / .v-btn-sm (segments, chips, filter tiles, the field clear and sortable headers are their own components) (v3 §4.9)" \
+  '<button\b' '\bv-(btn|tab|chip|kpi|field-clear|nav-item)\b|data-sort[^>]*>[[:space:]]*<button'
+check "underlined text at rest: links underline on hover only (prose inside Data notes is the one exception) (v3 §4.10, §5)" \
+  'class="[^"]*\b(underline|decoration-[a-z0-9-]+)\b'
+check "uppercase outside the label role: uppercase comes only from .v-label / table headers / KPI labels / the eyebrow (v3 §2, §5)" \
+  'class="[^"]*\b(uppercase|tracking-[a-z]+)\b'
 check "<details> is banned: disclosures are button[aria-expanded][aria-controls] + a hidden panel, charts use the Table toggle (§4.6 o, s)" '<details[ >]'
 check "superscript footnote: definitions go in the line-2 caption, the tile qualifier, a title or Data notes (§4.6 n)" \
   '<sup[ >]|¹|²|³|⁰|⁴|⁵|⁶|⁷|⁸|⁹'
 check "font-mono only on .v-code: mono is for paths, versions and hashes, never handles, repos, #ids, SEPs or packages (§4.1)" \
   'class="[^"]*\bfont-mono\b' 'class="[^"]*\bv-code\b[^"]*\bfont-mono\b|class="[^"]*\bfont-mono\b[^"]*\bv-code\b'
 
-# ---------------------------------------------------------------- copy (§6.1, §6.4); "·" stays allowed between items of a caption line
-check "· inside a KPI label, section title or card title: put the window or rule on the second line in words (§6.1 rule 1)" \
-  'class="([^"]* )?v-(kpi-label|section-title|card-title)( [^"]*)?"[^>]*>[^<]*(·|&middot;)'
-check "· in the title/label passed to section-head, card or kpi: put the window or rule on the second line (§6.1 rule 1)" \
-  'partial(Cached)? "ui/(section-head|card|kpi)\.html"[^}]*"(title|label)" +"[^"]*(·|&middot;)'
-check "· in a column header's first line: the rule goes in the line-2 span.sub (§4.6 e)" \
-  '<th( [^>]*)?>[^<]*(·|&middot;)' 'scope="row"'
-check "window suffix ' · 24h / 7d / 30d': write the window in words on its own line (§6.4; 'team SLA · 24h' is the glossary qualifier)" \
-  '(^|[^A]|[^L]A|[^S]LA) (·|&middot;) (24h|7d|30d)\b'
-check "banned copy: invented targets, SLA badges, Suspect/Partial (use the 'n of 7 days' Flag), interaction narration (§6.4)" \
-  'Over target|× target|Past SLA|SLA: |\bSuspect\b|\bPartial\b|\bWatch\b|/ 25\b|Rows open on GitHub|Select a |Counts open|Package names open'
+# ---------------------------------------------------------------- separators (design system v3 §0.1, §5)
+# No glyph separators anywhere: not in markup, strings, comments, front matter or scripts. Separate items with layout (flex gap,
+# separate lines, icons as item markers) or real words (commas, "on", "by", "since"). Raw files, comments included.
+# The glyphs are written as UTF-8 byte escapes (U+00B7 middot, U+2022 bullet) so this script holds no separator glyph itself.
+glyph_re=$'\xc2\xb7|\xe2\x80\xa2|&mid''dot;|&#183;|&#[xX][bB]7;|&bu''ll;|&#8226;|&#[xX]2022;'
+report "glyph separator (middot or bullet) in layouts/, static/js/ or content/: use layout or words, never a dot (design system v3 §0.1)" \
+  "$(cd "$root" && grep -rnE -e "$glyph_re" layouts static/js content 2>/dev/null)"
+# " | " between items in rendered text: Go template actions are blanked first (across lines), so only literal markup text is checked.
+read -r -d '' pipe_scan <<'PERL'
+local $/; my $t = <>;
+$t =~ s{\{\{.*?\}\}}{my $m = $&; $m =~ tr/\n//cd; $m}gse;
+my $n = 0;
+for my $l (split /\n/, $t, -1) { $n++; print "$ARGV:$n: $l\n" if $l =~ /(^|[^|])\s\|\s([^|]|$)/; }
+PERL
+pipe_hits=$(find layouts -type f -name '*.html' | while IFS= read -r f; do perl -e "$pipe_scan" "$f"; done)
+report "' | ' used as a separator in template text: use layout or words (design system v3 §0.1)" "$pipe_hits"
+check "em dash used as a separator (' — ' between words): use layout or words; a lone '—' for a missing value is fine (design system v3 §0.1)" \
+  $'[^ >"]+ \xe2\x80\x94 [^ <"]+'
+
+# ---------------------------------------------------------------- copy (brief §6.1, §6.4)
+check "banned copy: invented targets, SLA badges, Suspect/Partial (use the 'n of 7 days' data-quality note), interaction narration (§6.4; 'Team SLA: 7 days' is the v3 §0.1 form and allowed)" \
+  'Over target|× target|Past SLA|\bSuspect\b|\bPartial\b|\bWatch\b|/ 25\b|Rows open on GitHub|Select a |Counts open|Package names open'
 check "classifier tier name rendered as text: map it through the page-local dictionary (§6.5; quoted Go strings, e.g. dict keys, are allowed)" \
   '(^|[^"A-Za-z])(We.{1,7}re blocking someone|Not our move|Bot corner|High leverage|Hygiene|Intake)\b'
-check "numbered tier prefix ('1 · '): tiers are named, not numbered (§6.4)" \
-  '(>|"|^)\s*[1-9] (·|&middot;) '
 check "raw registry key as a name: use ui/registry-name.html (npm, PyPI, NuGet, crates.io, RubyGems) (§6.1 rule 6)" \
   '>\s*(pypi|nuget|crates|rubygems)\s*<'
 check_in "'Daily' or 'Share' as a downloads label: the columns are Last 7 days, Change, 12 weeks, Last 30 days, Lifetime (§6.4, §6.5)" \
@@ -94,7 +115,7 @@ for my $ch (split //, $css) {
       print "outline\t$at\n"
         if ($d =~ /^outline(-style|-width)?\s*:\s*(none|0(px)?)\s*(!important)?$/i or $d =~ /^\@apply\b.*\boutline-(none|0)\b/)
            and $sel !~ /\.v-field input\b/;
-      print "separator\t$at\n" if $d =~ /^content\s*:.*(\xc2\xb7|\\0*b7\b)/i;
+      print "separator\t$at\n" if $d =~ /^content\s*:.*(\xc2\xb7|\xe2\x80\xa2|\\0*b7\b|\\0*2022\b|\||\xe2\x80\x94)/i;
     }
     pop @stack if $ch eq '}';
     $buf = '';
@@ -106,7 +127,7 @@ if [ -f "$root/assets/css/main.css" ]; then
   scan=$(perl -e "$css_scan" "$root/assets/css/main.css")
   report "outline: none/0 removes the focus ring; only the .v-field input rule may use it, its wrapper draws :focus-within (§7.3 A2)" \
     "$(printf '%s\n' "$scan" | awk -F'\t' '$1 == "outline" { print $2 }')"
-  report "· generated by CSS content: separators are real text inside a nowrap span, never ::before (§6.1 rule 2, §4.6 a)" \
+  report "separator generated by CSS content (middot, bullet, pipe or em dash): separate items with layout or words, never ::before/::after (design system v3 §0.1)" \
     "$(printf '%s\n' "$scan" | awk -F'\t' '$1 == "separator" { print $2 }')"
 fi
 if [ -e "$root/static/js/repo-picker.js" ]; then report "static/js/repo-picker.js must not exist: the scope is the URL and the switcher is ui/menu.html + menu.js (§2.3)" "static/js/repo-picker.js"; fi

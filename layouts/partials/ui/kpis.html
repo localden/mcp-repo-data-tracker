@@ -1,9 +1,18 @@
-{{- /* KPI row (brief 4.4, 4.6 d, 7.1 R6): one card holding the tiles, 1px dividers between them, no per-tile boxes.
-  Dict {tiles, label, id}. tiles: slice of ui/kpi.html dicts (2-6). Columns: one per tile at >= 64rem, 2 below (an odd last tile spans 2).
-  label: optional aria-label for the group. */ -}}
+{{- /* KPI strip (design system v3 §4.5): one card, 3 or 4 equal tiles in a grid, 1px dividers, every tile the same height.
+  Dict {tiles, label, id}. tiles: slice of ui/kpi.html dicts. Columns: one per tile from 48rem, 2 below (an odd last tile spans 2).
+  label: optional aria-label for the group.
+  Never 1 or 2 tiles: two or fewer facts are a stat list (v3 §4.6), so with fewer than 3 tiles this renders the same facts as a
+  ui/stats.html list inside a card (and warns at build time so the page can say so explicitly). More than 4 tiles also warns. */ -}}
 {{- $tiles := .tiles | default slice -}}
-{{- if $tiles -}}
-<div class="v-card v-kpis" style="--n:{{ len $tiles }}"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
+{{- $n := len $tiles -}}
+{{- if gt $n 4 }}{{ warnf "VISR ui/kpis: %d tiles; a KPI strip holds 3 or 4 (design system v3 §4.5)" $n }}{{ end -}}
+{{- if ge $n 3 -}}
+<div class="v-card v-kpis" style="--n:{{ $n }}"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
   {{- range $tiles }}{{ partial "ui/kpi.html" . }}{{ end -}}
+</div>
+{{- else if gt $n 0 -}}
+{{- warnf "VISR ui/kpis: %d tiles; two or fewer facts are a stat list, rendered as ui/stats.html (design system v3 §4.5)" $n -}}
+<div class="v-card"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
+  <div class="v-card-body"><dl class="v-stats">{{ range $tiles }}{{ partial "ui/kpi.html" (merge . (dict "variant" "stat")) }}{{ end }}</dl></div>
 </div>
 {{- end -}}

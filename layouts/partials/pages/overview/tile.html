@@ -1,30 +1,37 @@
-{{- /* One Overview KPI tile as a ui/kpi.html dict (brief 3.1-1, 4.6 d). Returns a dict, never prints.
-  Call: partial "pages/overview/tile.html" (dict "label" "Issues waiting for a reply" "title" "definition" "value" $sum.v
-          "line1" "no maintainer reply after 7 days" ["cmp" (partial "pages/overview/org-delta.html" path)]
-          "weekly" (partial "data/org-weekly.html" (dict "path" path "weeks" 12)))
-  Context line 1 is line1. Line 2 is the dated delta (down is good: these are waiting counts) when cmp found an earlier snapshot.
-  When the comparison, or else the newest sparkline week, covers fewer than every tracked repository, the last line ends with
-  "(7 of 9 repos)" (brief 3.1: one gapped repository never blanks the tile, and the reader is told what the number covers).
-  Parentheses, not "·": ui/delta.html ends in an sr-only ", worsening" span, which text extraction (and some screen readers) treat
-  as its own line, so a separator after it would start a line (text-ban check, brief 4.6 a). On phones the tail is hidden so the
-  delta stays on one line and the tile stays short (R6). */ -}}
+{{- /* One Overview KPI tile as a ui/kpi.html dict (brief 3.1-1, design system v3 §4.5, §4.7). Returns a dict, never prints.
+  Call: partial "pages/overview/tile.html" (dict "label" "Issues waiting for a reply" ["labelShort" "Issues waiting"] "title" "definition"
+          "value" $sum.v ["line1" "no maintainer reply after 7 days"] "weekly" (partial "data/org-weekly.html" (dict "path" path "weeks" 12))
+          ["cmp" (partial "pages/overview/org-delta.html" path)] ["net" 114.0])
+    line1: caption line 1, the qualifier.
+    cmp: a dated comparison (pages/overview/org-delta.html). The tile gets a delta badge in the value row (down is good: these are
+      waiting counts) and caption line 2 names the base, "vs Oct 7".
+    net: a 30-day net change (opened minus closed). The tile gets a delta badge (down is good: a growing backlog is bad) and caption
+      line 2 "net change in 30 days". cmp wins when both are given.
+  Coverage: when the comparison, or else the newest sparkline week, covers fewer than every tracked repository, caption line 2 ends
+  with ", 7 of 9 repos" (brief 3.1: one gapped repository never blanks the tile, and the reader is told what the number covers);
+  without a comparison the coverage is caption line 2 on its own ("8 of 9 repos"). On phones only caption line 1 shows. */ -}}
 {{- $c := . -}}
 {{- $total := len site.Data.repos.repositories -}}
-{{- $pts := slice }}{{ $latestN := $total -}}
-{{- with $c.weekly }}{{ $pts = .points | default slice }}{{ if gt .n 0 }}{{ $latestN = .n_latest }}{{ end }}{{ end -}}
-{{- $line2 := "" }}{{ $k := $latestN -}}
+{{- $pts := slice }}{{ $k := $total -}}
+{{- with $c.weekly }}{{ $pts = .points | default slice }}{{ if gt .n 0 }}{{ $k = int .n_latest }}{{ end }}{{ end -}}
+{{- $delta := dict }}{{ $base := "" -}}
 {{- with $c.cmp }}{{ if ne .prev nil -}}
-  {{- $line2 = trim (string (partial "ui/delta.html" (dict "cur" .cur "prev" .prev "date" .date "polarity" "down"))) " \n" -}}
-  {{- $k = .k -}}
+  {{- $delta = dict "cur" .cur "prev" .prev "polarity" "down" -}}
+  {{- $base = printf "vs %s" (partial "ui/date.html" (dict "d" .date "style" "short")) -}}
+  {{- $k = int .k -}}
 {{- end }}{{ end -}}
-{{- $cover := "" }}{{ if lt $k $total }}{{ $cover = printf "(%d of %d repos)" (int $k) $total }}{{ end -}}
-{{- $line1 := $c.line1 | default "" -}}
-{{- $tile := dict "label" $c.label "labelTitle" $c.title "value" $c.value "points" $pts -}}
-{{- if $line2 -}}
-  {{- with $cover }}{{ $line2 = printf `%s<span class="v-muted max-sm:hidden"> %s</span>` $line2 . }}{{ end -}}
-  {{- $tile = merge $tile (dict "qualifier" $line1 "context" ($line2 | safeHTML)) -}}
-{{- else -}}
-  {{- with $cover }}{{ $line1 = cond (ne $line1 "") (printf "%s %s" $line1 .) . }}{{ end -}}
-  {{- $tile = merge $tile (dict "qualifier" $line1) -}}
+{{- if and (eq $base "") (isset $c "net") -}}
+  {{- $delta = dict "cur" (float $c.net) "prev" 0.0 "polarity" "down" -}}
+  {{- $base = "net change in 30 days" -}}
+{{- end -}}
+{{- $cover := "" }}{{ if lt $k $total }}{{ $cover = printf "%d of %d repos" $k $total }}{{ end -}}
+{{- $tile := dict "label" $c.label "labelTitle" ($c.title | default "") "value" $c.value "points" $pts "qualifier" ($c.line1 | default "") -}}
+{{- with $c.labelShort }}{{ $tile = merge $tile (dict "labelShort" .) }}{{ end -}}
+{{- if ne $base "" -}}
+  {{- with $cover }}{{ $base = printf "%s, %s" $base . }}{{ end -}}
+  {{- /* the comparison goes in as "suffix" (no "date"), so ui/kpi.html prints it verbatim as caption line 2 */ -}}
+  {{- $tile = merge $tile (dict "delta" (merge $delta (dict "suffix" $base))) -}}
+{{- else if ne $cover "" -}}
+  {{- $tile = merge $tile (dict "context" $cover) -}}
 {{- end -}}
 {{- return $tile -}}

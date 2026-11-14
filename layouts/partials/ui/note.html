@@ -1,0 +1,6 @@
+{{- /* Data-quality note (design system v3 §4.18): inline, never boxed. small 500 --warning text with a 14px info icon
+  ("4 of 7 days", "Tracking since Nov 10", "Version data stopped on Nov 10"). In a table cell (or a .v-kv value or stat value) it sits on its
+  own line under the value. The only boxed warning on a page is the page-head callout.
+  Call with the text or a dict {text, title}. Empty text renders nothing. ui/flag.html is an alias that renders this note. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
+{{- with $c.text }}<span class="v-dq"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ partial "ui/icon.html" (dict "name" "info" "size" 14) }}<span>{{ . }}</span></span>{{ end -}}

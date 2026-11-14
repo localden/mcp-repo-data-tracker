@@ -1,6 +1,6 @@
 {{- /* Whole-day wait for the "Waiting" and "Waiting on us" columns (brief 3.3b-2, 6.3: d = calendar days, no decimals, no year unit;
      Age columns use ui/dur.html with years instead). Input: a number of days, or nil. Returns dict {short, long, html, v}:
-     short "41d" / "<1d", long "41 days" for screen readers, html = short aria-hidden + long sr-only, v = the rounded number (or nil). */ -}}
+     short "41d" or "<1d", long "41 days" for screen readers, html = short aria-hidden + long sr-only, v = the rounded number (or nil). */ -}}
 {{- $has := ne . nil -}}
 {{- $short := "—" }}{{ $long := "not tracked" }}{{ $d := 0.0 -}}
 {{- if $has -}}

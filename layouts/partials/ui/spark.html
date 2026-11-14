@@ -1,14 +1,19 @@
-{{- /* SVG sparkline (§5.12). Emits nothing below 4 non-null points: the caller shows "Tracking since …" instead (§5.5).
+{{- /* SVG sparkline (design system v3 §4.15). Emits nothing below 4 non-null points: the caller shows "Tracking since …" instead.
   Call: partial "ui/spark.html" (dict "points" $bins.points ["kind" "count|duration|column"] ["size" "tile|cell|mini"] ["crit" true])
-    kind "column": weekly flows (downloads) as 12 columns on a baseline instead of a line; a nil week is an empty slot, and it
-    renders from 1 week with a value (no 4-point minimum). Each column's title names its week and value; the strip is aria-hidden.
-    points: [{date, value|nil}] (12 ISO weeks from data/week-bins.html or data/org-weekly.html); x is placed by date. A missing
-    stretch between two values is bridged by a thin dashed connector (.v-spark-gap), so the end dot never floats alone at 32px
-    (the full charts show the same hole as a gap band); leading and trailing nulls draw nothing. y spans at least max(25% of |max|, 4) for counts, 25% of |max| for durations, so flat data reads flat.
-    size: tile 100% x 32px, cell 100% x 24px (table cells), mini 80 x 20px (adoption table). crit: end dot in --status-critical.
-  Dots are zero-length round-capped strokes with non-scaling width, so they stay round under preserveAspectRatio="none". */ -}}
+    Line: --accent 1.5px, a 10% --accent area fill down to the baseline, an end dot r 3.5 in --accent with a 2px --surface ring.
+    Gaps: the line breaks; a 1px dashed connector in text-3 at 50% bridges a gap only between two drawn points (leading and trailing
+    nulls draw nothing). crit: true (overdue tiles) draws line, area and dot in --danger.
+    size: tile 100% x 40px (KPI tiles); cell and mini 80 x 24px (table cells; no area).
+    points: [{date, value|nil}] (12 ISO weeks from data/week-bins.html or data/org-weekly.html); x is placed by date across the window.
+    y spans at least max(25% of |max|, 4) for counts, 25% of |max| for durations, so flat data reads flat.
+    kind "column": weekly flows (downloads) as one accent column per week on a baseline; a nil week is an empty slot (never a zero
+    bar), a week with a value never drops below a 6% sliver; renders from 1 week with a value. Each column's title names its week.
+  The SVG is aria-hidden: always print the value next to it. Dots are zero-length round-capped strokes with non-scaling width, so they
+  stay round under preserveAspectRatio="none". */ -}}
 {{- $pts := .points | default slice -}}
-{{- $h := index (dict "tile" 32.0 "cell" 24.0 "mini" 20.0) (.size | default "tile") | default 32.0 -}}
+{{- $size := .size | default "tile" -}}
+{{- $h := cond (eq $size "tile") 40.0 24.0 -}}
+{{- $area := eq $size "tile" -}}
 {{- $n := 0 }}{{ $lo := 0.0 }}{{ $hi := 0.0 -}}
 {{- range $pts -}}
   {{- if ne .value nil -}}
@@ -17,10 +22,8 @@
   {{- end -}}
 {{- end -}}
 {{- if eq .kind "column" -}}
-  {{- /* flows (downloads, §5.1): one column per week on a 1px baseline, scaled to the largest week; a nil week is an empty slot,
-       never a zero bar; a week with a value never drops below a 6% sliver. Emits nothing when no week is above 0. */ -}}
   {{- if gt $hi 0.0 -}}
-<span class="v-spark-cols is-{{ .size | default "tile" }}" aria-hidden="true">
+<span class="v-spark-cols is-{{ $size }}" aria-hidden="true">
     {{- range $pts -}}
       {{- $wk := (time.AsTime .date).Format "Jan 2" -}}
       {{- if ne .value nil -}}
@@ -33,7 +36,6 @@
 </span>
   {{- end -}}
 {{- else if ge $n 4 -}}
-  {{- /* x spans the whole requested window (first to last label), not only the weeks with data. */ -}}
   {{- $t0 := (time.AsTime (index $pts 0).date).Unix }}{{ $t1 := (time.AsTime (index $pts (sub (len $pts) 1)).date).Unix -}}
   {{- $minSpan := mul 0.25 (math.Abs $hi) -}}
   {{- if ne .kind "duration" }}{{ $minSpan = math.Max $minSpan 4.0 }}{{ end -}}
@@ -43,23 +45,28 @@
     {{- $mid := div (add $hi $lo) 2.0 }}{{ $lo = sub $mid (div $minSpan 2.0) }}{{ $hi = add $mid (div $minSpan 2.0) -}}
     {{- if and $nonNeg (lt $lo 0.0) }}{{ $hi = sub $hi $lo }}{{ $lo = 0.0 }}{{ end -}}
   {{- end -}}
-  {{- $pad := 6.0 }}{{ $span := sub $hi $lo }}{{ $tspan := float (math.Max 1 (sub $t1 $t0)) -}}
-  {{- $d := "" }}{{ $gaps := "" }}{{ $dots := slice }}{{ $run := 0 }}{{ $lx := 0.0 }}{{ $ly := 0.0 }}{{ $prevPt := "" -}}
+  {{- $pad := 5.0 }}{{ $span := sub $hi $lo }}{{ $tspan := float (math.Max 1 (sub $t1 $t0)) -}}
+  {{- $base := printf "%.2f" $h -}}
+  {{- $d := "" }}{{ $fill := "" }}{{ $seg := "" }}{{ $gaps := "" }}{{ $dots := slice }}{{ $run := 0 }}{{ $lx := 0.0 }}{{ $ly := 0.0 }}{{ $prevPt := "" }}{{ $prevX := "" -}}
   {{- range $pts -}}
     {{- if ne .value nil -}}
       {{- $x := mul 100.0 (div (float (sub (time.AsTime .date).Unix $t0)) $tspan) -}}
       {{- $y := sub (sub $h $pad) (mul (div (sub (float .value) $lo) $span) (sub $h (mul 2.0 $pad))) -}}
       {{- $p := printf "%.2f,%.2f" $x $y -}}
-      {{- /* a run that starts after a hole is bridged from the last point before it ($prevPt survives the null run) */ -}}
       {{- if eq $run 0 -}}
+        {{- /* a run that starts after a hole is bridged from the last point before it ($prevPt survives the null run) */ -}}
         {{- with $prevPt }}{{ $gaps = printf "%s M%s L%s" $gaps . $p }}{{ end -}}
         {{- $d = printf "%sM%s" $d $p -}}
-      {{- else }}{{ $d = printf "%s L%s" $d $p }}{{ end -}}
-      {{- $run = add $run 1 }}{{ $lx = $x }}{{ $ly = $y }}{{ $prevPt = $p -}}
+        {{- $seg = printf "M%.2f,%s L%s" $x $base $p -}}
+      {{- else }}{{ $d = printf "%s L%s" $d $p }}{{ $seg = printf "%s L%s" $seg $p }}{{ end -}}
+      {{- $run = add $run 1 }}{{ $lx = $x }}{{ $ly = $y }}{{ $prevPt = $p }}{{ $prevX = printf "%.2f" $x -}}
     {{- else -}}
-      {{- if eq $run 1 }}{{ $dots = $dots | append $prevPt }}{{ end }}{{ $run = 0 -}}
+      {{- if eq $run 1 }}{{ $dots = $dots | append $prevPt }}{{ end -}}
+      {{- if gt $run 1 }}{{ $fill = printf "%s %s L%s,%s Z" $fill $seg $prevX $base }}{{ end -}}
+      {{- $run = 0 -}}
     {{- end -}}
   {{- end -}}
+  {{- if gt $run 1 }}{{ $fill = printf "%s %s L%s,%s Z" $fill $seg $prevX $base }}{{ end -}}
   {{- $end := printf "M%.2f,%.2f l0.01,0" $lx $ly -}}
-<svg class="v-spark is-{{ .size | default "tile" }}{{ if .crit }} is-crit{{ end }}" viewBox="0 0 100 {{ $h }}" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ with $gaps }}<path class="v-spark-gap" d="{{ trim . " " }}"/>{{ end }}<path class="v-spark-line" d="{{ $d }}"/>{{ range $dots }}<path class="v-spark-pt" d="M{{ . }} l0.01,0"/>{{ end }}<path class="v-spark-ring" d="{{ $end }}"/><path class="v-spark-dot" d="{{ $end }}"/></svg>
+<svg class="v-spark is-{{ $size }}{{ if .crit }} is-crit{{ end }}" viewBox="0 0 100 {{ $h }}" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ if and $area $fill }}<path class="v-spark-area" d="{{ trim $fill " " }}"/>{{ end }}{{ with $gaps }}<path class="v-spark-gap" d="{{ trim . " " }}"/>{{ end }}<path class="v-spark-line" d="{{ $d }}"/>{{ range $dots }}<path class="v-spark-pt" d="M{{ . }} l0.01,0"/>{{ end }}<path class="v-spark-ring" d="{{ $end }}"/><path class="v-spark-dot" d="{{ $end }}"/></svg>
 {{- end -}}

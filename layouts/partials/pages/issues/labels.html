@@ -1,8 +1,10 @@
-{{- /* Labels on open issues (brief 3.2b-6): a disclosure, closed by default (button[aria-expanded][aria-controls] + hidden panel; ui.js
-  toggles it and Escape closes it). Top 10 of metrics.json issues.by_label without the labels the queue already carries: type
-  (bug, enhancement, question, documentation), priority (P0–P3) and status/workflow labels (ready for work, needs *, fix proposed,
-  potentially close, on hold, pending SEP approval). Columns Label · Open · Share; the share is text only (no meter) and an issue can
-  carry several labels. Omitted when no label is left. Ctx: dict {r (data/repo.html)}. */ -}}
+{{- /* Labels on open issues (brief 3.2b-6): a disclosure, closed by default. The section head carries the H2 on the left and the
+  disclosure control on the right, where a link-action would sit: a small .v-btn ("10 labels" + chevron, design system v3 §4.9;
+  pressed style while open) with aria-expanded and aria-controls on the hidden panel; ui.js toggles it and Escape closes it.
+  Top 10 of metrics.json issues.by_label without the labels the queue already carries: type (bug, enhancement, question,
+  documentation), priority (P0–P3) and status/workflow labels (ready for work, needs *, fix proposed, potentially close, on hold,
+  pending SEP approval). Columns Label, Open, Share; the share is text only (no meter) and an issue can carry several labels.
+  Omitted when no label is left. Ctx: dict {r (data/repo.html)}. */ -}}
 {{- $r := .r -}}
 {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
 {{- $skip := slice "bug" "enhancement" "question" "documentation" "P0" "P1" "P2" "P3" "ready for work" "fix proposed" "potentially close" "on hold" "pending SEP approval" -}}
@@ -15,12 +17,10 @@
 {{- $open := float ($iss.open_count | default 0) -}}
 {{- $dec := 0 }}{{ range $top }}{{ if and (gt $open 0.0) (lt (mul (div .n $open) 100.0) 10.0) }}{{ $dec = 1 }}{{ end }}{{ end }}
 <section class="v-section" aria-labelledby="labels">
-  <div class="v-section-head">
-    <div class="v-section-row">
-      <h2 class="v-section-title" id="labels"><button type="button" class="v-disclosure font-semibold" data-disclosure aria-expanded="false" aria-controls="labels-panel">Labels on open issues{{ partial "ui/icon.html" "chevron-down" }}</button></h2>
-    </div>
-    <p class="v-section-caption">Top 10, without type, priority and status labels</p>
-  </div>
+  {{- $btn := printf `<button type="button" class="v-btn v-btn-sm" data-disclosure aria-expanded="false" aria-controls="labels-panel">%s%s</button>`
+      (partial "ui/plural.html" (dict "n" (len $top) "one" "label")) (partial "ui/icon.html" "chevron-down") | safeHTML }}
+  {{ partial "ui/section-head.html" (dict "title" "Labels on open issues" "id" "labels" "right" $btn
+      "description" "The most used labels, leaving out type, priority and status labels.") }}
   <div id="labels-panel" hidden>
     <div class="v-card">
       <table class="v-dt is-fixed" aria-labelledby="labels">

@@ -1,9 +1,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-{{- /* <title> is "{H1} · VISR" (brief 2.3): page titles equal their H1; the home page is "MCP repositories". */ -}}
-{{- $title := .Title -}}{{- if .IsHome }}{{ $title = "MCP repositories" }}{{ end }}
-<title>{{ $title }} · {{ site.Title }}</title>
+{{- /* <title> (design system v3 §4.2): "VISR: {eyebrow}, {H1}" ("VISR: Issues, TypeScript SDK"); the home page is "VISR: Overview".
+  Built by ui/page-name.html from the section and the page title (the H1). */ -}}
+<title>{{ (partial "ui/page-name.html" .).doc }}</title>
 <meta name="description" content="{{ .Description | default site.Params.description }}">
 {{- if eq .Layout "redirect" }}
 {{- /* Retired URL (layout: redirect, brief 2.1). The script redirects first, so a legacy ?repo=owner/repo link lands on that repo's

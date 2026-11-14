@@ -1,11 +1,11 @@
-{{- /* Overdue status (brief 4.6 j): a 12px filled alert triangle in a 16px leading slot, then the value in --bad-text 600.
-  There is one level only. Use it only for items past a published deadline (P4), never for drafts, waiting-on-author,
-  release, bot, close-candidate or housekeeping rows.
-  Dict {n, text, html, title, icon, mode, na}:
-    n: the overdue count (formatted with ui/num.html, mode default "full"); 0 -> muted "0"; nil (with no text/html) -> "—" + sr-only na.
-    text / html: the status text instead of a number ("P1 · 514d over"); html is pre-rendered markup.
+{{- /* Overdue status (design system v3 §4.20): one expression, the value in --danger with an alert icon (12px in tables, 18px in tiles).
+  Use it only for items past a published deadline; nothing else is red (no red ages, no red row edges).
+  Dict {n, text, html, title, icon, mode, na, size}:
+    n: the overdue count (formatted with ui/num.html, mode default "full"); 0 -> "0" in text-3; nil (with no text/html) -> "—" + sr-only na.
+    text, html: the status text instead of a number ("514d over"); html is pre-rendered markup.
     title: names the rule ("Overdue: triage within 2 business days").
-    icon: false drops the icon and keeps the text (when more than 50% of a list's rows are overdue). */ -}}
+    icon: false drops the icon and keeps the danger text (when more than 50% of a list's rows are overdue).
+    size: icon size, 12 (default) or 18 (KPI tiles; ui/kpi.html passes it). */ -}}
 {{- $c := . -}}
 {{- $body := "" }}{{ $state := "status" }}{{ $icon := true -}}
 {{- /* the old "crit"/"warn" string form is retired: it renders nothing */ -}}
@@ -20,5 +20,5 @@
 {{- else if eq $state "na" -}}{{ partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) }}
 {{- else if eq $state "zero" -}}<span class="v-zero">0</span>
 {{- else -}}
-<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" "alert-triangle" }}</span><span class="v-status-text{{ if or $c.html $c.text }} is-text{{ end }}">{{ $body }}</span></span>
+<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" (dict "name" "alert-triangle" "size" ($c.size | default 12)) }}</span><span class="v-status-text{{ if or $c.html $c.text }} is-text{{ end }}">{{ $body }}</span></span>
 {{- end -}}

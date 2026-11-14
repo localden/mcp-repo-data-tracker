@@ -1,10 +1,11 @@
-{{- /* Card header (brief 4.6 c): 48px, title (subhead, h3) on the left, exactly one item in the right slot
-  (a count, a link, a Table toggle or a segmented control). Dict {title, id, level, right}.
+{{- /* Card head (design system v3 §4.4): 52px, title (subhead) on the left, exactly ONE item on the right: a link-action, a small
+  .v-btn, or a segmented control. Dict {title, id, level, right, divided}.
   id: the title id (for aria-labelledby); level: 2, 3 (default) or 4; right: text or pre-rendered HTML.
-  Renders nothing when both title and right are empty. A card gets a title only when its section holds 2 or more cards. */ -}}
+  The divider under the head appears only when the body is a table: automatically when the head is followed by a table, a .v-scroll,
+  a flush body or a tabpanel; divided: true forces it. Renders nothing when both title and right are empty. */ -}}
 {{- $c := . -}}
 {{- if or $c.title $c.right -}}
-<div class="v-card-head">
+<div class="v-card-head{{ if $c.divided }} is-divided{{ end }}">
   {{- with $c.title -}}
     {{- if eq $c.level 2 }}<h2 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h2>
     {{- else if eq $c.level 4 }}<h4 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h4>

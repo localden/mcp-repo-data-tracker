@@ -1,22 +1,28 @@
 {{ define "main" }}
 {{- /*
-  Overview, / (brief 3.1): the org view of every tracked repository; one module per row, in the order of the questions it answers.
-  0 page head: H1 names the scope. "Data as of" is the oldest GitHub-side source the page uses (GitHub metrics, issue and PR
-    classification, SEP data). The registries are not part of it: their complete-through days always trail by 1-2 days, so they
-    would pin the page's headline time days behind the numbers it shows. Each registry still sets the stale Flag when it is more than
-    2 days behind ("PyPI data is 5 days old") and is listed with its complete-through day in Data notes; the SDK adoption headers name
-    the download window itself. (The brief keeps registries in "Data as of" for registry pages only; this is not one.)
-    The gap notice covers the 26-week charted window; definitions live in Data notes.
-  1 KPI row (Q1, Q3) · 2 Needs attention (Q1, Q2) · 3 Backlog trend (Q3) · 4 Repositories (Q3, Q4) · 5 SDK adoption (Q5) ·
-  6 Spec proposals (Q6). Each module is a page-local partial in layouts/partials/pages/overview/ that takes the page as context.
+  Overview at the site root (brief 3.1, design system v3): the org view of every tracked repository; one module per row, in the order of the
+  questions it answers.
+  0 Page head (v3 §4.2): eyebrow "Overview" (the home page), H1 "All repositories" (the scope). The "Updated" meta item is the
+    oldest GitHub-side source the page uses (GitHub metrics, issue and PR classification, SEP data). The registries stay out of
+    it: their complete-through days always trail by 1-2 days, so they would pin the headline time days behind the numbers shown.
+    A registry more than 2 days behind still adds its staleness sentence to the one page callout ("PyPI data is 5 days old.") and
+    is listed with its complete-through day in Data notes; the SDK adoption section names the download window itself.
+    The callout's gap sentence covers the 26-week charted window; definitions live in Data notes.
+  Modules, each a page-local partial in layouts/partials/pages/overview/ that takes the page as context:
+    1 KPI strip (Q1, Q3)
+    2 Needs attention (Q1, Q2)
+    3 Backlog trend (Q3)
+    4 Repositories (Q3, Q4)
+    5 SDK adoption (Q5)
+    6 Spec proposals (Q6)
 */ -}}
 <article class="v-page">
 {{- $keys := slice -}}
 {{- range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
-{{- $title := .Title | default "MCP repositories" -}}
+{{- $title := .Title | default "All repositories" -}}
 {{- if $keys }}
   {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability" "seps")) -}}
-  {{- /* registries: keep "through" (stale Flag, Data notes "Complete through"), drop "at" (so they stay out of "Data as of") */ -}}
+  {{- /* registries: keep "through" (staleness sentence, Data notes "Complete through"), drop "at" (so they never move "Updated") */ -}}
   {{- range partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
     {{- $src = $src | append (dict "kind" .kind "label" .label "noun" .noun "through" .through) -}}
   {{- end -}}
@@ -47,7 +53,7 @@
     (dict "term" "Downloads, 12 weeks" "text" "Weekly totals over the last 12 complete ISO weeks. A week with a missing day is not plotted; when too few weeks are complete the cell says how many are.") -}}
   {{- with $how }}{{ $defs = $defs | append (dict "term" "Registry counts" "text" (delimit . " ")) }}{{ end -}}
   {{- $defs = $defs | append (dict "term" "Reached final" "text" "SEP pull requests merged in the 90 days before the SEP data was collected.") }}
-  {{ partial "ui/page-head.html" (dict "title" $title "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs) }}
+  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs) }}
   {{ partial "pages/overview/kpis.html" . }}
   {{ partial "pages/overview/attention.html" . }}
   {{ partial "pages/overview/backlog.html" . }}
@@ -55,7 +61,7 @@
   {{ partial "pages/overview/adoption.html" . }}
   {{ partial "pages/overview/seps.html" . }}
 {{- else }}
-  {{ partial "ui/page-head.html" (dict "title" $title) }}
+  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview") }}
   {{ partial "ui/empty.html" (dict "size" "none" "body" "No data collected for the MCP repositories yet.") }}
 {{- end }}
 </article>

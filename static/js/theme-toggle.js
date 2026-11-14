@@ -1,5 +1,5 @@
 /* VISR theme toggle (brief 7.2 D5, D6): flips html[data-theme]; icons, tokens and charts react to the attribute.
-   The button is "Dark theme" with aria-pressed. meta[name=theme-color] follows --page on load and on every change.
+   The button (an icon-only .v-btn) is "Dark theme" with aria-pressed. meta[name=theme-color] follows --bg on load and on every change.
    A stored choice overrides the system preference; storage access is always guarded. */
 (function () {
   'use strict';
@@ -13,7 +13,7 @@
   function sync() {
     var dark = root.getAttribute('data-theme') === 'dark';
     document.querySelectorAll('#theme-toggle').forEach(function (b) { b.setAttribute('aria-pressed', String(dark)); });
-    var c = getComputedStyle(root).getPropertyValue('--page').trim();
+    var c = getComputedStyle(root).getPropertyValue('--bg').trim();
     if (c) meta().setAttribute('content', c);
   }
   function set(theme, persist) {

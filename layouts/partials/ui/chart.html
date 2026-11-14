@@ -4,18 +4,18 @@
       "title" "Open issues"            card title (h3; "level" 2 for h2); optional when the section head already names the chart
       "metric" "open issues"           plural noun for tooltips/aria ("114 open issues"); "metric_one" "open issue" for 1
       "scope" "TypeScript SDK"         "All repositories" on org views
-      "unit" "count"                   count | downloads | hours | percent
-      "gran" "day"                     day | week | month (month points are dated the 1st)
-      "kind" "line"                    line | column | stack
+      "unit" "count"                   one of count, downloads, hours, percent
+      "gran" "day"                     one of day, week, month (month points are dated the 1st)
+      "kind" "line"                    one of line, column, stack
       "series" (slice (dict "label" "Open issues" "role" "accent" "points" $s.points "reconstructed" $s.reconstructed) …)
-    Optional: "id" (default derived from title/metric/scope), "agg" (last|sum, for weekly table rows; default last for lines),
-      "from"/"to" (shared domain for charts in one row; default the series' own span), "size" "small" (small multiples),
+    Optional: "id" (default derived from title/metric/scope), "agg" (last or sum, for weekly table rows; default last for lines),
+      "from" and "to" (shared domain for charts in one row; default the series' own span), "size" "small" (small multiples),
       "value" + "sub" + "reserve_sub" true (2-row header: figure, then caption line, reserved even when empty),
       "caption" (one line under the plot), "foot" (e.g. "Week to date: 41.2M (5 of 7 days)"),
       "avg" 22.8 + "avg_label" "12-wk avg 22.8" (labeled average rule), "cap_label" true (value on the latest column),
       "ticks" "all" (a tick per bar), "fill" false (no wash), "current" "294" (value shown when the history is too short),
-      "min_points" (override 14 daily / 4 weekly).
-  points are [{date, value|nil}] as returned by data/series.html, data/week-bins.html, data/org-weekly.html or data/downloads.html;
+      "min_points" (overrides 14 for daily, 4 for weekly).
+  points are [{date, value or nil}] as returned by data/series.html, data/week-bins.html, data/org-weekly.html or data/downloads.html;
   missing dates are filled with null here, so sparse input is fine. Keep daily series to 26 weeks (use weekly bins beyond). */ -}}
 {{- $kind := .kind | default "line" }}{{ $gran := .gran | default "day" }}{{ $unit := .unit | default "count" -}}
 {{- $agg := .agg | default (cond (eq $kind "line") "last" "sum") -}}
@@ -143,10 +143,9 @@
 {{- /* Short-history body text (§4.6 p, §5.5). */ -}}
 {{- $current := .current | default "" -}}
 {{- if and (not $current) (gt (len $rows) 1) (eq $unit "count") -}}
-  {{- /* 2+ count series: every series' latest value, label first ("Open issues 31 · Open PRs 37"); the nbsp keeps "·" off a line start */ -}}
+  {{- /* 2+ count series: every series' latest value, label first, joined in words ("Open issues 31, Open PRs 37") */ -}}
   {{- $parts := slice }}{{ range $i, $r := $rows }}{{ if ge $r.lastIdx 0 }}{{ $parts = $parts | append (printf "%s %s" $r.label (index $fmt (printf "s%d" $i))) }}{{ end }}{{ end -}}
-  {{- with $parts }}{{ $current = delimit . " · " }}{{ end -}}
-{{- end -}}
+  {{- with $parts }}{{ $current = delimit . ", " }}{{ end -}}{{- end -}}
 {{- if and (not $current) (gt (len $rows) 0) (in (slice "count" "downloads") $unit) }}{{ with index $rows 0 }}{{ if ge .lastIdx 0 }}{{ $current = partial "ui/num.html" (dict "v" .last "mode" (cond (eq $unit "downloads") "compact" "tile")) }}{{ end }}{{ end }}{{ end -}}
 {{- $note := printf "No data collected for %s yet." $scope -}}
 {{- with $firstAll -}}
@@ -154,7 +153,7 @@
   {{- $words := "4 weeks" }}{{ $at := $ft.AddDate 0 0 28 -}}
   {{- if eq $gran "day" }}{{ $words = "14 days" }}{{ $at = $ft.AddDate 0 0 13 }}{{ end -}}
   {{- if gt ($at.Format "2006-01-02") $to -}}
-    {{- $note = printf "Tracking since %s. Trend appears after %s (%s)." ($ft.Format "Jan 2, 2006") $words ($at.Format "Jan 2") -}}
+    {{- $note = printf "Tracking since %s. The trend appears after %s of data (%s)." ($ft.Format "Jan 2, 2006") $words ($at.Format "Jan 2") -}}
   {{- else -}}
     {{- $note = printf "Tracking since %s. Too few data points in this window for a trend." ($ft.Format "Jan 2, 2006") -}}
   {{- end -}}
@@ -179,7 +178,7 @@
     </ul>
     {{- end }}
     {{- if $canvas }}
-    <button type="button" class="v-chart-toggle" aria-pressed="false" aria-controls="{{ $id }}-table" data-chart-toggle>Table</button>
+    <button type="button" class="v-btn v-btn-sm v-chart-toggle" aria-pressed="false" aria-controls="{{ $id }}-table" data-chart-toggle>Table</button>
     {{- end }}
   </div>
   {{- end }}
@@ -201,7 +200,7 @@
   {{- else }}
     <div class="v-chart-empty{{ if eq $size "small" }} is-small{{ end }}">
       {{- with $current }}<p class="v-chart-empty-value">{{ . }}</p>{{ end }}
-      <p class="v-chart-empty-note">{{ $note }}</p>
+      <p class="v-chart-empty-note">{{ partial "ui/icon.html" "clock" }}<span>{{ $note }}</span></p>
     </div>
   {{- end }}
     {{- with .caption }}

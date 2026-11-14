@@ -1,7 +1,9 @@
-{{- /* /repos/ (brief 2.1): the tracked repositories in repos.json order, one row each, linking to /repos/<repo>/. The cross-repo numbers
-  live in the Overview Repositories table (P2), so this list carries the name, description and registry package only.
+{{- /* /repos/ (brief 2.1, design system v3): the tracked repositories in repos.json order, one row each, linking to /repos/<repo>/.
+  Page head: eyebrow "Repositories", H1 "All repositories" (the content title). The cross-repo numbers live in the Overview
+  Repositories table (P2), so this list carries the name (the row's single link), the description under it and the registry
+  package (registry name in text-3, then the package: ui/registry-name.html labelHTML).
   Context: the section page (content/repos/_index.md). */ -}}
-{{ partial "ui/page-head.html" (dict "title" (.Title | default "Repositories")) }}
+{{ partial "ui/page-head.html" (dict "title" (.Title | default "All repositories") "eyebrow" "Repositories") }}
 <section class="v-section" aria-label="Repository list">
   <div class="v-card">
     <table class="v-dt is-fixed is-list" aria-labelledby="page-title">
@@ -13,8 +15,8 @@
         <tr data-row-link>
           <td class="v-title-cell"><a class="v-row-link" href="{{ printf "repos/%s/" .repo | relURL }}">{{ .name | default .repo }}</a>
             {{- with .description }}<span class="sub">{{ . }}</span>{{ end }}
-            {{- with $reg.label }}<span class="v-listmeta"><span>{{ . }}</span></span>{{ end }}</td>
-          <td>{{ with $reg.label }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no registry package") }}{{ end }}</td>
+            {{- with $reg.labelHTML }}<span class="v-listmeta"><span>{{ . }}</span></span>{{ end }}</td>
+          <td>{{ with $reg.labelHTML }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no registry package") }}{{ end }}</td>
         </tr>
         {{- end }}
       </tbody>

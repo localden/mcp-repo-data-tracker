@@ -1,4 +1,4 @@
 ---
-title: "Repositories"
+title: "All repositories"
 page: repo
 ---

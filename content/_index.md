@@ -1,3 +1,3 @@
 ---
-title: "MCP repositories"
+title: "All repositories"
 ---

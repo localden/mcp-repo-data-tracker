@@ -1,7 +1,14 @@
-{{- /* /issues/<repo>/ (brief 3.2b). Context: the adapter page (.Params.repo = "owner/repo"). The same skeleton for every repo;
-  issue classification (issues.json) only adds modules, it never swaps the layout:
-    0 head · 1 Response SLAs · 2 Queue (classified) or Waiting for a reply · 3 Backlog trend · 4 Responsiveness · 5 Backlog age · 6 Labels.
-  Data as of = the older of metrics.json timestamp and issues.json lastUpdated; the gap notice covers the 26-week chart window. */ -}}
+{{- /* /issues/<repo>/ (brief 3.2b). Context: the adapter page (.Params.repo = "owner/repo"; the title is the bare repo name, the
+  H1; the eyebrow "Issues" comes from the switcher kind). The same skeleton for every repo; issue classification (issues.json) only
+  adds modules, it never swaps the layout. Modules in order:
+    0 page head
+    1 Response SLAs
+    2 Queue (classified) or Waiting for a reply
+    3 Backlog trend
+    4 Responsiveness
+    5 Backlog age
+    6 Labels on open issues
+  Updated = the older of metrics.json timestamp and issues.json lastUpdated; the one gap callout covers the 26-week chart window. */ -}}
 {{- $r := partial "data/repo.html" .Params.repo -}}
 {{- $m := $r.data.metrics -}}
 {{- $t := $r.data.issues -}}
@@ -25,7 +32,7 @@
   (dict "term" "Backlog age" "text" "Open issues by days since their last activity (any comment, label or edit).") -}}
 
 {{ partial "ui/page-head.html" (dict
-    "title" .Title "repo" $r.key "switch" "issues" "links" $links "sources" $src
+    "title" .Title "eyebrow" "Issues" "repo" $r.key "switch" "issues" "links" $links "sources" $src
     "gap" (dict "repos" (slice $r.key) "days" 182 "tail" "Charts show the gap.") "defs" $defs) }}
 
 {{- if not (reflect.IsMap $m) }}
@@ -35,7 +42,7 @@
 {{- else }}
 {{- $q := dict -}}
 {{- if $classified -}}
-  {{- /* the Overview's "No reply" count as a set of issue numbers, for the Waiting for a reply tab (P6) */ -}}
+  {{- /* the Overview's "Waiting for a reply" count as a set of issue numbers, for the Waiting for a reply tab (P6) */ -}}
   {{- $wait := dict -}}
   {{- with $m.issues }}{{ range (.issues_without_maintainer_response | default slice) }}{{ if ge (float (.daysWaiting | default 0)) 7.0 }}{{ $wait = merge $wait (dict (string (int .number)) true) }}{{ end }}{{ end }}{{ end -}}
   {{- $q = partial "pages/issues/rows.html" (dict "t" $t "wait" $wait) -}}

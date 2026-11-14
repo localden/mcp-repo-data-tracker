@@ -4,7 +4,7 @@
      count: rendered rows per tab {needs, housekeeping, close, author}; all: every rendered row; over: overdue rows (needs tab only);
      waiting: rows of classifier tier 1, glossary "Author waiting on us" (the author did what was asked; Overview Needs attention
        column 9 counts summary.by_tier[0] = this tier), cluster members excluded so the chip count matches that column;
-     auth / maint / bot: rows carrying each chip token; wait: true once the classifier exports waiting_days (D3-2), else rows sort by age.
+     auth, maint, bot: rows carrying each chip token; wait: true once the classifier exports waiting_days (D3-2), else rows sort by age.
    Called with partialCached (variant key = the repo key) by pages/pulls.html and pages/pulls/queue.html, so it runs once per page.
    Tabs (6.5 "PR tier labels"): tiers 0-3 and unclassified rows -> needs ("Needs a maintainer"); tier 4 and bot rows -> housekeeping;
      tier 5 -> close; not_our_move -> author ("Waiting on author"). Tab counts and the segments sum to all, because every rendered row

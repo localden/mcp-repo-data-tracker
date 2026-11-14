@@ -1,10 +1,11 @@
-{{- /* 2. Needs attention (brief 3.6-2): one SEP-1730 line for SDK repos, then the 5 oldest issues with no maintainer reply and the 5 oldest
-  non-draft PRs with no maintainer review, side by side at >= 64rem. Rows come from the metrics.json arrays that the Issues and Pull
-  requests pages list (P6); "View all" opens those pages. Status colour only on counts past a SEP-1730 deadline (P4).
-  The replies item reads summary.sla.first_reply_2bd_breach (D1-9). Until it exists the item is left out of the sentence: a "—" works
-  in a table cell (the Overview column) but in running text it read as "— replies overdue", a stray glyph; Data notes defines only
-  the rules that are shown. reply_2bd_breach counts reporter follow-ups (a team target), so it is never shown under SEP-1730. P0 is
-  left out for a repo with no priority labels.
+{{- /* 2. Needs attention (brief 3.6-2, design system v3): for SDK repos, the SEP-1730 overdue counts as a stat list in a card (v3 §4.6)
+  with a link-action to the Issues page's Response SLAs in the section head; then the 5 oldest issues with no maintainer reply and
+  the 5 oldest non-draft PRs with no maintainer review, side by side at >= 64rem, each card with a "View all" link-action.
+  Rows come from the metrics.json arrays that the Issues and Pull requests pages list (P6). Overdue counts use the one status
+  expression (ui/status.html: danger value + alert icon, v3 §4.20); ages and waiting times stay neutral.
+  The "First reply overdue" item (the Overview's column name) reads summary.sla.first_reply_2bd_breach (D1-9) and is left out until it exists; Data notes defines only the rules
+  that are shown. reply_2bd_breach counts reporter follow-ups (a team target), so it is never shown under SEP-1730. P0 is left out
+  for a repo with no priority labels. A repo outside SEP-1730, or one whose status is not computed, says so in the description.
   Context: the dict from pages/repo.html. */ -}}
 {{- $r := .r }}{{ $m := .m }}{{ $sla := .sla -}}
 {{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
@@ -14,77 +15,84 @@
 {{- range $pr.prs_without_maintainer_review | default slice }}{{ if not .isDraft }}{{ $open = $open | append . }}{{ end }}{{ end -}}
 {{- $pulls := first 5 (sort $open "daysWaiting" "desc") -}}
 
-{{- /* SEP-1730 items {n, one, other, rule}, only for rules with a computed count (a JSON null or a missing key is left out). Status
-     titles name the rule in the words of the Issues page Response SLAs table (pages/issues/rules.html), as on the Overview. */ -}}
+{{- /* SEP-1730 stat items, only for rules with a computed count (a JSON null or a missing key is left out). Status titles name the
+     rule in the words of the Issues page Response SLAs table (pages/issues/rules.html), as on the Overview. */ -}}
 {{- $rt := dict }}{{ range partial "pages/issues/rules.html" "rules" }}{{ $rt = merge $rt (dict .key .title) }}{{ end -}}
 {{- $items := slice -}}
 {{- if and $r.sdk (gt (len $sla) 0) -}}
   {{- $hasP := false }}{{ range $k, $_ := $is.by_label | default dict }}{{ if in (slice "P0" "P1" "P2" "P3") $k }}{{ $hasP = true }}{{ end }}{{ end -}}
   {{- $fr := index $sla "first_reply_2bd_breach" }}{{ $tr := index $sla "triage_2bd_breach" }}{{ $p0 := index $sla "p0_7d_breach" -}}
-  {{- if ne $fr nil }}{{ $items = $items | append (dict "n" $fr "one" "reply overdue" "other" "replies overdue" "rule" (index $rt "first-reply")) }}{{ end -}}
-  {{- if ne $tr nil }}{{ $items = $items | append (dict "n" $tr "one" "triage overdue" "other" "triage overdue" "rule" (index $rt "triage")) }}{{ end -}}
-  {{- if and $hasP (ne $p0 nil) }}{{ $items = $items | append (dict "n" $p0 "one" "P0 overdue" "other" "P0 overdue" "rule" (index $rt "p0")) }}{{ end -}}
+  {{- if ne $fr nil }}{{ $items = $items | append (dict "label" "First reply overdue" "caption" "reply within 2 business days"
+      "valueHTML" (partial "ui/status.html" (dict "n" $fr "title" (index $rt "first-reply")))) }}{{ end -}}
+  {{- if ne $tr nil }}{{ $items = $items | append (dict "label" "Triage overdue" "caption" "triage within 2 business days"
+      "valueHTML" (partial "ui/status.html" (dict "n" $tr "title" (index $rt "triage")))) }}{{ end -}}
+  {{- if and $hasP (ne $p0 nil) }}{{ $items = $items | append (dict "label" "P0 overdue" "caption" "resolve P0 bugs within 7 days"
+      "valueHTML" (partial "ui/status.html" (dict "n" $p0 "title" (index $rt "p0")))) }}{{ end -}}
 {{- end -}}
-{{- $issuesURL := printf "issues/%s/" $r.repo | relURL }}{{ $pullsURL := printf "pulls/%s/" $r.repo | relURL }}
+{{- $issuesURL := printf "issues/%s/" $r.repo | relURL }}{{ $pullsURL := printf "pulls/%s/" $r.repo | relURL -}}
+{{- $head := dict "title" "Needs attention" "id" "needs-attention" -}}
+{{- if $items -}}
+  {{- $head = merge $head (dict "description" "SEP-1730 response deadlines, then the oldest issues and PRs still waiting for a maintainer."
+      "action" (dict "text" "Response SLAs" "href" (printf "%s#sla" $issuesURL) "sr" "on the Issues page")) -}}
+{{- else if not $r.sdk -}}
+  {{- $head = merge $head (dict "description" "SEP-1730 SLAs apply to SDK repositories.") -}}
+{{- else -}}
+  {{- $head = merge $head (dict "description" "SEP-1730 status is not computed for this repository yet.") -}}
+{{- end }}
 <section class="v-section" aria-labelledby="needs-attention">
-  {{ partial "ui/section-head.html" (dict "title" "Needs attention" "id" "needs-attention") }}
-  {{- if $items }}
-  <p class="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3"><span>SEP-1730:</span>
-    {{- range $items -}}
-      {{- if gt (float .n) 0.0 }}<span>{{ partial "ui/status.html" (dict "text" (printf "%s %s" (lang.FormatNumber 0 (float .n)) (cond (eq (float .n) 1.0) .one .other)) "title" .rule) }}</span>
-      {{- else }}<span class="v-muted">0 {{ .other }}</span>{{ end -}}
-    {{- end -}}
-    <a class="v-section-action" href="{{ $issuesURL }}">Issues{{ partial "ui/icon.html" "arrow-right" }}</a></p>
-  {{- else if not $r.sdk }}
-  <p class="v-caption mb-3">SEP-1730 SLAs apply to SDK repositories.</p>
-  {{- else }}
-  <p class="v-caption mb-3">SEP-1730 status is not computed for this repository yet.</p>
-  {{- end }}
-  <div class="v-grid">
-    <div class="v-span-6">
-      <div class="v-card">
-        <div class="v-card-head"><h3 class="v-card-title" id="oldest-issues">Oldest unanswered issues</h3>
-          <div class="v-card-aside"><a class="v-section-action" href="{{ $issuesURL }}?tab=waiting">View all<span class="sr-only"> issues waiting for a reply</span>{{ partial "ui/icon.html" "arrow-right" }}</a></div></div>
-        {{- if $issues }}
-        <table class="v-dt is-fixed is-list" aria-labelledby="oldest-issues">
-          <colgroup><col class="v-col-auto"><col class="v-col-20"></colgroup>
-          <thead><tr><th scope="col">Issue</th><th scope="col" class="num">Age</th></tr></thead>
-          <tbody>
-            {{- range $issues }}
-            <tr data-row-link>
-              <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ .url }}" target="_blank" rel="noopener">{{ .title }}<span class="sr-only"> (opens GitHub)</span></a><span class="sub">#{{ .number }}</span></td>
-              <td class="num v-verdict" data-v="{{ .daysWaiting }}">{{ (partial "ui/dur.html" (dict "d" .daysWaiting "years" true)).html }}</td>
-            </tr>
-            {{- end }}
-          </tbody>
-        </table>
-        {{- else }}
-        <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" "No open issue is waiting for a maintainer reply.") }}</div>
-        {{- end }}
+  {{ partial "ui/section-head.html" $head }}
+  <div class="v-flow">
+    {{- with $items }}
+    {{ partial "ui/stats.html" (dict "items" . "label" "SEP-1730 overdue" "card" true) }}
+    {{- end }}
+    <div class="v-grid">
+      <div class="v-span-6">
+        <div class="v-card">
+          {{ partial "ui/card-head.html" (dict "title" "Oldest unanswered issues" "id" "oldest-issues"
+              "right" (partial "ui/link-action.html" (dict "text" "View all" "href" (printf "%s?tab=waiting" $issuesURL) "sr" "issues waiting for a reply"))) }}
+          {{- if $issues }}
+          <table class="v-dt is-fixed is-list" aria-labelledby="oldest-issues">
+            <colgroup><col class="v-col-auto"><col class="v-col-20"></colgroup>
+            <thead><tr><th scope="col">Issue</th><th scope="col" class="num">Age</th></tr></thead>
+            <tbody>
+              {{- range $issues }}
+              <tr data-row-link>
+                <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ .url }}" target="_blank" rel="noopener">{{ .title }}<span class="sr-only"> (opens GitHub)</span></a>
+                  <span class="v-rowmeta"><span>#{{ .number }}</span>{{ with .author }}<span>{{ strings.TrimPrefix "app/" (string .) }}</span>{{ end }}</span></td>
+                <td class="num v-verdict" data-v="{{ .daysWaiting }}">{{ (partial "ui/dur.html" (dict "d" .daysWaiting "years" true)).html }}</td>
+              </tr>
+              {{- end }}
+            </tbody>
+          </table>
+          {{- else }}
+          <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "icon" false "body" "No open issues are waiting for a maintainer reply.") }}</div>
+          {{- end }}
+        </div>
       </div>
-    </div>
-    <div class="v-span-6">
-      <div class="v-card">
-        <div class="v-card-head"><h3 class="v-card-title" id="oldest-pulls">Oldest unreviewed PRs</h3>
-          <div class="v-card-aside"><a class="v-section-action" href="{{ $pullsURL }}">View all<span class="sr-only"> PRs waiting for first review</span>{{ partial "ui/icon.html" "arrow-right" }}</a></div></div>
-        {{- if $pulls }}
-        <table class="v-dt is-fixed is-list" aria-labelledby="oldest-pulls">
-          <colgroup><col class="v-col-auto"><col class="v-col-20"></colgroup>
-          <thead><tr><th scope="col">Pull request</th><th scope="col" class="num">Waiting</th></tr></thead>
-          <tbody>
-            {{- range $pulls }}
-            {{- /* whole days, the format of the Waiting column on the Pull requests pages (pages/pulls/wait.html) */}}
-            {{- $wd := partial "pages/pulls/wait.html" .daysWaiting }}
-            <tr data-row-link>
-              <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ .url }}" target="_blank" rel="noopener">{{ .title }}<span class="sr-only"> (opens GitHub)</span></a><span class="sub">#{{ .number }}{{ with .author }}&nbsp;· {{ strings.TrimPrefix "app/" (string .) }}{{ end }}</span></td>
-              <td class="num v-verdict"{{ with $wd.v }} data-v="{{ . }}"{{ end }}>{{ $wd.html }}</td>
-            </tr>
-            {{- end }}
-          </tbody>
-        </table>
-        {{- else }}
-        <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "body" "No open PRs are waiting for a maintainer review.") }}</div>
-        {{- end }}
+      <div class="v-span-6">
+        <div class="v-card">
+          {{ partial "ui/card-head.html" (dict "title" "Oldest unreviewed PRs" "id" "oldest-pulls"
+              "right" (partial "ui/link-action.html" (dict "text" "View all" "href" $pullsURL "sr" "PRs waiting for first review"))) }}
+          {{- if $pulls }}
+          <table class="v-dt is-fixed is-list" aria-labelledby="oldest-pulls">
+            <colgroup><col class="v-col-auto"><col class="v-col-20"></colgroup>
+            <thead><tr><th scope="col">Pull request</th><th scope="col" class="num">Waiting</th></tr></thead>
+            <tbody>
+              {{- range $pulls }}
+              {{- /* whole days, the format of the Waiting column on the Pull requests pages (pages/pulls/wait.html) */}}
+              {{- $wd := partial "pages/pulls/wait.html" .daysWaiting }}
+              <tr data-row-link>
+                <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ .url }}" target="_blank" rel="noopener">{{ .title }}<span class="sr-only"> (opens GitHub)</span></a>
+                  <span class="v-rowmeta"><span>#{{ .number }}</span>{{ with .author }}<span>{{ strings.TrimPrefix "app/" (string .) }}</span>{{ end }}</span></td>
+                <td class="num v-verdict"{{ with $wd.v }} data-v="{{ . }}"{{ end }}>{{ $wd.html }}</td>
+              </tr>
+              {{- end }}
+            </tbody>
+          </table>
+          {{- else }}
+          <div class="v-card-body">{{ partial "ui/empty.html" (dict "card" false "size" "none" "icon" false "body" "No open PRs are waiting for a maintainer review.") }}</div>
+          {{- end }}
+        </div>
       </div>
     </div>
   </div>

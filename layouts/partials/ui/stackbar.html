@@ -1,11 +1,11 @@
-{{- /* Stacked bar, one row (§5.13): segments separated by 2px surface gaps, zero segments omitted. Replaces ui/segbar.html.
+{{- /* Stacked bar, one row (design system v3 §4.17): the ord ramp, segments separated by 2px surface gaps, zero segments omitted.
   Call: partial "ui/stackbar.html" (dict
     "segments" (slice (dict "label" "Active < 30 days" "n" 69 "role" "ord-1") (dict "label" "30–60 days" "n" 22 "role" "ord-2") …)
     ["legend" "below|none"] ["pct" true] ["total" 294] ["aria" "Backlog age: …"])
-    role: accent | series-2 | seg-neutral | other | ord-1 … ord-5 (validated ramps only, §5.10).
+    role: one of accent, series-2, seg-neutral, other, ord-1 to ord-5 (validated ramps only, §5.10).
     legend "below" (default): a legend row of count (and % of total with pct=true) per segment, in segment order, and the bar is
     aria-hidden. legend "none": no legend; the bar is role="img" with aria (default: "label n, …"), for a bar whose numbers sit in
-    adjacent text (the tile caption "10 maintainers · 22 others").
+    adjacent text (the tile caption "10 maintainers and 22 others").
     total: percentage base (default the sum of the segments). */ -}}
 {{- $segs := slice }}{{ $sum := 0.0 -}}
 {{- range .segments }}{{ if gt (float (.n | default 0)) 0.0 }}{{ $segs = $segs | append . }}{{ $sum = add $sum (float .n) }}{{ end }}{{ end -}}

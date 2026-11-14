@@ -1,24 +1,25 @@
-{{- /* Weekly downloads small multiples (brief 3.5-2, 5.6): one column chart per SDK, complete ISO weeks only, on one shared 52-week
-  x-domain, each with its own y-axis (the section caption says so). The 2-row header holds Last 7 days (the table's window) and
-  its change vs prior 7 days; the unfinished week is stated under the plot, never plotted (5.4). Fewer than 4 complete weeks:
-  the same card frame and header with "Tracking since …" at plot height (5.5). 3-up from 64rem, 2-up from 40rem, 1-up below.
+{{- /* Weekly downloads small multiples (brief 3.5-2, 5.6; design system v3 §4.7, §4.16, §4.19): one column chart per SDK, complete ISO
+  weeks only, on one shared 52-week x-domain, each with its own y-axis (the section description says so). Context: none (a dict).
+  Chart card head: the SDK name, then Last 7 days (the table's window) with its change as a bare delta badge after the value; the
+  line under it names the window and the badge's base ("Nov 3–9 vs prior 7 days"), or carries the data-quality note "5 of 7 days"
+  when the window is not complete. The unfinished week is stated under the plot, never plotted (5.4). Fewer than 4 complete weeks:
+  the same card frame and head with the short-history body at plot height (clock icon, "Tracking since …"). 3-up from 64rem, 2-up
+  from 40rem, 1-up below.
   Call: partial "pages/downloads/weekly.html" (dict "pkgs" $pkgs "from" $wFrom "to" $wTo)
-    pkgs: the page's package list (with cells); from / to: the first and last shared week start ("" lets each chart use its own). */ -}}
-{{- $c := . }}
+    pkgs: the page's package list (with cells); from, to: the first and last shared week start ("" lets each chart use its own). */ -}}
+{{- $c := . -}}
+{{- $nb := printf "%c" 160 }}
 <div class="v-grid">
   {{- range $p := $c.pkgs }}
   {{- $d := $p.d }}{{ $x := $p.cells }}{{ $id := printf "dl-%s" $p.r.repo -}}
-  {{- /* header line 2: the window, then the change (with its base) or "n of 7 days" as text (the table carries the Flag; a 20px
-       Flag here would push this plot below its neighbours, 5.6). Kept short enough for one line at the narrowest 3-up and 2-up
-       widths, so plot tops align: "Last 7 days" is in the section caption and, for screen readers, before the value. */ -}}
-  {{- $win := "" }}{{ with $x.win }}{{ $win = printf `<span class="v-nowrap">%s</span>` . }}{{ end -}}
-  {{- $tail := "" -}}
-  {{- if $x.has7 }}{{ $tail = partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "polarity" "up" "vs" "prior 7 days") -}}
-  {{- else if $x.flag }}{{ $tail = printf `<span class="v-nowrap">%d of 7 days</span>` (int $d.days_covered) }}{{ end -}}
-  {{- /* the separator is glued to the item before it, so a wrapped line never starts with it (6.1 rule 2) */ -}}
-  {{- $sub := $win }}{{ if and $win $tail }}{{ $sub = printf "%s&#160;· %s" $win $tail }}{{ end -}}
-  {{- $sub = $sub | safeHTML -}}
-  {{- $value := printf `<span class="sr-only">Last 7 days </span>%s` $x.value | safeHTML -}}
+  {{- /* value: Last 7 days (sr-only label), then the bare change badge */ -}}
+  {{- $badge := "" }}{{ if $x.has7 }}{{ $badge = printf " %s" $x.chg7 }}{{ end -}}
+  {{- $value := printf `<span class="sr-only">Last 7 days </span>%s%s` $x.value $badge | safeHTML -}}
+  {{- /* line 2: the window, then the badge's base or the data-quality note */ -}}
+  {{- $sub := $x.win | default "" -}}
+  {{- if $x.has7 }}{{ $sub = printf "%s vs prior 7 days" $sub -}}
+  {{- else if $x.note }}{{ $sub = printf "%s %s" $sub $x.note }}{{ end -}}
+  {{- $sub = trim $sub " " | safeHTML -}}
   {{- $foot := "" -}}
   {{- with $d.wtd }}{{ if ne .value nil }}{{ $foot = printf "Week to date: %s (%d of 7 days)" (partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true)) .days }}{{ end }}{{ end }}
   <div class="v-span-4">
@@ -28,9 +29,8 @@
         "value" $value "sub" $sub "reserve_sub" true "foot" $foot
         "series" (slice (dict "label" "Downloads" "points" $d.weekly.points))) }}
     {{- else }}
-    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. The second
-         sentence is held together with no-break spaces, so a narrow card breaks between the sentences, never as "(Dec" / "7)." */ -}}
-    {{- $nb := htmlUnescape "&#160;" -}}
+    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. A no-break
+         space holds the date in the parentheses together, so a narrow card never breaks it between "(Dec" and "7)". */ -}}
     {{- $note := printf "No data collected for %s yet." $p.r.name -}}
     {{- with $d.first -}}
       {{- $ft := time.AsTime . -}}
@@ -38,7 +38,7 @@
       {{- $start := $ft }}{{ if gt $dow 0 }}{{ $start = $ft.AddDate 0 0 (int (sub 7 $dow)) }}{{ end -}}
       {{- $at := $start.AddDate 0 0 28 -}}
       {{- if gt ($at.Format "2006-01-02") $d.complete_through -}}
-        {{- $note = printf "Tracking since %s. %s" ($ft.Format "Jan 2, 2006") (replace (printf "Trend appears after 4 weeks (%s)." ($at.Format "Jan 2")) " " $nb) -}}
+        {{- $note = printf "Tracking since %s. The trend appears after 4 weeks of data (%s)." ($ft.Format "Jan 2, 2006") (replace ($at.Format "Jan 2") " " $nb) -}}
       {{- else -}}
         {{- $note = printf "Tracking since %s. %s of the 4 complete weeks a trend needs." ($ft.Format "Jan 2, 2006") (string (int $d.weekly.n)) -}}
       {{- end -}}

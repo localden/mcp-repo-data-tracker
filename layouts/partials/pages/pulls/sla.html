@@ -1,20 +1,22 @@
-{{- /* Review SLAs (brief 3.3b-1, 4.6 d, 6.5): one KPI card. Dict {r (data/repo.html), a (actionability.json), m (metrics.json), classified}.
-     Classified repos: First review overdue (team SLA 7 days), Re-review overdue and Maintainer PRs unreviewed (team SLA 24h), from
-       actionability › summary.sla, as status tiles with a denominator line; sparklines from snapshots › actionability.sla.* (12 weeks).
-     Other repos: one neutral tile, "PRs waiting for first review" (glossary 6.2; the brief's interim "No first review > 7 days" puts
-       the window on line 1, against 6.1 rule 1), from metrics › pulls.without_review_7d over the non-draft rows of
-       prs_without_maintainer_review (the same number as Overview's "No first review" column), then one muted line on the missing
-       classification.
-     A one-tile card sits on a 4-column span (half below 64rem, full on phones), so it reads like one tile of the 3-up card instead of
-     a 1216px-wide tile with its 32px sparkline stretched across the page. */ -}}
+{{- /* Review SLAs (brief 3.3b-1, 6.5; design system v3 §4.5, §4.6). Dict {r (data/repo.html), a (actionability.json), m (metrics.json),
+     classified}.
+     Classified repos: one KPI strip of 3 tiles, First review overdue, Re-review overdue and Maintainer PRs unreviewed, from
+       actionability › summary.sla, as overdue tiles (danger value + 18px alert icon, danger sparkline). Caption line 1 is the
+       denominator ("of 238 waiting for a first review (95%)"), line 2 the rule ("Team SLA: 7 days", "Team SLA: 24 hours"; the rule is
+       also in the label tooltip and Data notes). Sparklines from snapshots › actionability.sla.* (12 weeks); a delta badge against the
+       snapshot 7 days earlier whenever data/series.html finds one (cmp7), whose "vs Nov 7" then takes caption line 2.
+     Other repos: two facts, so a stat list (never a 1-tile strip): "PRs waiting for first review" (glossary 6.2) from metrics ›
+       pulls.without_review_7d, and the same list at any age (the non-draft rows of prs_without_maintainer_review, the same number as
+       the queue tab). The section description says why the other SLAs are missing. */ -}}
 {{- $r := .r -}}
-{{- $tiles := slice -}}
+<section class="v-section" aria-labelledby="review-slas">
 {{- if .classified -}}
   {{- $sla := dict }}{{ with .a.summary }}{{ with .sla }}{{ if reflect.IsMap . }}{{ $sla = . }}{{ end }}{{ end }}{{ end -}}
-  {{- $bins := dict -}}
+  {{- $bins := dict }}{{ $deltas := dict -}}
   {{- range $k := slice "first_review_7d_breach" "re_review_24h_breach" "maint_24h_breach" -}}
     {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" (printf "actionability.sla.%s" $k)) -}}
     {{- $bins = merge $bins (dict $k (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points) -}}
+    {{- if ne $s.cur nil }}{{ with $s.cmp7 }}{{ $deltas = merge $deltas (dict $k (dict "cur" (float $s.cur) "prev" (float .value) "date" .date "polarity" "down")) }}{{ end }}{{ end -}}
   {{- end -}}
   {{- /* denominators: "of 238 waiting for a first review (95%)"; "All 11 waited more than 24 hours" when every eligible PR is over */ -}}
   {{- $ctx := dict -}}
@@ -30,41 +32,33 @@
     {{- end -}}
     {{- $ctx = merge $ctx (dict $k $t) -}}
   {{- end -}}
-  {{- $tiles = slice
+  {{- $tiles := slice
     (dict "label" "First review overdue" "value" $sla.first_review_7d_breach "na" "not computed"
       "labelTitle" "Classified PRs with no maintainer review yet (none, or community reviews only) waiting more than 7 days"
-      "overdue" (dict "title" "Overdue: first review within 7 days (team SLA)") "qualifier" "team SLA · 7 days"
-      "context" (index $ctx "first_review_7d_breach") "points" (index $bins "first_review_7d_breach"))
+      "overdue" (dict "title" "Overdue: first review within 7 days (team SLA)") "qualifier" (index $ctx "first_review_7d_breach")
+      "context" "Team SLA: 7 days" "delta" (index $deltas "first_review_7d_breach" | default dict)
+      "points" (index $bins "first_review_7d_breach"))
     (dict "label" "Re-review overdue" "value" $sla.re_review_24h_breach "na" "not computed"
       "labelTitle" "The author updated the PR after a change request and no maintainer re-reviewed it within 24 hours"
-      "overdue" (dict "title" "Overdue: re-review within 24 hours (team SLA)") "qualifier" "team SLA · 24h"
-      "context" (index $ctx "re_review_24h_breach") "points" (index $bins "re_review_24h_breach"))
+      "overdue" (dict "title" "Overdue: re-review within 24 hours (team SLA)") "qualifier" (index $ctx "re_review_24h_breach")
+      "context" "Team SLA: 24 hours" "delta" (index $deltas "re_review_24h_breach" | default dict)
+      "points" (index $bins "re_review_24h_breach"))
     (dict "label" "Maintainer PRs unreviewed" "value" $sla.maint_24h_breach "na" "not computed"
       "labelTitle" "Maintainer-authored PRs with no review from another maintainer within 24 hours"
-      "overdue" (dict "title" "Overdue: review of a maintainer PR within 24 hours (team SLA)") "qualifier" "team SLA · 24h"
-      "context" (index $ctx "maint_24h_breach") "points" (index $bins "maint_24h_breach")) -}}
+      "overdue" (dict "title" "Overdue: review of a maintainer PR within 24 hours (team SLA)") "qualifier" (index $ctx "maint_24h_breach")
+      "context" "Team SLA: 24 hours" "delta" (index $deltas "maint_24h_breach" | default dict)
+      "points" (index $bins "maint_24h_breach")) }}
+  {{ partial "ui/section-head.html" (dict "title" "Review SLAs" "id" "review-slas") }}
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}
 {{- else -}}
   {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
-  {{- $nd := 0 }}{{ range $pl.prs_without_maintainer_review | default slice }}{{ if not .isDraft }}{{ $nd = add $nd 1 }}{{ end }}{{ end -}}
-  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.without_review_7d") -}}
-  {{- $ctx := "No open PRs are waiting for a maintainer review" -}}
-  {{- /* worded like the classified tile ("of 238 waiting for a first review"), without repeating the qualifier's "no maintainer review" */ -}}
-  {{- if gt $nd 0 }}{{ $ctx = printf "of %s waiting for a first review" (lang.FormatNumber 0 (float $nd)) }}{{ end -}}
-  {{- /* glossary label and qualifier (6.2), as on the Overview and repository KPI cards */ -}}
-  {{- $tiles = slice
-    (dict "label" "PRs waiting for first review" "value" $pl.without_review_7d "qualifier" "no maintainer review after 7 days"
-      "labelTitle" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago"
-      "context" $ctx
-      "points" (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points) -}}
+  {{- $nd := 0 }}{{ range $pl.prs_without_maintainer_review | default slice }}{{ if not .isDraft }}{{ $nd = add $nd 1 }}{{ end }}{{ end }}
+  {{ partial "ui/section-head.html" (dict "title" "Review SLAs" "id" "review-slas"
+      "description" "Re-review and maintainer SLAs need PR classification, which does not run for this repository.") }}
+  {{ partial "ui/stats.html" (dict "label" "Review SLAs" "card" true "items" (slice
+      (dict "label" "PRs waiting for first review" "value" $pl.without_review_7d "caption" "no maintainer review after 7 days"
+        "title" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago")
+      (dict "label" "Waiting at any age" "value" $nd "caption" "open PRs that are not drafts, with no maintainer review"
+        "title" "The Waiting for first review tab of the queue below"))) }}
 {{- end }}
-<section class="v-section" aria-labelledby="review-slas">
-  {{ partial "ui/section-head.html" (dict "title" "Review SLAs" "id" "review-slas") }}
-  {{- if eq (len $tiles) 1 }}
-  <div class="v-grid"><div class="v-span-4">{{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}</div></div>
-  {{- else }}
-  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Review SLAs") }}
-  {{- end }}
-  {{- if not .classified }}
-  <p class="v-caption mt-3">Re-review and maintainer SLAs need PR classification, which does not run for this repository.</p>
-  {{- end }}
 </section>

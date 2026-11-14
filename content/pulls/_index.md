@@ -1,5 +1,5 @@
 ---
-title: "Pull requests · All repositories"
+title: "All repositories"
 params:
   page: pulls
 ---

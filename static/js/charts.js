@@ -59,13 +59,15 @@
   function weekStart(s) { if (!wkCache[s]) wkCache[s] = addDays(s, -((utc(s).getUTCDay() + 6) % 7)); return wkCache[s]; }
   function cap1(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
 
+  /* Design system v3 §1, §4.16: series from --chart-1 (= --accent) and --chart-2; axis ticks --text-3; gridlines and axis lines --border;
+     direct labels --text-2; crosshair and average rule --border-strong; the tooltip is HTML on --surface-raised (main.css .v-tip). */
   function tokens() {
     var cs = getComputedStyle(root);
     function g(n, fb) { var v = cs.getPropertyValue(n).trim(); return v || (fb ? cs.getPropertyValue(fb).trim() : ''); }
-    var t = { surface: g('--surface', '--color-base-100'), ink: g('--ink', '--color-base-content'), muted: g('--muted', '--ink-3'),
-      line: g('--line'), strong: g('--line-strong', '--axis'), gap: g('--gap'), font: getComputedStyle(document.body).fontFamily, roles: {} };
-    if (!t.gap) t.gap = t.line;
-    t.roles.accent = g('--chart-1'); t.roles.spark = g('--spark'); t.roles.other = g('--other'); t.roles['seg-neutral'] = g('--seg-neutral', '--other');
+    var t = { surface: g('--surface'), text: g('--text'), text2: g('--text-2'), text3: g('--text-3'),
+      border: g('--border'), strong: g('--border-strong'), gap: g('--gap'), font: getComputedStyle(document.body).fontFamily, roles: {} };
+    if (!t.gap) t.gap = t.border;
+    t.roles.accent = g('--chart-1', '--accent'); t.roles.spark = g('--spark'); t.roles.other = g('--other'); t.roles['seg-neutral'] = g('--seg-neutral', '--other');
     for (var i = 1; i <= 8; i++) t.roles['series-' + i] = g('--chart-' + i);
     for (var j = 1; j <= 5; j++) t.roles['ord-' + j] = g('--ord-' + j);
     return t;
@@ -76,7 +78,7 @@
 
   function applyDefaults() {
     var d = Chart.defaults;
-    d.font.family = T.font; d.font.size = 12; d.color = T.muted; d.borderColor = T.line;
+    d.font.family = T.font; d.font.size = 12; d.color = T.text3; d.borderColor = T.border;
     d.responsive = true; d.maintainAspectRatio = false; d.animation = false;
     d.interaction.mode = 'visrIndex'; d.interaction.intersect = false;
     Object.assign(d.elements.line, { borderWidth: 2, tension: 0, borderCapStyle: 'round', borderJoinStyle: 'round' });
@@ -186,7 +188,7 @@
   }
   function bandText(st, b) {
     var g = gapText(st.labels[b[0]], periodEnd(st.labels[b[1]], st.gran), st.spec.outage);
-    return 'No data · ' + g.range + g.note;
+    return 'No data for ' + g.range + g.note;
   }
 
   /* Plugins (§5.11-3). State lives in a Map keyed by canvas, set before the chart is constructed. */
@@ -201,7 +203,7 @@
       if (r <= l) return;
       ctx.fillStyle = T.gap; ctx.fillRect(l, a.top, r - l, a.bottom - a.top);
       if (r - l >= textWidth('No data') + 16) {   /* the label only where it fits with 8px either side */
-        ctx.fillStyle = T.muted; ctx.font = '12px ' + T.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = T.text3; ctx.font = '12px ' + T.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('No data', (l + r) / 2, (a.top + a.bottom) / 2);
       }
     });
@@ -227,26 +229,26 @@
     if (over > 0) items.forEach(function (it) { it.y -= over; });
     var under = a.top + 6 - items[0].y;
     if (under > 0) items.forEach(function (it) { it.y += under; });
-    ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.text2; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     items.forEach(function (it) { ctx.fillText(st.endText[it.d], it.x + 8, it.y); });
     ctx.restore();
   } };
   var capLabel = { id: 'visrCapLabel', afterDatasetsDraw: function (c) {   /* value on the latest column's cap */
     var st = S(c); if (!st || !st.spec.capLabel || st.kind === 'line') return;
     var inf = st.info[0], el = inf && inf.last >= 0 && c.getDatasetMeta(0).data[inf.last]; if (!el) return;
-    var ctx = c.ctx; ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    var ctx = c.ctx; ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.text2; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     var y = el.y - 4, av = st.spec.avg;   /* never on the labeled average rule: sit just above it when they would touch */
     if (av && av.value != null) { var ay = c.scales.y.getPixelForValue(av.value); if (Math.abs(y - ay) < 14) y = Math.min(y, ay - 4); }
     ctx.fillText(st.endText[0], el.x, y); ctx.restore();
   } };
-  var avgRule = { id: 'visrAvgRule', afterDatasetsDraw: function (c) {   /* 1px --line-strong rule, labeled (commits, §5.1) */
+  var avgRule = { id: 'visrAvgRule', afterDatasetsDraw: function (c) {   /* 1px --border-strong rule, labeled (commits, §5.1) */
     var st = S(c), avg = st && st.spec.avg; if (!avg || avg.value == null) return;
     var a = c.chartArea, y = Math.round(c.scales.y.getPixelForValue(avg.value)) + 0.5, ctx = c.ctx, label = String(avg.label || '');
     ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.left, y); ctx.lineTo(a.right, y); ctx.stroke();
     if (label) {
       ctx.font = '12px ' + T.font; var w = ctx.measureText(label).width;
       ctx.fillStyle = T.surface; ctx.fillRect(a.left, y - 18, w + 8, 16);
-      ctx.fillStyle = T.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(label, a.left + 4, y - 3);
+      ctx.fillStyle = T.text2; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(label, a.left + 4, y - 3);
     }
     ctx.restore();
   } };
@@ -367,13 +369,13 @@
         interaction: { mode: 'visrIndex', intersect: false },
         hover: { mode: 'visrIndex', intersect: false },
         scales: {
-          x: { type: 'category', stacked: stack, offset: !line, border: { color: T.line },
-               grid: { display: all, drawOnChartArea: false, drawTicks: true, tickLength: 4, color: T.line },
+          x: { type: 'category', stacked: stack, offset: !line, border: { color: T.border },
+               grid: { display: all, drawOnChartArea: false, drawTicks: true, tickLength: 4, color: T.border },
                /* every label is a tick (no autoSkip, no maxTicksLimit thinning of tick marks); '' keeps the tick, hides the text */
-               ticks: { autoSkip: false, maxTicksLimit: labels.length + 1, maxRotation: 0, color: T.muted, padding: 4,
+               ticks: { autoSkip: false, maxTicksLimit: labels.length + 1, maxRotation: 0, color: T.text3, padding: 4,
                         callback: function (v, i) { if (i === 0 || !this._visr) this._visr = xTicks(this, labels, gran, spec.ticks); var t = this._visr[i]; return t == null ? '' : t; } } },
-          y: { stacked: stack, min: 0, max: sc.max, beginAtZero: true, border: { display: false }, grid: { color: T.line, drawTicks: false },
-               ticks: { stepSize: sc.step, autoSkip: false, color: T.muted, padding: 8, callback: tick },
+          y: { stacked: stack, min: 0, max: sc.max, beginAtZero: true, border: { display: false }, grid: { color: T.border, drawTicks: false },
+               ticks: { stepSize: sc.step, autoSkip: false, color: T.text3, padding: 8, callback: tick },
                afterFit: function (s) { s.width = 44; } }   /* plots in one row share a left edge */
         }
       }
@@ -438,7 +440,7 @@
     if (share) heads.push('Total');
     var withSource = !!(rec && rec.length === 2); if (withSource) heads.push('Source');
     var tbl = document.createElement('table'); tbl.className = 'v-dt v-dt-chart';
-    var cap = tbl.createCaption(); cap.className = 'sr-only'; cap.textContent = cap1(metric) + ' — ' + (cv.dataset.scope || '');
+    var cap = tbl.createCaption(); cap.className = 'sr-only'; cap.textContent = cap1(metric) + (cv.dataset.scope ? ', ' + cv.dataset.scope : '');
     var hr = tbl.createTHead().insertRow();
     heads.forEach(function (h, j) {
       var th = document.createElement('th'); th.scope = 'col'; th.textContent = h;
@@ -454,7 +456,7 @@
         var from = labels[j], to = periodEnd(labels[i], g);
         r.className = 'is-gap'; th.colSpan = heads.length;
         var gt = gapText(from, to, out);
-        th.textContent = dateRange(from, to) + ' · No data' + gt.note;
+        th.textContent = 'No data for ' + dateRange(from, to) + gt.note;
         i = j - 1;
       } else {
         var total = 0; series.forEach(function (s) { total += s.data[i] || 0; });

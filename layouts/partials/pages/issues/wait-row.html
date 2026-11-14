@@ -1,11 +1,12 @@
 {{- /* One row of a no-reply list built from metrics.json issues.issues_without_maintainer_response (brief 3.2a-2, 3.2b-2 unclassified).
   Ctx: dict {it (the metrics row), asof (metrics.json timestamp), repo (display name: adds the Repository column, org view),
     comments (bool: Comments column), over (bool)}.
-  Columns: [Repository] · # · Issue (title, at most 2 tags: P0/P1 strong, then type labels, then the rest; search still covers every
-  label) · Age (calendar time from createdAt to asof, else daysWaiting) · [Comments]. No status markers (P4). Without the Comments
-  column the count goes in the title tooltip. One link per row, the title.
-  Phone: title + Age, then one meta row (#, repository, the tags, comments); the separate tag line is desktop only, so a row is two
-  caption lines shorter. */ -}}
+  Cells (design system v3 §4.8): [Repository], then Issue, then Age (calendar time from createdAt to asof, else daysWaiting), then
+  [Comments]. The title is the single link; under it the row meta (span.v-rowmeta, gap 12): the number, then at most 2 tags (P0/P1
+  strong, then type labels, then the rest; search still covers every label). No status markers (P4). Without the Comments column the
+  count goes in the title tooltip.
+  Phone (.is-list): the title and Age stay; the row meta adds the repository and the comment count (.v-phone-only spans), the two
+  columns that hide, so the row keeps one meta line. */ -}}
 {{- $it := .it -}}
 {{- $labels := $it.labels | default slice -}}
 {{- $prio := slice "P0" "P1" "P2" "P3" }}{{ $types := slice "bug" "enhancement" "question" "documentation" -}}
@@ -21,14 +22,13 @@
 {{- $opened := "" }}{{ with $it.createdAt }}{{ $opened = printf "Opened %s" (partial "ui/date.html" .) }}{{ end -}}
 {{- $title := string ($it.title | default "") -}}
 {{- $repo := .repo | default "" -}}
+{{- $num := int ($it.number | default 0) -}}
 <tr data-row data-row-link data-text="{{ lower (printf "%s|%s|%s" $title $repo (delimit $labels "|")) }}"{{ if .over }} data-over{{ end }}>
   {{- with $repo }}
   <td>{{ . }}</td>
   {{- end }}
-  <td><span class="v-muted">#{{ int ($it.number | default 0) }}</span></td>
   <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ $it.url }}" target="_blank" rel="noopener"{{ if not $.comments }} title="{{ $comments }}"{{ end }}>{{ $title }}<span class="sr-only"> (opens GitHub)</span></a>
-    {{- with $tags }}<span class="v-hide-list">{{ partial "ui/tag.html" . }}</span>{{ end }}
-    <span class="v-listmeta"><span>#{{ int ($it.number | default 0) }}</span>{{ with $repo }}<span>{{ . }}</span>{{ end }}{{ range $tags }}<span>{{ partial "ui/tag.html" . }}</span>{{ end }}{{ if gt $cc 0.0 }}<span>{{ $comments }}</span>{{ end }}</span></td>
+    <span class="v-rowmeta"><span>#{{ $num }}</span>{{ with $repo }}<span class="v-phone-only">{{ . }}</span>{{ end }}{{ partial "ui/tag.html" $tags }}{{ if and $.comments (gt $cc 0.0) }}<span class="v-phone-only">{{ $comments }}</span>{{ end }}</span></td>
   <td class="num v-verdict" data-v="{{ printf "%.2f" $days }}"><span{{ with $opened }} title="{{ . }}"{{ end }}>{{ (partial "ui/dur.html" (dict "d" $days "years" true)).html }}</span></td>
   {{- if .comments }}
   <td class="num" data-v="{{ $cc }}">{{ if gt $cc 0.0 }}{{ partial "ui/num.html" (dict "v" $cc "mode" "full") }}{{ else }}<span class="v-zero">0</span>{{ end }}</td>

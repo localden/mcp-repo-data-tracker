@@ -1,5 +1,5 @@
 ---
-title: "Issues · All repositories"
+title: "All repositories"
 params:
   page: issues
 ---

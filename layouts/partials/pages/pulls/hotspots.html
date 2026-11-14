@@ -1,9 +1,10 @@
-{{- /* Where merged PRs land (brief 3.3b-5, 4.3, 5.13, TR-05, DV-30). Dict {m (metrics.json)}; source metrics › hotspots.
-     Layout change from the brief, made after the first render: the brief's single full-width table behind a Files | Directories
+{{- /* Where merged PRs land (brief 3.3b-5, 4.3, 5.13, TR-05, DV-30; design system v3 §4.4, §4.8, §4.17). Dict {m (metrics.json)};
+     source metrics › hotspots.
+     Layout change from the brief, made after the first render: the brief's single full-width table behind a Files and Directories
      segmented control left about 700px of empty space between a 30-character path and its count at 1440px, and hid one list.
      Both are 3-column ranking tables, which 4.3 places on a 6-column span, and both hold up to 10 rows, so they sit side by side as
-     two titled cards (a section with two cards titles each, 4.4) at >= 64rem and stack below. Each table: path auto | merged PRs 7rem |
-     ranking bar 6rem (no track, scaled to that list's top row, aria-hidden, dropped on phones).
+     two titled cards (a section with two cards titles each, 4.4) at >= 64rem and stack below. Each table: path auto, merged PRs 7rem,
+     ranking bar 6rem (ui/meter.html: one accent colour, no track, scaled to that list's top row, aria-hidden, dropped on phones).
      Paths are code: mono. They break only after a "/": each segment of up to 26 characters is a nowrap span with a <wbr> after its
      slash, so "upgrade-to-v2.md" never splits at a hyphen; a longer segment may break anywhere (the cell is wrap-anywhere), which
      keeps the cell from overflowing on a 390px phone. Counts are right-aligned and never clipped.
@@ -26,7 +27,7 @@
 {{- with $files }}{{ $panels = $panels | append (dict "key" "files" "title" "Files" "head" "File" "rows" .) }}{{ end -}}
 {{- with $dirs }}{{ $panels = $panels | append (dict "key" "dirs" "title" "Directories" "head" "Directory" "rows" .) }}{{ end }}
 <section class="v-section" aria-labelledby="hotspots">
-  {{ partial "ui/section-head.html" (dict "title" "Where merged PRs land" "id" "hotspots" "caption" "Last 90 days, ranked by merged PRs") }}
+  {{ partial "ui/section-head.html" (dict "title" "Where merged PRs land" "id" "hotspots" "description" "The files and directories touched by the most PRs merged in the last 90 days.") }}
   {{- if $panels }}
   <div class="v-grid">
     {{- range $panels }}
@@ -34,7 +35,7 @@
     {{- $max := float ((index $pn.rows 0).pr_count | default 1) }}{{ if le $max 0.0 }}{{ $max = 1.0 }}{{ end }}
     <div class="v-span-6">
       <div class="v-card">
-        <div class="v-card-head"><h3 class="v-card-title" id="hot-{{ $pn.key }}-title">{{ $pn.title }}</h3></div>
+        {{ partial "ui/card-head.html" (dict "title" $pn.title "id" (printf "hot-%s-title" $pn.key)) }}
         <table class="v-dt is-fixed" aria-labelledby="hot-{{ $pn.key }}-title">
           <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-24 v-desk-only"></colgroup>
           <thead><tr>
@@ -63,7 +64,7 @@
             <tr>
               <th scope="row" class="wrap-anywhere"><span class="v-code"{{ with $tip }} title="{{ . }}"{{ end }}>{{ $path | safeHTML }}</span></th>
               <td class="num">{{ partial "ui/num.html" (dict "v" .pr_count "mode" "full") }}</td>
-              <td class="v-desk-only">{{ partial "ui/meter.html" (dict "value" .pr_count "max" $max "rank" true) }}</td>
+              <td class="v-desk-only">{{ partial "ui/meter.html" (dict "value" .pr_count "max" $max) }}</td>
             </tr>
             {{- end }}
           </tbody>
@@ -73,7 +74,7 @@
     {{- end }}
   </div>
   {{- else }}
-  {{ partial "ui/empty.html" (dict "size" "none" "body" "No merged PRs in the last 90 days.") }}
+  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No merged PRs in the last 90 days.") }}
   {{- end }}
 </section>
 {{- end -}}

@@ -1,24 +1,27 @@
-{{- /* Queue for a classified repo (brief 3.3b-2): one table, segmented tabs, search, toggle chips, 25 rows then "Show all".
+{{- /* Queue for a classified repo (brief 3.3b-2; design system v3 §4.8, §4.11, §4.13, §4.14): one table, segmented tabs, the search
+     field with toggle chips and the inline count, 25 rows then "Show all".
      Dict {r (data/repo.html), a (actionability.json)}. Tab counts come from the rendered rows (pages/pulls/rows.html, cached per repo)
-     and the segments sum to All (TS today: Needs a maintainer 287 · Housekeeping 10 · Close candidates 12 · Waiting on author 65 · All 374).
+     and the segments sum to All (TS today: Needs a maintainer 287, Housekeeping 10, Close candidates 12, Waiting on author 65, All 374).
+     No tab count is red: there is no Overdue tab here (the Overdue chip filters), and only an Overdue tab may colour its count.
      Default tab: Needs a maintainer. Rows outside it, beyond its first 25, and collapsed cluster members carry data-over.
-     Chips: Overdue · Author waiting on us · Touches auth · Maintainer · Bot, each shown only when a row carries it. "Author waiting on
+     Chips: Overdue, Author waiting on us, Touches auth, Maintainer, Bot, each shown only when a row carries it. "Author waiting on
      us" (glossary 6.2, classifier tier 1, 17 on TS today) is the one addition to the brief's chip list: the Overview Needs attention
-     column with that name links here, and without the chip those PRs (the old page's first group) sit behind "Show all" in an age sort.
-     The Age / Waiting on us definition lives in the header title and Data notes, not in a <caption> (4.6 n). */ -}}
+     column with that name links here, and without the chip those PRs sit behind "Show all" in an age sort.
+     Section description, one sentence in words: "374 open PRs, 287 need a maintainer (249 overdue), about 112 hours of review by the
+     classifier's estimate."
+     Columns (fixed): Pull request auto (title + row meta), State 10rem, Reason 15rem, Waiting on us (Age before D3-2) 6rem. The definition of
+     Age, and of Waiting on us, lives in the header title and Data notes. */ -}}
 {{- $q := partialCached "pages/pulls/rows.html" .a .r.key -}}
 {{- $stages := partial "pages/pulls/sep-stages.html" .r.data -}}
 {{- $needs := index $q.count "needs" -}}
-{{- /* more than half the needs tab overdue: the header says so and row status drops the icon (4.6 j) */ -}}
+{{- /* more than half the needs tab overdue: row status drops the icon and keeps the danger text */ -}}
 {{- $icon := le (mul $q.over 2) $needs -}}
-{{- $line := slice (partial "ui/plural.html" (dict "n" $q.all "one" "open PR")) (printf "%s %s a maintainer" (lang.FormatNumber 0 $needs) (cond (eq $needs 1) "needs" "need")) -}}
-{{- if not $icon }}{{ $line = $line | append (printf "%s of %s overdue" (lang.FormatNumber 0 $q.over) (lang.FormatNumber 0 $needs)) }}{{ end -}}
+{{- $desc := printf "%s, %s %s a maintainer" (partial "ui/plural.html" (dict "n" $q.all "one" "open PR")) (lang.FormatNumber 0 $needs) (cond (eq $needs 1) "needs" "need") -}}
+{{- if gt $q.over 0 }}{{ $desc = printf "%s (%s overdue)" $desc (lang.FormatNumber 0 $q.over) }}{{ end -}}
 {{- with .a.summary }}{{ with .effort_hours }}{{ if gt (float .) 0.0 -}}
-  {{- $line = $line | append (printf "about %s of review (classifier estimate)" (partial "ui/plural.html" (dict "n" (math.Round (float .)) "one" "hour"))) -}}
+  {{- $desc = printf "%s, about %s of review by the classifier's estimate" $desc (partial "ui/plural.html" (dict "n" (math.Round (float .)) "one" "hour")) -}}
 {{- end }}{{ end }}{{ end -}}
-{{- /* one nowrap span per item with its trailing "·", so a wrapped line never starts with a separator */ -}}
-{{- $parts := slice -}}
-{{- range $i, $t := $line }}{{ $parts = $parts | append (printf `<span class="v-nowrap">%s%s</span>` (htmlEscape $t) (cond (lt $i (sub (len $line) 1)) " ·" "")) }}{{ end -}}
+{{- $desc = printf "%s." $desc -}}
 {{- $tabs := slice (dict "key" "needs" "label" "Needs a maintainer" "count" $needs) -}}
 {{- with index $q.count "housekeeping" }}{{ $tabs = $tabs | append (dict "key" "housekeeping" "label" "Housekeeping" "count" .) }}{{ end -}}
 {{- with index $q.count "close" }}{{ $tabs = $tabs | append (dict "key" "close" "label" "Close candidates" "count" .) }}{{ end -}}
@@ -33,10 +36,10 @@
 {{- $verdict := cond $q.wait "Waiting on us" "Age" -}}
 {{- $verdictTitle := cond $q.wait "Days since the next step moved to a maintainer" "Calendar days since the PR opened" }}
 <section class="v-section" aria-labelledby="queue">
-  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" (delimit $parts " " | safeHTML)) }}
+  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "description" $desc) }}
   <div data-list id="pq" data-limit="25" data-url>
     <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" "pq" "label" "PR queue" "panel" "pq-panel" "selected" "needs" "tabs" $tabs) }}</div>
-    {{ partial "ui/filterbar.html" (dict "id" "pq-search" "label" "Search pull requests" "placeholder" "Search title or author"
+    {{ partial "ui/filterbar.html" (dict "id" "pq-search" "label" "Search pull requests" "placeholder" "Search titles and authors"
         "chips" $chips "noun" "PRs" "one" "PR" "total" $needs) }}
     <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-needs">
       <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">

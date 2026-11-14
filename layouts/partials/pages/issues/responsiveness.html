@@ -1,8 +1,11 @@
-{{- /* Responsiveness (brief 3.2b-4): one KPI card of 3 tiles; a sparkline only with 4 or more weekly points (ui/kpi.html).
+{{- /* Responsiveness (brief 3.2b-4; design system v3 §4.5): one KPI strip of 3 tiles; a sparkline only with 4 or more weekly points
+  (ui/kpi.html), and on the first two tiles a delta badge against the snapshot 7 days earlier whenever data/series.html finds one
+  (cmp7; none across the Oct 8 to Nov 9, 2026 outage). The definitions sit in caption line 1 (qualifier), so a delta's comparison
+  ("vs Nov 7", line 2) never pushes them out.
     Never answered: issues.without_response_24h; "{pct} of open issues by non-maintainers" once issues.open_non_maintainer_count
       exists (D1-8), else the plain qualifier.
-    First reply: issues.first_reply_90d (D1-8: Kaplan–Meier median over issues opened in the last 90 days, "≥" when more than half are
-      unanswered, "n = 64 · 41% unanswered"); until then the survivorship median response_time.median_hours, labeled as such.
+    First reply: issues.first_reply_90d (D1-8: Kaplan-Meier median over issues opened in the last 90 days, "≥" when more than half are
+      unanswered, caption "n = 64, 41% unanswered"); until then the survivorship median response_time.median_hours, labeled as such.
     Time to close: close_time.median_days over issues closed in the last 90 days, "90% within {p90}"; "—" when nothing closed.
   Ctx: dict {r (data/repo.html)}. */ -}}
 {{- $r := .r -}}
@@ -10,9 +13,10 @@
 {{- /* Sparkline slot: 12 weekly bins only when 4 or more hold a value. Below that the slot collapses, unless the field started later
      than the repository's own tracking (a new pipeline field), when it reads "Tracking since {first day}". A short-history repo
      (Rust, Ruby) states its start once, in the Backlog trend card, not three times in a row; and the date is the first day with a
-     value, never the Monday of its ISO week (ui/kpi.html's fallback). */ -}}
+     value, never the Monday of its ISO week (ui/kpi.html's fallback).
+     Deltas: cur and the 7-day comparison per path, in the path's own unit (counts, or hours for the first-reply medians). */ -}}
 {{- $repoFirst := (partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open")).first -}}
-{{- $bins := dict }}{{ $since := dict -}}
+{{- $bins := dict }}{{ $since := dict }}{{ $cmp := dict -}}
 {{- range $p := slice "issues.without_response_24h" "issues.first_reply_90d.median_hours" "issues.response_time.median_hours" "issues.close_time.median_days" -}}
   {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" $p) -}}
   {{- $w := partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12) -}}
@@ -22,15 +26,17 @@
   {{- else if and $s.first (ne $s.first $repoFirst) -}}
     {{- $since = merge $since (dict $k $s.first) -}}
   {{- end -}}
+  {{- if ne $s.cur nil }}{{ with $s.cmp7 }}{{ $cmp = merge $cmp (dict $k (dict "cur" (float $s.cur) "prev" (float .value) "date" .date)) }}{{ end }}{{ end -}}
 {{- end -}}
 
 {{- /* Never answered */ -}}
+{{- $dNever := dict }}{{ with index $cmp "issues-without_response_24h" }}{{ $dNever = merge . (dict "polarity" "down") }}{{ end -}}
 {{- $never := dict "label" "Never answered" "value" $iss.without_response_24h "points" (index $bins "issues-without_response_24h")
-  "since" (index $since "issues-without_response_24h")
+  "since" (index $since "issues-without_response_24h") "delta" $dNever
   "labelTitle" "Open issues by non-maintainers with no maintainer comment, older than 24 hours" -}}
 {{- $base := $iss.open_non_maintainer_count -}}
 {{- if and (ne $base nil) (ne $iss.without_response_24h nil) (gt (float $base) 0.0) -}}
-  {{- $never = merge $never (dict "context" (printf "%s of open issues by non-maintainers" (partial "ui/pct.html" (mul (div (float $iss.without_response_24h) (float $base)) 100.0)))) -}}
+  {{- $never = merge $never (dict "qualifier" (printf "%s of open issues by non-maintainers" (partial "ui/pct.html" (mul (div (float $iss.without_response_24h) (float $base)) 100.0)))) -}}
 {{- else -}}
   {{- $never = merge $never (dict "qualifier" "open issues by non-maintainers") -}}
 {{- end -}}
@@ -44,15 +50,17 @@
   {{- $fn := index $fr "n" }}{{ $fa := index $fr "answered_pct" -}}
   {{- if ne $fn nil }}{{ $ctx = $ctx | append (printf "n = %s" (lang.FormatNumber 0 (float $fn))) }}{{ end -}}
   {{- if ne $fa nil }}{{ $ctx = $ctx | append (printf "%s unanswered" (partial "ui/pct.html" (sub 100.0 (float $fa)))) }}{{ end -}}
+  {{- $d := dict }}{{ with index $cmp "issues-first_reply_90d-median_hours" }}{{ $d = merge . (dict "polarity" "down" "unit" "hours") }}{{ end -}}
   {{- $reply = dict "label" "First reply, issues opened in the last 90 days" "value" (index $fr "median_hours") "format" "dur"
-    "prefix" (cond (eq (index $fr "censored") true) "≥" "") "context" (delimit $ctx " · ") "points" (index $bins "issues-first_reply_90d-median_hours")
-    "since" (index $since "issues-first_reply_90d-median_hours")
+    "prefix" (cond (eq (index $fr "censored") true) "≥" "") "qualifier" (delimit $ctx ", ") "delta" $d
+    "points" (index $bins "issues-first_reply_90d-median_hours") "since" (index $since "issues-first_reply_90d-median_hours")
     "labelTitle" "Median time to the first maintainer comment, issues opened in the last 90 days; unanswered issues count at their current age" -}}
 {{- else -}}
   {{- $rt := $iss.response_time | default dict -}}
+  {{- $d := dict }}{{ with index $cmp "issues-response_time-median_hours" }}{{ $d = merge . (dict "polarity" "down" "unit" "hours") }}{{ end -}}
   {{- $reply = dict "label" "First reply, median of answered issues" "value" (index $rt "median_hours") "format" "dur"
-    "context" "Excludes issues never answered" "points" (index $bins "issues-response_time-median_hours")
-    "since" (index $since "issues-response_time-median_hours")
+    "qualifier" "excludes issues never answered" "delta" $d
+    "points" (index $bins "issues-response_time-median_hours") "since" (index $since "issues-response_time-median_hours")
     "labelTitle" "Median time to the first maintainer comment, over issues that got one" -}}
 {{- end -}}
 
@@ -60,6 +68,7 @@
 {{- $ct := $iss.close_time | default dict -}}
 {{- $med := index $ct "median_days" -}}
 {{- if and (ne $med nil) (eq (float $med) 0.0) (eq (float ($iss.closed_90d | default 0)) 0.0) }}{{ $med = cond false 0 nil }}{{ end -}}
+{{- /* no delta here: caption line 2 holds "90% within {p90}", which a delta's comparison would replace */ -}}
 {{- $close := dict "label" "Time to close, median" "qualifier" "issues closed in the last 90 days" "format" "dur" "na" "no issues closed"
   "value" (cond (ne $med nil) (mul (float ($med | default 0)) 24.0) nil) "points" (index $bins "issues-close_time-median_days")
   "since" (index $since "issues-close_time-median_days")

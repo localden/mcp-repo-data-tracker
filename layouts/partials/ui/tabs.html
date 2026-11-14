@@ -1,7 +1,9 @@
-{{- /* Tabs / segmented control (brief 4.6 l): role=tablist of role=tab buttons; the selected tab is inverted.
+{{- /* Segmented control (design system v3 §4.11): role=tablist of role=tab buttons. Track surface-2, radius 8, padding 3; segment 28px,
+  small 500 text-2; the count follows the label in text-3 (danger when the tab holds overdue rows). Selected: surface (dark:
+  surface-raised), text, a soft shadow. Never inverted. Phone: one scrolling line with an edge fade.
   Dict {id, label, tabs, selected, panel, panels, for}.
     id: prefix; each tab gets id "{id}-tab-{key}". label: the tablist aria-label.
-    tabs: slice of {key, label, count, panel}. count (number, optional) prints after the label.
+    tabs: slice of {key, label, count, panel, overdue}. count (number, optional) prints after the label; overdue: true colours it danger.
     selected: the key of the selected tab (required).
   Two modes:
     list tabs (default): every tab carries data-tab=key and filters the rows of one [data-list] by their data-tags token (key "all" = no filter).
@@ -13,6 +15,6 @@
 <div class="v-tabs" role="tablist"{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ with $c.for }} data-for="{{ . }}"{{ end }}>
 {{- range $c.tabs -}}
   {{- $on := eq .key $c.selected -}}
-  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}"{{ if not $c.panels }} data-tab="{{ .key }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-tab-count"{{ if not $c.panels }} data-tab-count{{ end }}>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</button>
+  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}"{{ if not $c.panels }} data-tab="{{ .key }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-tab-count{{ if .overdue }} is-danger{{ end }}"{{ if not $c.panels }} data-tab-count{{ end }}>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</button>
 {{- end -}}
 </div>

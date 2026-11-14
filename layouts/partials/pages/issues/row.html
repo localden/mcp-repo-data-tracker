@@ -1,23 +1,27 @@
-{{- /* One classified queue row (brief 3.2b-2): # · Issue · Next step · Author · Waiting on · Age · Overdue.
+{{- /* One classified queue row (brief 3.2b-2; design system v3 §4.8). Cells: Issue, Next step, Age, Overdue.
   Ctx: dict {r (a pages/issues/rows.html row), copy ("flat" | "group"), over (bool: beyond the first paint), icon (bool: status icon),
     tier (the tier group row label above a group copy, or "")}.
+    Issue: the title is the row's single link (#123 is plain text). Under it the row meta (span.v-rowmeta, small text-2 spans with a
+      12px gap): the number, the author, the waiting phrase ("Waiting on us for 275 business days", "Waiting on the reporter"), then the
+      tags as text-3 spans ("Maintainer", P0/P1 strong, "Fix proposed in #2051", conflicting type labels, "Missing priority").
+    Next step: the tier's plain label; under a tier group row it is left blank when it only repeats the tier name (3.2b-2).
+    Age: calendar age, neutral text (ages are never red); the tooltip gives business days.
+    Overdue: the one red cell (v3 §4.20): status "744d over" (danger, alert icon unless more than half the list is overdue), the rule
+      name ("Repro") as line 2. Blank when the issue is within every deadline.
     The group copy sits under a tier group row in the Bugs or Enhancements tab and starts hidden (ui.js shows it), so without JS
-    only the flat list renders. Under a tier row, Next step is left empty when it only repeats the tier name (3.2b-2: shown only when it
-    differs). One link per row, the title; #123 is plain text.
-    The rule names ("Follow-up") sit in normal-nums spans: the cells are tabular, and tabular figures widen the hyphen.
-    Phone: title + Age (verdict) + a meta row (#, author, next step), then the overdue status on its own line. */ -}}
+    only the flat list renders.
+  Phone (.is-list): title and Age stay; the row meta stays; a phone-only line (.v-listmeta) carries the columns that hide: the next
+  step and the overdue status ("Repro, 744d over"). */ -}}
 {{- $r := .r }}{{ $group := eq .copy "group" -}}
 {{- $tier := .tier | default "" -}}
 {{- $next := $r.next }}{{ if and $group (ne $tier "") (eq $next $tier) }}{{ $next = "" }}{{ end -}}
-{{- $ohtml := "" }}{{ with $r.otext }}{{ $ohtml = printf `<span class="normal-nums">%s</span> · %s` (htmlEscape $r.orule) (htmlEscape $r.over) | safeHTML }}{{ end -}}
 <tr data-row data-row-link data-tags="{{ cond $group $r.gtags $r.ftags }}" data-text="{{ $r.text }}"{{ if .over }} data-over{{ end }}{{ if $group }} hidden{{ end }}>
-  <td><span class="v-muted">#{{ $r.n }}</span></td>
   <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener" title="{{ $r.ctitle }}">{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    {{- partial "ui/tag.html" $r.tags }}
-    <span class="v-listmeta"><span>#{{ $r.n }}</span><span>{{ $r.author }}{{ if $r.maint }} · maintainer{{ end }}</span>{{ with $next }}<span>{{ . }}</span>{{ end }}{{ with $ohtml }}<span class="basis-full">{{ partial "ui/status.html" (dict "html" . "title" $r.otitle "icon" $.icon) }}</span>{{ end }}</span></td>
+    <span class="v-rowmeta"><span>#{{ $r.n }}</span><span>{{ $r.author }}</span>{{ with $r.wait }}<span>{{ . }}</span>{{ end }}{{ partial "ui/tag.html" $r.tags }}</span>
+    {{- if or $next $r.over }}
+    <span class="v-listmeta">{{ with $next }}<span>{{ . }}</span>{{ end }}{{ with $r.over }}<span>{{ partial "ui/status.html" (dict "text" (printf "%s, %s" $r.orule .) "title" $r.otitle "icon" $.icon) }}</span>{{ end }}</span>
+    {{- end }}</td>
   <td>{{ $next }}</td>
-  <td><span class="block truncate" title="{{ $r.author }}">{{ $r.author }}</span>{{ if $r.maint }}<span class="sub">maintainer</span>{{ end }}</td>
-  <td>{{ $r.waiton }}{{ with $r.waitsub }}<span class="sub">{{ . }}</span>{{ end }}</td>
   <td class="num v-verdict" data-v="{{ printf "%.1f" $r.age }}"><span title="{{ $r.ageTitle }}">{{ $r.ageHTML }}</span></td>
-  <td class="num" data-v="{{ printf "%.1f" $r.k }}">{{ with $r.over }}{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}<span class="sub normal-nums">{{ $r.orule }}</span>{{ end }}</td>
+  <td class="num" data-v="{{ printf "%.1f" $r.k }}">{{ with $r.over }}{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}<span class="sub">{{ $r.orule }}</span>{{ end }}</td>
 </tr>

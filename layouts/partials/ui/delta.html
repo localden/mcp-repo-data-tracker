@@ -1,38 +1,53 @@
-{{- /* Change vs a named base (brief 6.1 rule 10, 6.3). Dict {cur, prev, unit, polarity, date, vs, suffix}. Emits HTML, or nothing when cur or prev is nil.
-  unit "count" (default): absolute, "+9" / "−14"; "percent": relative, "+1.7%" (nothing when prev is 0); "hours": "+2.5d".
-  polarity "up" (up is good), "down" (down is good, e.g. waiting counts) or "none" (default, muted).
-  Base text: date (YYYY-MM-DD) -> "vs Nov 7"; else vs ("prior 7 days") -> "vs prior 7 days"; else suffix verbatim. No change -> "No change". */ -}}
+{{- /* Delta badge (design system v3 §4.7). Emits HTML, or nothing when cur or prev is nil.
+  Dict {cur, prev, unit, polarity, date, vs, suffix, bare}.
+    The badge: inline-flex, 20px, radius 6, 12/16 600 tabular, a 12px arrow (up or down, the direction of the change) + the absolute
+    value ("12", "0.9%", "2.5d"). good: success-soft/success; bad: danger-soft/danger; flat (no change, or no polarity): surface-2/text-2.
+    No change reads "No change" with no arrow. The same badge is used in tables (Change columns) and KPI tiles.
+    unit "count" (default): absolute; "percent": relative to prev (nothing when prev is 0); "hours": a duration ("2.5d").
+    polarity "up" (up is good), "down" (down is good, e.g. waiting counts) or none (default: flat colours, arrow kept).
+    The comparison is never inside the badge: date (YYYY-MM-DD) -> "vs Nov 7", else vs ("prior 7 days") -> "vs prior 7 days", else
+    suffix verbatim, is emitted AFTER the badge as span.v-delta-vs (small, text-3). bare: true leaves it out (KPI tiles put the
+    comparison in their caption; table columns name it in the header).
+    Screen readers hear "Improving, up 12", "Worsening, down 3" or "Up 4" (sr-only, inside the badge, before the number). */ -}}
 {{- $c := . -}}
 {{- if and (ne $c.cur nil) (ne $c.prev nil) -}}
   {{- $cur := float $c.cur }}{{ $prev := float $c.prev }}{{ $d := sub $cur $prev -}}
   {{- $unit := $c.unit | default "count" -}}
-  {{- $sign := cond (gt $d 0.0) "+" "−" -}}
   {{- $txt := "" }}{{ $ok := true }}{{ $zero := false -}}
   {{- if eq $unit "percent" -}}
     {{- if eq $prev 0.0 }}{{ $ok = false }}{{ else -}}
       {{- $p := div (math.Round (mul (math.Abs (mul (div $d (math.Abs $prev)) 100.0)) 10.0)) 10.0 -}}
       {{- if eq $d 0.0 }}{{ $zero = true }}
-      {{- else if eq $p 0.0 }}{{ $txt = printf "%s<0.1%%" $sign }}
-      {{- else }}{{ $txt = printf "%s%.1f%%" $sign $p }}{{ end -}}
+      {{- else if eq $p 0.0 }}{{ $txt = "<0.1%" }}
+      {{- else }}{{ $txt = printf "%.1f%%" $p }}{{ end -}}
     {{- end -}}
   {{- else if eq $unit "hours" -}}
-    {{- if eq $d 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = printf "%s%s" $sign (partial "ui/dur.html" (math.Abs $d)) }}{{ end -}}
+    {{- if eq $d 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = partial "ui/dur.html" (math.Abs $d) }}{{ end -}}
   {{- else -}}
     {{- $r := math.Round $d -}}
-    {{- if eq $r 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = printf "%s%s" (cond (gt $r 0.0) "+" "−") (lang.FormatNumber 0 (math.Abs $r)) }}{{ end -}}
+    {{- if eq $r 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = lang.FormatNumber 0 (math.Abs $r) }}{{ end -}}
   {{- end -}}
   {{- if $ok -}}
-    {{- if $zero }}{{ $txt = "No change" }}{{ end -}}
     {{- $state := "flat" -}}
     {{- if not $zero -}}
       {{- if eq $c.polarity "up" }}{{ $state = cond (gt $d 0.0) "good" "bad" }}{{ end -}}
       {{- if eq $c.polarity "down" }}{{ $state = cond (lt $d 0.0) "good" "bad" }}{{ end -}}
     {{- end -}}
+    {{- $dir := cond (gt $d 0.0) "up" "down" -}}
+    {{- $sr := "" -}}
+    {{- if not $zero -}}
+      {{- $sr = cond (eq $dir "up") "Up " "Down " -}}
+      {{- if eq $state "good" }}{{ $sr = printf "Improving, %s" (lower $sr) }}{{ else if eq $state "bad" }}{{ $sr = printf "Worsening, %s" (lower $sr) }}{{ end -}}
+    {{- end -}}
     {{- $vs := "" -}}
-    {{- if $c.date }}{{ $vs = printf "vs %s" (partial "ui/date.html" (dict "d" $c.date "style" "short")) }}
-    {{- else if $c.vs }}{{ $vs = printf "vs %s" $c.vs }}
-    {{- else if $c.suffix }}{{ $vs = $c.suffix }}{{ end -}}
-    {{- /* the polarity word leads (sr-only), so nothing a caller appends after the delta is split from it */ -}}
-    <span class="v-delta is-{{ $state }}">{{ if eq $state "good" }}<span class="sr-only">Improving: </span>{{ else if eq $state "bad" }}<span class="sr-only">Worsening: </span>{{ end }}{{ $txt }}{{ with $vs }} <span class="v-delta-vs">{{ . }}</span>{{ end }}</span>
+    {{- if not $c.bare -}}
+      {{- if $c.date }}{{ $vs = printf "vs %s" (partial "ui/date.html" (dict "d" $c.date "style" "short")) }}
+      {{- else if $c.vs }}{{ $vs = printf "vs %s" $c.vs }}
+      {{- else if $c.suffix }}{{ $vs = $c.suffix }}{{ end -}}
+    {{- end -}}
+    <span class="v-delta is-{{ $state }}">
+      {{- if $zero }}No change{{ else }}<span class="sr-only">{{ $sr }}</span>{{ partial "ui/icon.html" (dict "name" (printf "arrow-%s" $dir) "size" 12) }}{{ $txt }}{{ end -}}
+    </span>
+    {{- with $vs }}<span class="v-delta-vs">{{ . }}</span>{{ end -}}
   {{- end -}}
 {{- end -}}
