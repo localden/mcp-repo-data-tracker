@@ -1,0 +1,11 @@
+{{- /* Sum of N complete download days ending on a date (§5.4). Internal helper of data/downloads.html.
+  Call: partial "data/dl-window.html" (dict "vals" $map "end" "YYYY-MM-DD" "n" 7)   vals: date -> count (missing = not a complete day)
+  Returns dict: value float|nil (the sum, only when all N days exist), sum float (partial sum), days int (complete days), from, to. */ -}}
+{{- $end := time.AsTime .end }}{{ $n := int .n -}}
+{{- $sum := 0.0 }}{{ $days := 0 -}}
+{{- range $i := seq 0 (sub $n 1) -}}
+  {{- $v := index $.vals (($end.AddDate 0 0 (int (sub 0 $i))).Format "2006-01-02") -}}
+  {{- if ne $v nil }}{{ $sum = add $sum (float $v) }}{{ $days = add $days 1 }}{{ end -}}
+{{- end -}}
+{{- return dict "value" (cond (eq $days $n) $sum nil) "sum" $sum "days" $days
+  "from" (($end.AddDate 0 0 (int (sub 1 $n))).Format "2006-01-02") "to" .end -}}

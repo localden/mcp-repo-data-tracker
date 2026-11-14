@@ -1,0 +1,62 @@
+{{- /* Queue for a classified repo (brief 3.3b-2): one table, segmented tabs, search, toggle chips, 25 rows then "Show all".
+     Dict {r (data/repo.html), a (actionability.json)}. Tab counts come from the rendered rows (pages/pulls/rows.html) and the
+     segments sum to All (TS today: Needs a maintainer 287 · Housekeeping 10 · Close candidates 12 · Waiting on author 65 · All 374).
+     Default tab: Needs a maintainer. Rows outside it, beyond its first 25, and collapsed cluster members carry data-over. */ -}}
+{{- $q := partial "pages/pulls/rows.html" .a -}}
+{{- $stages := partial "pages/pulls/sep-stages.html" .r.data -}}
+{{- $needs := index $q.count "needs" -}}
+{{- /* more than half the needs tab overdue: the header says so and row status drops the icon (4.6 j) */ -}}
+{{- $icon := le (mul $q.over 2) $needs -}}
+{{- $line := slice (partial "ui/plural.html" (dict "n" $q.all "one" "open PR")) (printf "%s %s a maintainer" (lang.FormatNumber 0 $needs) (cond (eq $needs 1) "needs" "need")) -}}
+{{- if not $icon }}{{ $line = $line | append (printf "%s of %s overdue" (lang.FormatNumber 0 $q.over) (lang.FormatNumber 0 $needs)) }}{{ end -}}
+{{- with .a.summary }}{{ with .effort_hours }}{{ if gt (float .) 0.0 -}}
+  {{- $line = $line | append (printf "about %s of review (classifier estimate)" (partial "ui/plural.html" (dict "n" (math.Round (float .)) "one" "hour"))) -}}
+{{- end }}{{ end }}{{ end -}}
+{{- /* one nowrap span per item with its trailing "·", so a wrapped line never starts with a separator */ -}}
+{{- $parts := slice -}}
+{{- range $i, $t := $line }}{{ $parts = $parts | append (printf `<span class="v-nowrap">%s%s</span>` (htmlEscape $t) (cond (lt $i (sub (len $line) 1)) " ·" "")) }}{{ end -}}
+{{- $tabs := slice (dict "key" "needs" "label" "Needs a maintainer" "count" $needs) -}}
+{{- with index $q.count "housekeeping" }}{{ $tabs = $tabs | append (dict "key" "housekeeping" "label" "Housekeeping" "count" .) }}{{ end -}}
+{{- with index $q.count "close" }}{{ $tabs = $tabs | append (dict "key" "close" "label" "Close candidates" "count" .) }}{{ end -}}
+{{- with index $q.count "author" }}{{ $tabs = $tabs | append (dict "key" "author" "label" "Waiting on author" "count" .) }}{{ end -}}
+{{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $q.all) -}}
+{{- $chips := slice -}}
+{{- if gt $q.over 0 }}{{ $chips = $chips | append (dict "label" "Overdue" "tag" "overdue" "title" "Past a team review SLA") }}{{ end -}}
+{{- if gt $q.auth 0 }}{{ $chips = $chips | append (dict "label" "Touches auth" "tag" "auth") }}{{ end -}}
+{{- if gt $q.maint 0 }}{{ $chips = $chips | append (dict "label" "Maintainer" "tag" "maint" "title" "Authored by a maintainer") }}{{ end -}}
+{{- if gt $q.bot 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end }}
+<section class="v-section" aria-labelledby="queue">
+  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" (delimit $parts " " | safeHTML)) }}
+  <div data-list id="pq" data-limit="25" data-url>
+    <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" "pq" "label" "PR queue" "panel" "pq-panel" "selected" "needs" "tabs" $tabs) }}</div>
+    {{ partial "ui/filterbar.html" (dict "id" "pq-search" "label" "Search pull requests" "placeholder" "Search title or author"
+        "chips" $chips "noun" "PRs" "one" "PR" "total" $needs) }}
+    <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-needs">
+      <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">
+        <caption>{{ if $q.wait }}Waiting on us counts the days since the next step moved to a maintainer.{{ else }}Age is calendar days since the PR opened.{{ end }}</caption>
+        <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-60"><col class="v-col-24"></colgroup>
+        <thead><tr>
+          <th scope="col">Pull request</th>
+          <th scope="col">State</th>
+          <th scope="col">Reason</th>
+          <th scope="col" class="num">{{ if $q.wait }}Waiting on us{{ else }}Age{{ end }}</th>
+        </tr></thead>
+        <tbody>
+          {{- $seen := 0 -}}
+          {{- range $q.rows -}}
+            {{- $row := . -}}
+            {{- $first := eq .tab "needs" }}
+          {{ partial "pages/pulls/row.html" (merge . (dict "icon" $icon "wait" $q.wait "stages" $stages "more" (or (not $first) (ge $seen 25)))) }}
+            {{- if $first }}{{ $seen = add $seen 1 }}{{ end -}}
+            {{- range .kids }}
+          {{ partial "pages/pulls/row.html" (merge . (dict "icon" $icon "wait" $q.wait "stages" $stages "more" true "parent" $row.id)) }}
+              {{- if $first }}{{ $seen = add $seen 1 }}{{ end -}}
+            {{- end -}}
+          {{- end }}
+        </tbody>
+      </table>
+      {{ partial "ui/more.html" (dict "list" "pq" "controls" "pq-table" "n" $needs) }}
+    </div>
+    <p class="v-empty-text" data-filter-empty hidden>No PRs match.</p>
+  </div>
+</section>

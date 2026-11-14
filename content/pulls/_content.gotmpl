@@ -1,0 +1,9 @@
+{{- /* /pulls/<repo>/: one page per tracked repository (brief 2.1). Rendered by layouts/partials/pages/pulls.html. */ -}}
+{{- range .Site.Data.repos.repositories -}}
+  {{- $name := .name | default .repo -}}
+  {{- $.AddPage (dict
+      "path" .repo
+      "kind" "page"
+      "title" (printf "Pull requests · %s" $name)
+      "params" (dict "repo" (printf "%s/%s" .owner .repo) "page" "pulls")) -}}
+{{- end -}}

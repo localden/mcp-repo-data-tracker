@@ -620,6 +620,10 @@ export interface RepoConfig {
   name?: string;
   description?: string;
   package?: PackageConfig;
+  /** SEP-1730 SLAs apply (the dashboard shows SLA modules only for SDK repos). */
+  sdk?: boolean;
+  /** Metric key → first snapshot date with a trustworthy value; the dashboard drops earlier points. */
+  valid_from?: Record<string, string>;
 }
 
 export interface ReposConfig {

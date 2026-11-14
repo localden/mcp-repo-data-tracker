@@ -1,0 +1,9 @@
+{{- /* Search field (brief 4.6 m): search icon, sr-only label, input type=search, and the 24px clear button outside the label.
+  Dict {id, label, placeholder, value}. id: the input id (required, unique on the page); label: sr-only text ("Search issues").
+  Plain substring search over each row's data-text, run by ui.js inside the enclosing [data-list]. No query syntax. */ -}}
+<div class="v-field">
+  {{- partial "ui/icon.html" "search" -}}
+  <label class="sr-only" for="{{ .id }}">{{ .label | default "Search" }}</label>
+  <input id="{{ .id }}" type="search" autocomplete="off" spellcheck="false" data-filter-input{{ with .placeholder }} placeholder="{{ . }}"{{ end }}{{ with .value }} value="{{ . }}"{{ end }}>
+  <button type="button" class="v-field-clear" aria-label="Clear search" data-filter-clear hidden>{{ partial "ui/icon.html" "x" }}</button>
+</div>

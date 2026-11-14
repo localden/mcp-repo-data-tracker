@@ -1,0 +1,53 @@
+{{- /* Page-level snapshot gaps for the gap notice and Data notes (brief 2.4, 8c). Returns a dict, never errors.
+  Call: $g := partial "ui/page-gaps.html" (dict "repos" (slice "modelcontextprotocol/typescript-sdk") ["days" 182] ["key" "issues"] ["min" 3])
+    repos: one "owner/repo" (or bare repo) or a slice of them; days: the charted window back from the newest snapshot (default 182 = 26 weeks);
+    key: the snapshot field whose absence is a gap ("issues" = GitHub metrics, "actionability" = PR classification); min: shortest run (default 3 days).
+  A day is missing when any repo that was already tracking on that day has no snapshot, or a snapshot without key (download-only stubs).
+  Days before a repo's first snapshot with key are not gaps (Rust and Ruby start Nov 10).
+  Returns {runs: [{from, to, days, outage}], reconstructed: [{from, to}], latest: "YYYY-MM-DD"}; outage = the run intersects data/outage.html. */ -}}
+{{- $keys := .repos | default slice -}}{{- if not (reflect.IsSlice $keys) }}{{ $keys = slice $keys }}{{ end -}}
+{{- $field := .key | default "issues" -}}
+{{- $days := int (.days | default 182) -}}
+{{- $min := int (.min | default 3) -}}
+{{- $o := partial "data/outage.html" . -}}
+{{- $repos := slice }}{{ $latest := "" -}}
+{{- range $keys -}}
+  {{- $snaps := (partial "data/repo.html" .).snapshots | default dict -}}
+  {{- $first := "" -}}
+  {{- range $d, $s := $snaps -}}
+    {{- if and (eq $first "") (reflect.IsMap $s) }}{{ if ne (index $s $field) nil }}{{ $first = $d }}{{ end }}{{ end -}}
+    {{- if gt $d $latest }}{{ $latest = $d }}{{ end -}}
+  {{- end -}}
+  {{- if $first }}{{ $repos = $repos | append (dict "snaps" $snaps "first" $first) }}{{ end -}}
+{{- end -}}
+{{- $runs := slice }}{{ $recs := slice -}}
+{{- if and $repos $latest -}}
+  {{- $start := (time.AsTime $latest).AddDate 0 0 (int (sub 0 $days)) -}}
+  {{- $rf := "" }}{{ $rt := "" }}{{ $rn := 0 }}{{ $cf := "" }}{{ $ct := "" -}}
+  {{- range $i := seq 0 $days -}}
+    {{- $d := ($start.AddDate 0 0 (int $i)).Format "2006-01-02" -}}
+    {{- $miss := false }}{{ $rec := false -}}
+    {{- range $repos -}}
+      {{- if ge $d .first -}}
+        {{- $s := index .snaps $d -}}
+        {{- if not (reflect.IsMap $s) }}{{ $miss = true -}}
+        {{- else if eq (index $s $field) nil }}{{ $miss = true -}}
+        {{- else }}{{ with index $s "meta" }}{{ if reflect.IsMap . }}{{ if eq (index . "source") "reconstructed" }}{{ $rec = true }}{{ end }}{{ end }}{{ end }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $miss -}}
+      {{- if eq $rn 0 }}{{ $rf = $d }}{{ end }}{{ $rt = $d }}{{ $rn = add $rn 1 -}}
+    {{- else -}}
+      {{- if ge $rn $min }}{{ $runs = $runs | append (dict "from" $rf "to" $rt "days" $rn "outage" (and (le $rf $o.to) (ge $rt $o.from))) }}{{ end -}}
+      {{- $rn = 0 -}}
+    {{- end -}}
+    {{- if $rec -}}
+      {{- if eq $cf "" }}{{ $cf = $d }}{{ end }}{{ $ct = $d -}}
+    {{- else if $cf -}}
+      {{- $recs = $recs | append (dict "from" $cf "to" $ct) }}{{ $cf = "" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if ge $rn $min }}{{ $runs = $runs | append (dict "from" $rf "to" $rt "days" $rn "outage" (and (le $rf $o.to) (ge $rt $o.from))) }}{{ end -}}
+  {{- if $cf }}{{ $recs = $recs | append (dict "from" $cf "to" $ct) }}{{ end -}}
+{{- end -}}
+{{- return dict "runs" $runs "reconstructed" $recs "latest" $latest -}}

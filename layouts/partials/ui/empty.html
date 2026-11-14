@@ -1,5 +1,24 @@
-<div class="v-panel v-empty">
-  <p class="v-empty-title">{{ .title }}</p>
-  {{ with .body }}<p class="v-empty-body">{{ . }}</p>{{ end }}
-  {{ with .action }}<p class="v-empty-body"><a class="v-link" href="?repo={{ .repoKey | urlquery }}" data-repo-switch>{{ .label }}</a></p>{{ end }}
+{{- /* Empty and short-history state (brief 4.6 p, 5.5): the same card frame, title row and plot height as the chart it stands in for.
+  Dict {title, id, level, right, value, body, since, weeks, size, card}.
+    title/id/level/right: the card header (ui/card-head.html). value: the current value (text or HTML, subhead).
+    body: the one caption line. Without body, since ("YYYY-MM-DD") writes "Tracking since Nov 10, 2026. Trend appears after 4 weeks (Dec 8)."
+      (weeks: default 4). For a repo with no data: body "No data collected for TypeScript SDK yet."
+    size: "chart" (default, main plot height), "sm" (small-multiple height) or "none" (no min-height, e.g. a list module).
+    card: false renders only the inner block, for use inside an existing card body.
+  Sections that can never apply are omitted, not rendered empty. */ -}}
+{{- $c := . -}}
+{{- $text := $c.body -}}
+{{- if and (not $text) $c.since -}}
+  {{- $s := time.AsTime $c.since }}{{ $w := int ($c.weeks | default 4) -}}
+  {{- $text = printf "Tracking since %s. Trend appears after %d weeks (%s)." ($s.Format "Jan 2, 2006") $w (($s.AddDate 0 0 (int (mul $w 7))).Format "Jan 2") -}}
+{{- end -}}
+{{- $size := $c.size | default "chart" -}}
+{{- $cls := " is-chart" }}{{ if eq $size "sm" }}{{ $cls = " is-sm" }}{{ else if eq $size "none" }}{{ $cls = "" }}{{ end -}}
+{{- if eq $c.card false -}}
+<div class="v-empty{{ $cls }}">{{ with $c.value }}<p class="v-empty-value">{{ . }}</p>{{ end }}{{ with $text }}<p class="v-empty-text">{{ . }}</p>{{ end }}</div>
+{{- else -}}
+<div class="v-card">
+  {{- partial "ui/card-head.html" $c -}}
+  <div class="v-card-body"><div class="v-empty{{ $cls }}">{{ with $c.value }}<p class="v-empty-value">{{ . }}</p>{{ end }}{{ with $text }}<p class="v-empty-text">{{ . }}</p>{{ end }}</div></div>
 </div>
+{{- end -}}

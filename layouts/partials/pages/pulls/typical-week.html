@@ -1,0 +1,25 @@
+{{- /* "Typical week" of merged PRs (brief 3.3b-3, 6.2, PR-X1): the median of weekly snapshots › pulls.merged_7d over the prior 12 ISO
+     weeks, skipping weeks without data (TS today: 8 of the 12 weeks have data, median 5). One sample per week (its last reading); the
+     current, unfinished week is not a sample.
+     Shared by the Pull requests backlog strip and the Overview Repositories table, which both show it only with 4 or more samples.
+     Input: a repos.json entry (or any data/repo.html reference). Returns dict {value float|nil, n int, from, to (sampled week starts),
+     title (the tooltip naming the samples, "" when there are none)}. */ -}}
+{{- $s := partial "data/series.html" (dict "repo" . "path" "pulls.merged_7d") -}}
+{{- $w := partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12 "partial" false) -}}
+{{- $vals := slice }}{{ $from := "" }}{{ $to := "" -}}
+{{- range $w.points | default slice -}}
+  {{- if ne .value nil -}}
+    {{- $vals = $vals | append (float .value) -}}
+    {{- if eq $from "" }}{{ $from = .date }}{{ end }}{{ $to = .date -}}
+  {{- end -}}
+{{- end -}}
+{{- $med := 0.0 }}{{ $n := len $vals -}}
+{{- if gt $n 0 -}}
+  {{- $sorted := sort $vals -}}
+  {{- $mid := div $n 2 -}}
+  {{- if eq (mod $n 2) 1 }}{{ $med = index $sorted $mid -}}
+  {{- else }}{{ $med = div (add (index $sorted (sub $mid 1)) (index $sorted $mid)) 2.0 }}{{ end -}}
+{{- end -}}
+{{- $title := "" -}}
+{{- if gt $n 0 }}{{ $title = printf "Median of %s of PRs merged in 7 days, weeks of %s" (partial "ui/plural.html" (dict "n" $n "one" "weekly count")) (partial "data/date-range.html" (dict "from" $from "to" $to)) }}{{ end -}}
+{{- return dict "value" (cond (gt $n 0) $med nil) "n" $n "from" $from "to" $to "title" $title -}}

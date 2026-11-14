@@ -1,10 +1,41 @@
-{{- $h := float . -}}{{- $out := "" -}}
-{{- if lt $h 1.0 -}}{{- $out = printf "%.0fm" (mul $h 60) -}}
-{{- else if lt $h 10.0 -}}{{- $out = printf "%sh" (strings.TrimSuffix ".0" (printf "%.1f" $h)) -}}
-{{- else if lt $h 48.0 -}}{{- $out = printf "%.0fh" $h -}}
-{{- else -}}{{- $d := div $h 24.0 -}}
-  {{- if lt $d 10.0 -}}{{- $out = printf "%sd" (strings.TrimSuffix ".0" (printf "%.1f" $d)) -}}
-  {{- else if lt $d 365.0 -}}{{- $out = printf "%.0fd" $d -}}
-  {{- else -}}{{- $out = printf "%sy" (strings.TrimSuffix ".0" (printf "%.1f" (div $d 365.0))) -}}{{- end -}}
+{{- /* Duration formatter (brief 6.3, A6). Never minutes.
+  Number input (hours): returns the short string, e.g. partial "ui/dur.html" 141.0 -> "5.9d".
+  Dict input {h | d, years}: returns dict {short, long, html}. h = hours, d = days (age_days); years: true allows "1.7y" at >= 365 days (Age columns only).
+  short: "<1h", "4.5h", "36h", "5.9d", "193d", "1.7y"; long: "4.5 hours", "1 day"; html: short aria-hidden + long sr-only.
+  nil -> short "—", long "not tracked". */ -}}
+{{- $c := . -}}{{- $legacy := not (reflect.IsMap $c) -}}
+{{- if $legacy }}{{ $c = dict "h" . }}{{ end -}}
+{{- $h := $c.h -}}
+{{- if and (eq $h nil) (ne $c.d nil) }}{{ $h = mul (float $c.d) 24.0 }}{{ end -}}
+{{- $short := "—" }}{{ $long := "not tracked" -}}
+{{- if ne $h nil -}}
+  {{- $h = math.Abs (float $h) -}}
+  {{- $r1 := div (math.Round (mul $h 10.0)) 10.0 -}}
+  {{- if lt $h 1.0 -}}
+    {{- $short = "<1h" }}{{ $long = "less than 1 hour" -}}
+  {{- else if lt $r1 10.0 -}}
+    {{- $s := strings.TrimSuffix ".0" (printf "%.1f" $r1) -}}
+    {{- $short = printf "%sh" $s }}{{ $long = printf "%s %s" $s (cond (eq $s "1") "hour" "hours") -}}
+  {{- else if lt (math.Round $h) 48.0 -}}
+    {{- $s := printf "%.0f" (math.Round $h) -}}
+    {{- $short = printf "%sh" $s }}{{ $long = printf "%s hours" $s -}}
+  {{- else -}}
+    {{- $d := div $h 24.0 -}}{{- $d1 := div (math.Round (mul $d 10.0)) 10.0 -}}
+    {{- if lt $d1 10.0 -}}
+      {{- $s := strings.TrimSuffix ".0" (printf "%.1f" $d1) -}}
+      {{- $short = printf "%sd" $s }}{{ $long = printf "%s %s" $s (cond (eq $s "1") "day" "days") -}}
+    {{- else if and $c.years (ge (math.Round $d) 365.0) -}}
+      {{- $s := strings.TrimSuffix ".0" (printf "%.1f" (div (math.Round (mul (div $d 365.0) 10.0)) 10.0)) -}}
+      {{- $short = printf "%sy" $s }}{{ $long = printf "%s %s" $s (cond (eq $s "1") "year" "years") -}}
+    {{- else -}}
+      {{- $s := printf "%.0f" (math.Round $d) -}}
+      {{- $short = printf "%sd" $s }}{{ $long = printf "%s days" $s -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
-{{- return $out -}}
+{{- $ret := $short -}}
+{{- if not $legacy -}}
+  {{- $html := printf `<span aria-hidden="true">%s</span><span class="sr-only">%s</span>` (htmlEscape $short) (htmlEscape $long) | safeHTML -}}
+  {{- $ret = dict "short" $short "long" $long "html" $html -}}
+{{- end -}}
+{{- return $ret -}}

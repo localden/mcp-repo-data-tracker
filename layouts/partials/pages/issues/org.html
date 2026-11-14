@@ -1,0 +1,59 @@
+{{- /* /issues/ (brief 3.2a): all repositories. Context: the section page (content/issues/_index.md, .Params.repo empty).
+    1 Repo chips: links to /issues/<repo>/ with metrics.json issues.open_count (navigation, not filters).
+    2 Longest waiting for a maintainer reply: the union of every repo's metrics.json issues.issues_without_maintainer_response,
+      oldest first; Repository · # · Issue (at most 2 tags) · Age · Comments; 25 rows, then "Show all N". No status markers (P4).
+  Data as of = the oldest metrics.json timestamp across the repositories. No chart, so no gap notice. */ -}}
+{{- $keys := slice }}{{ $chips := slice }}{{ $rows := slice -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $keys = $keys | append $r.key -}}
+  {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+  {{- $chips = $chips | append (dict "label" $r.name "href" (printf "issues/%s/" $r.repo | relURL) "count" $iss.open_count "title" $r.key) -}}
+  {{- $asof := "" }}{{ with $r.data.metrics }}{{ with .timestamp }}{{ $asof = . }}{{ end }}{{ end -}}
+  {{- range ($iss.issues_without_maintainer_response | default slice) -}}
+    {{- $rows = $rows | append (dict "age" (float (.daysWaiting | default 0)) "it" . "repo" $r.name "asof" $asof) -}}
+  {{- end -}}
+{{- end -}}
+{{- if $rows }}{{ $rows = sort $rows "age" "desc" }}{{ end -}}
+{{- $n := len $rows -}}
+{{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
+{{ partial "ui/page-head.html" (dict "title" .Title "switch" "issues" "sources" $src
+    "defs" (slice
+      (dict "term" "Age" "text" "Calendar days since the issue opened.")
+      (dict "term" "Longest waiting for a maintainer reply" "text" "Open issues by non-maintainers with no comment from a maintainer of their repository, at any age, oldest first."))) }}
+
+<nav class="v-section" aria-label="Open issues by repository">
+  <div class="v-chiplinks">{{ range $chips }}{{ partial "ui/chip.html" . }}{{ end }}</div>
+</nav>
+
+<section class="v-section" aria-labelledby="longest-waiting">
+  {{ partial "ui/section-head.html" (dict "title" "Longest waiting for a maintainer reply" "id" "longest-waiting" "caption" "Open issues with no maintainer comment, oldest first") }}
+  {{- if eq $n 0 }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" "No open issue is waiting for a maintainer reply.") }}
+  {{- else }}
+  <div data-list id="io" data-limit="25" data-url>
+    {{ partial "ui/filterbar.html" (dict "id" "io-search" "label" "Search issues" "placeholder" "Search titles, repositories, labels"
+        "noun" "issues" "one" "issue" "total" $n) }}
+    <div class="v-card">
+      <table class="v-dt is-fixed is-list" id="io-table" aria-labelledby="longest-waiting">
+        <caption>Age is calendar days since the issue opened.</caption>
+        <colgroup><col class="v-col-40"><col class="v-col-18"><col class="v-col-auto"><col class="v-col-20"><col class="v-col-24"></colgroup>
+        <thead><tr>
+          {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
+          <th scope="col"><span aria-hidden="true">#</span><span class="sr-only">Number</span></th>
+          <th scope="col">Issue</th>
+          {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true "active" "descending") }}
+          {{ partial "ui/th-sort.html" (dict "label" "Comments" "num" true) }}
+        </tr></thead>
+        <tbody>
+          {{- range $i, $row := $rows }}
+          {{ partial "pages/issues/wait-row.html" (dict "it" $row.it "asof" $row.asof "repo" $row.repo "comments" true "over" (ge $i 25)) }}
+          {{- end }}
+        </tbody>
+      </table>
+      {{ partial "ui/more.html" (dict "list" "io" "controls" "io-table" "n" $n) }}
+    </div>
+    <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>
+  </div>
+  {{- end }}
+</section>

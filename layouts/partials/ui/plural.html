@@ -1,0 +1,8 @@
+{{- /* Plural helper (brief 6.1 rule 11). Dict {n, one, other, bare}. Returns a string.
+  "1 comment", "3 comments", "1,204 issues". other defaults to one + "s". bare: true returns the word only. */ -}}
+{{- $n := float (.n | default 0) -}}
+{{- $word := .one -}}
+{{- if ne $n 1.0 }}{{ $word = .other | default (printf "%ss" .one) }}{{ end -}}
+{{- $out := printf "%s %s" (lang.FormatNumber 0 $n) $word -}}
+{{- if .bare }}{{ $out = $word }}{{ end -}}
+{{- return $out -}}

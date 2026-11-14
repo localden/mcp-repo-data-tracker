@@ -1,0 +1,97 @@
+{{- /* Response SLAs (brief 3.2b-1): a table, not tiles. Rule · Deadline · Overdue · Oldest · Show, grouped SEP-1730 / Team targets.
+  Ctx: dict {r (data/repo.html), q (pages/issues/rows.html result, or nil when the repo has no issues.json), list (queue [data-list] id)}.
+    Non-SDK repo: one muted line. SDK repo without issue classification: one muted line naming why.
+    Overdue: the issues.json summary count (status text when > 0, muted 0); "—" (not computed yet) until a field exists (first replies, D1-9).
+      A build warning fires when a summary count and the rows tagged with that rule disagree (P6).
+    Oldest: summary.sla_oldest.<rule> in days (D1-9); the column is omitted until it exists.
+    Show: switches the queue to the Overdue tab filtered to the rule's rows (ui.js data-show), so the list length equals the count.
+    No priority labels in the repo: the P0 and P1 rows read "Not tracked: no priority labels".
+  Phone (< 40rem): the same rows as blocks with a dl (R3). */ -}}
+{{- $r := .r }}{{ $q := .q }}{{ $list := .list | default "iq" -}}
+<section class="v-section" aria-labelledby="sla">
+  {{ partial "ui/section-head.html" (dict "title" "Response SLAs" "id" "sla") }}
+  {{- if not $r.sdk }}
+  <p class="v-caption">SEP-1730 SLAs apply to SDK repositories.</p>
+  {{- else if not $q }}
+  <p class="v-caption">SEP-1730 SLAs need issue classification, which does not run for this repository.</p>
+  {{- else }}
+  {{- $sum := $r.data.issues.summary | default dict -}}
+  {{- /* D1-9 marker: the first-reply count exists once the pipeline computes the redefined triage rule */ -}}
+  {{- $d19 := ne (index ($sum.sla | default dict) "first_reply_2bd_breach") nil -}}
+  {{- $oldest := dict }}{{ if reflect.IsMap $sum.sla_oldest }}{{ $oldest = $sum.sla_oldest }}{{ end -}}
+  {{- $hasOldest := gt (len $oldest) 0 -}}
+  {{- $cols := cond $hasOldest 5 4 -}}
+  {{- $rules := partial "pages/issues/rules.html" "rules" -}}
+  {{- /* one dict per rule with every cell's content, rendered twice (table, phone blocks) */ -}}
+  {{- $items := slice -}}
+  {{- range $rules -}}
+    {{- $ru := . -}}
+    {{- /* walk the summary path; a missing step leaves nil (a bare nil cannot be assigned, so it comes from cond) */ -}}
+    {{- $v := $sum -}}
+    {{- range $ru.sum }}{{ if reflect.IsMap $v }}{{ $v = index $v . }}{{ else }}{{ $v = cond false 0 nil }}{{ end }}{{ end -}}
+    {{- $rowsN := int (index $q.counts $ru.key | default 0) -}}
+    {{- if and (ne $v nil) (ne (int $v) $rowsN) }}{{ warnf "VISR issues %s: %s summary count %d, %d rows flagged" $r.key $ru.key (int $v) $rowsN }}{{ end -}}
+    {{- $label := $ru.label -}}
+    {{- if and (eq $ru.key "triage") (not $d19) }}{{ $label = "Triage new issues (type label)" }}{{ end -}}
+    {{- $untracked := and $ru.prio (not $q.prio) -}}
+    {{- $cell := "" -}}
+    {{- if $untracked }}{{ $cell = `<span class="v-muted">Not tracked: no priority labels</span>` -}}
+    {{- else if eq $v nil }}{{ $cell = partial "ui/num.html" (dict "v" nil "na" "not computed yet") -}}
+    {{- else -}}
+      {{- $cell = partial "ui/status.html" (dict "n" $v "title" $ru.title) -}}
+      {{- if and (eq $ru.key "p0") (ne $sum.p0_open nil) }}{{ $cell = printf `%s<span class="v-muted"> of %s open</span>` $cell (lang.FormatNumber 0 (float $sum.p0_open)) }}{{ end -}}
+    {{- end -}}
+    {{- $old := "" -}}
+    {{- if and $hasOldest (not $untracked) -}}
+      {{- $ov := index $oldest (replace $ru.key "-" "_") -}}
+      {{- range $ru.ids }}{{ if eq $ov nil }}{{ $ov = index $oldest . }}{{ end }}{{ end -}}
+      {{- $old = cond (ne $ov nil) (partial "ui/dur.html" (dict "d" $ov)).html (partial "ui/num.html" (dict "v" nil "na" "none overdue")) -}}
+    {{- end -}}
+    {{- $show := and (gt $rowsN 0) (not $untracked) (ne $v nil) -}}
+    {{- $items = $items | append (dict "key" $ru.key "group" $ru.group "label" $label "deadline" $ru.deadline "cell" ($cell | safeHTML)
+      "old" $old "show" $show "num" (not $untracked)) -}}
+  {{- end -}}
+  {{- $groups := slice (dict "key" "sep" "label" "SEP-1730") (dict "key" "team" "label" "Team targets") -}}
+
+  <div class="v-card v-desk-only">
+    <table class="v-dt is-fixed" aria-labelledby="sla">
+      <colgroup><col class="v-col-auto"><col class="v-col-36"><col class="v-col-40">{{ if $hasOldest }}<col class="v-col-20">{{ end }}<col class="v-col-20"></colgroup>
+      <thead><tr>
+        <th scope="col">Rule</th><th scope="col">Deadline</th><th scope="col" class="num">Overdue</th>
+        {{- if $hasOldest }}<th scope="col" class="num">Oldest</th>{{ end -}}
+        <th scope="col">Show<span class="sr-only"> in the queue</span></th>
+      </tr></thead>
+      {{- range $g := $groups }}
+      <tbody>
+        {{ partial "ui/group-row.html" (dict "label" $g.label "cols" $cols) }}
+        {{- range $items }}{{ if eq .group $g.key }}
+        <tr>
+          <th scope="row">{{ .label }}</th>
+          <td>{{ .deadline }}</td>
+          <td{{ if .num }} class="num"{{ end }}>{{ .cell }}</td>
+          {{- if $hasOldest }}<td class="num">{{ .old }}</td>{{ end }}
+          <td>{{ if .show }}{{ partial "pages/issues/show.html" (dict "key" .key "label" .label "list" $list) }}{{ end }}</td>
+        </tr>
+        {{- end }}{{ end }}
+      </tbody>
+      {{- end }}
+    </table>
+  </div>
+
+  <div class="v-card v-phone-only">
+    <ul class="v-blocks">
+      {{- range $items }}
+      <li class="v-block">
+        <p class="v-block-title">{{ .label }}</p>
+        <dl class="v-kv">
+          <div><dt>Deadline</dt><dd>{{ .deadline }} · {{ if eq .group "sep" }}SEP-1730{{ else }}team target{{ end }}</dd></div>
+          <div><dt>Overdue</dt><dd>{{ .cell }}</dd></div>
+          {{- if $hasOldest }}<div><dt>Oldest</dt><dd>{{ .old }}</dd></div>{{ end }}
+        </dl>
+        {{- if .show }}<p class="mt-2">{{ partial "pages/issues/show.html" (dict "key" .key "label" .label "list" $list) }}</p>{{ end }}
+      </li>
+      {{- end }}
+    </ul>
+  </div>
+  {{- end }}
+</section>

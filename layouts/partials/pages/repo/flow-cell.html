@@ -1,0 +1,7 @@
+{{- /* One Flow table value (brief 3.6-4). Dict {v, net, na}: net true prints a signed count ("+9", "−1"); otherwise a full count.
+  nil prints "—" with the sr-only reason na (default "not tracked"; "tracked for 90 days only" for closed without merging). Emits HTML. */ -}}
+{{- $out := "" -}}
+{{- if .net }}{{ $out = partial "pages/repo/signed.html" (dict "n" .v) }}{{ end -}}
+{{- if $out }}{{ $out -}}
+{{- else }}{{ partial "ui/num.html" (dict "v" .v "mode" "full" "na" (.na | default "not tracked")) -}}
+{{- end -}}

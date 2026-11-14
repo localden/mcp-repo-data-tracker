@@ -3,15 +3,23 @@ languageCode = "en-us"
 title = "VISR"
 
 enableGitInfo = true
+# No tag or category pages: the site has no taxonomies (redesign brief, WP0).
+disableKinds = ["taxonomy", "term"]
 
 [build]
-  writeStats = true
+  [build.buildStats]
+    enable = true
 
 [params]
-  description = "Dashboard for modelcontextprotocol repository metrics"
+  description = "Health dashboard for the modelcontextprotocol GitHub organization"
   repo = "modelcontextprotocol/modelcontextprotocol"
 
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+
+# The footer prints the commit being built (GITHUB_SHA in CI); the first two entries are Hugo's defaults.
+[security]
+  [security.funcs]
+    getenv = ['^HUGO_', '^CI$', '^GITHUB_SHA$']

@@ -1,3 +1,4 @@
 ---
-title: "Spec Enhancement Proposals"
+title: "Specification Enhancement Proposals"
+page: seps
 ---

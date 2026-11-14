@@ -1,27 +1,32 @@
-{{- /* Humanised, sentence-case name for an actionability state slug (spec 4.10). Falls back to ui/humanize.html. Returns a string. */ -}}
+{{- /* State column label for a PR classifier state slug (brief 6.5 "PR state labels"; classifier names never render verbatim, 6.1 rule 9).
+     Input: the slug (pr.state). Returns a string. Slugs the brief does not name get a plain label here; an unknown slug falls back to
+     ui/humanize.html ("needs-merge" -> "Needs merge"). */ -}}
 {{- $names := dict
-  "author-pinged-after-procedural" "Author pinged, awaiting us"
+  "author-pinged-after-procedural" "Author responded"
+  "maintainer-intake" "Maintainer PR, needs review"
+  "duplicate-cluster" "Duplicate"
+  "duplicate-cluster-member" "Duplicate"
+  "needs-decision" "Needs decision"
+  "backport-follows-primary" "v1.x backport"
+  "needs-first-review" "No review yet"
+  "community-reviewed" "Community review only"
+  "stale-awaiting-author" "Changes requested, author silent"
+  "stale-ci-abandoned" "CI failing, inactive"
+  "stale-draft" "Draft, idle"
+  "parked" "Parked maintainer draft"
+  "bot-release" "Release PR"
+  "unknown" "Could not classify"
   "needs-re-review" "Needs re-review"
-  "maintainer-intake" "Maintainer PRs awaiting review"
-  "duplicate-cluster" "Duplicate clusters"
-  "needs-decision" "Needs a decision"
-  "backport-follows-primary" "Backports of a main-branch PR"
-  "needs-first-review" "Needs first review"
-  "community-reviewed" "Community-reviewed"
-  "stale-awaiting-author" "Stale, awaiting author"
-  "ci-red-silent" "CI failing, author not told"
-  "stale-ci-abandoned" "CI failing, abandoned"
+  "needs-merge" "Approved, ready to merge"
+  "ci-red-silent" "CI failing"
   "approved-rotted" "Approved, now conflicting"
   "pre-ci-ghost" "CI never ran"
   "bot-broke-ci" "Bot PR, CI failing"
-  "bot-release" "Release PRs"
-  "unknown" "Unclassified"
-  "stale-draft" "Stale drafts"
-  "stale-draft-pinged" "Stale drafts, pinged"
-  "draft-active" "Active drafts"
-  "parked" "Parked"
+  "stale-draft-pinged" "Draft, idle, author pinged"
+  "draft-active" "Draft"
+  "awaiting-author" "Waiting on author"
 -}}
-{{- $s := string . -}}
+{{- $s := string (. | default "unknown") -}}
 {{- $out := "" -}}
 {{- with index $names $s }}{{ $out = . }}{{ else }}{{ $out = partial "ui/humanize.html" $s }}{{ end -}}
 {{- return $out -}}

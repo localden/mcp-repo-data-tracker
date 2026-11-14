@@ -1,0 +1,4 @@
+{{- /* Group row (brief 4.6 e): the first row of a tbody[data-group] block, 40px on --group-band, subhead label + muted count.
+  Dict {label, count, cols, id}. cols: the table's column count (colspan). ui.js rewrites the count from the rows that match the
+  current tab and filters, and hides the whole tbody when none do. Only render groups when a tab has 2 or more of them. */ -}}
+<tr class="v-group"><th colspan="{{ .cols | default 1 }}" scope="rowgroup"{{ with .id }} id="{{ . }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-count" data-group-count>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</th></tr>

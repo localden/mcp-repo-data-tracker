@@ -1,0 +1,18 @@
+{{- /* Tabs / segmented control (brief 4.6 l): role=tablist of role=tab buttons; the selected tab is inverted.
+  Dict {id, label, tabs, selected, panel, panels, for}.
+    id: prefix; each tab gets id "{id}-tab-{key}". label: the tablist aria-label.
+    tabs: slice of {key, label, count, panel}. count (number, optional) prints after the label.
+    selected: the key of the selected tab (required).
+  Two modes:
+    list tabs (default): every tab carries data-tab=key and filters the rows of one [data-list] by their data-tags token (key "all" = no filter).
+      All tabs aria-control the same panel: pass panel = the id of the role=tabpanel element that wraps the table. Counts get data-tab-count
+      and ui.js rewrites them from the rendered rows. Put the tablist inside the [data-list], or pass for = its id.
+    panel tabs (panels: true): each tab shows its own role=tabpanel (tabs[].panel ids) and hides the others; nothing is counted.
+  Keys: ArrowLeft/Right, Home/End; ?tab= is kept in the URL when the [data-list] has data-url. */ -}}
+{{- $c := . -}}{{- $id := $c.id | default "tabs" -}}
+<div class="v-tabs" role="tablist"{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ with $c.for }} data-for="{{ . }}"{{ end }}>
+{{- range $c.tabs -}}
+  {{- $on := eq .key $c.selected -}}
+  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}"{{ if not $c.panels }} data-tab="{{ .key }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-tab-count"{{ if not $c.panels }} data-tab-count{{ end }}>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</button>
+{{- end -}}
+</div>

@@ -74,8 +74,9 @@ function toRow(issue: GitHubIssue, maintainers: Set<string>, owner: string, repo
   ];
 
   // Comment timeline analysis — split maintainer/community, exclude bot from both sides.
-  const maintComments = comments.filter(c => maintainers.has(c.author!.login) && c.author!.login !== author);
-  const communityComments = comments.filter(c => !maintainers.has(c.author!.login) && c.author!.login !== BOT_LOGIN);
+  // The maintainer set is lowercased; GitHub logins are case-insensitive.
+  const maintComments = comments.filter(c => maintainers.has(c.author!.login.toLowerCase()) && c.author!.login !== author);
+  const communityComments = comments.filter(c => !maintainers.has(c.author!.login.toLowerCase()) && c.author!.login !== BOT_LOGIN);
   const lastMaintAt = maintComments.at(-1)?.createdAt;
   const lastCommunityAt = communityComments.at(-1)?.createdAt;
 
@@ -107,7 +108,7 @@ function toRow(issue: GitHubIssue, maintainers: Set<string>, owner: string, repo
     priority,
     linked_prs,
     tier: '',
-    is_maintainer: maintainers.has(author),
+    is_maintainer: maintainers.has(author.toLowerCase()),
     has_maintainer_response,
     reporter_replied,
     reply_wait_days,

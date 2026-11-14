@@ -1,0 +1,10 @@
+{{- /* /issues/<repo>/: one page per tracked repository (brief 2.1, 3.2b). Each renders layouts/partials/pages/issues.html
+     through _default/single.html with params {repo: "owner/repo", page: "issues"}; the title is the H1 ("Issues · TypeScript SDK"). */ -}}
+{{- range .Site.Data.repos.repositories -}}
+  {{- $name := .name | default .repo -}}
+  {{- $.AddPage (dict
+      "path" .repo
+      "kind" "page"
+      "title" (printf "Issues · %s" $name)
+      "params" (dict "repo" (printf "%s/%s" .owner .repo) "page" "issues")) -}}
+{{- end -}}

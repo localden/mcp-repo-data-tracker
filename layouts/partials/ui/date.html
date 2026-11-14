@@ -1,0 +1,11 @@
+{{- /* Single date or timestamp (brief 6.3). Call with a date/time string or time, or a dict {d, style}. Returns a string ("" for empty input).
+  style "date" (default) "Nov 13, 2026"; "short" "Nov 13"; "month" "Nov 2026"; "day" "Thu, Jul 10, 2026"; "ts" "Nov 14, 2026, 00:42 UTC".
+  Ranges ("Nov 6–12", "Oct 8 – Nov 9, 2026") come from data/date-range.html. No relative "ago" text (static build). */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "d" . }}{{ end -}}
+{{- $out := "" -}}
+{{- with $c.d -}}
+  {{- $t := (time.AsTime .).UTC -}}
+  {{- $layouts := dict "date" "Jan 2, 2006" "short" "Jan 2" "month" "Jan 2006" "day" "Mon, Jan 2, 2006" "ts" "Jan 2, 2006, 15:04 UTC" -}}
+  {{- $out = $t.Format (index $layouts ($c.style | default "date") | default "Jan 2, 2006") -}}
+{{- end -}}
+{{- return $out -}}

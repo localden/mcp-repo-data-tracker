@@ -1,0 +1,5 @@
+{{- /* "Table" toggle (brief 4.6 s) for a hand-built plot/table pair inside one card. Chart cards from ui/chart.html render their own
+  toggle (charts.js builds that table); use this only when the page renders both views itself.
+  Dict {table, plot, label}. table / plot: ids of the two containers (the table one starts hidden). ui.js swaps their hidden state,
+  flips aria-pressed and dispatches "visr:tabletoggle" on document with detail {button, table, plot, open}. */ -}}
+<button type="button" class="v-tt" data-table-toggle aria-pressed="false" aria-controls="{{ .table }}" data-plot="{{ .plot }}">{{ .label | default "Table" }}</button>

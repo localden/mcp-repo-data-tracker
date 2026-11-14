@@ -1,0 +1,39 @@
+{{- /* Data notes panel (brief 2.4, 4.6 n, o): the disclosure panel behind the page head's "Data notes" button. ui/page-head.html renders
+  it; call it directly only for a second panel. Dict {id, sources, gaps, notes, defs}.
+    sources: ui/sources.html dicts (label + timestamp, or "Complete through" for registries).
+    gaps: ui/page-gaps.html result; lists each missing run (outage named) and each reconstructed span.
+    notes: slice of strings, one paragraph each (method notes, e.g. how a registry counts days).
+    defs: slice of {term, text}, the "how computed" definitions for the metrics on the page (in place of footnotes). */ -}}
+{{- $c := . -}}
+{{- $g := $c.gaps | default dict -}}
+<div class="v-notes" id="{{ $c.id }}" hidden>
+  {{- if or $c.sources $g.runs $g.reconstructed }}
+  <p class="v-notes-h">Sources</p>
+  <dl class="v-notes-kv">
+    {{- range $c.sources }}
+    <div><dt>{{ .label }}</dt><dd>{{ if .through }}Complete through {{ partial "ui/date.html" .through }}{{ else }}{{ partial "ui/date.html" (dict "d" .at "style" "ts") }}{{ end }}</dd></div>
+    {{- end }}
+    {{- with $g }}
+    {{- range .runs }}
+    <div><dt>{{ partial "data/date-range.html" (dict "from" .from "to" .to) }}</dt><dd>No data{{ if .outage }} (collection outage){{ end }}</dd></div>
+    {{- end }}
+    {{- range .reconstructed }}
+    <div><dt>{{ partial "data/date-range.html" (dict "from" .from "to" .to) }}</dt><dd>Reconstructed from GitHub history (approximate for stale counts and label coverage)</dd></div>
+    {{- end }}
+    {{- end }}
+  </dl>
+  {{- end }}
+  {{- with $c.notes }}
+  {{- range . }}
+  <p>{{ . }}</p>
+  {{- end }}
+  {{- end }}
+  {{- with $c.defs }}
+  <p class="v-notes-h">Definitions</p>
+  <dl class="v-notes-kv">
+    {{- range . }}
+    <div><dt>{{ .term }}</dt><dd>{{ .text }}</dd></div>
+    {{- end }}
+  </dl>
+  {{- end }}
+</div>

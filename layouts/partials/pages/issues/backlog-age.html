@@ -1,0 +1,27 @@
+{{- /* Backlog age (brief 3.2b-5, glossary 6.2): one 100% stacked bar of issues.open_count by time since last activity, from metrics.json
+  stale_30d/60d/90d: Active < 30 days (--seg-neutral), 30–60 days (ord-2), 60–90 days (ord-3), Over 90 days (ord-5). The legend gives
+  count and % of open; zero segments are omitted (ui/stackbar.html). Ctx: dict {r (data/repo.html)}. */ -}}
+{{- $r := .r -}}
+{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+<section class="v-section" aria-labelledby="backlog-age">
+  {{ partial "ui/section-head.html" (dict "title" "Backlog age" "id" "backlog-age" "caption" "Open issues by time since their last activity") }}
+  {{- if and (ne $iss.open_count nil) (ne $iss.stale_30d nil) (ne $iss.stale_60d nil) (ne $iss.stale_90d nil) }}
+  {{- $open := float $iss.open_count }}{{ $s30 := float $iss.stale_30d }}{{ $s60 := float $iss.stale_60d }}{{ $s90 := float $iss.stale_90d -}}
+  {{- $segs := slice
+    (dict "label" "Active < 30 days" "n" (math.Max 0.0 (sub $open $s30)) "role" "seg-neutral")
+    (dict "label" "30–60 days" "n" (math.Max 0.0 (sub $s30 $s60)) "role" "ord-2")
+    (dict "label" "60–90 days" "n" (math.Max 0.0 (sub $s60 $s90)) "role" "ord-3")
+    (dict "label" "Over 90 days" "n" (math.Max 0.0 $s90) "role" "ord-5") }}
+  <div class="v-card">
+    <div class="v-card-body">
+      {{- if gt $open 0.0 }}
+      {{ partial "ui/stackbar.html" (dict "segments" $segs "pct" true "total" $open) }}
+      {{- else }}
+      {{ partial "ui/empty.html" (dict "card" false "size" "none" "value" "0" "body" "No open issues.") }}
+      {{- end }}
+    </div>
+  </div>
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." $r.name)) }}
+  {{- end }}
+</section>

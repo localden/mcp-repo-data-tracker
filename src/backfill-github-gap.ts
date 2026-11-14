@@ -5,17 +5,21 @@
  * for each gap date T rewinds the data to end-of-day T (drop everything
  * created after T, treat items closed/merged after T as still open) and runs
  * the normal metric calculators with the clock pinned to T. Existing snapshot
- * fields (e.g. downloads written by backfill-downloads --gap-only) are kept.
+ * fields (e.g. download stubs) are kept, and only dates whose snapshot has no
+ * `issues` block are filled unless --force.
  *
- * Approximations: `isDraft` and labels reflect current state (no cheap
- * as-of history); `updatedAt` is rewound to the last visible activity when it
- * has moved past T; unstars/deleted forks are invisible; `contributors.total`
- * (needs the all-time roster's first-activity dates) and, when the commit
- * fetch cap truncates the window, `commits_per_week_avg` are interpolated
- * between the surrounding real snapshots; actionability (LLM classification)
- * is not reconstructed.
+ * Every snapshot written carries meta: {source: 'reconstructed', approx}.
+ * Fields with no cheap as-of history are written as null: stale_* (updatedAt
+ * has no history), label_coverage_pct, draft_count and by_size (labels and
+ * draft state are today's). `contributors.total` (needs the all-time roster's
+ * first-activity dates) is interpolated between the real snapshots either
+ * side of the range, or null when one is missing. `commits_per_week_avg` is
+ * exact unless the commit fetch stopped short of T's 12-week window; then it
+ * is interpolated the same way and added to `approx`. Unstars/deleted forks
+ * are invisible; actionability (LLM classification) is not reconstructed.
  *
  * Run: npm run build && node dist/backfill-github-gap.js --from=YYYY-MM-DD --to=YYYY-MM-DD [--force] [--repo=name]
+ * CI: .github/workflows/backfill-github-gap.yml (dry run by default).
  */
 
 import { readFile, writeFile, mkdir } from 'fs/promises';
@@ -41,8 +45,38 @@ import type {
 } from './types/index.js';
 
 const DAY_MS = 86400000;
-const COMMIT_FETCH_CAP = 500; // fetchCommits stops paginating here
+const COMMIT_WINDOW_MS = 12 * 7 * DAY_MS; // calculateContributorMetrics' commit trend window
 const realNow = Date.now();
+
+/** Fields that can't be rebuilt from timestamps; listed in meta.approx on every reconstructed snapshot. */
+const APPROX_FIELDS = ['stale_30d', 'stale_60d', 'stale_90d', 'label_coverage_pct', 'draft_count', 'by_size', 'contributors.total'];
+/** The subset of APPROX_FIELDS always written as null (for the summary). */
+const NULL_FIELDS = ['issues.stale_30d', 'issues.stale_60d', 'issues.stale_90d', 'issues.label_coverage_pct', 'pulls.draft_count', 'pulls.by_size'];
+
+/**
+ * Snapshot shape this tool reads and writes. Blocks are Partial so fields
+ * added to DailySnapshot later are simply absent on reconstructed dates
+ * rather than a compile error; the fields above that can't be rewound are
+ * nullable.
+ */
+type WithNull<T, K extends keyof T> = Omit<T, K> & { [P in K]: T[P] | null };
+type ReconstructedSnapshot = Omit<Partial<DailySnapshot>, 'issues' | 'pulls' | 'contributors' | 'meta'> & {
+  issues?: WithNull<Partial<DailySnapshot['issues']>, 'stale_30d' | 'stale_60d' | 'stale_90d' | 'label_coverage_pct'>;
+  pulls?: WithNull<Partial<DailySnapshot['pulls']>, 'draft_count' | 'by_size'>;
+  contributors?: WithNull<Partial<DailySnapshot['contributors']>, 'total' | 'commits_per_week_avg'>;
+  meta?: { source: string; approx?: string[] };
+};
+
+/** Per-repo tallies for the end-of-run summary the workflow's dry run prints. */
+interface RepoTally {
+  repo: string;
+  written: number;
+  created: number;
+  skipped: number;
+  totalNull: number;
+  cpwInterpolated: number;
+  cpwNull: number;
+}
 
 function arg(name: string): string | undefined {
   return process.argv.find((a) => a.startsWith(`--${name}=`))?.split('=')[1];
@@ -56,7 +90,7 @@ function shiftDate(date: string, days: number): string {
   return new Date(new Date(date).getTime() + days * DAY_MS).toISOString().split('T')[0];
 }
 
-async function readSnapshot(dir: string, date: string): Promise<Partial<DailySnapshot> | null> {
+async function readSnapshot(dir: string, date: string): Promise<ReconstructedSnapshot | null> {
   try {
     return JSON.parse(await readFile(join(dir, `${date}.json`), 'utf-8'));
   } catch (err) {
@@ -65,17 +99,29 @@ async function readSnapshot(dir: string, date: string): Promise<Partial<DailySna
   }
 }
 
-/** Linear interpolation of a snapshot field between the real snapshots at `a` and `b`. */
+/** A neighbour snapshot to interpolate from: null when missing or itself reconstructed. */
+async function readRealSnapshot(dir: string, date: string): Promise<ReconstructedSnapshot | null> {
+  const snap = await readSnapshot(dir, date);
+  return snap?.meta?.source === 'reconstructed' ? null : snap;
+}
+
+/**
+ * Linear interpolation of a snapshot field between the real snapshots at `a`
+ * and `b`. Undefined when either side is missing: a flat copy of one
+ * neighbour would read as a measured value.
+ */
 function interpolate(
-  before: number | undefined,
-  after: number | undefined,
+  before: number | null | undefined,
+  after: number | null | undefined,
   a: string,
   b: string,
-  date: string
+  date: string,
+  decimals = 0
 ): number | undefined {
-  if (before === undefined || after === undefined) return before ?? after;
+  if (before == null || after == null) return undefined;
   const t = (new Date(date).getTime() - new Date(a).getTime()) / (new Date(b).getTime() - new Date(a).getTime());
-  return Math.round(before + (after - before) * t);
+  const scale = 10 ** decimals;
+  return Math.round((before + (after - before) * t) * scale) / scale;
 }
 
 function datesBetween(from: string, to: string): string[] {
@@ -152,7 +198,8 @@ function issuesAsOf(all: GitHubIssue[], asOf: number): IssueData {
     const closedThen = issue.closedAt !== null && new Date(issue.closedAt).getTime() <= asOf;
     // updatedAt has no history; if it moved past T, fall back to the last
     // activity we can see (comment, close, or creation) so staleness ages
-    // aren't measured against future edits.
+    // aren't measured against future edits. Other edits stay invisible, so
+    // stale_* is still written as null (APPROX_FIELDS).
     let updatedAt = issue.updatedAt;
     if (new Date(updatedAt).getTime() > asOf) {
       const seen = [
@@ -206,19 +253,30 @@ async function main() {
   if (!from || !to || !isoDate.test(from) || !isoDate.test(to) || from > to) {
     throw new Error('usage: --from=YYYY-MM-DD --to=YYYY-MM-DD (from <= to)');
   }
+  const today = new Date(realNow).toISOString().split('T')[0];
+  if (to >= today) {
+    throw new Error(`--to must be before today (${today}); the aggregate run owns today's snapshot`);
+  }
   const gapDates = datesBetween(from, to);
   const oldest = endOfDay(gapDates[0]);
 
   const client = createGitHubClient();
   const config = await loadConfig();
   const maintainers = await fetchMaintainers(client, false);
-  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github));
+  const maintainerSet = new Set(maintainers.maintainers.map((m) => m.github.toLowerCase()));
 
   const onlyRepo = arg('repo');
+  if (onlyRepo && !config.repositories.some((r) => r.repo === onlyRepo)) {
+    throw new Error(`--repo=${onlyRepo} is not a configured repository`);
+  }
+  const tallies: RepoTally[] = [];
+  let sample: ReconstructedSnapshot | undefined;
   for (const repoConfig of config.repositories) {
     const { owner, repo } = repoConfig;
     if (onlyRepo && repo !== onlyRepo) continue;
     console.log(`\n[${owner}/${repo}]`);
+    const tally: RepoTally = { repo, written: 0, created: 0, skipped: 0, totalNull: 0, cpwInterpolated: 0, cpwNull: 0 };
+    tallies.push(tally);
 
     // Shift the clock so the 90-day cutoff on closed issues/PRs reaches back
     // from the oldest gap date, not from today.
@@ -228,12 +286,21 @@ async function main() {
     Date.now = () => realNow;
     // 12 weeks of commit history relative to the oldest gap date.
     const weeks = 12 + Math.ceil((realNow - oldest) / (7 * DAY_MS)) + 1;
-    const { commits } = await fetchCommits(client, owner, repo, weeks, false);
+    const { commits, totalCount } = await fetchCommits(client, owner, repo, weeks, false);
+    // fetchCommits stops paginating at its cap. When it did, the oldest commit
+    // fetched bounds which dates have a complete 12-week commit window.
+    const commitsTruncated = commits.length < totalCount;
+    const commitsFrom = commitsTruncated
+      ? Math.min(...commits.map((c) => new Date(c.committedDate).getTime())) // Infinity if none came back
+      : -Infinity;
+    const truncation = !commitsTruncated ? ''
+      : Number.isFinite(commitsFrom) ? ` (truncated; complete from ${new Date(commitsFrom).toISOString().split('T')[0]})`
+      : ' (truncated; none fetched)';
     const stars = await fetchEventTimestamps(client, owner, repo, 'stargazers', oldest - DAY_MS);
     const forks = await fetchEventTimestamps(client, owner, repo, 'forks', oldest - DAY_MS);
     console.log(
       `  fetched ${issues.open.length + issues.closed.length} issues, ` +
-      `${pulls.open.length + pulls.closed.length} PRs, ${commits.length} commits, ` +
+      `${pulls.open.length + pulls.closed.length} PRs, ${commits.length}/${totalCount} commits${truncation}, ` +
       `${stars.recent.length} recent stars, ${forks.recent.length} recent forks`
     );
 
@@ -242,15 +309,22 @@ async function main() {
     const snapDir = join('data', 'repos', owner, repo, 'snapshots');
     await mkdir(snapDir, { recursive: true });
 
-    // Anchor snapshots on either side of the gap, used to interpolate the
+    // Real snapshots on either side of the gap, used to interpolate the
     // couple of fields that can't be rewound from timestamps.
     const beforeDate = shiftDate(from, -1);
     const afterDate = shiftDate(to, 1);
-    const before = await readSnapshot(snapDir, beforeDate);
-    const after = await readSnapshot(snapDir, afterDate);
-    const commitsCapped = commits.length >= COMMIT_FETCH_CAP;
+    const before = await readRealSnapshot(snapDir, beforeDate);
+    const after = await readRealSnapshot(snapDir, afterDate);
 
     for (const date of gapDates) {
+      const path = join(snapDir, `${date}.json`);
+      const existing = await readSnapshot(snapDir, date);
+      if (existing?.issues != null && !force) {
+        console.log(`  ${date}: already has GitHub metrics, skipping (use --force to overwrite)`);
+        tally.skipped++;
+        continue;
+      }
+
       const asOf = endOfDay(date);
       Date.now = () => asOf;
       const dayIssues = issuesAsOf(allIssues, asOf);
@@ -261,13 +335,10 @@ async function main() {
       const contributorMetrics = await calculateContributorMetrics(dayIssues, dayPulls, dayCommits, maintainerSet, repoConfig as RepoConfig);
       Date.now = () => realNow;
 
-      const path = join(snapDir, `${date}.json`);
-      const existing = await readSnapshot(snapDir, date);
-      const snapshot: Partial<DailySnapshot> = existing ?? { date };
-      if (snapshot.issues && !force) {
-        console.log(`  ${date}: already has GitHub metrics, skipping (use --force to overwrite)`);
-        continue;
-      }
+      // Keep whatever the file already holds (download stubs, actionability);
+      // date leads and always matches the filename.
+      const snapshot: ReconstructedSnapshot = { date, ...(existing ?? {}) };
+      snapshot.date = date;
 
       snapshot.issues = {
         open: issueMetrics.open_count,
@@ -280,13 +351,14 @@ async function main() {
         without_response_24h: issueMetrics.without_response_24h,
         without_response_7d: issueMetrics.without_response_7d,
         without_response_30d: issueMetrics.without_response_30d,
-        stale_30d: issueMetrics.stale_30d,
-        stale_60d: issueMetrics.stale_60d,
-        stale_90d: issueMetrics.stale_90d,
+        // updatedAt and labels have no as-of history (see APPROX_FIELDS).
+        stale_30d: null,
+        stale_60d: null,
+        stale_90d: null,
         reopen_rate: issueMetrics.reopen_rate,
         response_time: issueMetrics.response_time,
         close_time: issueMetrics.close_time,
-        label_coverage_pct: issueMetrics.label_coverage_pct,
+        label_coverage_pct: null,
       };
       snapshot.pulls = {
         open: prMetrics.open_count,
@@ -297,7 +369,8 @@ async function main() {
         opened_30d: prMetrics.opened_30d,
         opened_90d: prMetrics.opened_90d,
         closed_not_merged_90d: prMetrics.closed_not_merged_90d,
-        draft_count: prMetrics.draft_count,
+        // Draft state and size labels are today's, not as of T.
+        draft_count: null,
         without_review_24h: prMetrics.without_review_24h,
         without_review_7d: prMetrics.without_review_7d,
         review_time: prMetrics.review_time,
@@ -305,35 +378,75 @@ async function main() {
         code_review_rate_pct: prMetrics.code_review_rate_pct,
         rejection_rate_pct: prMetrics.rejection_rate_pct,
         avg_reviews_per_pr: prMetrics.avg_reviews_per_pr,
-        by_size: prMetrics.by_size,
+        by_size: null,
       };
       snapshot.repository = {
         stars: countAsOf(stars.current, stars.recent, asOf),
         forks: countAsOf(forks.current, forks.recent, asOf),
       };
+      // loadContributors() unions in today's all-time roster, so the raw total
+      // is anachronistic; interpolate between the real neighbours or write null.
+      const total = interpolate(before?.contributors?.total, after?.contributors?.total, beforeDate, afterDate, date) ?? null;
+      // The 12-week commit window ending at T is complete unless the fetch
+      // stopped after T - 12w; then the computed average undercounts.
+      const cpwExact = commitsFrom <= asOf - COMMIT_WINDOW_MS;
+      const cpw = cpwExact
+        ? contributorMetrics.commits_per_week_avg
+        : interpolate(before?.contributors?.commits_per_week_avg, after?.contributors?.commits_per_week_avg, beforeDate, afterDate, date, 1) ?? null;
       snapshot.contributors = {
-        // loadContributors() unions in today's all-time roster, so the raw
-        // total is anachronistic; interpolate between the real neighbors.
-        total: interpolate(before?.contributors?.total, after?.contributors?.total, beforeDate, afterDate, date)
-          ?? contributorMetrics.total_known,
+        total,
         active_30d: contributorMetrics.active_30d,
         first_time_30d: contributorMetrics.first_time_30d,
         retention_rate_pct: contributorMetrics.retention_rate_pct,
         churned_30d: contributorMetrics.churned_30d,
-        // When the commit fetch hit its cap, the oldest weeks of the trailing
-        // 12-week window are missing for early gap dates; interpolate instead.
-        commits_per_week_avg: commitsCapped
-          ? interpolate(before?.contributors?.commits_per_week_avg, after?.contributors?.commits_per_week_avg, beforeDate, afterDate, date)
-            ?? contributorMetrics.commits_per_week_avg
-          : contributorMetrics.commits_per_week_avg,
+        commits_per_week_avg: cpw,
         active_maintainers_30d: contributorMetrics.active_maintainers_30d,
         active_community_30d: contributorMetrics.active_community_30d,
       };
+      snapshot.meta = {
+        source: 'reconstructed',
+        approx: cpwExact ? [...APPROX_FIELDS] : [...APPROX_FIELDS, 'contributors.commits_per_week_avg'],
+      };
 
       await writeFile(path, JSON.stringify(snapshot, null, 2));
-      console.log(`  ${date}: issues.open=${issueMetrics.open_count} pulls.open=${prMetrics.open_count} stars=${snapshot.repository.stars}`);
+      tally.written++;
+      if (!existing) tally.created++;
+      if (total === null) tally.totalNull++;
+      if (!cpwExact && cpw === null) tally.cpwNull++;
+      else if (!cpwExact) tally.cpwInterpolated++;
+      sample = snapshot;
+      console.log(
+        `  ${date}: issues.open=${issueMetrics.open_count} pulls.open=${prMetrics.open_count} ` +
+        `stars=${snapshot.repository.stars} contributors.total=${total ?? 'null'} ` +
+        `commits_per_week_avg=${cpw ?? 'null'}${cpwExact ? '' : ' (interpolated)'}${existing ? '' : ' [new file]'}`
+      );
     }
   }
+
+  printSummary(gapDates, tallies, sample);
+}
+
+/** Dates x repos x fields written, for reviewing a dry run before committing. */
+function printSummary(gapDates: string[], tallies: RepoTally[], sample: ReconstructedSnapshot | undefined): void {
+  const sum = (key: Exclude<keyof RepoTally, 'repo'>) => tallies.reduce((n, t) => n + t[key], 0);
+  console.log(`\nSummary: ${gapDates.length} dates (${gapDates[0]}..${gapDates[gapDates.length - 1]}) x ${tallies.length} repos`);
+  console.log(`  ${'repo'.padEnd(22)}${['written', 'new', 'skipped', 'total=null', 'cpw=interp', 'cpw=null'].map((h) => h.padStart(11)).join('')}`);
+  for (const t of tallies) {
+    const cells = [t.written, t.created, t.skipped, t.totalNull, t.cpwInterpolated, t.cpwNull];
+    console.log(`  ${t.repo.padEnd(22)}${cells.map((n) => String(n).padStart(11)).join('')}`);
+  }
+  const totals = [sum('written'), sum('created'), sum('skipped'), sum('totalNull'), sum('cpwInterpolated'), sum('cpwNull')];
+  console.log(`  ${'all'.padEnd(22)}${totals.map((n) => String(n).padStart(11)).join('')}`);
+  if (!sample) {
+    console.log('  nothing written');
+    return;
+  }
+  console.log('  fields written on each date:');
+  for (const block of ['issues', 'pulls', 'repository', 'contributors', 'meta'] as const) {
+    const keys = Object.keys(sample[block] ?? {});
+    console.log(`    ${block.padEnd(13)}(${keys.length}) ${keys.join(' ')}`);
+  }
+  console.log(`  always null: ${NULL_FIELDS.join(' ')}`);
 }
 
 main().catch((err) => {

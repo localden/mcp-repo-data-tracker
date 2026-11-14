@@ -1,0 +1,57 @@
+{{- /* Responsiveness (brief 3.2b-4): one KPI card of 3 tiles; a sparkline only with 4 or more weekly points (ui/kpi.html).
+    Never answered: issues.without_response_24h; "{pct} of open issues by non-maintainers" once issues.open_non_maintainer_count
+      exists (D1-8), else the plain qualifier.
+    First reply: issues.first_reply_90d (D1-8: Kaplan–Meier median over issues opened in the last 90 days, "≥" when more than half are
+      unanswered, "n = 64 · 41% unanswered"); until then the survivorship median response_time.median_hours, labeled as such.
+    Time to close: close_time.median_days over issues closed in the last 90 days, "90% within {p90}"; "—" when nothing closed.
+  Ctx: dict {r (data/repo.html)}. */ -}}
+{{- $r := .r -}}
+{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+{{- $bins := dict -}}
+{{- range $p := slice "issues.without_response_24h" "issues.first_reply_90d.median_hours" "issues.response_time.median_hours" "issues.close_time.median_days" -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" $p) -}}
+  {{- $bins = merge $bins (dict (replace $p "." "-") (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points) -}}
+{{- end -}}
+
+{{- /* Never answered */ -}}
+{{- $never := dict "label" "Never answered" "value" $iss.without_response_24h "points" (index $bins "issues-without_response_24h")
+  "labelTitle" "Open issues by non-maintainers with no maintainer comment, older than 24 hours" -}}
+{{- $base := $iss.open_non_maintainer_count -}}
+{{- if and (ne $base nil) (ne $iss.without_response_24h nil) (gt (float $base) 0.0) -}}
+  {{- $never = merge $never (dict "context" (printf "%s of open issues by non-maintainers" (partial "ui/pct.html" (mul (div (float $iss.without_response_24h) (float $base)) 100.0)))) -}}
+{{- else -}}
+  {{- $never = merge $never (dict "qualifier" "open issues by non-maintainers") -}}
+{{- end -}}
+
+{{- /* First reply */ -}}
+{{- $reply := dict -}}
+{{- $fr := $iss.first_reply_90d -}}
+{{- if and (reflect.IsMap $fr) (ne (index $fr "median_hours") nil) -}}
+  {{- $ctx := slice -}}
+  {{- /* ne nil, not with: n = 0 and answered_pct = 0 (all unanswered) are real values */ -}}
+  {{- $fn := index $fr "n" }}{{ $fa := index $fr "answered_pct" -}}
+  {{- if ne $fn nil }}{{ $ctx = $ctx | append (printf "n = %s" (lang.FormatNumber 0 (float $fn))) }}{{ end -}}
+  {{- if ne $fa nil }}{{ $ctx = $ctx | append (printf "%s unanswered" (partial "ui/pct.html" (sub 100.0 (float $fa)))) }}{{ end -}}
+  {{- $reply = dict "label" "First reply, issues opened in the last 90 days" "value" (index $fr "median_hours") "format" "dur"
+    "prefix" (cond (eq (index $fr "censored") true) "≥" "") "context" (delimit $ctx " · ") "points" (index $bins "issues-first_reply_90d-median_hours")
+    "labelTitle" "Median time to the first maintainer comment, issues opened in the last 90 days; unanswered issues count at their current age" -}}
+{{- else -}}
+  {{- $rt := $iss.response_time | default dict -}}
+  {{- $reply = dict "label" "First reply, median of answered issues" "value" (index $rt "median_hours") "format" "dur"
+    "context" "Excludes issues never answered" "points" (index $bins "issues-response_time-median_hours")
+    "labelTitle" "Median time to the first maintainer comment, over issues that got one" -}}
+{{- end -}}
+
+{{- /* Time to close: hours for ui/dur.html; nothing closed in 90 days reads "—", never 0 */ -}}
+{{- $ct := $iss.close_time | default dict -}}
+{{- $med := index $ct "median_days" -}}
+{{- if and (ne $med nil) (eq (float $med) 0.0) (eq (float ($iss.closed_90d | default 0)) 0.0) }}{{ $med = cond false 0 nil }}{{ end -}}
+{{- $close := dict "label" "Time to close, median" "qualifier" "issues closed in the last 90 days" "format" "dur" "na" "no issues closed"
+  "value" (cond (ne $med nil) (mul (float ($med | default 0)) 24.0) nil) "points" (index $bins "issues-close_time-median_days")
+  "labelTitle" "Median time from open to close, issues closed in the last 90 days" -}}
+{{- with index $ct "p90_days" }}{{ if ne $med nil }}{{ $close = merge $close (dict "context" (printf "90%% within %s" (partial "ui/dur.html" (mul (float .) 24.0)))) }}{{ end }}{{ end -}}
+
+<section class="v-section" aria-labelledby="responsiveness">
+  {{ partial "ui/section-head.html" (dict "title" "Responsiveness" "id" "responsiveness") }}
+  {{ partial "ui/kpis.html" (dict "tiles" (slice $never $reply $close) "label" "Responsiveness") }}
+</section>

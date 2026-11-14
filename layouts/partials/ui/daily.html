@@ -1,8 +1,0 @@
-{{- $t := time.AsTime .anchor -}}{{- $days := .days | default 300 -}}
-{{- $by := dict }}{{ range .points }}{{ $by = merge $by (dict .date (string .value)) }}{{ end -}}
-{{- $labels := slice }}{{ $cells := slice -}}
-{{- range $i := seq 0 (sub $days 1) -}}
-  {{- $d := ($t.AddDate 0 0 (int (sub 0 (sub (sub $days 1) $i)))).Format "2006-01-02" -}}
-  {{- $labels = $labels | append $d }}{{ $cells = $cells | append (index $by $d | default "null") -}}
-{{- end -}}
-{{- return dict "labels" $labels "data" (printf "[%s]" (delimit $cells ",")) -}}

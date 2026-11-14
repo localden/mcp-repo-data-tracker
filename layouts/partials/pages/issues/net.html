@@ -1,7 +1,0 @@
-{{- /* Signed net flow (a - b), ink, no color; zero renders ±0 and a missing input the ink-3 dash (same as overview Flow).
-     Ctx: (dict "a" opened "b" closed). Outputs HTML; minus is U+2212. */ -}}
-{{- if or (eq .a nil) (eq .b nil) -}}<span class="v-na" title="Not tracked for this repository">—</span>
-{{- else -}}
-{{- $d := sub (float .a) (float .b) -}}
-{{- if gt $d 0.0 }}+{{ lang.FormatNumber 0 $d }}{{ else if lt $d 0.0 }}−{{ lang.FormatNumber 0 (math.Abs $d) }}{{ else }}±0{{ end -}}
-{{- end -}}

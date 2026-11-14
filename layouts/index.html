@@ -1,25 +1,52 @@
 {{ define "main" }}
 {{- /*
-  Overview (spec 8.1). Every scope is pre-rendered; head.html shows the block whose data-repo matches html[data-scope].
-  A: all repositories (the default scope on the home page). B: one block per repos.json entry.
-  Page-local partials live in layouts/partials/pages/overview/.
+  Overview, / (brief 3.1): the org view of every tracked repository; one module per row, in the order of the questions it answers.
+  0 page head: H1 names the scope, "Data as of" is the oldest source the page uses (GitHub metrics, issue and PR classification, SEP
+    data, each registry's complete-through day), the gap notice covers the 26-week charted window, definitions live in Data notes.
+  1 KPI row (Q1, Q3) · 2 Needs attention (Q1, Q2) · 3 Backlog trend (Q3) · 4 Repositories (Q3, Q4) · 5 SDK adoption (Q5) ·
+  6 Spec proposals (Q6). Each module is a page-local partial in layouts/partials/pages/overview/ that takes the page as context.
 */ -}}
-{{- $repos := site.Data.repos.repositories -}}
-<article>
-{{- if $repos }}
-  {{- $latest := partialCached "ui/latest-date.html" . "latest" -}}
-  {{- $data := partial "pages/overview/rows.html" (dict "latest" $latest) }}
-  <div class="repo-content" data-repo="__all__" data-default>
-    {{ partial "pages/overview/all.html" (dict "rows" $data.rows "weeks" $data.weeks "latest" $latest) }}
-  </div>
-  {{- range $data.rows }}
-  <div class="repo-content" data-repo="{{ .key }}">
-    {{ partial "pages/overview/repo.html" (dict "r" . "latest" $latest) }}
-  </div>
-  {{- end }}
+<article class="v-page">
+{{- $keys := slice -}}
+{{- range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
+{{- $title := .Title | default "MCP repositories" -}}
+{{- if $keys }}
+  {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability" "seps" "downloads")) -}}
+  {{- /* the Triage overdue count is type-only until D1-9 redefines it (the same switch as the Issues and repository pages) */ -}}
+  {{- $d19 := false -}}
+  {{- range $keys }}{{ with (partial "data/repo.html" .).data.issues }}{{ with .summary }}{{ with .sla }}{{ if isset . "first_reply_2bd_breach" }}{{ $d19 = true }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end -}}
+  {{- $defs := slice
+    (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "Net change" "text" "Issues opened minus issues closed in the last 30 days.")
+    (dict "term" "SEP-1730" "text" "Response rules for SDK repositories: a first reply and triage (a type label plus a priority or status label) within 2 business days, and P0 bugs resolved within 7 days.")
+    (dict "term" "Triage overdue" "text" (cond $d19
+      "SEP-1730: open issues without a type label and a priority or status label after 2 business days."
+      "SEP-1730: open issues without a type label after 2 business days."))
+    (dict "term" "Team targets" "text" "P1 bugs resolved within 90 days, and a first maintainer review of each classified PR within 7 days (team SLA). Neither is part of SEP-1730.")
+    (dict "term" "Author waiting on us" "text" "PRs whose author answered maintainer feedback and now waits on a maintainer, from PR classification.")
+    (dict "term" "Typical week" "text" "Median of the weekly merged-PR counts over the prior 12 complete weeks, weeks without data skipped. Shown from 4 weeks of data.")
+    (dict "term" "Downloads, last 7 days" "text" "Sum of the 7 complete days ending on the newest day that every SDK package with a week of history covers. A window with a missing day shows its partial sum, muted, with a day count and no change.")
+    (dict "term" "Reached final" "text" "SEP pull requests merged in the 90 days before the SEP data was collected.")
+    (dict "term" "Weekly sums" "text" "Org-wide sparklines and the backlog trend sum, for each week, only the repositories that have a value that week.") -}}
+  {{- /* registry method notes in the words of the Downloads and repository pages (one line per registry) */ -}}
+  {{- $regs := slice }}{{ range site.Data.repos.repositories }}{{ with .package }}{{ with .registry }}{{ $regs = $regs | append (string .) }}{{ end }}{{ end }}{{ end -}}
+  {{- $notes := slice "Downloads count complete UTC days only; a missing day is never counted as zero." -}}
+  {{- if in $regs "npm" }}{{ $notes = $notes | append "npm: daily counts from the npm range API." }}{{ end -}}
+  {{- if in $regs "pypi" }}{{ $notes = $notes | append "PyPI: BigQuery, complete UTC days." }}{{ end -}}
+  {{- if in $regs "crates" }}{{ $notes = $notes | append "crates.io: daily range API." }}{{ end -}}
+  {{- $cum := slice }}{{ if in $regs "nuget" }}{{ $cum = $cum | append "NuGet" }}{{ end }}{{ if in $regs "rubygems" }}{{ $cum = $cum | append "RubyGems" }}{{ end -}}
+  {{- with $cum }}{{ $notes = $notes | append (printf "%s: daily = change in lifetime total; days the total did not move are shown as missing." (delimit . " and ")) }}{{ end }}
+  {{ partial "ui/page-head.html" (dict "title" $title "sources" $src "gap" (dict "repos" $keys "days" 182) "notes" $notes "defs" $defs) }}
+  {{ partial "pages/overview/kpis.html" . }}
+  {{ partial "pages/overview/attention.html" . }}
+  {{ partial "pages/overview/backlog.html" . }}
+  {{ partial "pages/overview/repos.html" . }}
+  {{ partial "pages/overview/adoption.html" . }}
+  {{ partial "pages/overview/seps.html" . }}
 {{- else }}
-  {{ partial "ui/page-head.html" (dict "title" "All repositories") }}
-  {{ partial "ui/empty.html" (dict "title" "No repository data yet" "body" "This dashboard hasn't been aggregated.") }}
+  {{ partial "ui/page-head.html" (dict "title" $title) }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" "No data collected for the MCP repositories yet.") }}
 {{- end }}
 </article>
 {{ end }}

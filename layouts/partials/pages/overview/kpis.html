@@ -1,0 +1,42 @@
+{{- /* Overview KPI row (brief 3.1-1): one card, four tiles answering Q1 (what waits on a maintainer) and Q3 (is the backlog growing).
+  Context: the page. Values are sums of metrics.json over every tracked repository (pages/overview/sum.html). Sparklines are 12
+  weekly org sums of the snapshots (data/org-weekly.html: each week sums only the repositories with a value that week, so one gapped
+  repository never blanks the strip). Waiting tiles carry a dated delta (pages/overview/org-delta.html). No Stars tile, no links. */ -}}
+{{- $wait := partial "pages/overview/sum.html" "issues.without_response_7d" -}}
+{{- $rev := partial "pages/overview/sum.html" "pulls.without_review_7d" -}}
+{{- $oi := partial "pages/overview/sum.html" "issues.open_count" -}}
+{{- $op := partial "pages/overview/sum.html" "pulls.open_count" -}}
+
+{{- /* Open issues: net = opened - closed over 30 days. */ -}}
+{{- $iO := partial "pages/overview/sum.html" "issues.opened_30d" }}{{ $iC := partial "pages/overview/sum.html" "issues.closed_30d" -}}
+{{- $issLine := "" -}}
+{{- if and (ne $iO.v nil) (ne $iC.v nil) }}{{ $issLine = printf "net %s in 30 days" (partial "pages/overview/signed.html" (sub $iO.v $iC.v)) }}{{ end -}}
+
+{{- /* Open PRs: net needs closed-without-merging over 30 days from every repository (not collected yet); until then the merged count. */ -}}
+{{- $pO := partial "pages/overview/sum.html" "pulls.opened_30d" }}{{ $pM := partial "pages/overview/sum.html" "pulls.merged_30d" -}}
+{{- $pX := partial "pages/overview/sum.html" "pulls.closed_not_merged_30d" -}}
+{{- $prLine := "" -}}
+{{- if and $pX.all (ne $pO.v nil) (ne $pM.v nil) -}}
+  {{- $prLine = printf "net %s in 30 days" (partial "pages/overview/signed.html" (sub (sub $pO.v $pM.v) $pX.v)) -}}
+{{- else if ne $pM.v nil -}}
+  {{- $prLine = printf "merged %s in 30 days" (lang.FormatNumber 0 $pM.v) -}}
+{{- end -}}
+
+{{- $tiles := slice
+  (partial "pages/overview/tile.html" (dict "label" "Issues waiting for a reply" "value" $wait.v "line1" "no maintainer reply after 7 days"
+    "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago"
+    "cmp" (partial "pages/overview/org-delta.html" "issues.without_response_7d")
+    "weekly" (partial "data/org-weekly.html" (dict "path" "issues.without_response_7d" "weeks" 12))))
+  (partial "pages/overview/tile.html" (dict "label" "PRs waiting for first review" "value" $rev.v "line1" "no maintainer review after 7 days"
+    "title" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago"
+    "cmp" (partial "pages/overview/org-delta.html" "pulls.without_review_7d")
+    "weekly" (partial "data/org-weekly.html" (dict "path" "pulls.without_review_7d" "weeks" 12))))
+  (partial "pages/overview/tile.html" (dict "label" "Open issues" "value" $oi.v "line1" $issLine
+    "title" "Issues open now, summed over all tracked repositories"
+    "weekly" (partial "data/org-weekly.html" (dict "path" "issues.open" "weeks" 12))))
+  (partial "pages/overview/tile.html" (dict "label" "Open PRs" "value" $op.v "line1" $prLine
+    "title" "PRs open now, drafts included, summed over all tracked repositories"
+    "weekly" (partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 12)))) -}}
+<section class="v-section" aria-label="Summary">
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Summary") }}
+</section>

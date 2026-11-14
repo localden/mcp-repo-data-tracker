@@ -1,0 +1,65 @@
+{{- /* Backlog trend (brief 3.3b-3, 5.1, 5.3): 26 weeks of daily points, then a stat strip. Dict {r (data/repo.html), m (metrics.json), classified}.
+     "Open, not draft" = snapshots › pulls.open − pulls.draft_count (null when either is missing, e.g. draft_count on reconstructed days).
+     "Needs a maintainer" (classified repos) follows the glossary definition (6.2: tiers 0-3 + unclassified, cluster members included), so
+       its end value equals the queue tab: Σ snapshots › actionability.by_tier[idx ≤ 3].count + cluster_member_count. Days without
+       classification (Oct 8 – Nov 9, 2026) stay null and draw the gap band.
+     Strip: net change over 90 days from metrics › pulls.opened_90d − merged_90d − closed_not_merged_90d; the closed-without-merging share;
+       merged in the last 7 days against the typical week (pages/pulls/typical-week.html, shown with 4 or more weekly samples). */ -}}
+{{- $r := .r -}}
+{{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.open") -}}
+{{- $draft := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.draft_count") -}}
+{{- $pts := slice -}}
+{{- range $i, $p := $open.points -}}
+  {{- $d := index $draft.points $i -}}
+  {{- if and (ne $p.value nil) (ne $d.value nil) }}{{ $pts = $pts | append (dict "date" $p.date "value" (sub $p.value $d.value)) -}}
+  {{- else }}{{ $pts = $pts | append (dict "date" $p.date "value" nil) }}{{ end -}}
+{{- end -}}
+{{- $series := slice (dict "label" "Open, not draft" "role" "accent" "points" $pts "reconstructed" $open.reconstructed) -}}
+{{- if .classified -}}
+  {{- $needs := slice -}}
+  {{- range $day := $open.labels -}}
+    {{- $has := false }}{{ $val := 0.0 -}}
+    {{- with index $r.snapshots $day }}{{ if reflect.IsMap . }}{{ if eq (string .date) $day }}{{ with .actionability }}{{ if reflect.IsMap . -}}
+      {{- $act := . -}}
+      {{- with $act.by_tier -}}
+        {{- range . }}{{ $i := float (.idx | default 0) }}{{ if le $i 3.0 }}{{ $val = add $val (float (.count | default 0)) }}{{ end }}{{ end -}}
+        {{- $val = add $val (float ($act.cluster_member_count | default 0)) }}{{ $has = true -}}
+      {{- end -}}
+    {{- end }}{{ end }}{{ end }}{{ end }}{{ end -}}
+    {{- $needs = $needs | append (dict "date" $day "value" (cond $has $val nil)) -}}
+  {{- end -}}
+  {{- $series = $series | append (dict "label" "Needs a maintainer" "role" "series-2" "points" $needs) -}}
+{{- end -}}
+{{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
+{{- $tw := partial "pages/pulls/typical-week.html" $r.cfg -}}
+{{- /* the stat strip sits under the plot inside the chart card (ui/chart.html "foot"), as on the Issues backlog trend */ -}}
+{{- $items := slice -}}
+{{- if and (ne $pl.opened_90d nil) (ne $pl.merged_90d nil) (ne $pl.closed_not_merged_90d nil) -}}
+  {{- $o := float $pl.opened_90d }}{{ $mg := float $pl.merged_90d }}{{ $cl := float $pl.closed_not_merged_90d -}}
+  {{- $net := sub (sub $o $mg) $cl -}}
+  {{- $sign := cond (gt $net 0.0) "+" (cond (lt $net 0.0) "−" "") -}}
+  {{- $items = $items | append (printf `<span class="whitespace-normal">Net <strong>%s%s</strong> in 90 days (%s opened, %s merged, %s closed without merging)</span>`
+      $sign (lang.FormatNumber 0 (math.Abs $net)) (lang.FormatNumber 0 $o) (lang.FormatNumber 0 $mg) (lang.FormatNumber 0 $cl)) -}}
+  {{- if gt (add $mg $cl) 0.0 -}}
+    {{- $items = $items | append (printf `<span>Closed without merging: <strong>%s</strong> (%s of %s)</span>`
+        (partial "ui/pct.html" (mul (div $cl (add $mg $cl)) 100.0)) (lang.FormatNumber 0 $cl) (lang.FormatNumber 0 (add $mg $cl))) -}}
+  {{- end -}}
+{{- end -}}
+{{- if ne $pl.merged_7d nil -}}
+  {{- $mw := printf "Merged this week: <strong>%s</strong>" (lang.FormatNumber 0 (float $pl.merged_7d)) -}}
+  {{- if ge $tw.n 4 -}}
+    {{- $mw = printf `<span title="%s">%s · typical week <strong>%s</strong></span>` (htmlEscape $tw.title) $mw (lang.FormatNumber 0 (math.Round $tw.value)) -}}
+  {{- else }}{{ $mw = printf "<span>%s</span>" $mw }}{{ end -}}
+  {{- $items = $items | append $mw -}}
+{{- end -}}
+{{- /* PRs that left the classified queue (6.5): shown only once the classifier has 30 days of coverage (D3-5) */ -}}
+{{- if .classified }}{{ with $r.data.actionability }}{{ if reflect.IsMap . }}{{ with .summary -}}
+  {{- if and (eq (float (.actioned_coverage_days | default 0)) 30.0) (ne .actioned_7d nil) -}}
+    {{- $items = $items | append (printf "<span>Left the queue, last 7 days: <strong>%s</strong></span>" (lang.FormatNumber 0 (float .actioned_7d))) -}}
+  {{- end -}}
+{{- end }}{{ end }}{{ end }}{{ end -}}
+{{- $strip := "" }}{{ with $items }}{{ $strip = printf `<span class="v-strip">%s</span>` (delimit . "") | safeHTML }}{{ end }}
+<section class="v-section" aria-labelledby="backlog">
+  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "caption" (cond .classified "Last 26 weeks" "Open PRs that are not drafts, last 26 weeks")) }}
+  {{ partial "ui/chart.html" (dict "id" "pulls-backlog" "metric" "open PRs" "metric_one" "open PR" "scope" $r.name "unit" "count" "gran" "day" "series" $series "foot" $strip) }}
+</section>

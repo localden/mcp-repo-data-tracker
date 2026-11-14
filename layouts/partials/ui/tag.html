@@ -1,0 +1,13 @@
+{{- /* Tag (brief 4.6 h, replaces .v-pill): plain muted caption text, no border, no box. P0/P1 use strong (ink 600).
+  Call with a string, a dict {text, strong, href, title}, or a slice of either (rendered in a .v-tags row with 8px gaps).
+  Empty text renders nothing. href makes the tag a quiet link ("SEP · Proposal" -> /seps/#sep-2028). GitHub labels go in verbatim. */ -}}
+{{- $c := . -}}
+{{- if reflect.IsSlice $c -}}
+  {{- if $c }}<span class="v-tags">{{ range $c }}{{ partial "ui/tag.html" . }}{{ end }}</span>{{ end -}}
+{{- else -}}
+  {{- if not (reflect.IsMap $c) }}{{ $c = dict "text" $c }}{{ end -}}
+  {{- with $c.text -}}
+    {{- if $c.href -}}<a class="v-tag{{ if $c.strong }} is-strong{{ end }}" href="{{ $c.href }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ . }}</a>
+    {{- else -}}<span class="v-tag{{ if $c.strong }} is-strong{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ . }}</span>{{- end -}}
+  {{- end -}}
+{{- end -}}

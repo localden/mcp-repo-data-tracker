@@ -34,6 +34,8 @@ from access import load as load_maintainers, load_from_visr_json, RepoMaintainer
 
 # Maintainers loaded per-repo from modelcontextprotocol/access (source of truth).
 # Set at runtime in main() so classify() can read it without threading through 8 call sites.
+# Lowercased logins: the access repo's casing need not match the API's, so every
+# probe lowercases too.
 MAINTAINERS: set[str] = set()
 
 BOT_REVIEWER_PATTERNS = (
@@ -377,6 +379,7 @@ query($owner: String!, $name: String!, $cursor: String) {
 def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR]:
     prs = []
     cursor = None
+    maintainer_logins = {m.lower() for m in maintainers.all}
     while True:
         data = gh_graphql(TIER_A_QUERY, owner=owner, name=name, cursor=cursor or "")
         conn = data["repository"]["pullRequests"]
@@ -399,7 +402,7 @@ def fetch_tier_a(owner: str, name: str, maintainers: RepoMaintainers) -> list[PR
                 additions=n.get("additions", 0),
                 deletions=n.get("deletions", 0),
                 body=n.get("bodyText", "") or "",
-                is_maintainer=(author in maintainers.all),
+                is_maintainer=(author.lower() in maintainer_logins),
                 is_auth=_is_auth(n["title"], files, labels),
             ))
             if author_type == "Bot":
@@ -1033,7 +1036,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         fetch_tier_c(pr, owner, name)
         maint_comments = [
             c for c in (pr.comments or [])
-            if c["author"] in MAINTAINERS and c["author"] != pr.author
+            if c["author"].lower() in MAINTAINERS and c["author"] != pr.author
         ]
         latest_ping = max((c["created_at"] for c in maint_comments), default=None)
         author_replied_after = latest_ping and any(
@@ -1052,11 +1055,11 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
     # Per-reviewer current state (the P0-3 fix)
     approved_by = {
         r["author"] for r in reviews
-        if r["state"] == "APPROVED" and r["author"] in MAINTAINERS
+        if r["state"] == "APPROVED" and r["author"].lower() in MAINTAINERS
     }
     changes_requested_by = {
         r["author"] for r in reviews
-        if r["state"] == "CHANGES_REQUESTED" and r["author"] in MAINTAINERS
+        if r["state"] == "CHANGES_REQUESTED" and r["author"].lower() in MAINTAINERS
     }
     latest_review_at = max((r["submitted_at"] for r in reviews), default=None)
 
@@ -1089,7 +1092,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
             # Maintainer pinged about CI → awaiting-author-ci
             maintainer_ci_ping = [
                 c for c in comments_after_ci
-                if c["author"] in MAINTAINERS and c["author"] != pr.author
+                if c["author"].lower() in MAINTAINERS and c["author"] != pr.author
             ]
             if maintainer_ci_ping:
                 since_ping = days_since(maintainer_ci_ping[-1]["created_at"])
@@ -1103,13 +1106,14 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         fetch_tier_c(pr, owner, name)
         maintainer_comments = [
             c for c in (pr.comments or [])
-            if c["author"] in MAINTAINERS and c["author"] != pr.author
+            if c["author"].lower() in MAINTAINERS and c["author"] != pr.author
         ]
         author_pings = []
         for c in (pr.comments or []):
             if c["author"] != pr.author or "@" not in c["body"]:
                 continue
-            mentioned = [m for m in MAINTAINERS if f"@{m}" in c["body"]]
+            body_lower = c["body"].lower()
+            mentioned = [m for m in MAINTAINERS if f"@{m}" in body_lower]
             if mentioned:
                 author_pings.append((c, mentioned))
 
@@ -1213,7 +1217,7 @@ def classify(pr: PR, owner: str, name: str, use_llm: bool) -> None:
         return
 
     # COMMENTED only (no approve, no request-changes)
-    maintainer_reviewers = [r["author"] for r in reviews if r["author"] in MAINTAINERS]
+    maintainer_reviewers = [r["author"] for r in reviews if r["author"].lower() in MAINTAINERS]
     if maintainer_reviewers:
         pr.wait_since = latest_review_at
         pr.state, pr.reason = "needs-decision", "maintainer COMMENTED but took no stance"
@@ -1761,7 +1765,7 @@ def classify_repo(repo: str, use_llm: bool, maintainers_json: str | None = None)
         print(f"[{repo}] loading maintainers from access repo...", file=sys.stderr)
         maintainers = load_maintainers(repo)
     global MAINTAINERS, _current_repo
-    MAINTAINERS = maintainers.all
+    MAINTAINERS = {m.lower() for m in maintainers.all}
     _current_repo = repo
     print(f"[{repo}] {len(maintainers.all)} maintainers, {len(maintainers.auth)} auth", file=sys.stderr)
 

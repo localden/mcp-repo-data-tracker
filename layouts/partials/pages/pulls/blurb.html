@@ -1,8 +1,0 @@
-{{- /* Aggregator blurb -> visitor copy (page-local copy of issues/blurb.html): no em-dash chains, no arrow separators, sentence case. Returns a string. */ -}}
-{{- $s := strings.TrimSpace (string (. | default "")) -}}
-{{- $s = replace $s " — " ": " -}}
-{{- $s = replace $s "—" ": " -}}
-{{- $s = replace $s "→ " "to " -}}
-{{- $s = replace $s "→" "to " -}}
-{{- $s = strings.FirstUpper $s -}}
-{{- return $s -}}

@@ -51,7 +51,7 @@ function getSEPStatus(pr: GitHubPullRequest, maintainerSet: Set<string>): SEPSta
 
   // "final" label with a maintainer assignee counts as in-review
   if (labels.some(l => l === 'final')) {
-    const hasMaintainerAssignee = pr.assignees.nodes.some(a => maintainerSet.has(a.login));
+    const hasMaintainerAssignee = pr.assignees.nodes.some(a => maintainerSet.has(a.login.toLowerCase()));
     if (hasMaintainerAssignee) {
       return 'in-review';
     }

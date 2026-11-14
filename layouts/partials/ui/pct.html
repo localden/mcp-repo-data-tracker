@@ -1,3 +1,21 @@
-{{- $v := float . -}}{{- $s := printf "%.0f" $v -}}
-{{- if lt (math.Abs $v) 10.0 }}{{ $s = strings.TrimSuffix ".0" (printf "%.1f" $v) }}{{ end -}}
-{{- return printf "%s%%" $s -}}
+{{- /* Percent formatter (brief 6.3). Input is already 0-100. Call with a number or a dict {v, dec}. Returns a string.
+  Half-up rounding. dec 0 or 1 forces the decimals for a whole column ("36.0%", "3.0%"); without dec, values below 10 get one decimal.
+  0 < |v| < 0.1 -> "<0.1%". 0 -> "0%" (or "0.0%" with dec 1). nil -> "—". */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "v" . }}{{ end -}}
+{{- $out := "—" -}}
+{{- if ne $c.v nil -}}
+  {{- $v := float $c.v }}{{ $a := math.Abs $v }}{{ $sign := cond (lt $v 0.0) "−" "" -}}
+  {{- $auto := eq $c.dec nil -}}
+  {{- $dec := 0 -}}
+  {{- if $auto }}{{ if lt $a 10.0 }}{{ $dec = 1 }}{{ end }}{{ else }}{{ $dec = int $c.dec }}{{ end -}}
+  {{- if eq $a 0.0 -}}
+    {{- $out = cond (and (not $auto) (eq $dec 1)) "0.0%" "0%" -}}
+  {{- else if lt $a 0.1 -}}
+    {{- $out = printf "%s<0.1%%" $sign -}}
+  {{- else if eq $dec 1 -}}
+    {{- $out = printf "%s%.1f%%" $sign (div (math.Round (mul $a 10.0)) 10.0) -}}
+  {{- else -}}
+    {{- $out = printf "%s%.0f%%" $sign (math.Round $a) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

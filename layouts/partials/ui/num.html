@@ -1,13 +1,33 @@
-{{- if eq .v nil -}}<span class="v-na" title="Not tracked">—</span>
+{{- /* Count formatter (brief 6.3). Call with a number or a dict {v, mode, na, plain}. Emits HTML.
+  mode "tile" (default): full digits below 10,000, compact from 10,000 ("13.8K").
+  mode "full": full digits with separators ("13,812"), for every table column of counts.
+  mode "compact": compact from 1,000 with 3 significant figures ("87.8M", "1.37M", "245K"), for downloads.
+  Compact rounds first, then rolls the unit over (999,593 -> "1.00M"). Negative values use a real minus sign.
+  nil -> muted "—" with sr-only reason (na, default "not tracked"). plain: true emits text only (for attributes). */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "v" . }}{{ end -}}
+{{- if eq $c.v nil -}}
+  {{- $na := $c.na | default "not tracked" -}}
+  {{- if $c.plain }}—{{ else }}<span class="v-na" title="{{ strings.FirstUpper $na }}"><span aria-hidden="true">—</span><span class="sr-only">{{ $na }}</span></span>{{ end -}}
 {{- else -}}
-{{- $v := float .v -}}{{- $a := math.Abs $v -}}
-{{- if or (eq .mode "full") (lt $a 10000.0) -}}{{- lang.FormatNumber 0 $v -}}
-{{- else -}}
-  {{- $u := "K" }}{{ $d := 1000.0 -}}
-  {{- if ge $a 1000000000.0 }}{{ $u = "B" }}{{ $d = 1000000000.0 }}{{ else if ge $a 1000000.0 }}{{ $u = "M" }}{{ $d = 1000000.0 }}{{ end -}}
-  {{- $x := div $v $d }}{{ $ax := math.Abs $x -}}
-  {{- $s := "" }}{{ if lt $ax 10.0 }}{{ $s = printf "%.2f" $x }}{{ else if lt $ax 100.0 }}{{ $s = printf "%.1f" $x }}{{ else }}{{ $s = printf "%.0f" $x }}{{ end -}}
-  {{- if in $s "." }}{{ $s = strings.TrimRight "0" $s }}{{ $s = strings.TrimSuffix "." $s }}{{ end -}}
-  <span title="{{ lang.FormatNumber 0 $v }}">{{ $s }}{{ $u }}</span>
-{{- end -}}
+  {{- $v := float $c.v -}}{{- $a := math.Abs $v -}}{{- $sign := cond (lt $v 0.0) "−" "" -}}
+  {{- $mode := $c.mode | default "tile" -}}
+  {{- $compact := or (and (eq $mode "tile") (ge $a 10000.0)) (and (eq $mode "compact") (ge $a 1000.0)) -}}
+  {{- if not $compact -}}
+    {{- $sign }}{{ lang.FormatNumber 0 $a -}}
+  {{- else -}}
+    {{- $units := slice "K" "M" "B" -}}{{- $divs := slice 1000.0 1000000.0 1000000000.0 -}}{{- $scale := slice 100.0 10.0 1.0 -}}
+    {{- $i := 0 }}{{ if ge $a 1000000000.0 }}{{ $i = 2 }}{{ else if ge $a 1000000.0 }}{{ $i = 1 }}{{ end -}}
+    {{- /* pass 1: decimals from the raw mantissa; pass 2: decimals from the rounded mantissa (9.996 -> 10.0) */ -}}
+    {{- $x := div $a (index $divs $i) -}}
+    {{- $dec := cond (lt $x 10.0) 2 (cond (lt $x 100.0) 1 0) -}}
+    {{- $r := div (math.Round (mul $x (index (slice 1.0 10.0 100.0) $dec))) (index (slice 1.0 10.0 100.0) $dec) -}}
+    {{- $dec = cond (lt $r 10.0) 2 (cond (lt $r 100.0) 1 0) -}}
+    {{- $r = div (math.Round (mul $x (index (slice 1.0 10.0 100.0) $dec))) (index (slice 1.0 10.0 100.0) $dec) -}}
+    {{- if and (ge $r 1000.0) (lt $i 2) -}}
+      {{- $i = add $i 1 }}{{ $x = div $a (index $divs $i) }}{{ $dec = 2 -}}
+      {{- $r = div (math.Round (mul $x 100.0)) 100.0 -}}
+    {{- end -}}
+    {{- $s := printf (printf "%%.%df" $dec) $r -}}
+    {{- if $c.plain }}{{ $sign }}{{ $s }}{{ index $units $i }}{{ else }}<span title="{{ $sign }}{{ lang.FormatNumber 0 $a }}">{{ $sign }}{{ $s }}{{ index $units $i }}</span>{{ end -}}
+  {{- end -}}
 {{- end -}}

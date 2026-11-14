@@ -1,0 +1,77 @@
+{{- /* SDK packages table (brief 3.5-1, 5.4): one row per package, each compared with itself. No cross-registry total or share
+  (IA-18). A matrix table from 64rem, where all 7 columns fit; one block per package below that (R3).
+  Call: partial "pages/downloads/table.html" (dict "pkgs" $pkgs "window" "Nov 3–9" "weeks" $last12 "id" "packages")
+    pkgs: the page's package list, each with its cells (pages/downloads/cells.html); window: the common Last 7 days window, named
+    once in the header; weeks: the 12 shared week starts behind the sparklines; id: the section H2 that labels the table. */ -}}
+{{- $c := . -}}
+{{- $short := slice }}{{ range $c.pkgs }}{{ if and .short .d.complete_through }}{{ $short = $short | append .r.name }}{{ end }}{{ end -}}
+{{- $span := "" -}}
+{{- with $c.weeks -}}
+  {{- $end := ((time.AsTime (index . (sub (len .) 1))).AddDate 0 0 6).Format "2006-01-02" -}}
+  {{- $span = partial "data/date-range.html" (dict "from" (index . 0) "to" $end "year" false) -}}
+{{- end }}
+<div class="v-card">
+  {{- /* blocks first, so the card note follows the table directly and gets its top padding (.v-dt + .v-card-note) */}}
+  <ul class="v-blocks lg:hidden" aria-labelledby="{{ $c.id }}">
+    {{- range $p := $c.pkgs }}
+    {{- $x := $p.cells }}{{ $label := printf "%s%s· %s" $p.reg.registry (htmlUnescape "&#160;") $p.reg.package }}
+    <li class="v-block">
+      <p class="v-block-title">{{ $p.r.name }}</p>
+      {{- with $p.reg.url }}
+      <p class="v-caption">{{ partial "ui/ext-link.html" (dict "href" . "text" $label "site" $p.reg.registry "class" "v-link-quiet") }}</p>
+      {{- end }}
+      <dl class="v-kv">
+        <div><dt>Last 7 days{{ with $p.d.window }}, {{ . }}{{ end }}</dt><dd>{{ $x.value }}{{ with $x.flag }} {{ . }}{{ end }}</dd></div>
+        {{- if $x.has7 }}
+        <div><dt>Change vs prior 7 days</dt><dd>{{ $x.chg7 }}</dd></div>
+        {{- end }}
+        {{- if $x.has28 }}
+        <div><dt>Change vs 4 weeks earlier</dt><dd>{{ $x.chg28 }}</dd></div>
+        {{- end }}
+        {{- with $x.lifeSub }}
+        <div><dt>Lifetime</dt><dd>{{ $x.life }} <span class="v-muted">{{ . }}</span></dd></div>
+        {{- end }}
+        {{- with $p.d.complete_through }}
+        <div><dt>Complete through</dt><dd>{{ $x.through }}</dd></div>
+        {{- end }}
+      </dl>
+    </li>
+    {{- end }}
+  </ul>
+  <table class="v-dt is-fixed hidden lg:table" aria-labelledby="{{ $c.id }}">
+    <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-24"><col class="v-col-24"><col class="v-col-24"><col class="v-col-36"><col class="v-col-24"></colgroup>
+    <thead>
+      <tr>
+        <th scope="col">SDK</th>
+        <th scope="col" class="text-right">Last 7 days{{ with $c.window }}<span class="sub">{{ . }}</span>{{ end }}</th>
+        <th scope="col" class="text-right">Change<span class="sub">vs prior 7 days</span></th>
+        <th scope="col" class="text-right">Change<span class="sub">vs 4 weeks earlier</span></th>
+        <th scope="col">12 weeks{{ with $span }}<span class="sub">{{ . }}</span>{{ end }}</th>
+        <th scope="col" class="text-right">Lifetime</th>
+        <th scope="col" class="text-right">Complete through</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{- range $p := $c.pkgs }}
+      {{- $x := $p.cells }}
+      {{- /* "npm · @modelcontextprotocol/sdk", the separator glued to the registry so no wrapped line starts with it */}}
+      {{- $label := printf "%s%s· %s" $p.reg.registry (htmlUnescape "&#160;") $p.reg.package }}
+      <tr>
+        <th scope="row">{{ $p.r.name }}{{ with $p.reg.url }}<span class="sub">{{ partial "ui/ext-link.html" (dict "href" . "text" $label "site" $p.reg.registry "class" "v-link-quiet") }}</span>{{ end }}</th>
+        <td class="num">{{ $x.value }}{{ with $x.flag }}<span class="sub">{{ . }}</span>{{ end }}</td>
+        <td class="num">{{ $x.chg7 }}</td>
+        <td class="num">{{ $x.chg28 }}</td>
+        <td>{{ $x.spark }}</td>
+        <td class="num">{{ $x.life }}{{ with $x.lifeSub }}<span class="sub whitespace-normal">{{ . }}</span>{{ end }}</td>
+        <td class="num">{{ $x.through }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+  {{- /* short packages are read on their own newest days (their window is in the Flag's title), so the header window does not
+       apply to them; the note says so once */}}
+  {{- with $short }}
+  {{- $one := eq (len .) 1 }}
+  <p class="v-card-note">{{ delimit . ", " " and " }} {{ cond $one "has" "have" }} fewer than 7 complete days, so {{ cond $one "its" "their" }} Last 7 days sums the days collected in the 7 days to {{ cond $one "its" "their" }} Complete through date{{ with $c.window }}, not {{ . }}{{ end }}.</p>
+  {{- end }}
+</div>

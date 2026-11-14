@@ -1,0 +1,101 @@
+{{- /* Repositories (brief 3.1-4): one row per tracked repository, sorted by open issues (Q3, Q4). Context: the page.
+  Open issues with "net +37 in 30d" (metrics.json opened_30d - closed_30d); a 12-week sparkline of snapshots › issues.open (weekly
+  last value, data/week-bins.html); open PRs with "merged 1 in 7d · typical week 5", where typical = the median of weekly
+  snapshots › pulls.merged_7d over the prior 12 complete weeks with data (PR-X1, pages/pulls/typical-week.html); contributors in
+  30 days; stars.
+  First reply / First review (median) are the D1-8 cohort fields (issues.first_reply_90d, pulls.first_review_90d); each column is
+  omitted until some repository has its field, never shown from the survivorship medians. No forks, no group row, no totals row
+  (people cannot be summed across repositories). Table at >= 64rem; blocks below (R3). */ -}}
+{{- $nb := printf "%c" 160 -}}{{- /* no-break space: glues "·" to the word before it */ -}}
+{{- $rows := slice }}{{ $hasFR := false }}{{ $hasRV := false -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $m := $r.data.metrics | default dict -}}
+  {{- $iss := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
+  {{- $net := "" -}}
+  {{- if and (ne $iss.opened_30d nil) (ne $iss.closed_30d nil) }}{{ $net = partial "pages/overview/signed.html" (sub (float $iss.opened_30d) (float $iss.closed_30d)) }}{{ end -}}
+  {{- /* 12-week sparkline; below 4 weekly readings ui/spark.html emits nothing and the cell says "Tracking since …" */ -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open" "days" 91) -}}
+  {{- $w := partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12) -}}
+  {{- $spark := trim (string (partial "ui/spark.html" (dict "points" $w.points "size" "cell"))) " \n" -}}
+  {{- $since := "" -}}
+  {{- if and (not $spark) $s.first -}}
+    {{- if or (eq $w.from "") (ge $s.first $w.from) }}{{ $since = printf "Tracking since %s" (partial "ui/date.html" (dict "d" $s.first "style" "short")) }}
+    {{- else }}{{ $since = "Too few weekly readings" }}{{ end -}}
+  {{- end -}}
+  {{- /* typical week: the same median as the Pull requests backlog strip (pages/pulls/typical-week.html, PR-X1: one pulls.merged_7d
+       sample per complete ISO week over the prior 12 weeks, weeks without data skipped), shown with 4 or more samples */ -}}
+  {{- $tw := partial "pages/pulls/typical-week.html" $r.cfg -}}
+  {{- $typ := "" }}{{ $typTitle := "" -}}
+  {{- if ge $tw.n 4 }}{{ $typ = lang.FormatNumber 0 (math.Round $tw.value) }}{{ $typTitle = $tw.title }}{{ end -}}
+  {{- $prSub := "" -}}
+  {{- if ne $pr.merged_7d nil }}{{ $prSub = printf "merged %s in 7d" (lang.FormatNumber 0 (float $pr.merged_7d)) }}{{ end -}}
+  {{- if $typ }}{{ $prSub = printf "%stypical week %s" (cond (ne $prSub "") (printf "%s%s· " $prSub $nb) "") $typ }}{{ end -}}
+  {{- if $iss.first_reply_90d }}{{ $hasFR = true }}{{ end }}{{ if $pr.first_review_90d }}{{ $hasRV = true }}{{ end -}}
+  {{- $rows = $rows | append (dict "r" $r "oi" $iss.open_count "net" $net "spark" $spark "since" $since
+    "op" $pr.open_count "m7" $pr.merged_7d "prSub" $prSub "prTitle" $typTitle
+    "fr" $iss.first_reply_90d "rv" $pr.first_review_90d
+    "ac" ($m.contributors | default dict).active_30d "stars" ($m.repository | default dict).stars
+    "sort" (float ($iss.open_count | default -1))) -}}
+{{- end -}}
+{{- $rows = sort $rows "sort" "desc" -}}
+<section class="v-section" aria-labelledby="repositories">
+  {{ partial "ui/section-head.html" (dict "title" "Repositories" "id" "repositories" "caption" "Sorted by open issues.") }}
+  <div class="v-card">
+    <ul class="v-blocks lg:hidden">
+      {{- range $rows }}
+      <li class="v-block">
+        <p class="v-block-title"><a class="v-link" href="{{ printf "repos/%s/" .r.repo | relURL }}">{{ .r.name }}</a></p>
+        <dl class="v-kv">
+          <div><dt>Open issues</dt><dd>{{ partial "ui/num.html" (dict "v" .oi "mode" "full" "na" "not collected") }}{{ with .net }}<span class="v-muted"> (net {{ . }} in 30d)</span>{{ end }}</dd></div>
+          <div><dt>Open PRs</dt><dd>{{ partial "ui/num.html" (dict "v" .op "mode" "full" "na" "not collected") }}{{ if ne .m7 nil }}<span class="v-muted"> (merged {{ lang.FormatNumber 0 (float .m7) }} in 7d)</span>{{ end }}</dd></div>
+          <div><dt>Contributors, last 30 days</dt><dd>{{ partial "ui/num.html" (dict "v" .ac "mode" "full" "na" "not collected") }}</dd></div>
+          <div><dt>Stars</dt><dd>{{ partial "ui/num.html" (dict "v" .stars "mode" "full" "na" "not collected") }}</dd></div>
+        </dl>
+      </li>
+      {{- end }}
+    </ul>
+    {{- /* the sparkline column gets a fixed 7rem (a 100%-wide cell sparkline has no width of its own, brief 5.12); the cohort
+         headers wrap (whitespace-normal), so the D1-8 columns fit at 1440 */}}
+    <table class="v-dt hidden lg:table" aria-labelledby="repositories">
+      <colgroup><col span="2"><col class="v-col-28"></colgroup>
+      <thead>
+        <tr>
+          <th scope="col">Repository</th>
+          <th scope="col" class="num">Open issues</th>
+          <th scope="col">Trend<span class="sub">open issues, 12 weeks</span></th>
+          <th scope="col" class="num">Open PRs</th>
+          {{- if $hasFR }}
+          <th scope="col" class="num whitespace-normal">First reply (median)<span class="sub">issues opened in the last 90 days</span></th>
+          {{- end }}
+          {{- if $hasRV }}
+          <th scope="col" class="num whitespace-normal">First review (median)<span class="sub">PRs opened in the last 90 days</span></th>
+          {{- end }}
+          <th scope="col" class="num">Contributors<span class="sub">last 30 days</span></th>
+          <th scope="col" class="num">Stars</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- range $row := $rows }}
+        <tr data-row-link>
+          <th scope="row"><a class="v-row-link" href="{{ printf "repos/%s/" .r.repo | relURL }}" title="{{ .r.key }}">{{ .r.name }}</a></th>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .oi "mode" "full" "na" "not collected") }}{{ with .net }}<span class="sub">net {{ . }} in 30d</span>{{ end }}</td>
+          <td>
+            {{- with .spark }}{{ . | safeHTML }}
+            {{- else }}{{ with .since }}<span class="v-caption">{{ . }}</span>{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no data collected yet") }}{{ end }}{{ end -}}
+          </td>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .op "mode" "full" "na" "not collected") }}{{ with .prSub }}<span class="sub"{{ with $row.prTitle }} title="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}</td>
+          {{- if $hasFR }}
+          <td class="num">{{ partial "pages/overview/cohort.html" (dict "c" .fr "unanswered" true) }}</td>
+          {{- end }}
+          {{- if $hasRV }}
+          <td class="num">{{ partial "pages/overview/cohort.html" (dict "c" .rv) }}</td>
+          {{- end }}
+          <td class="num">{{ partial "ui/num.html" (dict "v" .ac "mode" "full" "na" "not collected") }}</td>
+          <td class="num">{{ partial "ui/num.html" (dict "v" .stars "mode" "full" "na" "not collected") }}</td>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+  </div>
+</section>

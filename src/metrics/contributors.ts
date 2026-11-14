@@ -27,7 +27,7 @@ const ONE_TWENTY_DAYS_MS = 120 * 24 * 60 * 60 * 1000;
  * @param issues - Issue data from GitHub
  * @param pulls - Pull request data from GitHub
  * @param commits - Commit data from GitHub
- * @param maintainerSet - Set of known maintainer GitHub usernames
+ * @param maintainerSet - Set of known maintainer GitHub usernames, lowercased
  * @param repoConfig - Repository configuration
  */
 export async function calculateContributorMetrics(
@@ -140,7 +140,7 @@ export async function calculateContributorMetrics(
   // Calculate maintainer vs community breakdown
   let active_maintainers_30d = 0;
   for (const contributor of activeContributors) {
-    if (maintainerSet.has(contributor)) {
+    if (maintainerSet.has(contributor.toLowerCase())) {
       active_maintainers_30d++;
     }
   }

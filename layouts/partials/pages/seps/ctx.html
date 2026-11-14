@@ -1,0 +1,10 @@
+{{- /* Context line of a SEP tile (brief 3.4-1, 4.6 d, 6.1 rule 2): peer items on one caption line, "oldest 319 days · 12 need WG support".
+  Context: a slice of strings. Returns HTML ("" for an empty slice), for ui/kpi.html "context". Each item is a nowrap token with its
+  "·" attached to the item before it, so a wrapped line never starts with one. Items after the first are .v-desk-only: a phone tile
+  keeps one context line (R6). */ -}}
+{{- $out := "" -}}
+{{- range $i, $t := (. | default slice) -}}
+  {{- if eq $i 0 }}{{ $out = printf `<span class="v-nowrap">%s</span>` (htmlEscape $t) -}}
+  {{- else }}{{ $out = printf `%s<span class="v-desk-only">&nbsp;· <span class="v-nowrap">%s</span></span>` $out (htmlEscape $t) }}{{ end -}}
+{{- end -}}
+{{- return ($out | safeHTML) -}}

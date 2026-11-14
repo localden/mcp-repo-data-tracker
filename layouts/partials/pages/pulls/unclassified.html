@@ -1,0 +1,80 @@
+{{- /* Queue for a repo without PR classification (brief 3.3b-2, 8a-9, PR-06): metrics › pulls.prs_without_maintainer_review in one
+     table with two tabs, "Waiting for first review" (isDraft false, the default) and "Drafts" (isDraft true). Drafts are decided by
+     isDraft only, never by the "draft" label (#1913 carries the label and is not a draft). Dict {r (data/repo.html), m (metrics.json)}.
+     No row status: these rows have no SLA tier, and status is never set on age alone (8a-8). SEP PRs on the spec repo get a
+     "SEP · Proposal" tag linking to /seps/. */ -}}
+{{- $r := .r -}}
+{{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
+{{- $list := $pl.prs_without_maintainer_review | default slice -}}
+{{- $stages := partial "pages/pulls/sep-stages.html" $r.data -}}
+{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "accepted" "final" "deferred" "dormant" -}}
+{{- $open := slice }}{{ $drafts := slice }}{{ $bots := 0 -}}
+{{- range $list -}}
+  {{- if eq .isDraft true }}{{ $drafts = $drafts | append . }}{{ else }}{{ $open = $open | append . }}{{ end -}}
+  {{- if or .isBot (hasSuffix (string (.author | default "")) "[bot]") }}{{ $bots = add $bots 1 }}{{ end -}}
+{{- end -}}
+{{- $nOpen := len $open }}{{ $nDraft := len $drafts -}}
+{{- $tabs := slice (dict "key" "review" "label" "Waiting for first review" "count" $nOpen) -}}
+{{- if gt $nDraft 0 }}{{ $tabs = $tabs | append (dict "key" "drafts" "label" "Drafts" "count" $nDraft) }}{{ end -}}
+{{- $chips := slice }}{{ if gt $bots 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end -}}
+{{- /* the tabs carry the counts (6.5); the caption only says what the list holds, never the open total it does not hold */}}
+<section class="v-section" aria-labelledby="queue">
+  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "caption" "Open PRs with no maintainer review, longest wait first") }}
+  {{- if $list }}
+  <div data-list id="pq" data-limit="25" data-url>
+    <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" "pq" "label" "PR queue" "panel" "pq-panel" "selected" "review" "tabs" $tabs) }}</div>
+    {{ partial "ui/filterbar.html" (dict "id" "pq-search" "label" "Search pull requests" "placeholder" "Search title or author"
+        "chips" $chips "noun" "PRs" "one" "PR" "total" $nOpen) }}
+    <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-review">
+      <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">
+        <caption>Waiting counts calendar days since the PR opened.</caption>
+        <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-28"><col class="v-col-24"></colgroup>
+        <thead><tr>
+          <th scope="col">Pull request</th>
+          <th scope="col">Author</th>
+          <th scope="col" class="num">Lines changed</th>
+          <th scope="col" class="num">Waiting</th>
+        </tr></thead>
+        <tbody>
+          {{- range $i, $pr := $open | append $drafts -}}
+            {{- $draft := eq $pr.isDraft true -}}
+            {{- $num := int ($pr.number | default 0) -}}
+            {{- $author := strings.TrimPrefix "app/" (string ($pr.author | default "")) -}}
+            {{- $bot := or $pr.isBot (hasSuffix $author "[bot]") -}}
+            {{- $tok := slice (cond $draft "drafts" "review") }}{{ if $bot }}{{ $tok = $tok | append "bot" }}{{ end -}}
+            {{- /* tags: the SEP stage (spec repo), then up to 3 GitHub labels verbatim; stage labels drop when the SEP tag says it */ -}}
+            {{- $stage := index $stages (string $num) -}}
+            {{- $tags := slice -}}
+            {{- with $stage }}{{ $tags = $tags | append (dict "text" (printf "SEP · %s" .) "href" (printf "seps/#sep-%d" $num | relURL)) }}{{ end -}}
+            {{- if $bot }}{{ $tags = $tags | append "Bot" }}{{ end -}}
+            {{- $nl := 0 -}}
+            {{- range $pr.labels | default slice -}}
+              {{- if and (lt $nl 3) (not (and $stage (in $stageLabels (lower .)))) }}{{ $tags = $tags | append . }}{{ $nl = add $nl 1 }}{{ end -}}
+            {{- end -}}
+            {{- $adds := float ($pr.additions | default 0) }}{{ $dels := float ($pr.deletions | default 0) -}}
+            {{- $lines := printf "+%s −%s" (lang.FormatNumber 0 $adds) (lang.FormatNumber 0 $dels) -}}
+            {{- $wd := partial "pages/pulls/wait.html" ($pr.daysWaiting | default 0) -}}
+            {{- $reviews := "" }}{{ with $pr.reviewCount }}{{ $reviews = printf "%s from non-maintainers" (partial "ui/plural.html" (dict "n" . "one" "review")) }}{{ end -}}
+            {{- $more := or $draft (ge $i 25) }}
+          <tr data-row data-row-link id="pq-{{ $num }}" data-tags="{{ delimit $tok " " }}" data-text="{{ lower (printf "%s|%s" (string ($pr.title | default "")) $author) }}"{{ if $more }} data-over{{ end }}>
+            <td class="v-title-cell">
+              <a class="v-row-link v-clamp" href="{{ $pr.url }}" target="_blank" rel="noopener"{{ with $reviews }} title="{{ . }}"{{ end }}>{{ $pr.title }}<span class="sr-only"> (opens GitHub)</span></a>
+              <span class="sub v-hide-list">#{{ $num }}</span>
+              {{- partial "ui/tag.html" $tags }}
+              <span class="v-listmeta"><span>#{{ $num }}</span><span>{{ $author }}</span><span>{{ $lines }}</span></span>
+            </td>
+            <td><span class="block truncate" title="{{ $author }}">{{ $author }}</span></td>
+            <td class="num">{{ $lines }}</td>
+            <td class="num v-verdict"{{ with $wd.v }} data-v="{{ . }}"{{ end }}>{{ $wd.html }}</td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+      {{ partial "ui/more.html" (dict "list" "pq" "controls" "pq-table" "n" $nOpen) }}
+    </div>
+    <p class="v-empty-text" data-filter-empty hidden>No PRs match.</p>
+  </div>
+  {{- else }}
+  {{ partial "ui/empty.html" (dict "size" "none" "body" "No open PRs are waiting for a maintainer review.") }}
+  {{- end }}
+</section>

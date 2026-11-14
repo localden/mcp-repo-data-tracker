@@ -1,0 +1,33 @@
+{{- /* One row of "Final in the last 90 days" (brief 3.4-5): SEP · Title · Sponsor · Merged ("Oct 29") · Time to final ("33 days").
+  Context: dict "r" (pages/seps/entry.html) "merged" (mergedAt) "ttf" (whole days from opening to merge, -1 when unknown)
+  "year" (the year of seps.json lastUpdated; a merge in another year prints its full date). Below 640px Merged is the verdict
+  and SEP, sponsor and time to final go to the meta row. */ -}}
+{{- $r := .r }}{{ $ttfDays := .ttf -}}
+{{- $m := time.AsTime .merged -}}
+{{- $mergedText := partial "ui/date.html" (dict "d" .merged "style" (cond (eq $m.Year .year) "short" "date")) -}}
+{{- $mergedFull := partial "ui/date.html" .merged -}}
+{{- $ttf := "" -}}
+{{- if ge $ttfDays 1 }}{{ $ttf = partial "ui/plural.html" (dict "n" $ttfDays "one" "day") }}{{ else if eq $ttfDays 0 }}{{ $ttf = "less than a day" }}{{ end -}}
+{{- $sponsor := "no sponsor assigned" -}}
+{{- if eq $r.sponsorKind "handle" }}{{ $sponsor = printf "sponsor %s" $r.sponsor }}{{ else if eq $r.sponsorKind "self" }}{{ $sponsor = "self-sponsored" }}{{ end -}}
+{{- $meta := slice $r.sep $sponsor -}}
+{{- with $ttf }}{{ $meta = $meta | append (printf "%s to final" .) }}{{ end -}}
+{{- $last := sub (len $meta) 1 }}
+<tr data-row-link>
+  <td class="v-nowrap{{ if $r.isPR }} v-muted{{ end }}"{{ if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }} title="PR #{{ $r.num }}"{{ end }}>{{ $r.sep }}</td>
+  <td class="v-title-cell">
+    <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener">{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
+    <span class="v-listmeta">
+      {{- range $i, $t := $meta -}}
+      <span>{{ $t }}{{ if lt $i $last }}&nbsp;·{{ end }}</span>
+      {{- end -}}
+    </span>
+  </td>
+  <td>
+    {{- if eq $r.sponsorKind "handle" }}<span class="block truncate" title="{{ $r.sponsor }}">{{ $r.sponsor }}</span>
+    {{- else if eq $r.sponsorKind "self" }}<span class="v-muted" title="Sponsored by the author">self</span>
+    {{- else }}<span class="v-muted v-nowrap">Not assigned</span>{{ end -}}
+  </td>
+  <td class="num v-verdict"><span title="Merged {{ $mergedFull }}">{{ $mergedText }}</span></td>
+  <td class="num">{{ with $ttf }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown") }}{{ end }}</td>
+</tr>

@@ -1,0 +1,53 @@
+{{- /* /issues/<repo>/ (brief 3.2b). Context: the adapter page (.Params.repo = "owner/repo"). The same skeleton for every repo;
+  issue classification (issues.json) only adds modules, it never swaps the layout:
+    0 head · 1 Response SLAs · 2 Queue (classified) or Waiting for a reply · 3 Backlog trend · 4 Responsiveness · 5 Backlog age · 6 Labels.
+  Data as of = the older of metrics.json timestamp and issues.json lastUpdated; the gap notice covers the 26-week chart window. */ -}}
+{{- $r := partial "data/repo.html" .Params.repo -}}
+{{- $m := $r.data.metrics -}}
+{{- $t := $r.data.issues -}}
+{{- $classified := reflect.IsMap $t -}}
+{{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" (slice "metrics" "issues")) -}}
+{{- $links := slice (dict "text" $r.key "href" (printf "https://github.com/%s/issues" $r.key) "site" "GitHub") -}}
+
+{{- /* Data notes: definitions in place of footnotes (4.6 n) */ -}}
+{{- $defs := slice
+  (dict "term" "Age" "text" "Calendar days since the issue opened.")
+  (dict "term" "Waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.") -}}
+{{- if and $r.sdk $classified -}}
+  {{- $defs = $defs | append
+    (dict "term" "Overdue" "text" "Past a deadline in the Response SLAs table. SEP-1730 sets the reply, triage, P0 and question deadlines for SDK repositories; the follow-up, P1 and repro deadlines are team targets.")
+    (dict "term" "Triage complete" "text" "A type label plus a priority or status label. Issues without it are in the Untriaged tab.")
+    (dict "term" "Overdue column" "text" "Calendar days past the deadline. For the business-day rules this is converted from business days, which the tooltip gives exactly.") -}}
+{{- end -}}
+{{- $defs = $defs | append
+  (dict "term" "Never answered" "text" "Open issues by non-maintainers with no maintainer comment, older than 24 hours.")
+  (dict "term" "Time to close" "text" "Median time from open to close over issues closed in the last 90 days.")
+  (dict "term" "Backlog age" "text" "Open issues by days since their last activity (any comment, label or edit).") -}}
+
+{{ partial "ui/page-head.html" (dict
+    "title" .Title "repo" $r.key "switch" "issues" "links" $links "sources" $src
+    "gap" (dict "repos" (slice $r.key) "days" 182) "defs" $defs) }}
+
+{{- if not (reflect.IsMap $m) }}
+<section class="v-section" aria-label="No data">
+  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." $r.name)) }}
+</section>
+{{- else }}
+{{- $q := dict -}}
+{{- if $classified -}}
+  {{- /* the Overview's "No reply" count as a set of issue numbers, for the Waiting for a reply tab (P6) */ -}}
+  {{- $wait := dict -}}
+  {{- with $m.issues }}{{ range (.issues_without_maintainer_response | default slice) }}{{ if ge (float (.daysWaiting | default 0)) 7.0 }}{{ $wait = merge $wait (dict (string (int .number)) true) }}{{ end }}{{ end }}{{ end -}}
+  {{- $q = partial "pages/issues/rows.html" (dict "t" $t "wait" $wait) -}}
+{{- end }}
+{{ partial "pages/issues/sla.html" (dict "r" $r "q" (cond $classified $q nil) "list" "iq") }}
+{{- if $classified }}
+{{ partial "pages/issues/queue.html" (dict "r" $r "q" $q "id" "iq") }}
+{{- else }}
+{{ partial "pages/issues/noreply.html" (dict "r" $r "id" "iw") }}
+{{- end }}
+{{ partial "pages/issues/trend.html" (dict "r" $r) }}
+{{ partial "pages/issues/responsiveness.html" (dict "r" $r) }}
+{{ partial "pages/issues/backlog-age.html" (dict "r" $r) }}
+{{ partial "pages/issues/labels.html" (dict "r" $r) }}
+{{- end }}

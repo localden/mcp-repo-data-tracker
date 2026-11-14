@@ -1,13 +1,38 @@
-{{- $cur := float .cur -}}{{- $prev := float .prev -}}{{- $d := sub $cur $prev -}}
-{{- $sign := cond (gt $d 0.0) "+" "−" -}}{{- $txt := "±0" -}}
-{{- if ne $d 0.0 -}}
-  {{- if eq .unit "hours" -}}{{- $txt = printf "%s%s" $sign (partial "ui/dur.html" (math.Abs $d)) -}}
-  {{- else if ge (math.Abs $prev) 1000.0 -}}
-    {{- $p := math.Abs (mul (div $d $prev) 100.0) -}}
-    {{- $txt = cond (lt $p 0.1) (printf "%s<0.1%%" $sign) (printf "%s%s%%" $sign (strings.TrimSuffix ".0" (printf "%.1f" $p))) -}}
-  {{- else -}}{{- $txt = printf "%s%s" $sign (lang.FormatNumber 0 (math.Abs $d)) -}}{{- end -}}
+{{- /* Change vs a named base (brief 6.1 rule 10, 6.3). Dict {cur, prev, unit, polarity, date, vs, suffix}. Emits HTML, or nothing when cur or prev is nil.
+  unit "count" (default): absolute, "+9" / "−14"; "percent": relative, "+1.7%" (nothing when prev is 0); "hours": "+2.5d".
+  polarity "up" (up is good), "down" (down is good, e.g. waiting counts) or "none" (default, muted).
+  Base text: date (YYYY-MM-DD) -> "vs Nov 7"; else vs ("prior 7 days") -> "vs prior 7 days"; else suffix verbatim. No change -> "No change". */ -}}
+{{- $c := . -}}
+{{- if and (ne $c.cur nil) (ne $c.prev nil) -}}
+  {{- $cur := float $c.cur }}{{ $prev := float $c.prev }}{{ $d := sub $cur $prev -}}
+  {{- $unit := $c.unit | default "count" -}}
+  {{- $sign := cond (gt $d 0.0) "+" "−" -}}
+  {{- $txt := "" }}{{ $ok := true }}{{ $zero := false -}}
+  {{- if eq $unit "percent" -}}
+    {{- if eq $prev 0.0 }}{{ $ok = false }}{{ else -}}
+      {{- $p := div (math.Round (mul (math.Abs (mul (div $d (math.Abs $prev)) 100.0)) 10.0)) 10.0 -}}
+      {{- if eq $d 0.0 }}{{ $zero = true }}
+      {{- else if eq $p 0.0 }}{{ $txt = printf "%s<0.1%%" $sign }}
+      {{- else }}{{ $txt = printf "%s%.1f%%" $sign $p }}{{ end -}}
+    {{- end -}}
+  {{- else if eq $unit "hours" -}}
+    {{- if eq $d 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = printf "%s%s" $sign (partial "ui/dur.html" (math.Abs $d)) }}{{ end -}}
+  {{- else -}}
+    {{- $r := math.Round $d -}}
+    {{- if eq $r 0.0 }}{{ $zero = true }}{{ else }}{{ $txt = printf "%s%s" (cond (gt $r 0.0) "+" "−") (lang.FormatNumber 0 (math.Abs $r)) }}{{ end -}}
+  {{- end -}}
+  {{- if $ok -}}
+    {{- if $zero }}{{ $txt = "No change" }}{{ end -}}
+    {{- $state := "flat" -}}
+    {{- if not $zero -}}
+      {{- if eq $c.polarity "up" }}{{ $state = cond (gt $d 0.0) "good" "bad" }}{{ end -}}
+      {{- if eq $c.polarity "down" }}{{ $state = cond (lt $d 0.0) "good" "bad" }}{{ end -}}
+    {{- end -}}
+    {{- $vs := "" -}}
+    {{- if $c.date }}{{ $vs = printf "vs %s" (partial "ui/date.html" (dict "d" $c.date "style" "short")) }}
+    {{- else if $c.vs }}{{ $vs = printf "vs %s" $c.vs }}
+    {{- else if $c.suffix }}{{ $vs = $c.suffix }}{{ end -}}
+    <span class="v-delta is-{{ $state }}">{{ $txt }}{{ with $vs }} <span class="v-delta-vs">{{ . }}</span>{{ end }}
+    {{- if eq $state "good" }}<span class="sr-only">, improving</span>{{ else if eq $state "bad" }}<span class="sr-only">, worsening</span>{{ end }}</span>
+  {{- end -}}
 {{- end -}}
-{{- $state := "flat" -}}
-{{- if and (ne $d 0.0) (eq .polarity "up") }}{{ $state = cond (gt $d 0.0) "good" "bad" }}{{ end -}}
-{{- if and (ne $d 0.0) (eq .polarity "down") }}{{ $state = cond (lt $d 0.0) "good" "bad" }}{{ end -}}
-<span class="v-delta is-{{ $state }}">{{ $txt }}{{ with .suffix }} <span class="v-delta-win">{{ . }}</span>{{ end }}{{ if eq $state "good" }}<span class="sr-only">, improving</span>{{ else if eq $state "bad" }}<span class="sr-only">, worsening</span>{{ end }}</span>

@@ -1,0 +1,44 @@
+{{- /* Data sources of a page, for ui/page-head.html "sources" (brief 2.4). Returns a slice of source dicts, never errors.
+  Call: $src := partial "ui/sources.html" (dict "repo" "modelcontextprotocol/typescript-sdk" "use" (slice "metrics" "issues"))
+    repo: one "owner/repo" (or bare repo) or a slice of them (org pages: the oldest timestamp per source across the repos);
+    use: any of "metrics" (metrics.json timestamp), "issues" (issues.json lastUpdated), "actionability" (actionability.json lastUpdated),
+    "seps" (seps.json lastUpdated), "downloads" (one entry per package: downloads-daily.json complete_through, else the newest
+    complete day data/downloads.html rebuilds from snapshots; repos without a package are skipped).
+  Each source: {kind, label ("GitHub metrics"), noun (for the stale Flag, "GitHub data"), at (time), through ("YYYY-MM-DD", registries only)}.
+  A registry "through" date D is complete to the end of D, so its at is D + 1 day 00:00 UTC. Append your own dicts of the same shape. */ -}}
+{{- $keys := .repo | default slice -}}{{- if not (reflect.IsSlice $keys) }}{{ $keys = slice $keys }}{{ end -}}
+{{- $use := .use | default (slice "metrics") -}}
+{{- $label := dict "metrics" "GitHub metrics" "issues" "Issue classification" "actionability" "PR classification" "seps" "SEP data" -}}
+{{- $noun := dict "metrics" "GitHub data" "issues" "Issue classification" "actionability" "PR classification" "seps" "SEP data" -}}
+{{- $field := dict "metrics" "timestamp" "issues" "lastUpdated" "actionability" "lastUpdated" "seps" "lastUpdated" -}}
+{{- $out := slice -}}
+{{- range $kind := $use -}}
+  {{- if eq $kind "downloads" -}}
+    {{- range $keys -}}
+      {{- $r := partial "data/repo.html" . -}}
+      {{- if $r.package -}}
+        {{- $reg := partial "ui/registry-name.html" $r.package -}}
+        {{- /* downloads-daily.json (D2-1) when it exists, else the newest complete day rebuilt from snapshots by data/downloads.html
+             (same partialCached key as data/downloads-end.html, so the package is read once per build) */ -}}
+        {{- $through := "" -}}
+        {{- with index $r.data "downloads-daily" }}{{ with index . "complete_through" }}{{ $through = string . }}{{ end }}{{ end -}}
+        {{- if not $through }}{{ $through = (partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "").complete_through }}{{ end -}}
+        {{- with $through -}}
+          {{- $out = $out | append (dict "kind" "downloads" "label" ($reg.registry | default "Downloads") "noun" (printf "%s data" ($reg.registry | default "Download"))
+            "through" . "at" ((time.AsTime .).AddDate 0 0 1)) -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else if index $field $kind -}}
+    {{- $best := 0 }}{{ $bestT := "" -}}
+    {{- range $keys -}}
+      {{- $r := partial "data/repo.html" . -}}
+      {{- with index $r.data $kind }}{{ if reflect.IsMap . }}{{ with index . (index $field $kind) -}}
+        {{- $t := time.AsTime . -}}
+        {{- if or (eq $best 0) (lt $t.Unix $best) }}{{ $best = $t.Unix }}{{ $bestT = $t }}{{ end -}}
+      {{- end }}{{ end }}{{ end -}}
+    {{- end -}}
+    {{- if ne $best 0 }}{{ $out = $out | append (dict "kind" $kind "label" (index $label $kind) "noun" (index $noun $kind) "at" $bestT) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

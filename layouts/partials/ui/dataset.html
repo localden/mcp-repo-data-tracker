@@ -1,2 +1,0 @@
-{{- $data := .data -}}{{- if reflect.IsSlice $data }}{{ $data = jsonify $data }}{{ end -}}
-{{- return printf `{"label":%s,"role":%q,"partialLast":%t,"data":%s}` (jsonify .label) (.role | default "accent") (.partialLast | default false) $data -}}

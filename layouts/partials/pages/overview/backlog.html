@@ -1,0 +1,32 @@
+{{- /* Backlog trend (brief 3.1-3, 5.1, 5.8): one full-width line chart, 26 ISO weeks, open issues (chart-1) and open PRs (chart-2), each
+  the org sum of the last snapshot value per week (data/org-weekly.html). Answers Q3. Context: the page.
+  ui/chart.html draws the legend, end labels, gap band and Table toggle. A repository whose history starts inside the window is summed
+  for the weeks it covers, and the section caption names it ("Rust SDK and Ruby SDK included from Nov 10, 2026"). */ -}}
+{{- $i := partial "data/org-weekly.html" (dict "path" "issues.open" "weeks" 26) -}}
+{{- $p := partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 26) -}}
+
+{{- /* late starters across both series, earliest first date per repository, listed in repos.json order and grouped by date */ -}}
+{{- $sc := newScratch -}}
+{{- range (slice $i.late $p.late) -}}
+  {{- range . -}}
+    {{- $have := index ($sc.Get "late" | default dict) .name -}}
+    {{- if or (not $have) (lt .first $have) }}{{ $sc.SetInMap "late" .name .first }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $lm := $sc.Get "late" | default dict -}}
+{{- $list := slice -}}
+{{- range site.Data.repos.repositories }}{{ $n := .name | default .repo }}{{ with index $lm $n }}{{ $list = $list | append (dict "name" $n "first" .) }}{{ end }}{{ end -}}
+{{- $dates := slice }}{{ range $list }}{{ if not (in $dates .first) }}{{ $dates = $dates | append .first }}{{ end }}{{ end -}}
+{{- $parts := slice -}}
+{{- range $dt := $dates -}}
+  {{- $names := slice }}{{ range $list }}{{ if eq .first $dt }}{{ $names = $names | append .name }}{{ end }}{{ end -}}
+  {{- $parts = $parts | append (printf "%s included from %s" (delimit $names ", " " and ") (partial "ui/date.html" $dt)) -}}
+{{- end -}}
+{{- $cap := "Open issues and open PRs across all repositories, last reading of each week." -}}
+{{- with $parts }}{{ $cap = printf "%s %s." $cap (delimit . "; ") }}{{ end -}}
+<section class="v-section" aria-labelledby="backlog-trend">
+  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog-trend" "caption" $cap) }}
+  {{ partial "ui/chart.html" (dict "id" "overview-backlog" "metric" "open issues and PRs" "scope" "All repositories"
+      "unit" "count" "gran" "week" "kind" "line" "agg" "last"
+      "series" (slice (dict "label" "Open issues" "role" "accent" "points" $i.points) (dict "label" "Open PRs" "role" "series-2" "points" $p.points))) }}
+</section>

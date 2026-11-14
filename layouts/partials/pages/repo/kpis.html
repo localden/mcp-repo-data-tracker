@@ -1,0 +1,42 @@
+{{- /* 1. KPI card (brief 3.6-1, 4.6 d): issues waiting for a reply, PRs waiting for first review, open issues (net change in 30 days),
+  then downloads in the last 7 complete days for package repos or active contributors for the others. Glossary labels (6.2).
+  Deltas are dated (data/series cmp7, nearest earlier snapshot); a package with fewer than 7 complete days shows its partial sum
+  muted with the Flag "n of 7 days" and no delta (5.4). Context: the dict from pages/repo.html. */ -}}
+{{- $r := .r }}{{ $m := .m }}{{ $c := .c }}{{ $d := .dl }}{{ $s := .s -}}
+{{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
+{{- $iw := $s.iWait }}{{ $pw := $s.pWait }}{{ $io := $s.iOpen -}}
+{{- $wd := dict }}{{ with $iw.cmp7 }}{{ $wd = dict "cur" $iw.cur "prev" .value "date" .date "polarity" "down" }}{{ end -}}
+{{- $rd := dict }}{{ with $pw.cmp7 }}{{ $rd = dict "cur" $pw.cur "prev" .value "date" .date "polarity" "down" }}{{ end -}}
+{{- $net := "" -}}
+{{- if and (ne $is.opened_30d nil) (ne $is.closed_30d nil) }}{{ $net = partial "pages/repo/signed.html" (dict "n" (sub (float $is.opened_30d) (float $is.closed_30d))) }}{{ end -}}
+{{- $tiles := slice
+  (dict "label" "Issues waiting for a reply" "value" $is.without_response_7d "qualifier" "no maintainer reply after 7 days" "delta" $wd
+        "labelTitle" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago"
+        "points" (partial "data/week-bins.html" (dict "points" $iw.points "agg" "last" "weeks" 12)).points "since" $iw.first)
+  (dict "label" "PRs waiting for first review" "value" $pr.without_review_7d "qualifier" "no maintainer review after 7 days" "delta" $rd
+        "labelTitle" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago"
+        "points" (partial "data/week-bins.html" (dict "points" $pw.points "agg" "last" "weeks" 12)).points "since" $pw.first)
+  (dict "label" "Open issues" "value" $is.open_count "context" (cond (ne $net "") (printf "net %s in 30 days" $net) "")
+        "points" (partial "data/week-bins.html" (dict "points" $io.points "agg" "last" "weeks" 12)).points "since" $io.first) -}}
+
+{{- if $r.package -}}
+  {{- /* 12 complete ISO weeks of downloads for the sparkline; the unfinished week is never plotted */ -}}
+  {{- $pts := slice }}{{ with $d.points }}{{ $pts = (partial "data/week-bins.html" (dict "points" . "agg" "sum" "weeks" 12 "end" $d.complete_through)).points }}{{ end -}}
+  {{- $t := dict "label" "Downloads, last 7 days" "value" nil "na" "no complete days yet" "since" ($d.first | default "") -}}
+  {{- if ne $d.dl7 nil -}}
+    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "value" $d.dl7 "format" "compact" "points" $pts "since" ($d.first | default "")
+        "delta" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "vs" "prior 7 days" "polarity" "up") -}}
+  {{- else if gt (int ($d.days_covered | default 0)) 0 -}}
+    {{- $t = dict "label" "Downloads, last 7 days" "qualifier" $d.window "points" $pts "since" ($d.first | default "")
+        "valueHTML" (printf `<span class="v-muted">%s</span>` (partial "ui/num.html" (dict "v" $d.sum7 "mode" "compact")) | safeHTML)
+        "context" (partial "ui/flag.html" (printf "%d of 7 days" (int $d.days_covered))) -}}
+  {{- end -}}
+  {{- $tiles = $tiles | append $t -}}
+{{- else -}}
+  {{- $act := partial "data/series.html" (dict "repo" $r.cfg "path" "contributors.active_30d") -}}
+  {{- $tiles = $tiles | append (dict "label" "Active contributors" "qualifier" "last 30 days" "value" $c.active_30d
+      "points" (partial "data/week-bins.html" (dict "points" $act.points "agg" "last" "weeks" 12)).points "since" $act.first) -}}
+{{- end }}
+<section class="v-section" aria-label="Summary">
+  {{ partial "ui/kpis.html" (dict "tiles" $tiles "label" "Summary") }}
+</section>

@@ -1,0 +1,9 @@
+{{- /* KPI row (brief 4.4, 4.6 d, 7.1 R6): one card holding the tiles, 1px dividers between them, no per-tile boxes.
+  Dict {tiles, label, id}. tiles: slice of ui/kpi.html dicts (2-6). Columns: one per tile at >= 64rem, 2 below (an odd last tile spans 2).
+  label: optional aria-label for the group. */ -}}
+{{- $tiles := .tiles | default slice -}}
+{{- if $tiles -}}
+<div class="v-card v-kpis" style="--n:{{ len $tiles }}"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
+  {{- range $tiles }}{{ partial "ui/kpi.html" . }}{{ end -}}
+</div>
+{{- end -}}

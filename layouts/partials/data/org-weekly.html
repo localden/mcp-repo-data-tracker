@@ -1,0 +1,46 @@
+{{- /* Org-wide weekly sum of one snapshot metric (§3.1-1, §3.1-3, §8a-4). Each week sums only the repos that have a value that week,
+  so one gapped repo never blanks the strip. Replaces overview/sum-weekly.html.
+  Call: $o := partial "data/org-weekly.html" (dict "path" "issues.open" ["weeks" 26] ["agg" "last"] ["repos" $list] ["anchor" "YYYY-MM-DD"])
+    repos: repos.json entries or names (default every tracked repo); agg/partial as in data/week-bins.html (default "last", current week kept).
+  Returns dict: labels []string (week starts), points [{date, value float|nil, n int (repos summed)}], data string (JSON array),
+    n int (non-null weeks), n_repos int (repos with any value in the window), n_latest int (repos in the newest week),
+    late [{name, first}] (repos whose history starts inside the window, for "Rust SDK and Ruby SDK included from Nov 10, 2026"),
+    from/to (first/last week start). */ -}}
+{{- $weeks := int (.weeks | default 26) -}}
+{{- $agg := .agg | default "last" -}}
+{{- $anchor := .anchor | default (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- $refs := .repos | default site.Data.repos.repositories -}}
+{{- $sc := newScratch }}{{ $labels := slice }}{{ $nRepos := 0 }}{{ $late := slice -}}
+{{- range $refs -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" $.path "days" (add (mul $weeks 7) 7) "anchor" $anchor) -}}
+  {{- $bargs := dict "points" $s.points "agg" $agg "weeks" $weeks "end" $anchor -}}
+  {{- if isset $ "partial" }}{{ $bargs = merge $bargs (dict "partial" $.partial) }}{{ end -}}
+  {{- $b := partial "data/week-bins.html" $bargs -}}
+  {{- $labels = $b.labels -}}
+  {{- if gt $b.n 0 -}}
+    {{- $nRepos = add $nRepos 1 -}}
+    {{- if and $s.first (gt $s.first $b.from) (eq (index $b.points 0).value nil) }}{{ $late = $late | append (dict "name" $r.name "first" $s.first) }}{{ end -}}
+    {{- range $b.points -}}
+      {{- if ne .value nil -}}
+        {{- $sc.SetInMap "sum" .date (add (index ($sc.Get "sum" | default dict) .date | default 0.0) .value) -}}
+        {{- $sc.SetInMap "cnt" .date (add (index ($sc.Get "cnt" | default dict) .date | default 0) 1) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $sums := $sc.Get "sum" | default dict }}{{ $cnts := $sc.Get "cnt" | default dict -}}
+{{- $pts := slice }}{{ $cells := slice }}{{ $n := 0 }}{{ $nLatest := 0 -}}
+{{- range $labels -}}
+  {{- $c := index $cnts . | default 0 -}}
+  {{- if gt $c 0 -}}
+    {{- $v := index $sums . -}}
+    {{- $pts = $pts | append (dict "date" . "value" $v "n" $c) }}{{ $cells = $cells | append (string $v) }}{{ $n = add $n 1 -}}
+  {{- else -}}
+    {{- $pts = $pts | append (dict "date" . "value" nil "n" 0) }}{{ $cells = $cells | append "null" -}}
+  {{- end -}}
+  {{- $nLatest = $c -}}
+{{- end -}}
+{{- $from := "" }}{{ $to := "" }}{{ with $labels }}{{ $from = index . 0 }}{{ $to = index . (sub (len .) 1) }}{{ end -}}
+{{- return dict "labels" $labels "points" $pts "data" (printf "[%s]" (delimit $cells ",")) "n" $n
+  "n_repos" $nRepos "n_latest" $nLatest "late" $late "from" $from "to" $to -}}

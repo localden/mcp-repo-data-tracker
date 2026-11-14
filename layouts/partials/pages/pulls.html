@@ -1,165 +1,74 @@
-{{- /* Pull requests page (design-system spec 8.5). Called once per repo block by _default/single.html with
-     (dict "context" $page "repoKey" "owner/repo"), or with the page itself when repos.json is absent.
-     Page-local partials live in pages/pulls/: group (tier section), state (tbody), row (PR row), tally,
-     state-label (slug dict), stats (Volume & timing, shared), legacy (no actionability.json). */ -}}
-{{- $context := . }}{{ $repoKey := "" -}}
-{{- if reflect.IsMap . -}}
-  {{- with .context }}{{ $context = . }}{{ end -}}
-  {{- with .repoKey }}{{ $repoKey = . }}{{ end -}}
+{{- /* Pull requests (brief 3.3). Context: the page. /pulls/ (3.3a, .Params.repo empty) renders pages/pulls/org.html; /pulls/<repo>/ (3.3b)
+     renders the same skeleton for every repo, classification only changes what fills it:
+       0 page head (scope switcher; one "Data as of" = the older of metrics.json timestamp and actionability.json lastUpdated)
+       1 Review SLAs (pulls/sla)  2 Queue (pulls/queue, or pulls/unclassified without actionability.json)
+       3 Backlog (pulls/backlog)  4 Review speed (pulls/speed)  5 Where merged PRs land (pulls/hotspots)
+     Helpers: pulls/rows (actionability -> table rows), pulls/row, pulls/reason (the only reader of short_reason), pulls/state-label,
+     pulls/wait (whole days), pulls/typical-week, pulls/sep-stages. */ -}}
+{{- $key := .Params.repo | default "" -}}
+{{- if not $key }}
+{{ partial "pages/pulls/org.html" . }}
+{{- else }}
+{{- $r := partial "data/repo.html" $key -}}
+{{- $m := dict }}{{ with $r.data.metrics }}{{ if reflect.IsMap . }}{{ $m = . }}{{ end }}{{ end -}}
+{{- $a := dict }}{{ with $r.data.actionability }}{{ if reflect.IsMap . }}{{ $a = . }}{{ end }}{{ end -}}
+{{- $classified := and (gt (len $a) 0) (ne $a.tiers nil) -}}
+
+{{- /* page head: sources, gap notice (GitHub data first; once that gap is backfilled, the classification gap that cannot be), definitions */ -}}
+{{- $use := slice "metrics" }}{{ if $classified }}{{ $use = $use | append "actionability" }}{{ end -}}
+{{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
+{{- $gap := dict "repos" (slice $r.key) "days" 182 -}}
+{{- $notes := slice -}}
+{{- if $classified -}}
+  {{- $gh := partial "ui/page-gaps.html" $gap -}}
+  {{- $ag := dict "repos" (slice $r.key) "days" 182 "key" "actionability" "noun" "PR classification history" "tail" "" -}}
+  {{- if not $gh.runs }}{{ $gap = $ag -}}
+  {{- else -}}
+    {{- /* the notice names the GitHub gap; Data notes also list the classification runs the "Needs a maintainer" line skips */ -}}
+    {{- $ranges := slice -}}
+    {{- range (partial "ui/page-gaps.html" $ag).runs }}{{ $ranges = $ranges | append (partial "data/date-range.html" (dict "from" .from "to" .to)) }}{{ end -}}
+    {{- with $ranges }}{{ $notes = $notes | append (printf "No PR classification history for %s." (delimit . ", " " and ")) }}{{ end -}}
+  {{- end -}}
 {{- end -}}
-{{- $data := partial "load-metrics.html" (dict "context" $context "repoKey" $repoKey) -}}
-{{- with $data.repoKey }}{{ $repoKey = . }}{{ end -}}
-{{- $m := $data.metrics -}}
-{{- $p := printf "pulls-%s" (replace (default "repo" $repoKey) "/" "-") -}}
+{{- $defs := slice -}}
+{{- if $classified -}}
+  {{- $defs = $defs | append
+    (dict "term" "First review overdue" "text" "Classified PRs with no maintainer review yet (none, or community reviews only) waiting more than 7 days. Team SLA.")
+    (dict "term" "Re-review overdue" "text" "The author updated the PR after a change request and no maintainer re-reviewed it within 24 hours. Team SLA.")
+    (dict "term" "Maintainer PRs unreviewed" "text" "Maintainer-authored PRs with no review from another maintainer within 24 hours. Team SLA.")
+    (dict "term" "Needs a maintainer" "text" "Open PRs whose next step is a maintainer's, according to the PR classifier. Duplicate PRs fold under their primary PR and still count.")
+    (dict "term" "Housekeeping" "text" "Open PRs that need a nudge or a cleanup rather than a review.")
+    (dict "term" "Close candidates" "text" "Open PRs the classifier suggests closing, such as inactive PRs with failing CI.")
+    (dict "term" "Waiting on author" "text" "Open PRs whose next step is not a maintainer's, such as drafts, parked maintainer drafts and release PRs.") -}}
+{{- else -}}
+  {{- $defs = $defs | append
+    (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "Drafts" "text" "Decided by GitHub's draft state, not by a draft label.")
+    (dict "term" "Waiting" "text" "Calendar days since the PR opened.") -}}
+{{- end -}}
+{{- $defs = $defs | append
+  (dict "term" "Open, not draft" "text" "Open PRs minus drafts, from the daily snapshot.")
+  (dict "term" "Typical week" "text" "Median of the weekly merged-PR counts over the prior 12 complete weeks, weeks without data skipped. Shown from 4 weeks of data.")
+  (dict "term" "Time to merge" "text" "Median time from opening to merge.")
+  (dict "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that touched each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
+{{ partial "ui/page-head.html" (dict
+    "title" .Title "repo" $r.key "switch" "pulls"
+    "links" (slice (dict "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))
+    "sources" $src "gap" $gap "notes" $notes "defs" $defs) }}
 
 {{- if not $m }}
-{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey) }}
-{{ partial "ui/empty.html" (dict "title" (printf "No pull request data for %s yet" ($data.repoName | default $repoKey | default "this repository")) "body" "This repository hasn't been aggregated.") }}
+<section class="v-section" aria-label="No data">
+  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." $r.name)) }}
+</section>
 {{- else }}
-{{- $snaps := $data.snapshots -}}
-{{- $latest := partialCached "ui/latest-date.html" $context "latest" -}}
-{{- $a := $data.actionability -}}
-{{- $metricsMeta := slice -}}
-{{- with $m.timestamp }}{{ $metricsMeta = slice (printf "Metrics updated %s UTC" ((time.AsTime .).UTC.Format "Jan 2, 2006 15:04")) }}{{ end -}}
-
-{{- if not $a }}
-{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey "updated" $m.timestamp) }}
-{{ partial "pages/pulls/legacy.html" (dict "m" $m "p" $p "repoKey" $repoKey "snaps" $snaps "latest" $latest) }}
+{{ partial "pages/pulls/sla.html" (dict "r" $r "a" $a "m" $m "classified" $classified) }}
+{{- if $classified }}
+{{ partial "pages/pulls/queue.html" (dict "r" $r "a" $a) }}
 {{- else }}
-{{- /* ---------------------------------------------------------------- actionability branch */ -}}
-{{- $sum := $a.summary | default dict -}}
-{{- $sla := $sum.sla | default dict -}}
-{{- $pl := $m.pulls | default dict -}}
-{{- $act := float ($sum.actionable_count | default 0) -}}
-{{- $target := float ($sla.actionable_target | default ($sum.actionable_target | default 25)) -}}
-{{- $auth := float ($sum.auth_count | default 0) -}}
-{{- $hrs := float ($sum.effort_hours | default 0) -}}
-
-{{- /* Queue strip: series per cell; R5 all-or-none sparklines, and stale series never draw (spec 4.5) */ -}}
-{{- $sAct := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.actionable_count" "anchor" $latest) $repoKey "actionability.actionable_count" -}}
-{{- $sEff := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.effort_hours" "anchor" $latest) $repoKey "actionability.effort_hours" -}}
-{{- $sDone := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "actionability.actioned" "anchor" $latest) $repoKey "actionability.actioned" -}}
-{{- $sMerged := partialCached "ui/series.html" (dict "snapshots" $snaps "path" "pulls.merged_7d" "anchor" $latest) $repoKey "pulls.merged_7d" -}}
-{{- $qLive := and (not $sAct.stale) (not $sEff.stale) (not $sDone.stale) (not $sMerged.stale) -}}
-
-{{- $actSt := "" }}{{ if gt $act 50.0 }}{{ $actSt = "crit" }}{{ else if gt $act 25.0 }}{{ $actSt = "warn" }}{{ end -}}
-{{- $actMeta := slice (printf "%s auth · %s maint" (lang.FormatNumber 0 $auth) (lang.FormatNumber 0 ($sum.maint_count | default 0))) -}}
-{{- if or $sla.actionable_over_target (and (gt $target 0.0) (gt $act $target)) -}}
-  {{- if gt $target 0.0 }}{{ $actMeta = $actMeta | append (printf "%s× target" (strings.TrimSuffix ".0" (printf "%.1f" (div $act $target)))) }}{{ end -}}
-{{- end -}}
-{{- $effSt := "" }}{{ if ge $hrs 10.0 }}{{ $effSt = "crit" }}{{ else if ge $hrs 5.0 }}{{ $effSt = "warn" }}{{ end -}}
-{{- $effMeta := slice (printf "≈ %s working days of 8h" (strings.TrimSuffix ".0" (printf "%.1f" (div $hrs 8.0)))) -}}
-{{- $doneVal := cond (isset $sum "actioned_7d") $sum.actioned_7d nil -}}
-{{- $doneMeta := slice }}{{ if isset $sum "actioned_30d" }}{{ $doneMeta = slice (printf "%s in 30d" (lang.FormatNumber 0 ($sum.actioned_30d | default 0))) }}{{ end -}}
-{{- $mergedMeta := slice }}{{ if ne $pl.merged_30d nil }}{{ $mergedMeta = slice (printf "%s in 30d" (lang.FormatNumber 0 $pl.merged_30d)) }}{{ end -}}
-
-{{- /* SLA strip */ -}}
-{{- $hasSla := isset $sum "sla" -}}
-{{- $fr := float ($sla.first_review_7d_breach | default 0) }}{{ $rr := float ($sla.re_review_24h_breach | default 0) }}{{ $mr := float ($sla.maint_24h_breach | default 0) -}}
-{{- $frSt := "" }}{{ if ge $fr 10.0 }}{{ $frSt = "crit" }}{{ else if ge $fr 5.0 }}{{ $frSt = "warn" }}{{ end -}}
-{{- $rrSt := "" }}{{ if ge $rr 10.0 }}{{ $rrSt = "crit" }}{{ else if ge $rr 5.0 }}{{ $rrSt = "warn" }}{{ end -}}
-{{- $mrSt := "" }}{{ if gt $mr 3.0 }}{{ $mrSt = "crit" }}{{ else if gt $mr 1.0 }}{{ $mrSt = "warn" }}{{ end -}}
-{{- $authMeta := slice }}{{ if gt $act 0.0 }}{{ $authMeta = slice (printf "%s of actionable" (partial "ui/pct.html" (mul (div $auth $act) 100.0))) }}{{ end -}}
-
-{{- /* Totals across summary.by_tier (formerly the "Breakdown by tier" table footer) */ -}}
-{{- $totN := 0.0 }}{{ $totA := 0.0 }}{{ $totM := 0.0 }}{{ $totMins := 0.0 -}}
-{{- range $sum.by_tier }}{{ $totN = add $totN (float (.count | default 0)) }}{{ $totA = add $totA (float (.auth | default 0)) }}{{ $totM = add $totM (float (.maint | default 0)) }}{{ $totMins = add $totMins (float (.mins | default 0)) }}{{ end -}}
-{{- $nom := $sum.not_our_move_count | default 0 -}}
-{{- $listMeta := printf "%s actionable · %s auth · %s maint · ≈ %s · %s not our move" (lang.FormatNumber 0 $totN) (lang.FormatNumber 0 $totA) (lang.FormatNumber 0 $totM) (partial "ui/dur.html" (div $totMins 60.0)) (lang.FormatNumber 0 $nom) -}}
-
-{{- /* Rendered row count for the filter counter */ -}}
-{{- $rowsTotal := 0 -}}
-{{- range $a.tiers }}{{ $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" (.states | default slice)).n }}{{ end -}}
-{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.bot_corner | default slice)).n -}}
-{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.untriaged | default slice)).n -}}
-{{- $rowsTotal = add $rowsTotal (partial "pages/pulls/tally.html" ($a.not_our_move | default slice)).n -}}
-
-{{ partial "ui/page-head.html" (dict "title" "Pull requests" "repoKey" $repoKey "updated" $a.lastUpdated "updatedLabel" "Classified" "staleDays" 7 "meta" $metricsMeta) }}
-<div class="v-sections" data-filter-scope>
-  <section aria-labelledby="{{ $p }}-queue">
-    {{ partial "ui/section-head.html" (dict "id" (printf "%s-queue" $p) "title" "Queue" "meta" "Classified PRs where the next move is ours") }}
-    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
-      {{ partial "ui/kpi.html" (dict "label" "Actionable" "value" $act "of" $target "status" $actSt "meta" $actMeta "series" (cond $qLive $sAct nil) "polarity" "down") }}
-      {{ partial "ui/kpi.html" (dict "label" "Est. effort" "value" $hrs "format" "dur" "status" $effSt "meta" $effMeta "series" (cond $qLive $sEff nil) "polarity" "down" "deltaUnit" "hours") }}
-      {{ partial "ui/kpi.html" (dict "label" "Actioned · 7d" "value" $doneVal "meta" $doneMeta "series" (cond $qLive $sDone nil) "noDelta" true) }}
-      {{ partial "ui/kpi.html" (dict "label" "Merged · 7d" "value" $pl.merged_7d "meta" $mergedMeta "series" (cond $qLive $sMerged nil) "polarity" "up") }}
-    </div></div>
-    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>Actionable ≤ 25 (watch ≤ 50) · Effort &lt; 5h (watch &lt; 10h)</span></p>
-  </section>
-
-  <section aria-labelledby="{{ $p }}-sla">
-    {{ partial "ui/section-head.html" (dict "id" (printf "%s-sla" $p) "title" "Review SLAs" "meta" "Select a figure to filter the list") }}
-    {{- if $hasSla }}
-    <div class="v-kpis"><div class="v-kpi-grid grid-cols-2 sm:grid-cols-4">
-      {{ partial "ui/kpi.html" (dict "label" "First review · > 7d" "value" $fr "of" $sla.first_review_eligible "status" $frSt "filter" "badge:1st-review") }}
-      {{ partial "ui/kpi.html" (dict "label" "Re-review · > 24h" "value" $rr "of" $sla.re_review_eligible "status" $rrSt "filter" "badge:re-review") }}
-      {{ partial "ui/kpi.html" (dict "label" "Maintainer · > 24h" "value" $mr "of" $sla.maint_eligible "status" $mrSt "filter" "badge:maintainer") }}
-      {{ partial "ui/kpi.html" (dict "label" "Auth PRs" "value" $auth "meta" $authMeta "filter" "badge:auth") }}
-    </div></div>
-    <p class="v-legend mt-2"><span><span class="v-dot v-dot-warn" aria-hidden="true"></span>Watch</span><span><span class="v-dot v-dot-crit" aria-hidden="true"></span>Over target</span><span>First review and re-review &lt; 5 (watch &lt; 10) · Maintainer ≤ 1 (watch ≤ 3) · Auth is informational</span></p>
-    {{- else }}
-    {{ partial "ui/empty.html" (dict "title" "SLA counts are not available for this repository" "body" "The classifier output has no SLA summary yet.") }}
-    {{- end }}
-  </section>
-
-  <section aria-labelledby="{{ $p }}-list">
-    {{ partial "ui/section-head.html" (dict "id" (printf "%s-list" $p) "title" "Pull requests by tier" "meta" $listMeta) }}
-    <div class="v-filterbar">
-      <label class="v-field">{{ partial "ui/icon.html" "search" }}<span class="sr-only">Filter pull requests</span>
-        <input type="search" data-filter-input placeholder="Filter by title, author:, badge:" autocomplete="off">
-        <button type="button" data-filter-clear hidden aria-label="Clear filter">{{ partial "ui/icon.html" "x" }}</button></label>
-      <span class="v-filter-count" data-filter-count data-noun="PRs">{{ $rowsTotal }} PRs</span>
-    </div>
-    <div class="v-filterbar">
-      {{- range $sum.by_tier }}
-        {{- $idx := int (.idx | default 0) -}}
-        {{- $slug := printf "%d" $idx }}{{ $label := printf "%d · %s" $idx (.name | default "") -}}
-        {{- if lt $idx 0 }}{{ $slug = "unclassified" }}{{ $label = "Unclassified" }}{{ else if ge $idx 99 }}{{ $slug = "bot" }}{{ $label = "Bot corner" }}{{ end }}
-      <a class="v-chip" href="#{{ $p }}-tier-{{ $slug }}">{{ $label }} <span class="v-count">{{ lang.FormatNumber 0 (.count | default 0) }}</span></a>
-      {{- end }}
-      <a class="v-chip" href="#{{ $p }}-tier-nom">Not our move <span class="v-count">{{ lang.FormatNumber 0 $nom }}</span></a>
-    </div>
-
-    <div class="v-sections" data-filter-results>
-      {{- with $a.tiers }}{{ range sort . "idx" }}
-        {{- $tier := . -}}
-        {{- $bt := dict }}{{ range $sum.by_tier }}{{ if eq (float (.idx | default 0)) (float ($tier.idx | default 0)) }}{{ $bt = . }}{{ end }}{{ end -}}
-        {{- $tc := float ($tier.count | default ($bt.count | default 0)) -}}
-        {{- $meta := printf "%s %s · %s auth · %s maint" (lang.FormatNumber 0 $tc) (cond (eq $tc 1.0) "PR" "PRs") (lang.FormatNumber 0 ($bt.auth | default 0)) (lang.FormatNumber 0 ($bt.maint | default 0)) -}}
-        {{- with ($tier.mins | default ($bt.mins | default 0)) }}{{ if gt (float .) 0.0 }}{{ $meta = printf "%s · ≈ %s" $meta (partial "ui/dur.html" (div (float .) 60.0)) }}{{ end }}{{ end -}}
-        {{- /* by_tier counts one PR per duplicate cluster; the table lists every member, so name the extra rows */ -}}
-        {{- $tt := partial "pages/pulls/tally.html" ($tier.states | default slice) -}}
-        {{- $extra := sub (float $tt.n) $tc -}}
-        {{- if gt $extra 0.0 }}{{ $meta = printf "%s · %s more in duplicate clusters" $meta (lang.FormatNumber 0 $extra) }}{{ end -}}
-        {{- $name := $tier.name | default "Tier" -}}
-        {{- $slugName := strings.Trim (replaceRE `[^a-z0-9]+` "-" (lower $name)) "-" -}}
-        {{- $blurb := partial "pages/pulls/blurb.html" ($tier.blurb | default "") }}
-      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" (printf "%d" (int $tier.idx)) "title" (printf "%d · %s" (int $tier.idx) $name) "meta" $meta "blurb" $blurb "states" ($tier.states | default slice) "tier" $slugName "empty" "No pull requests in this tier") }}
-      {{- end }}{{ end }}
-
-      {{- /* Bot corner (by_tier idx 99) and Unclassified (idx < 0): rows from the tally, minutes from by_tier */ -}}
-      {{- $botMins := 0.0 }}{{ $unMins := 0.0 -}}
-      {{- range $sum.by_tier }}{{ $bi := float (.idx | default 0) }}{{ if ge $bi 99.0 }}{{ $botMins = add $botMins (float (.mins | default 0)) }}{{ else if lt $bi 0.0 }}{{ $unMins = add $unMins (float (.mins | default 0)) }}{{ end }}{{ end -}}
-
-      {{- $botT := partial "pages/pulls/tally.html" ($a.bot_corner | default slice) -}}
-      {{- $botMeta := printf "%d %s · %d auth · %d maint" $botT.n (cond (eq $botT.n 1) "PR" "PRs") $botT.auth $botT.maint -}}
-      {{- if gt $botMins 0.0 }}{{ $botMeta = printf "%s · ≈ %s" $botMeta (partial "ui/dur.html" (div $botMins 60.0)) }}{{ end }}
-      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "bot" "title" "Bot corner" "meta" $botMeta "blurb" "Dependabot and Renovate PRs that need human attention." "states" ($a.bot_corner | default slice) "tier" "bot-corner" "empty" "No bot PRs need attention") }}
-
-      {{- $unT := partial "pages/pulls/tally.html" ($a.untriaged | default slice) -}}
-      {{- $unMeta := printf "%d %s · %d auth · %d maint" $unT.n (cond (eq $unT.n 1) "PR" "PRs") $unT.auth $unT.maint -}}
-      {{- if gt $unMins 0.0 }}{{ $unMeta = printf "%s · ≈ %s" $unMeta (partial "ui/dur.html" (div $unMins 60.0)) }}{{ end }}
-      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "unclassified" "title" "Unclassified" "meta" $unMeta "blurb" "The classifier could not determine a state. These need manual triage." "states" ($a.untriaged | default slice) "tier" "unclassified" "empty" "Every open PR is classified") }}
-
-      {{- $nomT := partial "pages/pulls/tally.html" ($a.not_our_move | default slice) -}}
-      {{- $nomMeta := printf "%d %s · %d auth · %d maint" $nomT.n (cond (eq $nomT.n 1) "PR" "PRs") $nomT.auth $nomT.maint }}
-      {{ partial "pages/pulls/group.html" (dict "p" $p "slug" "nom" "title" "Not our move" "meta" $nomMeta "blurb" "The clock is on the author or blocked externally. No action owed today." "states" ($a.not_our_move | default slice) "tier" "not-our-move" "empty" "No pull requests are waiting on authors") }}
-
-      <div class="v-panel v-empty" data-filter-empty hidden><p class="v-empty-title">No pull requests match</p><p class="v-empty-body"><button type="button" class="v-link" data-filter-clear>Clear filter</button></p></div>
-    </div>
-  </section>
-
-  {{ partial "pages/pulls/stats.html" (dict "m" $m "p" $p "repoKey" $repoKey "snaps" $snaps "latest" $latest) }}
-</div>
+{{ partial "pages/pulls/unclassified.html" (dict "r" $r "m" $m) }}
+{{- end }}
+{{ partial "pages/pulls/backlog.html" (dict "r" $r "m" $m "classified" $classified) }}
+{{ partial "pages/pulls/speed.html" (dict "r" $r "m" $m) }}
+{{ partial "pages/pulls/hotspots.html" (dict "m" $m) }}
 {{- end }}
 {{- end }}

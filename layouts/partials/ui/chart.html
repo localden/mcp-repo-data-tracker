@@ -1,0 +1,197 @@
+{{- /* Chart card (§5): one card, one plot, a Table toggle, HTML legend for 2+ series, captions. Replaces ui/chart-card.html,
+  ui/dataset.html and the old data twin. Decides canvas vs the short-history body itself (§5.5).
+  Call: partial "ui/chart.html" (dict
+      "title" "Open issues"            card title (h3; "level" 2 for h2); optional when the section head already names the chart
+      "metric" "open issues"           plural noun for tooltips/aria ("114 open issues"); "metric_one" "open issue" for 1
+      "scope" "TypeScript SDK"         "All repositories" on org views
+      "unit" "count"                   count | downloads | hours | percent
+      "gran" "day"                     day | week | month (month points are dated the 1st)
+      "kind" "line"                    line | column | stack
+      "series" (slice (dict "label" "Open issues" "role" "accent" "points" $s.points "reconstructed" $s.reconstructed) …)
+    Optional: "id" (default derived from title/metric/scope), "agg" (last|sum, for weekly table rows; default last for lines),
+      "from"/"to" (shared domain for charts in one row; default the series' own span), "size" "small" (small multiples),
+      "value" + "sub" + "reserve_sub" true (2-row header: figure, then caption line, reserved even when empty),
+      "caption" (one line under the plot), "foot" (e.g. "Week to date: 41.2M (5 of 7 days)"),
+      "avg" 22.8 + "avg_label" "12-wk avg 22.8" (labeled average rule), "cap_label" true (value on the latest column),
+      "ticks" "all" (a tick per bar), "fill" false (no wash), "current" "294" (value shown when the history is too short),
+      "min_points" (override 14 daily / 4 weekly).
+  points are [{date, value|nil}] as returned by data/series.html, data/week-bins.html, data/org-weekly.html or data/downloads.html;
+  missing dates are filled with null here, so sparse input is fine. Keep daily series to 26 weeks (use weekly bins beyond). */ -}}
+{{- $kind := .kind | default "line" }}{{ $gran := .gran | default "day" }}{{ $unit := .unit | default "count" -}}
+{{- $agg := .agg | default (cond (eq $kind "line") "last" "sum") -}}
+{{- $size := .size | default "main" -}}
+{{- $metric := .metric | default (lower (.title | default "value")) }}{{ $scope := .scope | default "" -}}
+{{- $id := .id | default (printf "chart-%s" (substr (md5 (printf "%s|%s|%s|%s" (.title | default "") $metric $scope $gran)) 0 10)) -}}
+{{- $o := partial "data/outage.html" . -}}
+
+{{- /* Index every series by date and find the domain. */ -}}
+{{- $sc := newScratch }}{{ $from := .from | default "" }}{{ $to := .to | default "" }}{{ $recs := slice -}}
+{{- range $i, $s := .series | default slice -}}
+  {{- range $s.points | default slice -}}
+    {{- if ne .value nil }}{{ $sc.SetInMap (printf "s%d" $i) .date .value }}{{ end -}}
+    {{- if not $.from }}{{ if or (eq $from "") (lt .date $from) }}{{ $from = .date }}{{ end }}{{ end -}}
+    {{- if not $.to }}{{ if or (eq $to "") (gt .date $to) }}{{ $to = .date }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- with $s.reconstructed }}{{ $recs = $recs | append (dict "from" (index . 0) "to" (index . 1)) }}{{ end -}}
+{{- end -}}
+{{- with .reconstructed }}{{ $recs = $recs | append (dict "from" (index . 0) "to" (index . 1)) }}{{ end -}}
+
+{{- /* Every label in the domain (§5.2): days, ISO week starts or month firsts. */ -}}
+{{- $labels := slice -}}
+{{- if and $from $to -}}
+  {{- $t := time.AsTime $from }}{{ $stop := (time.AsTime $to).Unix -}}
+  {{- $max := cond (eq $gran "day") 400 (cond (eq $gran "week") 60 24) -}}
+  {{- range $i := seq 0 $max -}}
+    {{- $d := $t.AddDate 0 0 (int $i) -}}
+    {{- if eq $gran "week" }}{{ $d = $t.AddDate 0 0 (int (mul 7 $i)) }}{{ else if eq $gran "month" }}{{ $d = $t.AddDate 0 (int $i) 0 }}{{ end -}}
+    {{- if le $d.Unix $stop }}{{ $labels = $labels | append ($d.Format "2006-01-02") }}{{ end -}}
+  {{- end -}}
+  {{- if and (eq $gran "day") (gt (len $labels) 200) }}{{ warnf "VISR ui/chart %s: %d daily labels; use weekly bins beyond 26 weeks (§5.11-10)" $id (len $labels) }}{{ end -}}
+{{- end -}}
+{{- $last := sub (len $labels) 1 -}}
+
+{{- /* Per series: data cells, counts, last value, gaps. */ -}}
+{{- $rows := slice }}{{ $nMax := 0 }}{{ $firstAll := "" }}{{ $gapTexts := slice }}{{ $outageHit := false -}}
+{{- range $i, $s := .series | default slice -}}
+  {{- $m := $sc.Get (printf "s%d" $i) | default dict -}}
+  {{- $cells := slice }}{{ $pts := slice }}{{ $n := 0 }}{{ $lv := 0.0 }}{{ $li := -1 }}{{ $first := "" -}}
+  {{- range $j, $d := $labels -}}
+    {{- $v := index $m $d -}}
+    {{- if ne $v nil -}}
+      {{- $cells = $cells | append (string $v) }}{{ $pts = $pts | append (dict "date" $d "value" $v) -}}
+      {{- $n = add $n 1 }}{{ $lv = float $v }}{{ $li = $j }}{{ if eq $first "" }}{{ $first = $d }}{{ end -}}
+    {{- else -}}
+      {{- $cells = $cells | append "null" }}{{ $pts = $pts | append (dict "date" $d "value" nil) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if gt $n $nMax }}{{ $nMax = $n }}{{ end -}}
+  {{- if and $first (or (eq $firstAll "") (lt $first $firstAll)) }}{{ $firstAll = $first }}{{ end -}}
+  {{- range partial "data/gaps.html" (dict "points" $pts "gran" $gran) -}}
+    {{- if .outage }}{{ $outageHit = true }}{{ else }}{{ $gapTexts = $gapTexts | append (partial "data/date-range.html" (dict "from" .from "to" .to)) }}{{ end -}}
+  {{- end -}}
+  {{- $role := $s.role | default (cond (eq $i 0) "accent" "series-2") -}}
+  {{- $prior := "" }}{{ $pv := 0.0 -}}
+  {{- $back := cond (eq $gran "day") 7 1 -}}
+  {{- if ge $li $back -}}
+    {{- $pd := index $labels (sub $li $back) }}{{ $px := index $m $pd -}}
+    {{- if ne $px nil }}{{ $prior = $pd }}{{ $pv = float $px }}{{ end -}}
+  {{- end -}}
+  {{- $rows = $rows | append (dict "label" ($s.label | default (strings.FirstUpper $metric)) "role" $role
+    "data" (printf "[%s]" (delimit $cells ",")) "n" $n "last" $lv "lastIdx" $li "prior" $prior "pv" $pv) -}}
+{{- end -}}
+
+{{- $minPts := .min_points | default (cond (eq $gran "day") 14 4) -}}
+{{- $canvas := and (gt (len $labels) 1) (ge $nMax $minPts) -}}
+
+{{- /* Number text for aria and the short-history body (full digits; downloads compact via ui/num.html). */ -}}
+{{- $fmt := dict -}}
+{{- range $i, $r := $rows -}}
+  {{- $txt := "" -}}
+  {{- if ge $r.lastIdx 0 -}}
+    {{- if eq $unit "hours" }}{{ $txt = cond (lt $r.last 48.0) (printf "%.0f hours" $r.last) (printf "%.1f days" (div $r.last 24.0)) -}}
+    {{- else if eq $unit "percent" }}{{ $txt = printf "%.1f%%" $r.last -}}
+    {{- else }}{{ $txt = lang.FormatNumber 0 $r.last }}{{ end -}}
+  {{- end -}}
+  {{- $fmt = merge $fmt (dict (printf "s%d" $i) $txt) -}}
+{{- end -}}
+
+{{- /* Canvas aria-label (§5.8): "{Metric}, {Scope}: {granularity}, {start}–{end}. Latest {value}. {Change}. No data {gaps}." */ -}}
+{{- $aria := "" -}}
+{{- if $canvas -}}
+  {{- $gw := index (dict "day" "daily" "week" "weekly" "month" "monthly") $gran -}}
+  {{- $aria = printf "%s, %s: %s, %s." (strings.FirstUpper $metric) $scope $gw (partial "data/date-range.html" (dict "from" (index $labels 0) "to" (index $labels $last))) -}}
+  {{- if eq (len $rows) 1 -}}
+    {{- $r := index $rows 0 -}}
+    {{- if ge $r.lastIdx 0 }}{{ $aria = printf "%s Latest %s (%s)." $aria (index $fmt "s0") ((time.AsTime (index $labels $r.lastIdx)).Format "Jan 2") }}{{ end -}}
+    {{- if ne $r.prior "" -}}
+      {{- $dv := sub $r.last $r.pv -}}
+      {{- $base := cond (eq $gran "week") (printf "week of %s" ((time.AsTime $r.prior).Format "Jan 2")) ((time.AsTime $r.prior).Format "Jan 2") -}}
+      {{- if eq $dv 0.0 }}{{ $aria = printf "%s No change vs %s." $aria $base -}}
+      {{- else if and (eq $unit "downloads") (gt $r.pv 0.0) }}{{ $aria = printf "%s %s %.1f%% vs %s." $aria (cond (gt $dv 0.0) "Up" "Down") (math.Abs (mul (div $dv $r.pv) 100.0)) $base -}}
+      {{- else if eq $unit "count" }}{{ $aria = printf "%s %s %s vs %s." $aria (cond (gt $dv 0.0) "Up" "Down") (lang.FormatNumber 0 (math.Abs $dv)) $base }}{{ end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $parts := slice }}{{ range $i, $r := $rows }}{{ if ge $r.lastIdx 0 }}{{ $parts = $parts | append (printf "%s %s" $r.label (index $fmt (printf "s%d" $i))) }}{{ end }}{{ end -}}
+    {{- with $parts }}{{ $aria = printf "%s Latest: %s." $aria (delimit . ", ") }}{{ end -}}
+  {{- end -}}
+  {{- if $outageHit }}{{ $gapTexts = $gapTexts | append (printf "%s (collection outage)" $o.range) }}{{ end -}}
+  {{- with uniq $gapTexts }}{{ $aria = printf "%s No data %s." $aria (delimit . ", ") }}{{ end -}}
+{{- end -}}
+
+{{- /* Reconstructed caption (§5.3), only when a reconstructed span falls inside the domain. */ -}}
+{{- $recCap := "" }}{{ $recJSON := "null" -}}
+{{- if and $canvas $recs -}}
+  {{- $rf := "" }}{{ $rt := "" -}}
+  {{- range $recs }}{{ if and (le .from $to) (ge .to $from) }}{{ if or (eq $rf "") (lt .from $rf) }}{{ $rf = .from }}{{ end }}{{ if or (eq $rt "") (gt .to $rt) }}{{ $rt = .to }}{{ end }}{{ end }}{{ end -}}
+  {{- if $rf -}}
+    {{- $recCap = printf "%s reconstructed from GitHub history." (partial "data/date-range.html" (dict "from" $rf "to" $rt "year" false)) -}}
+    {{- $recJSON = jsonify (slice $rf $rt) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Canvas contract (§5.11-1). */ -}}
+{{- $json := "" -}}
+{{- if $canvas -}}
+  {{- $ser := slice }}{{ range $rows }}{{ $ser = $ser | append (printf `{"label":%s,"role":%s,"data":%s}` (jsonify .label) (jsonify .role) .data) }}{{ end -}}
+  {{- $avg := "null" -}}
+  {{- with .avg }}{{ $avg = printf `{"value":%s,"label":%s}` (jsonify (float .)) (jsonify ($.avg_label | default (printf "Average %s" (lang.FormatNumber 1 (float .))))) }}{{ end -}}
+  {{- $json = printf `{"labels":%s,"series":[%s],"outage":%s,"reconstructed":%s,"metricOne":%s,"avg":%s,"capLabel":%t,"ticks":%s,"fill":%t}`
+    (jsonify $labels) (delimit $ser ",") (jsonify (slice $o.from $o.to)) $recJSON (jsonify (.metric_one | default $metric))
+    $avg (.cap_label | default false) (jsonify (.ticks | default "auto")) (ne .fill false) -}}
+{{- end -}}
+
+{{- /* Short-history body text (§4.6 p, §5.5). */ -}}
+{{- $current := .current | default "" -}}
+{{- if and (not $current) (gt (len $rows) 0) (in (slice "count" "downloads") $unit) }}{{ with index $rows 0 }}{{ if ge .lastIdx 0 }}{{ $current = partial "ui/num.html" (dict "v" .last "mode" (cond (eq $unit "downloads") "compact" "tile")) }}{{ end }}{{ end }}{{ end -}}
+{{- $note := printf "No data collected for %s yet." $scope -}}
+{{- with $firstAll -}}
+  {{- $ft := time.AsTime . -}}
+  {{- $words := "4 weeks" }}{{ $at := $ft.AddDate 0 0 28 -}}
+  {{- if eq $gran "day" }}{{ $words = "14 days" }}{{ $at = $ft.AddDate 0 0 13 }}{{ end -}}
+  {{- if gt ($at.Format "2006-01-02") $to -}}
+    {{- $note = printf "Tracking since %s. Trend appears after %s (%s)." ($ft.Format "Jan 2, 2006") $words ($at.Format "Jan 2") -}}
+  {{- else -}}
+    {{- $note = printf "Tracking since %s. Too few data points in this window for a trend." ($ft.Format "Jan 2, 2006") -}}
+  {{- end -}}
+{{- end -}}
+
+<div class="v-card v-chart{{ if eq $size "small" }} is-small{{ end }}" data-chart>
+  <div class="v-card-head v-chart-head">
+    <div class="v-chart-heading">
+      {{- with .title }}{{ if eq $.level 2 }}<h2 class="v-card-title" id="{{ $id }}-title">{{ . }}</h2>{{ else }}<h3 class="v-card-title" id="{{ $id }}-title">{{ . }}</h3>{{ end }}{{ end -}}
+      {{- with .value }}<span class="v-chart-value">{{ . }}</span>{{ end -}}
+      {{- if or .sub .reserve_sub }}<p class="v-chart-sub">{{ with .sub }}{{ . }}{{ end }}</p>{{ end -}}
+    </div>
+    {{- if $canvas }}
+    <button type="button" class="v-chart-toggle" aria-pressed="false" aria-controls="{{ $id }}-table" data-chart-toggle>Table</button>
+    {{- end }}
+  </div>
+  <div class="v-card-body v-chart-body">
+  {{- if $canvas }}
+    {{- if ge (len $rows) 2 }}
+    <ul class="v-legend" data-chart-legend>
+      {{- range $rows }}<li><span class="v-key {{ if eq $kind "line" }}is-line{{ else }}is-bar{{ end }} is-{{ .role }}" aria-hidden="true"></span>{{ .label }}</li>{{ end -}}
+    </ul>
+    {{- end }}
+    <div class="v-plot{{ if eq $size "small" }} is-small{{ end }}">
+      <canvas id="{{ $id }}" tabindex="0" role="img" aria-label="{{ $aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-metric="{{ $metric }}" data-scope="{{ $scope }}" data-gran="{{ $gran }}" data-agg="{{ $agg }}" data-series="{{ $json }}"></canvas>
+    </div>
+    <div class="v-chart-table{{ if eq $size "small" }} is-small{{ end }}" id="{{ $id }}-table" hidden></div>
+    <p class="sr-only" aria-live="polite" data-chart-live></p>
+    {{- with $recCap }}
+    <p class="v-chart-note">{{ . }}</p>
+    {{- end }}
+  {{- else }}
+    <div class="v-chart-empty{{ if eq $size "small" }} is-small{{ end }}">
+      {{- with $current }}<p class="v-chart-empty-value">{{ . }}</p>{{ end }}
+      <p class="v-chart-empty-note">{{ $note }}</p>
+    </div>
+  {{- end }}
+    {{- with .caption }}
+    <p class="v-chart-note">{{ . }}</p>
+    {{- end }}
+    {{- with .foot }}
+    <p class="v-chart-note">{{ . }}</p>
+    {{- end }}
+  </div>
+</div>

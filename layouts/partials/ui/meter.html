@@ -1,3 +1,6 @@
+{{- /* Inline meter (§5.13): fixed 4rem, --track track with a --chart-1 fill; rank=true drops the track (ranking bars scaled to the max row).
+  Always aria-hidden: print the number or percentage beside it in its own right-aligned element.
+  Call: partial "ui/meter.html" (dict "value" 12 "max" 40 ["rank" true]) */ -}}
 {{- $max := float (.max | default 1) }}{{ if le $max 0.0 }}{{ $max = 1.0 }}{{ end -}}
-{{- $pct := math.Min 100.0 (mul (div (float .value) $max) 100.0) -}}
-<span class="v-meter{{ with .level }} is-{{ . }}{{ end }}" role="img" aria-label="{{ .label }}: {{ .value }} of {{ .max }}"><i style="--v:{{ printf "%.1f" $pct }}%"></i></span>
+{{- $pct := math.Max 0.0 (math.Min 100.0 (mul (div (float (.value | default 0)) $max) 100.0)) -}}
+<span class="v-meter{{ if .rank }} is-rank{{ end }}" aria-hidden="true"><i style="--v:{{ printf "%.1f" $pct }}%"></i></span>

@@ -1,0 +1,151 @@
+{{- /* Rows of the classified issue queue (brief 3.2b-1, 3.2b-2, 8a-7). Returns a dict, never emits.
+  Call: $q := partial "pages/issues/rows.html" (dict "t" $r.data.issues "wait" $waitSet)
+    t: issues.json; wait: dict of issue numbers ("2018" -> true) in metrics.json's no-reply list for 7 days or more.
+  SLA flags per row: row.sla[] once D1-9 lands (rule ids mapped through pages/issues/rules.html ids), else the issues.json summary
+  predicates (issueTiers.ts computeSummary), so each rule's row count equals its summary count (P6):
+    triage: no type label, older than 2 business days; p0: P0 older than 7 days; question: question with no maintainer reply, older than
+    2 business days; follow-up: the reporter replied and has waited more than 2 business days; p1: P1 older than 90 days;
+    repro: needs repro or confirmation, reporter silent, older than 14 days.
+  Business-day overages are shown in calendar days at the row's own calendar/business-day ratio; the tooltip keeps the business days.
+  Sort (3.2b-2): overage desc, then priority (P0 first), then calendar age desc, as one numeric key k.
+  Tokens (data-tags): ftags on the flat copy (tabs open, overdue, waiting, untriaged, questions), gtags on the copy under the tier group
+  rows of the Bugs and Enhancements tabs (tab bugs or enhancements only), so no tab counts a row twice; both carry sla-<rule> and the
+  chip tokens p01, fix, close.
+  Returns {rows, grouped [{name, key, tiers [{label, rows}]}], counts (rule key -> rows), tabs (tab key -> rows), overdue, prio}. */ -}}
+{{- $t := .t | default dict -}}
+{{- $wait := .wait | default dict -}}
+{{- $rules := partial "pages/issues/rules.html" "rules" -}}
+{{- $rule := dict }}{{ $alias := dict -}}
+{{- range $rules }}{{ $rule = merge $rule (dict .key .) }}{{ $k := .key }}{{ range .ids }}{{ $alias = merge $alias (dict . $k) }}{{ end }}{{ end -}}
+{{- /* page-local dictionary for the classifier's tier names (6.5); unknown tiers render no Next step */ -}}
+{{- $tierLabel := dict
+  "untriaged" "Needs triage" "in-progress" "In progress" "fix-proposed" "Review proposed fix" "ready-for-work" "Ready for work"
+  "ready" "Ready for work" "needs-maintainer" "Needs a maintainer reply" "close-candidates" "Likely to close" "backlog" "Backlog"
+  "decide" "Needs decision" "design" "Needs design" "waiting" "Waiting on reporter" "answer" "Unanswered" -}}
+{{- $groupKey := dict "Bugs" "bugs" "Enhancements" "enhancements" -}}
+{{- $types := slice "bug" "enhancement" "question" "documentation" -}}
+{{- $prioScore := dict "P0" 4.0 "P1" 3.0 "P2" 2.0 "P3" 1.0 -}}
+{{- $sc := newScratch -}}
+{{- $rows := slice }}{{ $grouped := slice }}{{ $prio := false -}}
+
+{{- range $g := ($t.groups | default slice) -}}
+  {{- $gname := string ($g.name | default "") -}}
+  {{- $gkey := index $groupKey $gname | default "" -}}
+  {{- $tiers := slice -}}
+  {{- range $tr := ($g.tiers | default slice) -}}
+    {{- $trows := slice -}}
+    {{- range $i := ($tr.issues | default slice) -}}
+      {{- $labels := $i.labels | default slice -}}
+      {{- $age := float ($i.age_days | default 0) -}}
+      {{- $abd := float ($i.age_business_days | default 0) -}}
+      {{- $ratio := 1.4 }}{{ if gt $abd 0.0 }}{{ $ratio = div $age $abd }}{{ end -}}
+      {{- /* D1-9 renames reporter_replied to author_replied (the issue author only, bots excluded) */ -}}
+      {{- $replied := $i.reporter_replied }}{{ if isset $i "author_replied" }}{{ $replied = $i.author_replied }}{{ end -}}
+      {{- $rwd := float ($i.reply_wait_days | default 0) -}}
+      {{- $waitRep := and (or (in $labels "needs repro") (in $labels "needs confirmation")) (not $replied) -}}
+      {{- if $i.priority }}{{ $prio = true }}{{ end -}}
+
+      {{- /* SLA flags: {key, over (calendar days past the deadline), bd (business days past it, or -1)} */ -}}
+      {{- $flags := slice -}}
+      {{- if reflect.IsSlice $i.sla -}}
+        {{- range $i.sla -}}{{- if reflect.IsMap . -}}
+          {{- $id := replace (lower (string (.rule | default ""))) "-" "_" -}}
+          {{- $flags = $flags | append (dict "key" (index $alias $id | default "other") "id" $id "over" (float (.over_days | default 0)) "bd" -1.0) -}}
+        {{- end -}}{{- end -}}
+      {{- else -}}
+        {{- if and (not $i.type) (gt $abd 2.0) }}{{ $flags = $flags | append (dict "key" "triage" "over" (mul (sub $abd 2.0) $ratio) "bd" (sub $abd 2.0)) }}{{ end -}}
+        {{- if and (eq $i.priority "P0") (gt $age 7.0) }}{{ $flags = $flags | append (dict "key" "p0" "over" (sub $age 7.0) "bd" -1.0) }}{{ end -}}
+        {{- if and (eq $i.type "question") (not $i.has_maintainer_response) (gt $abd 2.0) }}{{ $flags = $flags | append (dict "key" "question" "over" (mul (sub $abd 2.0) $ratio) "bd" (sub $abd 2.0)) }}{{ end -}}
+        {{- if and $replied (gt $rwd 2.0) }}{{ $flags = $flags | append (dict "key" "follow-up" "over" (mul (sub $rwd 2.0) $ratio) "bd" (sub $rwd 2.0)) }}{{ end -}}
+        {{- if and (eq $i.priority "P1") (gt $age 90.0) }}{{ $flags = $flags | append (dict "key" "p1" "over" (sub $age 90.0) "bd" -1.0) }}{{ end -}}
+        {{- if and $waitRep (gt $age 14.0) }}{{ $flags = $flags | append (dict "key" "repro" "over" (sub $age 14.0) "bd" -1.0) }}{{ end -}}
+      {{- end -}}
+
+      {{- /* the largest overage names the cell; every rule goes in the tooltip and the tokens */ -}}
+      {{- /* tokens are built as strings: appending a slice to a []interface{} would nest it */ -}}
+      {{- $top := dict }}{{ $topOver := -1.0 }}{{ $ruleTok := "" }}{{ $titles := slice -}}
+      {{- range $flags -}}
+        {{- if gt .over $topOver }}{{ $top = . }}{{ $topOver = .over }}{{ end -}}
+        {{- $ruleTok = printf "%s sla-%s" $ruleTok .key -}}
+        {{- $sc.Add (printf "n-%s" .key) 1 -}}
+        {{- $m := index $rule .key | default dict -}}
+        {{- $tt := $m.title | default (printf "Overdue: %s" (partial "ui/humanize.html" .id)) -}}
+        {{- if ge .bd 0.0 }}{{ $tt = printf "%s, %s over" $tt (partial "ui/plural.html" (dict "n" (math.Floor .bd) "one" "business day" "other" "business days")) }}{{ end -}}
+        {{- $titles = $titles | append $tt -}}
+      {{- end -}}
+      {{- $over := "" }}{{ $orule := "" }}{{ $otext := "" -}}
+      {{- if $flags -}}
+        {{- $od := math.Floor $topOver -}}
+        {{- $over = cond (ge $od 1.0) (printf "%.0fd over" $od) "Overdue" -}}
+        {{- $orule = (index $rule $top.key | default dict).short | default (partial "ui/humanize.html" $top.id) -}}
+        {{- $otext = printf "%s · %s" $orule $over -}}
+        {{- $sc.Add "overdue" 1 -}}
+      {{- end -}}
+      {{- $k := add (add (cond (gt (len $flags) 0) (mul (math.Floor $topOver) 100000.0) -100000.0) (mul (float (index $prioScore (string $i.priority) | default 0)) 10000.0)) (math.Min $age 9999.0) -}}
+
+      {{- /* tags (3.2b-2): priority (P0/P1 strong), linked PRs, conflicting type labels, missing priority */ -}}
+      {{- $tags := slice -}}
+      {{- with $i.priority }}{{ $tags = $tags | append (dict "text" . "strong" (or (eq . "P0") (eq . "P1"))) }}{{ end -}}
+      {{- with $i.linked_prs -}}
+        {{- $prs := slice }}{{ range . }}{{ $prs = $prs | append (printf "#%d" (int .)) }}{{ end -}}
+        {{- $tags = $tags | append (printf "Fix proposed · %s" (delimit $prs ", ")) -}}
+      {{- end -}}
+      {{- $conflict := slice -}}
+      {{- if reflect.IsSlice $i.type_conflict }}{{ $conflict = $i.type_conflict }}{{ else }}{{ range $types }}{{ if in $labels . }}{{ $conflict = $conflict | append . }}{{ end }}{{ end }}{{ end -}}
+      {{- if gt (len $conflict) 1 }}{{ $tags = $tags | append (printf "Conflicting type labels: %s" (delimit $conflict ", ")) }}{{ end -}}
+      {{- if and $i.type (not $i.priority) (not $i.status) }}{{ $tags = $tags | append "Missing priority" }}{{ end -}}
+
+      {{- /* Waiting on: us once the reporter replied (business days until D1-9 adds a calendar wait), the reporter while a repro is owed */ -}}
+      {{- $waitOn := "" }}{{ $waitSub := "" -}}
+      {{- if $replied -}}
+        {{- $waitOn = "Us" -}}
+        {{- if ne $i.reply_wait_days nil }}{{ $waitSub = partial "ui/plural.html" (dict "n" (math.Floor $rwd) "one" "business day" "other" "business days") }}{{ end -}}
+      {{- else if $waitRep }}{{ $waitOn = "Reporter" }}{{ end -}}
+
+      {{- /* tab and chip tokens */ -}}
+      {{- $num := string (int ($i.number | default 0)) -}}
+      {{- $chips := "" -}}
+      {{- if or (eq $i.priority "P0") (eq $i.priority "P1") }}{{ $chips = printf "%s p01" $chips }}{{ end -}}
+      {{- if or (in $labels "fix proposed") (gt (len ($i.linked_prs | default slice)) 0) }}{{ $chips = printf "%s fix" $chips }}{{ end -}}
+      {{- if or (in $labels "potentially close") (and $waitRep (gt $age 14.0)) }}{{ $chips = printf "%s close" $chips }}{{ end -}}
+      {{- $ft := "open" -}}
+      {{- if $flags }}{{ $ft = printf "%s overdue" $ft }}{{ end -}}
+      {{- if index $wait $num }}{{ $ft = printf "%s waiting" $ft }}{{ $sc.Add "waiting" 1 }}{{ end -}}
+      {{- if not (and $i.type (or $i.priority $i.status)) }}{{ $ft = printf "%s untriaged" $ft }}{{ $sc.Add "untriaged" 1 }}{{ end -}}
+      {{- if eq $gname "Questions" }}{{ $ft = printf "%s questions" $ft }}{{ $sc.Add "questions" 1 }}{{ end -}}
+      {{- with $gkey }}{{ $sc.Add . 1 }}{{ end -}}
+
+      {{- /* Next step: the tier's dictionary label; the waiting tier also holds issues whose reporter replied, that have a linked PR or
+           that are on hold / pending SEP approval, so those rows take the matching label from the same dictionary (none for on hold)
+           instead of "Waiting on reporter" */ -}}
+      {{- $next := index $tierLabel (string $tr.name) | default "" -}}
+      {{- if and (eq (string $tr.name) "waiting") (not $waitRep) -}}
+        {{- if $replied }}{{ $next = index $tierLabel "needs-maintainer" }}{{ else if $i.linked_prs }}{{ $next = index $tierLabel "fix-proposed" }}{{ else }}{{ $next = "" }}{{ end -}}
+      {{- end -}}
+      {{- $author := string ($i.author | default "ghost") -}}
+      {{- $row := dict
+        "n" $num "title" (string ($i.title | default "")) "url" $i.url "author" $author "maint" ($i.is_maintainer | default false)
+        "ctitle" (partial "ui/plural.html" (dict "n" ($i.comment_count | default 0) "one" "comment"))
+        "text" (lower (printf "%s|%s|%s" (string ($i.title | default "")) $author (delimit $labels "|")))
+        "tags" $tags "next" $next
+        "waiton" $waitOn "waitsub" $waitSub
+        "age" $age "ageHTML" (partial "ui/dur.html" (dict "d" $age "years" true)).html
+        "ageTitle" (partial "ui/plural.html" (dict "n" $abd "one" "business day" "other" "business days"))
+        "over" $over "orule" $orule "otext" $otext "otitle" (delimit $titles "; ") "k" $k
+        "ftags" (printf "%s%s%s" $ft $ruleTok $chips)
+        "gtags" (strings.TrimSpace (printf "%s%s%s" $gkey $ruleTok $chips)) -}}
+      {{- $rows = $rows | append $row -}}
+      {{- $trows = $trows | append $row -}}
+    {{- end -}}
+    {{- if $trows }}{{ $tiers = $tiers | append (dict "label" (index $tierLabel (string $tr.name) | default "Other") "rows" (sort $trows "k" "desc")) }}{{ end -}}
+  {{- end -}}
+  {{- if and $gkey $tiers }}{{ $grouped = $grouped | append (dict "name" $gname "key" $gkey "tiers" $tiers) }}{{ end -}}
+{{- end -}}
+
+{{- $counts := dict -}}
+{{- range $rules }}{{ $counts = merge $counts (dict .key (int ($sc.Get (printf "n-%s" .key) | default 0))) }}{{ end -}}
+{{- $tabs := dict "overdue" (int ($sc.Get "overdue" | default 0)) "waiting" (int ($sc.Get "waiting" | default 0))
+  "untriaged" (int ($sc.Get "untriaged" | default 0)) "bugs" (int ($sc.Get "bugs" | default 0))
+  "enhancements" (int ($sc.Get "enhancements" | default 0)) "questions" (int ($sc.Get "questions" | default 0)) "open" (len $rows) -}}
+{{- if $rows }}{{ $rows = sort $rows "k" "desc" }}{{ end -}}
+{{- return dict "rows" $rows "grouped" $grouped "counts" $counts "tabs" $tabs "overdue" (index $tabs "overdue") "prio" $prio -}}

@@ -1,0 +1,31 @@
+{{- /* The issue response rules (brief 3.2b-1, glossary 6.2), in SLA table order. Returns a slice of dicts, never emits.
+  Call: $rules := partial "pages/issues/rules.html" "rules"
+    key: the row flag and its data-tags token (sla-<key>); label: the Rule cell (6.5 strings); deadline: the Deadline cell;
+    group: "sep" (SEP-1730) or "team" (team target, never labeled SEP-1730, P3); short: the rule's name in the Overdue cell ("P1");
+    title: names the rule for status tooltips; sum: path of the overdue count inside issues.json summary;
+    bd: the deadline counts business days; prio: the rule needs priority labels;
+    ids: rule ids that may appear in row.sla[].rule and summary.sla_oldest after D1-9 (lowercase, "_" for "-").
+  The triage label names the rule the count actually uses: type only until D1-9 redefines it (pages/issues/sla.html swaps the label). */ -}}
+{{- return slice
+  (dict "key" "first-reply" "label" "Reply to new issues" "deadline" "2 business days" "group" "sep" "short" "Reply" "bd" true
+    "title" "Overdue: reply to new issues within 2 business days (SEP-1730)" "sum" (slice "sla" "first_reply_2bd_breach")
+    "ids" (slice "first_reply" "first_reply_2bd" "first_reply_2bd_breach" "reply_first" "acknowledge" "ack"))
+  (dict "key" "triage" "label" "Triage new issues (type + priority or status)" "deadline" "2 business days" "group" "sep" "short" "Triage" "bd" true
+    "title" "Overdue: triage within 2 business days (SEP-1730)" "sum" (slice "sla" "triage_2bd_breach")
+    "ids" (slice "triage" "triage_2bd" "triage_2bd_breach"))
+  (dict "key" "p0" "label" "Resolve P0 bugs" "deadline" "7 days" "group" "sep" "short" "P0" "prio" true
+    "title" "Overdue: resolve P0 bugs within 7 days (SEP-1730)" "sum" (slice "sla" "p0_7d_breach")
+    "ids" (slice "p0" "p0_7d" "p0_7d_breach"))
+  (dict "key" "question" "label" "Answer questions" "deadline" "2 business days" "group" "sep" "short" "Question" "bd" true
+    "title" "Overdue: answer questions within 2 business days (SEP-1730)" "sum" (slice "questions_stale_2d")
+    "ids" (slice "question" "questions" "question_2d" "question_2bd" "questions_stale_2d" "answer"))
+  (dict "key" "follow-up" "label" "Reply to reporter follow-ups" "deadline" "2 business days" "group" "team" "short" "Follow-up" "bd" true
+    "title" "Overdue: reply to reporter follow-ups within 2 business days (team target)" "sum" (slice "sla" "reply_2bd_breach")
+    "ids" (slice "reply" "reply_2bd" "reply_2bd_breach" "follow_up" "followup" "author_reply"))
+  (dict "key" "p1" "label" "Resolve P1 bugs" "deadline" "90 days" "group" "team" "short" "P1" "prio" true
+    "title" "Overdue: resolve P1 bugs within 90 days (team target)" "sum" (slice "sla" "p1_90d_breach")
+    "ids" (slice "p1" "p1_90d" "p1_90d_breach"))
+  (dict "key" "repro" "label" "Get a repro" "deadline" "14 days" "group" "team" "short" "Repro"
+    "title" "Overdue: get a repro within 14 days (team target)" "sum" (slice "needs_repro_14d")
+    "ids" (slice "repro" "repro_14d" "needs_repro" "needs_repro_14d"))
+-}}

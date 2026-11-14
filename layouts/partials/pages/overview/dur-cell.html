@@ -1,3 +1,0 @@
-{{- /* Duration in hours via ui/dur.html, or the ink-3 dash when missing. Call: partial "pages/overview/dur-cell.html" (dict "h" hours-or-nil) */ -}}
-{{- $h := .h -}}
-{{- if ne $h nil }}{{ partial "ui/dur.html" $h }}{{ else }}<span class="v-na" title="Not tracked for this repository">—</span>{{ end -}}

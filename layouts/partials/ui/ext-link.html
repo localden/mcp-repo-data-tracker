@@ -1,0 +1,8 @@
+{{- /* External link (brief 7.3 A11): opens in a new tab, ends with a 12px arrow icon and sr-only " (opens {site})".
+  Dict {href, text, site, class, icon}. site: "GitHub", "npm", ... (omit to skip the sr-only text); class default "v-link";
+  icon: false drops the arrow. Renders nothing without href. */ -}}
+{{- $c := . -}}
+{{- $icon := true }}{{ if isset $c "icon" }}{{ $icon = $c.icon }}{{ end -}}
+{{- with $c.href -}}
+<a class="{{ $c.class | default "v-link" }}" href="{{ . }}" target="_blank" rel="noopener">{{ $c.text }}{{ if $icon }}{{ partial "ui/icon.html" (dict "name" "arrow-up-right" "class" "is-sm") }}{{ end }}{{ with $c.site }}<span class="sr-only"> (opens {{ . }})</span>{{ end }}</a>
+{{- end -}}

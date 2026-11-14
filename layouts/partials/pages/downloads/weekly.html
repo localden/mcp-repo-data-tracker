@@ -1,0 +1,59 @@
+{{- /* Weekly downloads small multiples (brief 3.5-2, 5.6): one column chart per SDK, complete ISO weeks only, on one shared 52-week
+  x-domain, each with its own y-axis (the section caption says so). The 2-row header holds Last 7 days (the table's window) and
+  its change vs prior 7 days; the unfinished week is stated under the plot, never plotted (5.4). Fewer than 4 complete weeks:
+  the same card frame and header with "Tracking since …" at plot height (5.5). 3-up from 64rem, 2-up from 40rem, 1-up below.
+  Call: partial "pages/downloads/weekly.html" (dict "pkgs" $pkgs "from" $wFrom "to" $wTo)
+    pkgs: the page's package list (with cells); from / to: the first and last shared week start ("" lets each chart use its own). */ -}}
+{{- $c := . }}
+<div class="v-grid">
+  {{- range $p := $c.pkgs }}
+  {{- $d := $p.d }}{{ $x := $p.cells }}{{ $id := printf "dl-%s" $p.r.repo -}}
+  {{- /* header line 2: the window, then the change (with its base) or "n of 7 days" as text (the table carries the Flag; a 20px
+       Flag here would push this plot below its neighbours, 5.6). Kept short enough for one line at the narrowest 3-up and 2-up
+       widths, so plot tops align: "Last 7 days" is in the section caption and, for screen readers, before the value. */ -}}
+  {{- $win := "" }}{{ with $d.window }}{{ $win = printf `<span class="v-nowrap">%s</span>` . }}{{ end -}}
+  {{- $tail := "" -}}
+  {{- if $x.has7 }}{{ $tail = partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "polarity" "up" "vs" "prior 7 days") -}}
+  {{- else if $x.flag }}{{ $tail = printf `<span class="v-nowrap">%d of 7 days</span>` (int $d.days_covered) }}{{ end -}}
+  {{- /* the separator is glued to the item before it, so a wrapped line never starts with it (6.1 rule 2) */ -}}
+  {{- $sub := $win }}{{ if and $win $tail }}{{ $sub = printf "%s&#160;· %s" $win $tail }}{{ end -}}
+  {{- $sub = $sub | safeHTML -}}
+  {{- $value := printf `<span class="sr-only">Last 7 days </span>%s` $x.value | safeHTML -}}
+  {{- $foot := "" -}}
+  {{- with $d.wtd }}{{ if ne .value nil }}{{ $foot = printf "Week to date: %s (%d of 7 days)" (partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true)) .days }}{{ end }}{{ end }}
+  <div class="v-span-4">
+    {{- if ge $d.weekly.n 4 }}
+    {{ partial "ui/chart.html" (dict "id" $id "title" $p.r.name "metric" "downloads" "metric_one" "download" "scope" $p.r.name
+        "unit" "downloads" "gran" "week" "kind" "column" "size" "small" "from" $c.from "to" $c.to
+        "value" $value "sub" $sub "reserve_sub" true "foot" $foot
+        "series" (slice (dict "label" "Downloads" "points" $d.weekly.points))) }}
+    {{- else }}
+    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. */ -}}
+    {{- $note := printf "No data collected for %s yet." $p.r.name -}}
+    {{- with $d.first -}}
+      {{- $ft := time.AsTime . -}}
+      {{- $dow := index (dict "Mon" 0 "Tue" 1 "Wed" 2 "Thu" 3 "Fri" 4 "Sat" 5 "Sun" 6) ($ft.Format "Mon") -}}
+      {{- $start := $ft }}{{ if gt $dow 0 }}{{ $start = $ft.AddDate 0 0 (int (sub 7 $dow)) }}{{ end -}}
+      {{- $at := $start.AddDate 0 0 28 -}}
+      {{- if gt ($at.Format "2006-01-02") $d.complete_through -}}
+        {{- $note = printf "Tracking since %s. Trend appears after 4 weeks (%s)." ($ft.Format "Jan 2, 2006") ($at.Format "Jan 2") -}}
+      {{- else -}}
+        {{- $note = printf "Tracking since %s. Too few complete weeks in this window for a trend." ($ft.Format "Jan 2, 2006") -}}
+      {{- end -}}
+    {{- end }}
+    <div class="v-card v-chart is-small">
+      <div class="v-card-head v-chart-head">
+        <div class="v-chart-heading">
+          <h3 class="v-card-title" id="{{ $id }}-title">{{ $p.r.name }}</h3>
+          {{- if $d.complete_through }}<span class="v-chart-value">{{ $value }}</span>{{ end }}
+          <p class="v-chart-sub">{{ $sub }}</p>
+        </div>
+      </div>
+      <div class="v-card-body v-chart-body">
+        {{ partial "ui/empty.html" (dict "card" false "size" "sm" "body" $note) }}
+      </div>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</div>

@@ -1,0 +1,9 @@
+{{- /* /repos/<repo>/: one page per tracked repository (brief 2.1, 3.6). Rendered by layouts/partials/pages/repo.html.
+  The title is the bare display name, so the H1 and <title> read "TypeScript SDK" and "TypeScript SDK · VISR". */ -}}
+{{- range .Site.Data.repos.repositories -}}
+  {{- $.AddPage (dict
+      "path" .repo
+      "kind" "page"
+      "title" (.name | default .repo)
+      "params" (dict "repo" (printf "%s/%s" .owner .repo) "page" "repo")) -}}
+{{- end -}}

@@ -1,0 +1,4 @@
+{{- /* Flag (brief 4.6 i): the only bordered inline element, for data quality only ("4 of 7 days", "Stale since Mar 27",
+  "GitHub data is 3 days old"). Call with the text or a dict {text, title}. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
+{{- with $c.text }}<span class="v-flag"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ . }}</span>{{ end -}}
