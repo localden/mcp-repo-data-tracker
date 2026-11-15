@@ -37,8 +37,8 @@ GRAPHITE = "#151518"
 WHITE = "#f4f4f5"
 SIGNAL = "#eb6834"
 
-FINAL = "g2"
-DEFAULT_SET = ["g1", "g2", "g3", "g4", "e2"]
+FINAL = "h1"
+DEFAULT_SET = ["h1", "h2", "h3", "h4"]
 
 
 def _lin(c):
@@ -157,7 +157,8 @@ def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.
 def studio(key=420.0, fill=110.0, rim=320.0, top=140.0):
     """Three-point area lighting plus a grazing top strip for the bevels."""
     area_light("Key", (-3.2, -5.2, 4.2), (0.0, 0.0, 0.0), key, 4.0, color=(1.0, 0.98, 0.96))
-    area_light("Fill", (4.2, -4.5, -1.2), (0.0, 0.0, 0.0), fill, 6.0, color=(0.94, 0.97, 1.0))
+    fill_ob = area_light("Fill", (4.2, -4.5, -1.2), (0.0, 0.0, 0.0), fill, 6.0, color=(0.94, 0.97, 1.0))
+    fill_ob.visible_glossy = False  # shadows only; keeps a second blob off the visor glass
     area_light("Rim", (3.0, 2.6, 3.8), (0.0, 0.0, 0.0), rim, 3.0)
     area_light("TopStrip", (0.0, -0.9, 4.6), (0.0, 0.0, 0.0), top, 5.0, 0.8)
 
@@ -564,28 +565,38 @@ def concept_d(scene):
     camera(scene, ortho_scale=2.1)
 
 
+SPARK = ((-0.52, -0.12), (-0.26, 0.08), (-0.04, -0.06), (0.42, 0.20))
+CHECK = ((-0.42, 0.12), (-0.14, -0.12), (0.42, 0.20))
+
+
 def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
-               w=1.60, h=0.78, r=0.30, z=0.08, notch=None,
-               recess=0.07, bulge=0.13, line_r=0.065, dot_r=0.11):
+               w=1.66, h=0.90, r=0.36, z=0.06, notch=(0.62, 0.22), line=SPARK,
+               recess=0.11, bulge=0.08, line_r=0.075, dot_r=0.125, ghost_bars=False):
     """Helmet tile whose visor shows one thing: the trend, and where it ends.
 
     The tile is the helmet, the domed glass is the visor, and the stroke under
-    the glass is a check mark that is also a recovering chart line.
+    the glass is a chart line whose last leg is a check mark.
     """
     bevel = 0.06
     hole = visor_pts(w + 2 * bevel, h + 2 * bevel, r + bevel, 0.0, z, notch)
     tile(tile_mat, bevel=bevel, holes=[hole])
     plate("Screen", visor_pts(w + 0.12, h + 0.12, r + 0.06, 0.0, z, notch), 0.03, 0.0, screen_mat, recess)
-    pts = [(-0.46, z + 0.10), (-0.20, z - 0.16), (0.40, z + 0.15)]
+    if ghost_bars:
+        ghost = principled("GhostBar", "#141d2e", rough=0.5, emission=BLUE, emission_strength=0.10)
+        for i, top in enumerate((-0.22, -0.10, 0.00, 0.10, 0.24)):
+            x = -0.56 + i * 0.28
+            bottom = -0.75
+            rplate(f"Ghost{i}", 0.18, top - bottom, 0.05, 0.012, 0.0, ghost, x, z + (top + bottom) / 2, recess - 0.012)
+    pts = [(x, z + dz) for x, dz in line]
     tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.55, flat=0.55)
-    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.5, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.5, 1.0))
+    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.45, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.45, 1.0))
     gap = 0.012
     dome("VisorGlass", visor_pts(w - 2 * gap, h - 2 * gap, r - gap, 0.0, z, notch),
          max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.03)
 
 
 def mat_screen_dark():
-    return principled("Screen", "#0a0c12", rough=0.35, coat=0.3)
+    return principled("Screen", "#0b0c11", rough=0.35, coat=0.3)
 
 
 def mat_screen_lit():
@@ -593,35 +604,58 @@ def mat_screen_lit():
 
 
 def mat_cover(tint=(0.9, 0.94, 1.0, 1.0)):
-    return glass("VisorGlass", tint, body=0.02, fresnel=0.45, rough=0.05)
+    return glass("VisorGlass", tint, body=0.02, fresnel=0.4, rough=0.12)
+
+
+def mat_line():
+    return mat_white(emit=0.3)
+
+
+def mat_dot():
+    return mat_signal(emit=0.7)
+
+
+def concept_h1(scene):
+    """Blue helmet, dark visor with nose bridge, sparkline ending in a check."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover())
+    studio()
+    camera(scene)
+
+
+def concept_h2(scene):
+    """As h1 with the plain check stroke."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), line=CHECK)
+    studio()
+    camera(scene)
+
+
+def concept_h3(scene):
+    """As h1 without the nose bridge."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), notch=None, h=0.84, r=0.34)
+    studio()
+    camera(scene)
+
+
+def concept_h4(scene):
+    """As h1 with ghost bars behind the line."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), ghost_bars=True)
+    studio()
+    camera(scene)
 
 
 def concept_g1(scene):
-    """Graphite helmet, lit blue visor."""
+    """Graphite helmet, lit blue visor (round 2 geometry)."""
     lighter = principled("Graphite", "#26262c", rough=0.42, coat=0.35, coat_rough=0.18)
-    visor_mark(lighter, mat_screen_lit(), mat_white(emit=1.2), mat_signal(emit=1.0), mat_cover())
-    studio()
-    camera(scene)
-
-
-def concept_g2(scene):
-    """Blue helmet, dark glass visor."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=1.6), mat_signal(emit=1.4), mat_cover())
-    studio()
-    camera(scene)
-
-
-def concept_g3(scene):
-    """Blue helmet, dark glass visor with a nose bridge."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=1.6), mat_signal(emit=1.4), mat_cover(),
-               h=0.80, r=0.32, z=0.10, notch=(0.60, 0.20))
+    visor_mark(lighter, mat_screen_lit(), mat_white(emit=1.2), mat_signal(emit=1.0), mat_cover(),
+               w=1.60, h=0.78, r=0.30, z=0.08, notch=None, line=CHECK)
     studio()
     camera(scene)
 
 
 def concept_g4(scene):
-    """White helmet, dark glass visor, blue trend."""
-    visor_mark(mat_white(), mat_screen_dark(), mat_blue(emit=2.2), mat_signal(emit=1.4), mat_cover())
+    """White helmet, dark glass visor, blue trend (round 2 geometry)."""
+    visor_mark(mat_white(), mat_screen_dark(), mat_blue(emit=2.2), mat_signal(emit=1.4), mat_cover(),
+               w=1.60, h=0.78, r=0.30, z=0.08, notch=None, line=CHECK)
     studio()
     camera(scene)
 
@@ -633,9 +667,11 @@ def concept_e2(scene):
 
 
 CONCEPTS = {
+    "h1": (concept_h1, "visor: nose bridge, sparkline"),
+    "h2": (concept_h2, "visor: nose bridge, check"),
+    "h3": (concept_h3, "visor: plain band, sparkline"),
+    "h4": (concept_h4, "visor: sparkline over ghost bars"),
     "g1": (concept_g1, "visor: graphite helmet, lit blue visor"),
-    "g2": (concept_g2, "visor: blue helmet, dark glass"),
-    "g3": (concept_g3, "visor: blue helmet, nose bridge"),
     "g4": (concept_g4, "visor: white helmet, blue trend"),
     "e2": (concept_e2, "check-trend, blue tile, heavier"),
     "a": (concept_a, "check-trend, graphite tile"),
