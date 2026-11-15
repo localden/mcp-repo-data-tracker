@@ -48,8 +48,8 @@
     {{- /* the ramp as a table, in ramp order, with the numbers a page can be checked against (design system v4 2.2): role, a real
          specimen, size and line, weight, tracking, default colour; what uses the role is the sub line under its name */}}
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Roles" "id" "sg-roles-title") }}
-      <table class="v-dt is-matrix has-sub" aria-labelledby="sg-roles-title">
-        <colgroup><col><col class="v-col-name"><col class="v-col-num-lg"><col class="v-col-num-sm"><col class="v-col-num"><col class="v-col-num-lg"></colgroup>
+      <table class="v-dt is-matrix has-sub v-sg-roles" aria-labelledby="sg-roles-title">
+        <colgroup><col><col class="v-sg-col-spec"><col class="v-col-num-sm"><col class="v-col-num-xs"><col class="v-col-num-sm"><col class="v-col-num-lg"></colgroup>
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Role") }}{{ partial "ui/th.html" (dict "label" "Specimen") }}{{ partial "ui/th.html" (dict "label" "Size and line") }}{{ partial "ui/th.html" (dict "label" "Weight") }}{{ partial "ui/th.html" (dict "label" "Tracking") }}{{ partial "ui/th.html" (dict "label" "Default colour") }}</tr></thead>
         <tbody>
           {{- range slice
@@ -133,9 +133,9 @@
   (dict "fmt" "date" "args" (dict "d" (printf "%s-11-14" $y)) "expect" "Nov 14")
   (dict "fmt" "date" "args" (dict "d" "2024-10-09") "expect" "Oct 9, 2024")
   (dict "fmt" "date" "args" (dict "d" "2024-09-10" "weekday" true) "expect" "Tue, Sep 10, 2024")
-  (dict "fmt" "range" "args" (dict "from" (printf "%s-11-03" $y) "to" (printf "%s-11-09" $y)) "expect" "Nov 3–9")
+  (dict "fmt" "range" "args" (dict "from" (printf "%s-11-03" $y) "to" (printf "%s-11-09" $y)) "expect" "Nov 3 to Nov 9")
   (dict "fmt" "range" "args" (dict "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y)) "expect" "Oct 8 to Nov 9")
-  (dict "fmt" "range" "args" (dict "from" "2024-11-03" "to" "2024-11-09") "expect" "Nov 3–9, 2024")
+  (dict "fmt" "range" "args" (dict "from" "2024-11-03" "to" "2024-11-09") "expect" "Nov 3 to Nov 9, 2024")
   (dict "fmt" "range" "args" (dict "from" "2024-10-08" "to" "2024-11-09") "expect" "Oct 8 to Nov 9, 2024")
   (dict "fmt" "range" "args" (dict "from" "2023-12-30" "to" "2024-01-04") "expect" "Dec 30, 2023 to Jan 4, 2024")
   (dict "fmt" "ts" "args" (dict "t" "2024-11-14T08:29:00Z") "expect" "Nov 14, 2024, 08:29 UTC")
@@ -147,12 +147,12 @@
   <div class="v-grid">
     {{- /* a matrix, so below 64rem each fixture is a record: the kind as its title, then Expected, Hugo and JavaScript lines */}}
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Fixture table") }}
-      <table class="v-dt is-matrix is-compact" id="formats-table" aria-label="Formatter fixtures">
-        <colgroup><col class="v-col-num-sm"><col><col class="v-col-deadline"><col class="v-col-deadline"><col class="v-col-deadline"></colgroup>
+      <table class="v-dt is-matrix is-compact v-sg-fixture" id="formats-table" aria-label="Formatter fixtures">
+        <colgroup><col class="v-sg-col-kind"><col><col class="v-sg-col-result"><col class="v-sg-col-result"><col class="v-sg-col-result"></colgroup>
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Input") }}{{ partial "ui/th.html" (dict "label" "Expected") }}{{ partial "ui/th.html" (dict "label" "Hugo") }}{{ partial "ui/th.html" (dict "label" "JavaScript") }}</tr></thead>
         <tbody>
           {{- range $fx }}
-          <tr data-fixture><th scope="row" title="{{ jsonify .args }}">{{ .fmt }}</th><td class="v-sg-wide"><span class="v-truncate">{{ jsonify .args }}</span></td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
+          <tr data-fixture><th scope="row" title="{{ jsonify .args }}">{{ .fmt }}</th><td class="v-sg-wide">{{ jsonify .args }}</td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
           {{- end }}
         </tbody>
       </table>
@@ -224,9 +224,9 @@
   <div class="v-grid">
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Scale" "action" (safeHTML `<button type="button" class="v-btn v-btn-sm" data-disclosure aria-expanded="false" aria-controls="sg-overlay">Column overlay</button>`)) }}<div class="v-card-body">
       <div class="v-sg-overlay" id="sg-overlay" hidden>{{ range seq 12 }}<i></i>{{ end }}</div>
-      <div class="v-sg-stack">
+      <div class="v-sg-scale">
         {{- range slice 2 4 8 12 16 20 24 32 40 48 56 72 }}
-        <div class="v-sg-row"><span class="v-sg-bar" style="--v:{{ . }}px"></span><span class="v-caption">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</span></div>
+        <span class="v-caption">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</span><span class="v-sg-bar" style="--v:{{ . }}px"></span>
         {{- end }}
       </div>
     </div></article>

@@ -7,7 +7,7 @@
   'use strict';
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var NBSP = ' ', MINUS = '−', ENDASH = '–';
+  var NBSP = ' ', MINUS = '−';
   var asof = document.documentElement.getAttribute('data-asof') || '';
   var asofYear = /^\d{4}/.test(asof) ? +asof.slice(0, 4) : new Date().getUTCFullYear();
   var nfs = {};
@@ -141,7 +141,7 @@
     var yr = a.year === true || y.getUTCFullYear() !== asofYear ? ', ' + y.getUTCFullYear() : '', text;
     if (same) text = md(x) + yr;
     else if (x.getUTCFullYear() !== y.getUTCFullYear()) text = mdy(x) + ' to ' + mdy(y);
-    else if (x.getUTCMonth() === y.getUTCMonth()) text = md(x) + ENDASH + y.getUTCDate() + yr;
+    /* one form at every length: both ends carry their month ("Nov 3 to Nov 9"), so a range never changes shape with the month */
     else text = md(x) + ' to ' + md(y) + yr;
     return { text: text, long: same ? mdy(x) : md(x) + ' to ' + mdy(y), from: iso(x), to: iso(y), state: 'value', kind: 'range' };
   }

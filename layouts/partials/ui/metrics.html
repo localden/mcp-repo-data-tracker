@@ -36,9 +36,11 @@
                opens, computed from the same rows.
   Slots sit on shared rows (subgrid), so labels, values, contexts and visuals line up across the strip. A strip with fewer than two
   tiles renders nothing. Below 40rem every strip is a column of rows: label (body text-2 in both sizes, the size of a stat-list
-  label) over delta and context on the left, the value on the right edge, and the link arrow in a fixed column after it (reserved
-  on every row of a strip that has a link, so values share one right edge). A qualifier that joins without a comma ("over 7 days")
-  carries .is-over: on a phone it is the label's second line in every row of the strip. */ -}}
+  label) over delta and context on the left, the value on the right edge, and the link arrow in a fixed column beside the value rows (reserved
+  on every row of a strip that has a link, so values share one right edge). A threshold qualifier ("over 7 days", not "overdue")
+  carries .is-over: at every width it is a line of its own under the name, so the tiles of a strip share one label structure.
+  Fixed slots (2.6): on a phone the delta is a fixed-width slot, so the base after it starts at one x; a coverage note never
+  follows a date inline (its own line on a phone, the tile's right edge from 40rem). */ -}}
 {{- $c := . -}}
 {{- $tiles := $c.tiles | default slice -}}
 {{- $n := len $tiles -}}
@@ -75,6 +77,8 @@
     {{- $vk := "count" }}{{ with $t.value }}{{ with .kind }}{{ $vk = . }}{{ end }}{{ end }}
     {{- $qual := string ($t.qual | default "") }}
     {{- $sep := ", " }}{{ if hasPrefix (lower $qual) "over" }}{{ $sep = " " }}{{ end }}
+    {{- /* a threshold ("over 7 days") is the label's own second line; a word joined without a comma ("overdue") stays on the name's line */}}
+    {{- $over := hasPrefix (lower $qual) "over " }}
     <li class="v-metric{{ if $breach }} is-breach{{ end }}">
       <div class="v-metric-label"{{ with $t.title }} title="{{ . }}"{{ end }}>
         {{- if $t.href -}}
@@ -82,7 +86,7 @@
         {{- else -}}
         <span class="v-metric-name">{{ $t.name }}</span>
         {{- end -}}
-        {{- with $qual }}<span class="v-metric-qual{{ if eq $sep " " }} is-over{{ end }}">{{ $sep }}{{ . }}</span>{{ end -}}
+        {{- with $qual }}<span class="v-metric-qual{{ if $over }} is-over{{ end }}">{{ $sep }}{{ . }}</span>{{ end -}}
       </div>
       <div class="v-metric-value">
         {{- if $breach }}<span class="sr-only">Overdue </span>{{ end -}}

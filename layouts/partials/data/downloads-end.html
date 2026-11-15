@@ -1,6 +1,6 @@
 {{- /* The common download window end D (§3.1-5): the newest date for which every package with at least 7 complete days has data.
   Call: $common := partialCached "data/downloads-end.html" . "dl-end"   (or pass dict "repos" $list ["anchor" "YYYY-MM-DD"])
-  Returns dict: end ("YYYY-MM-DD", "" when no package qualifies), from (end-6), window ("Nov 6–12"),
+  Returns dict: end ("YYYY-MM-DD", "" when no package qualifies), from (end-6), window ("Nov 6 to Nov 12"),
     short [{name, days}] (packages left out because they have fewer than 7 complete days: show their value muted + "n of 7 days").
   Each package is read through partialCached "data/downloads.html" (dict "repo" $cfg) "dl" <repo> "" so later calls with the same
   variant keys reuse it. */ -}}

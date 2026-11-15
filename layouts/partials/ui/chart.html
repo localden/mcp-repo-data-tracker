@@ -15,7 +15,8 @@
                            date, base, note}]. key: "accent" or "context": every item is a plotted series or a reference line
                            (an item without a key on a drawn chart is a build warning; other facts go in a stat list beside the
                            chart). base: a fmt/label.html base ({date}, "prior7", "4w"). Default: one item per series from its last
-                           point; the first item of a level chart carries the as-of date ("Latest" 295 "Nov 14").
+                           point. The date or range of the FIRST item is the readout's date: it is stated once for the whole
+                           readout and never printed after a value (a date or range on a later item is not drawn).
     avg, avg_label         draws the average rule and adds its readout item (context line key; default label "12-week average").
     marks                  event markers [{date, label}] (label at most 40 characters); keyed in the notes row.
     pending                override of the pending text, from the closed list of 4.22.
@@ -32,8 +33,10 @@
   pending bar; 120px, no readout (its figures are already in the strip above), and it never shares a row with a drawn chart or a
   stat list.
   The gap band is keyed "Data gap" in the notes row, the one term for it on every surface ("No data" is only the reason text of
-  an empty mark). A readout with several items states its date once: "As of" as a last item on the right from 40rem, a line
-  above the items on a phone.
+  an empty mark). Every readout states its date once, in a fixed slot (design system v4 2.6): the last item, on the card's
+  right edge, from 40rem ("As of" Nov 14 for a level, "Period" Nov 2 to Nov 8 for a flow), and a line above the items on a phone.
+  The items on the left are label and value pairs only, with a delta and its base where there is one. Notes are all key, label,
+  value, in that order (an event marker: its description, then its date).
   Sets the page's "charts" flag, so baseof.html loads Chart.js and charts.js only where a chart was rendered. */ -}}
 {{- $c := . -}}
 {{- range slice "band" "value" "caption" "foot" "cap_label" "reserve_sub" "size" "fill" "ticks" "current" "min_points" "level" -}}
@@ -100,11 +103,14 @@
 {{- end }}{{ end }}{{ end -}}
 {{- $hasNotes := and $d.canvas (or $d.gaps $d.holes $d.marks $d.rec.from) -}}
 {{- $tall := and $d.canvas $c.tall (not $hasNotes) -}}
-{{- /* the as-of date of a level chart: on a phone it is stated once, above the items, so it reads as the date of all of them */ -}}
-{{- $asof := "" }}{{ range first 1 $items }}{{ if and .date (not .range) }}{{ $asof = .date }}{{ end }}{{ end -}}
-{{- /* several items: the date is no property of the first series. From 40rem it is one last item on the right ("As of" Nov 14);
-     a single item keeps its date after its value */ -}}
-{{- $asofItem := and $asof (gt (len $items) 1) $d.canvas -}}
+{{- /* the date of the readout: the as-of day of a level chart, or the period of a flow (the first item's date or range). It is
+     stated once, whatever the number of series, and never after a value: a line above the items on a phone, the last item on
+     the right from 40rem */ -}}
+{{- $asof := "" }}{{ $period := dict -}}
+{{- range first 1 $items }}{{ if reflect.IsMap .range }}{{ $period = .range }}{{ else if .date }}{{ $asof = .date }}{{ end }}{{ end -}}
+{{- $when := dict -}}
+{{- if $period.from }}{{ $when = dict "label" "Period" "value" (dict "kind" "range" "from" $period.from "to" $period.to) -}}
+{{- else if $asof }}{{ $when = dict "label" "As of" "value" (dict "kind" "date" "d" $asof) }}{{ end -}}
 {{- /* a pending card is its head and the pending bar: the figures a readout would hold are already in the strip above it */ -}}
 {{- if not $d.canvas }}{{ $items = slice }}{{ end -}}
 {{- /* one outage, one range: a gap that overlaps the collection outage prints the outage's own dates at every cadence (the band
@@ -129,8 +135,8 @@
     {{- end }}
   </header>
   {{- if $items }}
-  {{- with $asof }}
-  <p class="v-readout-asof"><span>As of</span>{{ partial "ui/value.html" (dict "kind" "date" "d" .) }}</p>
+  {{- with $when.value }}
+  <p class="v-readout-asof"><span>{{ $when.label }}</span>{{ partial "ui/value.html" . }}</p>
   {{- end }}
   <dl class="v-readout" data-chart-legend>
     {{- range $items }}
@@ -138,24 +144,17 @@
     <div class="v-readout-item"><dt>
       {{- if and $d.canvas (ne $key "none") }}<span class="v-key {{ if or (eq $kind "line") (eq .keyform "line") }}is-line{{ else }}is-bar{{ end }} is-{{ $key }}" aria-hidden="true"></span>{{ end -}}
       {{ .label }}</dt><dd><span class="v-readout-value">{{ partial "ui/value.html" (.value | default (dict "kind" "na")) }}</span>
-      {{- $date := .date }}{{ if $asofItem }}{{ $date = "" }}{{ end -}}
-      {{- if or .delta .range $date .base .note -}}
+      {{- if or .delta .base .note -}}
       <span class="v-readout-meta">
         {{- with .delta }}{{ partial "ui/delta.html" . }}{{ end -}}
-        {{- if or .range $date .base -}}
-        <span class="v-readout-detail{{ if and $date (not .range) (not .base) }} is-asof{{ end }}">
-          {{- with .range }}{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}{{ end -}}
-          {{- with $date }}{{ partial "ui/value.html" (dict "kind" "date" "d" .) }}{{ end -}}
-          {{- with .base }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end -}}
-        </span>
-        {{- end -}}
+        {{- with .base }}<span class="v-readout-detail"><span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span></span>{{ end -}}
         {{- with .note }}{{ partial "ui/note.html" . }}{{ end -}}
       </span>
       {{- end -}}
     </dd></div>
     {{- end }}
-    {{- if $asofItem }}
-    <div class="v-readout-item is-asof"><dt>As of</dt><dd>{{ partial "ui/value.html" (dict "kind" "date" "d" $asof) }}</dd></div>
+    {{- with $when.value }}
+    <div class="v-readout-item is-asof"><dt>{{ $when.label }}</dt><dd>{{ partial "ui/value.html" . }}</dd></div>
     {{- end }}
   </dl>
   {{- end }}
@@ -177,7 +176,7 @@
     <li><span class="v-key is-line is-bridge" aria-hidden="true"></span><span class="v-chart-note-label">{{ .label }} not recorded</span>{{ partial "ui/value.html" (dict "kind" "ratio" "part" .n "whole" (len $d.labels) "noun" (cond (eq $gran "week") "week" "day")) }}</li>
     {{- end }}
     {{- range $d.marks }}
-    <li><span class="v-key is-mark" aria-hidden="true"></span>{{ partial "ui/value.html" (dict "kind" "date" "d" .date) }}<span class="v-chart-note-label">{{ .label }}</span></li>
+    <li><span class="v-key is-mark" aria-hidden="true"></span><span class="v-chart-note-label">{{ .label }}</span>{{ partial "ui/value.html" (dict "kind" "date" "d" .date) }}</li>
     {{- end }}
     {{- with $d.rec.from }}
     <li><span class="v-chart-note-label">Reconstructed</span>{{ partial "ui/value.html" (dict "kind" "range" "from" $d.rec.from "to" $d.rec.to) }}</li>

@@ -156,11 +156,12 @@ for my $ch (split //, $css) {
         $bad = 1 if $p eq 'font-family' and $v !~ /^(var\(--font-sans\)|inherit)$/;
         $bad = 1 if $p eq 'font-style' and $v eq 'italic';
         # numerals are set in three places only: body (proportional lining figures), form controls (inherit), and the one
-        # rule that makes numeric value components tabular (it starts with .v-val:not([data-kind="date"] ...)
+        # rule that makes value components tabular (it starts with ".v-val, .v-delta, .v-count": every value, dates and the
+        # id of a row's identity line included, so whatever follows a value starts at one x: the fixed-slot rule, 2.6)
         # and the one exception to it: a standalone display or heading value (a metric tile from 40rem, a chart readout) is
         # proportional, because it sits in no digit column
         $bad = 1 if $p eq 'font-variant-numeric' and $sel !~ /(^|\s)body$/ and $sel !~ /button, input, select, textarea$/
-                    and $sel !~ /\.v-val:not\(\[data-kind="date"\]/ and $sel !~ /\.v-(metric|readout)-value > \.v-val$/;
+                    and $sel !~ /(^|\s)\.v-val, \.v-delta, \.v-count, / and $sel !~ /\.v-(metric|readout)-value > \.v-val$/;
         print "type\t$at\n" if $bad;
         if ($p =~ /^(margin|padding|gap|row-gap|column-gap)(-[a-z-]+)?$/) {
           my $off = 0;

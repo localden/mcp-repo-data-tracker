@@ -36,7 +36,7 @@
     {{- if $facets }}
     <button type="button" class="v-btn v-filter-toggle" data-facets-toggle aria-expanded="{{ if $c.open }}true{{ else }}false{{ end }}" aria-controls="{{ $id }}-facets">{{ partial "ui/icon.html" "sliders" }}Filters<span class="v-count" data-facets-n{{ if eq $active 0 }} hidden{{ end }}>{{ $active }}</span></button>
     {{- end }}
-    <button type="button" class="v-btn v-btn-sm" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>{{ partial "ui/icon.html" (dict "name" "x" "size" 14) }}Clear filters</button>
+    <button type="button" class="v-btn v-btn-sm" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>{{ partial "ui/icon.html" (dict "name" "x" "size" 14) }}{{ if $facets }}Clear filters{{ else }}Clear search{{ end }}</button>
     <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $other }}" data-noun-one="{{ $one }}">
       {{- if ne $c.total nil }}{{ if $narrowed }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.matched)).text }}</span> of {{ end }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $one }}{{ else }}{{ $other }}{{ end }}{{ end -}}
     </p>
@@ -46,7 +46,7 @@
     {{- range $facets }}
     {{ partial "ui/chip.html" (merge . (dict "id" $id "noun" (strings.FirstUpper $other))) }}
     {{- end }}
-    <button type="button" class="v-btn is-ghost" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>Clear filters</button>
+    <button type="button" class="v-btn" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>Clear filters</button>
   </div>
   {{- end }}
 </div>

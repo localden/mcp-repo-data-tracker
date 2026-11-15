@@ -19,7 +19,7 @@
   function parts(s) { var p = String(s).split('-'); return { y: +p[0], m: +p[1] - 1, d: +(p[2] || 1) }; }
   function addDays(s, n) { var p = parts(s), t = new Date(Date.UTC(p.y, p.m, p.d + n)); return t.toISOString().slice(0, 10); }
   function periodEnd(s, gran) { return gran === 'week' ? addDays(s, 6) : s; }
-  /* a week never ends after the as-of day: the newest week of a level series reads "Nov 9–14" on a page updated Nov 14 */
+  /* a week never ends after the as-of day: the newest week of a level series reads "Nov 9 to Nov 14" on a page updated Nov 14 */
   var ASOF = (root.getAttribute('data-asof') || '').slice(0, 10);
   function weekEnd(s, clamp) { var e = addDays(s, 6); return clamp && ASOF && e > ASOF && s <= ASOF ? ASOF : e; }
   function periodText(s, gran, clamp) { return gran === 'week' ? F.range({ from: s, to: weekEnd(s, clamp) }).text : F.date({ d: s, weekday: true }).text; }
@@ -204,19 +204,24 @@
       ctx.moveTo(x, y - 3); ctx.lineTo(x + 3, y); ctx.lineTo(x, y + 3); ctx.lineTo(x - 3, y); ctx.closePath(); ctx.fill(); ctx.restore();
     });
   } };
-  /* A hole in one of two series (the other has values, so there is no gap band): up to 7 days are bridged by the line itself
-     (spanGaps), so a short hole never reads as a break; a longer one is joined by a 1px connector in the context colour, which
-     is visible over its span, and the notes row keys it. Nothing crosses a gap band. */
+  /* One rule for a span with no reading, at both cadences: the series line never crosses it in the series colour, and a 1px
+     connector in the context colour joins the reading before it to the reading after it, so the latest point is never a loose
+     dot (the rule of a sparkline, 4.20). That holds for a gap band (no series has a value; the band is keyed "Data gap") and for
+     a long hole in one of two series (the other has values; the notes row keys it "not recorded"). A hole of up to 7 days in a
+     daily series that is not a band is bridged by the line itself, so a short hole never reads as a break. */
+  function spansItself(st, r) {   /* true when the series line bridges the run r = [first, last] of one series */
+    for (var i = r[0]; i <= r[1]; i++) if (inBand(st, i)) return false;
+    return st.gran === 'day' && r[1] - r[0] + 1 < 8;
+  }
   var bridges = { id: 'visrBridges', beforeDatasetsDraw: function (c) {
-    var st = S(c); if (!st || st.kind !== 'line' || st.series.length < 2) return;
+    var st = S(c); if (!st || st.kind !== 'line') return;
     var ctx = c.ctx;
     st.info.forEach(function (info, d) {
       var meta = c.getDatasetMeta(d), data = st.series[d].data;
       info.runs.forEach(function (r) {
-        var s = r[0], e = r[1], i;
-        if (st.gran === 'day' && e - s + 1 < 8) return;   /* the line spans it */
+        var s = r[0], e = r[1];
+        if (spansItself(st, r)) return;
         if (s <= info.first || e >= info.last || data[s - 1] == null || data[e + 1] == null) return;
-        for (i = s; i <= e; i++) if (inBand(st, i)) return;
         var p = meta.data[s - 1], q = meta.data[e + 1]; if (!p || !q) return;
         ctx.save(); ctx.strokeStyle = T.context; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
       });
@@ -357,9 +362,12 @@
     }
     if (rows) tip.appendChild(list);
     function note(text) { tip.appendChild(el('p', 'v-tip-note', text)); spoken.push(text); }
-    function changeRow(ch, base) {   /* a change is the delta badge and its base, never a typed sentence */
-      var row = el('p', 'v-tip-change');
-      row.appendChild(changeEl(ch, st.polarity)); row.appendChild(el('span', 'v-base', base)); tip.appendChild(row);
+    /* a change is one more row of the same grid, never a typed sentence: its base in the name slot, the delta in the value slot
+       (a badge when the measure has a polarity, plain signed text otherwise), on the right edge the values above it share */
+    function changeRow(ch, base) {
+      var li = el('li', 'v-tip-change'), val = el('span', 'v-tip-value');
+      if (!list.classList.contains('is-plain')) { var pad = el('span'); pad.setAttribute('aria-hidden', 'true'); li.appendChild(pad); }
+      li.appendChild(el('span', 'v-tip-name', base)); val.appendChild(changeEl(ch, st.polarity)); li.appendChild(val); list.appendChild(li);
       spoken.push(ch.sr + ' ' + base);
     }
     /* a series with no value at this slot has no row: one caption line says so, in the words of the notes key ("Data gap" inside
@@ -410,15 +418,20 @@
     var line = kind === 'line', single = series.length === 1;
     var info = series.map(function (s) { return analyse(s.data, gran, panel, single ? 2 : 7); });
     var bands = !info.length ? [] : info.length < 2 ? mergeRuns(info[0].runs.slice()) : intersectRuns(info.map(function (x) { return x.runs; }), gran === 'day' ? 3 : 1);
-    /* a daily line bridges a hole of up to 7 days itself, except across a gap band: nothing crosses a band */
-    function crossesBand(ctx) {
-      for (var k = ctx.p0DataIndex + 1; k < ctx.p1DataIndex; k++) if (bands.some(function (b) { return k >= b[0] && k <= b[1]; })) return true;
-      return false;
-    }
+    /* a daily line bridges a short hole itself (spanGaps); it is not drawn through a gap band or a long hole. Chart.js styles a
+       spanned gap one slot at a time (p0DataIndex and p1DataIndex are always neighbours), so hide[i] marks every empty slot the
+       line must not cross and a segment that touches one is transparent. The bridges plugin draws the connector there. A weekly
+       line breaks at every empty week (spanGaps off). */
+    var probe = { bands: bands, gran: gran };
+    var hide = info.map(function (a) {
+      var h = [];
+      a.runs.forEach(function (r) { if (!spansItself(probe, r)) for (var k = r[0]; k <= r[1]; k++) h[k] = true; });
+      return h;
+    });
     var datasets = series.map(function (s, i) {
-      var c = color(s.role), a = info[i], order = s.role === 'context' ? 2 : 1;
-      if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day' ? 8 : false,
-        segment: { borderColor: function (ctx) { return ctx.p1DataIndex - ctx.p0DataIndex > 1 && crossesBand(ctx) ? 'transparent' : undefined; } },
+      var c = color(s.role), a = info[i], order = s.role === 'context' ? 2 : 1, hid = hide[i];
+      if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day',
+        segment: { borderColor: function (ctx) { return hid[ctx.p0DataIndex] || hid[ctx.p1DataIndex] ? 'transparent' : undefined; } },
         pointRadius: a.radius, pointHoverRadius: 4, pointHitRadius: 0, pointBackgroundColor: c, pointBorderColor: T.surface, pointBorderWidth: 2,
         pointHoverBackgroundColor: c, pointHoverBorderColor: T.surface, pointHoverBorderWidth: 2 };
       return { label: s.label, data: s.data, order: order, backgroundColor: c, hoverBackgroundColor: s.role === 'context' ? c : T.accentStrong, borderWidth: 0, borderRadius: { topLeft: 3, topRight: 3 }, borderSkipped: false };
@@ -522,7 +535,7 @@
   /* Table view: the switch swaps the plot for a flush compact table in the same box, newest first, across the full card width (CSS:
      a fixed period column, the value columns share the rest). Values use the one format of their kind; a volume carries its exact
      figure in title. A column of weeks shows each week by its Monday, as a date under the header "Week of", with the range of the
-     week in title: one form down the column, never ranges that alternate between "Nov 2–8" and "Oct 26 to Nov 1". A daily series
+     week in title: one form down the column. A daily series
      over 90 days is shown as weeks, and the header says so. A gap is one ordinary row: it is a span, so its first cell is a range,
      and each value cell holds the empty mark. A "Change" column (one series) carries its base as the sub line of its header, like
      every Change column on the site. A series with no value anywhere has no column (4.14 rule 8); a trellis row that cannot draw

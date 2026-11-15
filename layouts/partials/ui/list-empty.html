@@ -1,14 +1,18 @@
 {{- /* Empty result of a list card (design system v4 4.13): shown in place of the rows when the search and filters match nothing. The
   bands stay; the header row hides. Centred column: a search icon, the title "No matching PRs", one sentence that ui.js completes
   with the view's name, "Clear filters" and, only when the All view has matches, the ghost "Search all 375 PRs".
-  Dict {noun}: a fmt/noun.html key. A list that is empty at build time uses ui/empty.html instead. */ -}}
+  Dict {noun, facets}. noun: a fmt/noun.html key. facets: false for a list whose filter bar is a search field alone (a roster):
+  the sentence is "Nothing matches the search." and the action is "Clear search", so the copy never names a control the list
+  does not have. Left out, ui.js decides from the card (a card with no .v-facets is search only).
+  A list that is empty at build time uses ui/empty.html instead. */ -}}
+{{- $facets := ne .facets false -}}
 {{- $w := partial "fmt/noun.html" (dict "key" (replace (lower (string (.noun | default "issue"))) "-" " ")) -}}
-<div class="v-list-empty" data-filter-empty hidden>
+<div class="v-list-empty" data-filter-empty{{ if not $facets }} data-search-only{{ end }} hidden>
   {{ partial "ui/icon.html" "search" }}
   <p class="v-empty-title">No matching {{ $w.other }}</p>
-  <p class="v-empty-body" data-empty-body>Nothing matches the search and filters.</p>
+  <p class="v-empty-body" data-empty-body>Nothing matches the search{{ if $facets }} and filters{{ end }}.</p>
   <div class="v-list-empty-actions">
-    <button type="button" class="v-btn" data-filter-reset>Clear filters</button>
+    <button type="button" class="v-btn" data-filter-reset>{{ if $facets }}Clear filters{{ else }}Clear search{{ end }}</button>
     <button type="button" class="v-btn is-ghost" data-search-all hidden>Search all {{ $w.other }}</button>
   </div>
 </div>

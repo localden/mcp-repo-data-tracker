@@ -67,6 +67,7 @@
 {{- $defs = $defs | append
   (dict "group" $gM "term" "Open PRs" "text" "PRs open now, drafts included.")
   (dict "group" $gM "term" "Net change" "text" "PRs opened minus PRs merged and PRs closed without merging in the window.")
+  (dict "group" $gM "term" "Closed unmerged" "text" "PRs closed without merging. Tracked for 90 days only.")
   (dict "group" $gM "term" "Median first review" "text" "Median time from opening to the first review, over the PRs that got one.")
   (dict "group" $gM "term" "90% reviewed within" "text" "Nine in ten of those PRs got their first review within this time.")
   (dict "group" $gM "term" "Median time to merge" "text" "Median time from opening to merge, over PRs merged in the last 90 days.")
@@ -114,7 +115,8 @@
         "value" (dict "kind" "count" "v" $needs) "context" (dict "kind" "whole" "n" (int $q.all) "of" "open")
         "href" (cond (eq $viewArg "") "#queue" "?view=needs#queue") "drill" true)
       (dict "name" "Estimated review effort" "title" $defEffort "value" $effort
-        "context" (dict "kind" "ref" "label" "Actionable PRs" "value" (dict "kind" "count" "v" $sum.actionable_count "reason" "not-computed")))
+        "context" (dict "kind" "ref" "label" "Actionable PRs" "value" (dict "kind" "count" "v" $sum.actionable_count "reason" "not-computed"))
+        "href" (cond (eq $viewArg "") "#queue" "?view=needs#queue") "drill" true)
       $openTile)) }}
   </div>
 </section>

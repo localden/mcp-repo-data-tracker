@@ -114,7 +114,7 @@ RULES = {
     'cell-inset': 'no child of a table cell ends past the cell\'s content box (a sparkline, note or bar that breaks the card inset)',
     'value-truncated': 'no value, id or deadline phrase sits in a box that cuts it (design system v4 4.14 rule 2: a value never truncates)',
     'font-loaded': 'the shipped face rendered: document.fonts.check(\'500 14px "Inter Variable"\') after fonts.ready (design system v4 2.2)',
-    'numerals': 'tabular figures on numeric values in table cells, proportional figures on titles, tags, handles, ids and sentences '
+    'numerals': 'tabular figures on values in table cells (dates included) and on the id of a row identity line; proportional figures on titles, tags, handles and sentences '
                 '(design system v4 2.2)',
     'notes-layout': 'Data notes open at 64rem and up: Sources sits to the right of Definitions (the 8 + 4 grid applies)',
     'th-baseline': 'in a column header row every label sits on one line: equal top edges for plain labels and sort buttons',
@@ -161,13 +161,14 @@ PROBE = r"""() => {
     if (!el.closest('main')) return;   // header/footer chrome (brand, nav, build hash) is outside the page's type budget
     const f = cs.fontSize + ' ' + cs.fontWeight; fonts[f] = (fonts[f] || 0) + 1;
     if (!fontSamples[f]) fontSamples[f] = path(el) + ' "' + (el.textContent || '').trim().slice(0, 40) + '" [' + cs.fontFamily.split(',')[0].trim() + '; ' + cs.fontVariantNumeric + ']'; });
-  // the shipped face, and where figures are tabular: numeric values in table cells are, running text is not (v4 2.2)
+  // the shipped face, and where figures are tabular: values in table cells and the id that opens an identity line are (the
+  // fixed-slot rule, v4 2.6), running text is not (v4 2.2)
   const fontLoaded = !!(document.fonts && document.fonts.check && document.fonts.check('500 14px "Inter Variable"'));
   const tab = el => /tabular-nums/.test(getComputedStyle(el).fontVariantNumeric);
   const numerals = [];
-  [...document.querySelectorAll('.v-dt td.num .v-val:not([data-kind="date"]):not([data-kind="range"]):not([data-kind="ts"]):not(.is-na)')].filter(shown)
+  [...document.querySelectorAll('.v-dt td.num .v-val:not(.is-na), .v-meta-id > .v-id')].filter(shown)
     .filter(el => !tab(el)).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'tabular', text: el.textContent.trim().slice(0, 30) }));
-  [...document.querySelectorAll('main .v-row-link, main .v-tag, main .v-who, main .v-id, main .v-prose')].filter(shown)
+  [...document.querySelectorAll('main .v-row-link, main .v-tag, main .v-who, main .v-detail .v-id, main .v-prose')].filter(shown)
     .filter(tab).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'proportional', text: el.textContent.trim().slice(0, 30) }));
   // a value, an id or a deadline phrase inside any box that cuts it (4.14 rule 2)
   const cut = el => { for (let e = el; e && !e.matches('table, article, main'); e = e.parentElement) {

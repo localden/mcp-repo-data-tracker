@@ -51,20 +51,18 @@
 {{- if $r.package }}{{ $use = $use | append "downloads" }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
 
-{{- /* Data notes: Sources facts, how the registry counts days, then the definitions of the metrics on this page */ -}}
+{{- /* Data notes: Sources facts, then the definitions of the metrics on this page, among them how the registry counts days */ -}}
 {{- $facts := slice -}}
 {{- with $first }}{{ $facts = $facts | append (dict "label" "Tracking since" "value" (dict "kind" "date" "d" . "year" true)) }}{{ end -}}
 {{- with $m.repository }}{{ if ne .stars nil }}{{ $facts = $facts | append (dict "label" "Stars" "value" (dict "kind" "count" "v" .stars)) }}{{ end }}{{ end -}}
-{{- $notes := slice -}}
+{{- /* every line of Data notes is a term and its definition: the registry's method is the term the Downloads page uses (the
+     registry's name, the same sentence), and a missing classification is a term beside the deadlines it leaves out */ -}}
 {{- $methods := dict
-  "npm" "npm downloads are daily counts from the npm range API."
-  "pypi" "PyPI downloads come from BigQuery, complete UTC days only."
-  "crates" "crates.io downloads come from the daily range API."
-  "nuget" "NuGet daily downloads are the change in the lifetime total. Days on which the total did not move are shown as missing."
-  "rubygems" "RubyGems daily downloads are the change in the lifetime total. Days on which the total did not move are shown as missing." -}}
-{{- with index $methods ($reg.key | default "") }}{{ $notes = $notes | append . }}{{ end -}}
-{{- if not $r.data.issues }}{{ $notes = $notes | append "Issues are not classified for this repository, so the response deadlines are not shown." }}{{ end -}}
-{{- if not $r.data.actionability }}{{ $notes = $notes | append "PRs are not classified for this repository, so the review deadlines are not shown." }}{{ end -}}
+  "npm" "Daily counts from the npm range API."
+  "pypi" "BigQuery download records, complete UTC days."
+  "crates" "Daily counts from the crates.io range API."
+  "nuget" "A day is the change in the lifetime total. Days on which the total did not move are missing."
+  "rubygems" "A day is the change in the lifetime total. Days on which the total did not move are missing." -}}
 {{- $defs := slice
   (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
   (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
@@ -74,8 +72,11 @@
   {{- $rule := partial "data/sla-rules.html" . -}}
   {{- $defs = $defs | append (dict "term" (printf "%s deadline" $rule.name) "text" (printf "%s. Source: %s." $rule.deadline $rule.source)) -}}
 {{- end -}}
+{{- if not $r.data.issues }}{{ $defs = $defs | append (dict "term" "Response deadlines" "text" "Issues are not classified for this repository, so the response deadlines are not shown.") }}{{ end -}}
+{{- if not $r.data.actionability }}{{ $defs = $defs | append (dict "term" "Review deadlines" "text" "PRs are not classified for this repository, so the review deadlines are not shown.") }}{{ end -}}
 {{- $defs = $defs | append (dict "term" "Closed without merging" "text" "PRs closed without a merge. Tracked for 90 days only, so the shorter windows have no value.") -}}
 {{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "The sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported, so it can end before this registry's own Complete through day. A package with fewer complete days shows the sum of the days it has, with a coverage note. A day the registry has not reported is missing, never zero.") }}{{ end -}}
+{{- with index $methods ($reg.key | default "") }}{{ $defs = $defs | append (dict "term" $reg.registry "text" .) }}{{ end -}}
 {{- $defs = $defs | append (dict "term" "Active contributors" "text" (cond (isset $c "active_people")
     "Distinct people, known bots excluded, who opened an issue or PR, authored a commit, reviewed or commented in the last 30 days."
     "Distinct people, known bots excluded, who opened an issue or PR or authored a commit in the last 30 days. Reviews and comments are not counted yet.")) -}}
@@ -90,7 +91,7 @@
 {{- $defs = $defs | append (dict "term" "Commits" "text" "Commits on the default branch, counted in 7-day periods ending on the day of the last update. A period is not a calendar week.") -}}
 
 {{- $head := dict "scope" (dict "kind" "repo" "repo" $r.key) "desc" ($r.cfg.description | default "") "meta" $meta "sources" $src
-    "gap" (dict "repos" (slice $r.key) "days" 364) "notes" $notes "defs" $defs "facts" $facts -}}
+    "gap" (dict "repos" (slice $r.key) "days" 364) "defs" $defs "facts" $facts -}}
 {{- if and $short $first }}{{ $head = merge $head (dict "note" (dict "since" $first)) }}{{ end }}
 {{ partial "ui/page-head.html" $head }}
 

@@ -73,7 +73,8 @@
           <tr>
             {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
             {{- range $ci, $col := $cols }}
-            {{- $th := dict "label" $col.rule.name "num" true "title" $col.rule.title "record" $col.record
+            {{- /* no "record": below 64rem a cell's label is the rule name alone, under the card title "Overdue by rule" */ -}}
+            {{- $th := dict "label" $col.rule.name "num" true "title" $col.rule.title
                 "sort" (dict "key" $col.key "type" "num" "desc" (print (string $col.rule.name) ", most overdue first") "asc" (print (string $col.rule.name) ", fewest overdue first")) -}}
             {{- if eq $ci 0 }}{{ $th = merge $th (dict "active" "descending") }}{{ end }}
             {{ partial "ui/th.html" $th }}

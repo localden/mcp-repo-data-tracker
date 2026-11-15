@@ -258,7 +258,15 @@
       empty.hidden = matched !== 0;
       if (this.table) this.table.hidden = matched === 0;
       var body = empty.querySelector('[data-empty-body]'), vl = this.viewLabel();
-      if (body) body.textContent = vl && this.view !== 'all' ? 'Nothing in ' + vl + ' matches the search and filters.' : 'Nothing matches the search and filters.';
+      /* a list whose bar is a search field alone names only the search: the copy never mentions filters the list does not have */
+      var only = empty.hasAttribute('data-search-only') || !this.el.querySelector('.v-facets');
+      var what = only ? 'the search' : 'the search and filters';
+      if (body) body.textContent = (vl && this.view !== 'all' ? 'Nothing in ' + vl + ' matches ' : 'Nothing matches ') + what + '.';
+      all('[data-filter-reset]', this.el).forEach(function (b) {
+        if (!only || b.getAttribute('data-reset-set')) return;
+        for (var n = b.lastChild; n; n = n.previousSibling) if (n.nodeType === 3 && n.nodeValue.trim()) { n.nodeValue = 'Clear search'; break; }
+        b.setAttribute('data-reset-set', '1');
+      });
       var sa = empty.querySelector('[data-search-all]');
       if (sa) {
         var can = this.tabs.length && this.view !== 'all' && inAll > 0 && this.tabs.some(function (t) { return t.getAttribute('data-view') === 'all'; });

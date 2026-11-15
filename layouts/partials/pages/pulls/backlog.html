@@ -8,7 +8,7 @@
          count of PRs a maintainer can act on; Data notes defines it. There is no third near-equal set on the card.
        Unclassified: one series, snapshots pulls.open; the readout is "Latest" with its date.
        Stat list, six rows in one order on every repository and at every width, measure by measure, the last 30 days before the
-         last 90: Opened, Merged, then Closed without merging and Net change, which exist for 90 days only (net change is opened
+         last 90: Opened, Merged, then Closed unmerged (closed without merging; the short name keeps the row on one line) and Net change, which exist for 90 days only (net change is opened
          minus merged minus closed without merging, a plain signed value). The order is the source order and is never rearranged
          for a layout: in two columns a row is one measure with 30 days on the left and 90 on the right.
      Short history (fewer than 14 daily points): one card at 12, the stat list wide, closed by the pending bar with the text the chart
@@ -39,7 +39,8 @@
   (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.opened_90d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d30)).text "value" (dict "kind" "count" "v" $pl.merged_30d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.merged_90d))
-  (dict "label" (partial "fmt/label.html" (dict "metric" "Closed without merging" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.closed_not_merged_90d))
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Closed unmerged" "window" $d90)).text
+    "title" "PRs closed without merging." "value" (dict "kind" "count" "v" $pl.closed_not_merged_90d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $d90)).text
     "title" "PRs opened minus PRs merged and PRs closed without merging." "value" $net) -}}
 {{- /* the pending text, from the closed list of 4.22, by the rule ui/chart.html uses for a daily chart */ -}}

@@ -1,4 +1,4 @@
 {{- /* RETIRED (design system v4 8.1): use ui/value.html kind range, or fmt/range.html. Kept as a thin shim until the last caller is
-  rebuilt, then deleted. Dict {from, to, year}. Returns the v4 range text: "Nov 6–12" inside one month, "Oct 8 to Nov 9" across
-  months; the year follows the v4 rule unless year: true forces it. */ -}}
+  rebuilt, then deleted. Dict {from, to, year}. Returns the v4 range text in its one form, "Nov 6 to Nov 12" and "Oct 8 to Nov 9" (fmt/range.html),
+  whatever the months; the year follows the v4 rule unless year: true forces it. */ -}}
 {{- return (partial "fmt/range.html" (dict "from" .from "to" (.to | default .from) "year" (eq .year true))).text -}}

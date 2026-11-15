@@ -36,7 +36,7 @@
   <table class="v-dt is-keep has-barfill" data-numw="{{ $numw }}" aria-labelledby="{{ $id }}">
     <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num-lg"><col class="v-col-num-lg v-keep-drop"></colgroup>
     <thead>
-      <tr class="v-dt-span"><th></th><th class="v-span" colspan="2" scope="colgroup"><span>{{ $waitSpan }}</span></th><th></th><th class="v-keep-drop"></th></tr>
+      <tr class="v-dt-span"><th></th><th class="v-span is-bar" colspan="2" scope="colgroup"><span>{{ $waitSpan }}</span></th><th></th><th class="v-keep-drop"></th></tr>
       <tr>
         {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
         {{ partial "ui/th.html" (dict "label" "Issues" "num" true "class" "v-c-bar" "record" $recI "active" "descending"

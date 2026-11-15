@@ -5,10 +5,14 @@
     title     the H1, the scope ("All repositories", "TypeScript SDK"). Default: the page title.
     scope     {kind: "issues" | "pulls" | "repo", repo: "owner/repo" or ""}: the H1 becomes the scope switcher (ui/scope-switcher.html).
     desc      one line, a repository's own description (clamped to 2 lines on a phone).
-    meta      at most three items, in order: repository link, registry link, then freshness. Each is a dict
+    meta      at most three items. Each is a dict
                 {icon, text, href, site}                a link ("github" or "package" icon; site names it for screen readers)
                 {icon, label, value: {kind, ...}}       a labelled value: "Updated" + {kind "ts"}, "Complete through" + {kind "date"}
-    updated   a time: shortcut for the item {icon "clock", label "Updated", value {kind "ts"}}, placed after the meta items.
+              The row is drawn fixed-first whatever order the caller passes (design system v4 2.6): freshness ("Updated", or
+              "Complete through") is always the first item, so it starts on the head's left edge on every page; then the other
+              labelled values, the tracking note and the data gaps; the repository and registry links, whose width follows the
+              repository, are last. On a phone every item is a line of its own.
+    updated   a time: shortcut for the item {icon "clock", label "Updated", value {kind "ts"}}: the first item of the row.
     sources   ui/sources.html output: adds the freshness item (the oldest GitHub metrics time, or "Complete through" when every source
               is a registry) and fills the Sources list of Data notes.
     note      a ui/note.html dict shown after the meta items: {since: "2026-11-10"} is "Tracking since Nov 10". Once per page, here.
@@ -54,24 +58,28 @@
   {{- else }}{{ $allThru = false }}{{ end -}}
 {{- end -}}
 
-{{- /* meta items */ -}}
-{{- $items := slice -}}
+{{- /* meta items, fixed-first: $items is freshness, then the caller's other labelled values; $links (the repository and registry
+     links, of variable width) close the row after the note and the gaps */ -}}
+{{- $links := slice }}{{ $fresh := slice }}{{ $vals := slice -}}
 {{- range $c.links }}{{ if reflect.IsMap . }}{{ if .href -}}
   {{- $t := .text }}{{ with .prefix }}{{ $t = printf "%s %s" . $t }}{{ end -}}
-  {{- $items = $items | append (dict "icon" (.icon | default (cond (strings.Contains .href "github.com") "github" "package")) "text" $t "href" .href "site" .site) -}}
+  {{- $links = $links | append (dict "icon" (.icon | default (cond (strings.Contains .href "github.com") "github" "package")) "text" $t "href" .href "site" .site) -}}
 {{- end }}{{ end }}{{ end -}}
 {{- $noteArg := $c.note -}}
 {{- range $c.meta -}}
-  {{- if reflect.IsMap . }}{{ $items = $items | append . -}}
+  {{- if reflect.IsMap . -}}
+    {{- if .href }}{{ $links = $links | append . -}}
+    {{- else if eq (.label | default "") "Updated" }}{{ $fresh = $fresh | append . -}}
+    {{- else }}{{ $vals = $vals | append . }}{{ end -}}
   {{- else if hasPrefix (string .) "Tracking since" }}{{ if not $noteArg }}{{ $noteArg = dict "text" (string .) "tone" "info" }}{{ end }}{{ end -}}
 {{- end -}}
-{{- /* one "Updated" item: a caller that places it itself in meta (Downloads: Updated, then Complete through) is not given a second */ -}}
-{{- $hasUpd := false }}{{ range $items }}{{ if eq (.label | default "") "Updated" }}{{ $hasUpd = true }}{{ end }}{{ end -}}
-{{- if $hasUpd -}}
-{{- else if $c.updated }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $c.updated)) -}}
-{{- else if ne $ghU 0 }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $ghT)) -}}
-{{- else if and $allThru $thru }}{{ $items = $items | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $thru)) -}}
-{{- else if $oldT }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $oldT)) }}{{ end -}}
+{{- /* one "Updated" item: a caller that passes it itself in meta (Downloads: Updated, then Complete through) is not given a second */ -}}
+{{- if $fresh -}}
+{{- else if $c.updated }}{{ $fresh = slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $c.updated)) -}}
+{{- else if ne $ghU 0 }}{{ $fresh = slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $ghT)) -}}
+{{- else if and $allThru $thru }}{{ $fresh = slice (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $thru)) -}}
+{{- else if $oldT }}{{ $fresh = slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $oldT)) }}{{ end -}}
+{{- $items := $fresh | append $vals -}}
 
 {{- /* a past data gap is a fact about the charted window, not a condition of the page: it is one warning item in the meta row
      ("Data gap" and its range, the sentence in title), and Data notes lists it under Coverage. The charts key it themselves.
@@ -112,14 +120,12 @@
   {{- with $c.desc | default $c.description }}
   <p class="v-page-desc v-prose v-clamp">{{ . }}</p>
   {{- end }}
-  {{- if or $items $noteArg $gapItems }}
+  {{- if or $items $links $noteArg $gapItems }}
   <ul class="v-page-meta">
     {{- range $items }}
     {{- $ic := "" }}{{ with .icon }}{{ $ic = partial "ui/icon.html" . }}{{ end }}
     <li>
-      {{- if .href -}}
-      <a class="v-meta-item" href="{{ .href }}" target="_blank" rel="noopener">{{ $ic }}<span>{{ .text }}</span>{{ with .site }}<span class="sr-only"> (opens {{ . }})</span>{{ end }}</a>
-      {{- else if .value -}}
+      {{- if .value -}}
       <span class="v-meta-item">{{ $ic }}<span>{{ with .label }}{{ . }} {{ end }}{{ partial "ui/value.html" .value }}</span></span>
       {{- else -}}
       <span class="v-meta-item">{{ $ic }}<span>{{ .text }}</span></span>
@@ -136,6 +142,9 @@
     {{- end }}
     {{- range $gapItems }}
     <li><span class="v-meta-item is-warning" title="{{ .title }}">{{ partial "ui/icon.html" "circle-alert" }}<span>Data gap {{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</span></span></li>
+    {{- end }}
+    {{- range $links }}
+    <li><a class="v-meta-item" href="{{ .href }}" target="_blank" rel="noopener">{{ with .icon }}{{ partial "ui/icon.html" . }}{{ end }}<span>{{ .text }}</span>{{ with .site }}<span class="sr-only"> (opens {{ . }})</span>{{ end }}</a></li>
     {{- end }}
   </ul>
   {{- end }}

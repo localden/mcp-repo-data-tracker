@@ -1,7 +1,7 @@
 {{- /* /issues/ (design system v4 5.2): all repositories. Context: the section page (content/issues/_index.md).
     0 page head: the H1 is the scope switcher on "All repositories"; meta: Updated.
     1 Summary: metric strip lg, no visual, 3 tiles, one context each: Waiting for a reply over 7 days (drill ?over7=1#waiting), any age (drill #waiting),
-      Open issues with the reference pair "Net change, last 30 days" (no link).
+      Open issues with the reference pair "Net change, last 30 days" (links to #by-repository).
     2 By repository: ui/repo-table.html, kind issues.
     3 Waiting for a reply, any age (id waiting): the list card "io" (pages/issues/waiting.html) with the facets Over 7 days and
       Repository.
@@ -53,13 +53,18 @@
     "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)
     "href" "?over7=1#waiting" "drill" true -}}
 {{- if $ch.has -}}
-  {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting") "context" (dict "kind" "base" "date" $ch.date)) -}}
-  {{- if lt $ch.k $ch.n }}{{ $t1 = merge $t1 (dict "note" (dict "part" $ch.k "whole" $ch.n "noun" "repository")) }}{{ end -}}
+  {{- /* fixed slots (2.6): the base of the delta is a pair like the third tile's, so the date is alone on the tile's right edge and
+       nothing follows it. When only some repositories have the older snapshot the label says how many are compared (the Coverage
+       row of Data notes carries the same ratio). */ -}}
+  {{- $baseLabel := "Change since" -}}
+  {{- if lt $ch.k $ch.n }}{{ $baseLabel = printf "Change in %s since" (partial "fmt/ratio.html" (dict "part" $ch.k "whole" $ch.n "noun" "repository")).text }}{{ end -}}
+  {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting")
+      "context" (dict "kind" "ref" "label" $baseLabel "value" (dict "kind" "date" "d" $ch.date))) -}}
 {{- end -}}
 {{- $t2 := dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual "title" $defAny
     "value" (dict "kind" "count" "v" $nAny) "context" (dict "kind" "whole" "n" (cond $hasOpen $open nil) "of" "open")
     "href" "#waiting" "drill" true -}}
-{{- $t3 := dict "name" "Open issues" "title" $defOpen "value" (dict "kind" "count" "v" (cond $hasOpen $open nil))
+{{- $t3 := dict "name" "Open issues" "title" $defOpen "value" (dict "kind" "count" "v" (cond $hasOpen $open nil)) "href" "#by-repository"
     "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" (dict "n" 30 "unit" "day"))).text
       "value" (dict "kind" "net" "v" (cond $hasNet $net nil) "reason" "no-data")) }}
 <section class="v-section v-summary" aria-label="Summary">
