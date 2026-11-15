@@ -1,0 +1,85 @@
+{{- /* "Waiting by repository" (design system v4 5.1 module 2): the kept table that opens Overview's "Needs attention". One card at
+  12; one row per repository, sorted by issues waiting (descending); every numeric column sorts. Overview and the styleguide call
+  this partial, so the specimen is the module.
+  Dict {rows, id, class}.
+    rows   slice of {name, slug, issues, prs, overdue, author}:
+             name, slug   the repository's name and its URL slug ("typescript-sdk")
+             issues, prs  items waiting over 7 days (data/waiting.html .over7); nil: the empty mark "No data"
+             overdue      the sum over every rule; nil: the empty mark "Not classified"
+             author       PRs whose author is waiting; nil: the empty mark "Not classified"
+    id     the card title's id (default "waiting-by-repository").
+  Columns:
+    Repository       fixed (bar fill)  the row link, to /repos/<slug>/
+    Issues, PRs      auto, v-col-bar   under the spanner "Waiting over 7 days" (one label at every width): the count, then its
+                                       rank bar; a cell link to the org waiting list filtered to the repository, so the count
+                                       equals the list it opens
+    Overdue          v-col-num-sm      strong danger; zero is "0"
+    Author waiting   v-col-num-lg      a cell link to the repository's PR queue with the Author waiting filter
+  It is a kept table (4.14): below 64rem it stays a table so repositories can be compared, with Repository, Issues, PRs and
+  Overdue; bars are not drawn and "Author waiting" is dropped (three numeric columns at most). */ -}}
+{{- $c := . -}}
+{{- $id := $c.id | default "waiting-by-repository" -}}
+{{- $rows := slice }}{{ $maxI := 0.0 }}{{ $maxP := 0.0 -}}
+{{- range $c.rows -}}
+  {{- $i := -1.0 }}{{ if ne .issues nil }}{{ $i = float .issues }}{{ end -}}
+  {{- $p := -1.0 }}{{ if ne .prs nil }}{{ $p = float .prs }}{{ end -}}
+  {{- if gt $i $maxI }}{{ $maxI = $i }}{{ end }}{{ if gt $p $maxP }}{{ $maxP = $p }}{{ end -}}
+  {{- $rows = $rows | append (merge . (dict "i" $i "p" $p)) -}}
+{{- end -}}
+{{- if $rows }}{{ $rows = sort $rows "i" "desc" }}{{ end -}}
+{{- $numw := len (partial "fmt/count.html" (dict "v" (math.Max $maxI $maxP))).text -}}
+{{- $waitSpan := (partial "fmt/label.html" (dict "metric" "Waiting" "threshold" "over7")).record -}}
+{{- $recI := (partial "fmt/label.html" (dict "metric" "Waiting" "scope" "Issues" "threshold" "over7")).record -}}
+{{- $recP := (partial "fmt/label.html" (dict "metric" "Waiting" "scope" "PRs" "threshold" "over7")).record -}}
+<article class="v-card {{ $c.class | default "v-span-12" }}">
+  {{ partial "ui/card-head.html" (dict "title" "Waiting by repository" "id" $id) }}
+  <table class="v-dt is-keep has-barfill" data-numw="{{ $numw }}" aria-labelledby="{{ $id }}">
+    <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num-sm"><col class="v-col-num-lg v-keep-drop"></colgroup>
+    <thead>
+      <tr class="v-dt-span"><th></th><th class="v-span" colspan="2" scope="colgroup"><span>{{ $waitSpan }}</span></th><th></th><th class="v-keep-drop"></th></tr>
+      <tr>
+        {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+        {{ partial "ui/th.html" (dict "label" "Issues" "num" true "class" "v-c-bar" "record" $recI "active" "descending"
+            "title" "Open issues with no reply from a maintainer, opened more than 7 days ago."
+            "sort" (dict "key" "issues" "type" "num" "desc" "Most issues waiting first" "asc" "Fewest issues waiting first")) }}
+        {{ partial "ui/th.html" (dict "label" "PRs" "num" true "class" "v-c-bar" "record" $recP
+            "title" "Open PRs that are not drafts, with no review from a maintainer, opened more than 7 days ago."
+            "sort" (dict "key" "prs" "type" "num" "desc" "Most PRs waiting first" "asc" "Fewest PRs waiting first")) }}
+        {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "record" "Overdue, all rules"
+            "title" "Open issues and PRs past a published deadline, added up over every rule."
+            "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Fewest overdue first")) }}
+        {{ partial "ui/th.html" (dict "label" "Author waiting" "num" true "class" "v-keep-drop" "record" "Author waiting"
+            "title" "PRs whose author answered maintainer feedback and is waiting for a maintainer."
+            "sort" (dict "key" "author-waiting" "type" "num" "desc" "Most authors waiting first" "asc" "Fewest authors waiting first")) }}
+      </tr>
+    </thead>
+    <tbody>
+      {{- range $rows }}
+      {{- $slug := .slug | default "" }}{{ $name := .name }}
+      <tr data-row-link>
+        {{ partial "ui/name-cell.html" (dict "name" $name "href" (printf "repos/%s/" $slug | relURL)) }}
+        <td class="num v-c-bar" data-v="{{ if ge .i 0.0 }}{{ printf "%.0f" .i }}{{ end }}">
+          {{- if lt .i 0.0 }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") -}}
+          {{- else if eq .i 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" .i "max" $maxI "mode" "rank") }}<a class="v-cell-link" href="{{ printf "issues/?repo=%s&over7=1#waiting" $slug | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" .i) }}<span class="sr-only"> {{ $recI }}, {{ $name }}</span></a></span>{{ end -}}
+        </td>
+        <td class="num v-c-bar" data-v="{{ if ge .p 0.0 }}{{ printf "%.0f" .p }}{{ end }}">
+          {{- if lt .p 0.0 }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") -}}
+          {{- else if eq .p 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" .p "max" $maxP "mode" "rank") }}<a class="v-cell-link" href="{{ printf "pulls/?repo=%s&over7=1#waiting" $slug | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" .p) }}<span class="sr-only"> {{ $recP }}, {{ $name }}</span></a></span>{{ end -}}
+        </td>
+        <td class="num" data-v="{{ if ne .overdue nil }}{{ printf "%.0f" (float .overdue) }}{{ end }}">
+          {{- if eq .overdue nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "not-classified") -}}
+          {{- else if eq (float .overdue) 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" .overdue) }}</span>{{ end -}}
+        </td>
+        <td class="num v-keep-drop" data-v="{{ if ne .author nil }}{{ printf "%.0f" (float .author) }}{{ end }}">
+          {{- if eq .author nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "not-classified") -}}
+          {{- else if eq (float .author) 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<a class="v-cell-link" href="{{ printf "pulls/%s/?view=all&author-waiting=1#queue" $slug | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" .author) }}<span class="sr-only"> PRs with the author waiting, {{ $name }}</span></a>{{ end -}}
+        </td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+</article>

@@ -1,7 +1,8 @@
 {{- /* "Stages and pace" (design system v4 5.6 module 3, and the Overview's "Spec proposals" row, 5.1 module 6): one 8 + 4 row.
   Call: {{ partial "pages/seps/stages.html" . }} inside a section's .v-grid. The context is not read; the partial emits the two
   cards and nothing else, so each page writes its own section head around it.
-    8  rank table card "Open SEPs by stage", stage order, no sort: Stage, Open (rank bar and number), Median age, No sponsor.
+    8  rank table card "Open SEPs by stage", stage order, no sort: Stage, Open (the number, then its rank bar), Median age, No
+       sponsor. Bar fill (2.3): the stage names are short, so the name column is fixed and the bar takes the spare width.
     4  stat list "Pace": Opened and Reached final in the last 90 days, Median time to final, Oldest open (a link to its row).
   Four stage rows of 48px under a 56px head and a 40px header are 288px; the four stat rows share that height.
   Without seps.json it emits the build-time empty card. Guard a section with (partialCached "pages/seps/data.html" "seps" "seps").has
@@ -12,11 +13,11 @@
 {{- $w90 := dict "n" 90 "unit" "day" -}}
 <article class="v-card v-span-8">
   {{ partial "ui/card-head.html" (dict "title" "Open SEPs by stage" "id" "sep-stages-title") }}
-  <table class="v-dt is-rank is-list" aria-labelledby="sep-stages-title">
+  <table class="v-dt is-rank is-list has-barfill" data-numw="{{ len (partial "fmt/count.html" (dict "v" $max)).text }}" aria-labelledby="sep-stages-title">
     <colgroup><col><col class="v-col-bar"><col class="v-col-num-sm"><col class="v-col-num"></colgroup>
     <thead><tr>
       {{ partial "ui/th.html" (dict "label" "Stage") }}
-      {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open SEPs") }}
+      {{ partial "ui/th.html" (dict "label" "Open" "num" true "class" "v-c-bar" "record" "Open SEPs") }}
       {{ partial "ui/th.html" (dict "label" "Median age" "num" true "unit" ", days" "title" "Median calendar days since the open SEPs of the stage were opened.") }}
       {{ partial "ui/th.html" (dict "label" "No sponsor" "num" true "title" "Open SEPs of the stage with no sponsor whose author is not a core or lead maintainer.") }}
     </tr></thead>

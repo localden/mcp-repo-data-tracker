@@ -3,22 +3,34 @@
   are attributes rendered by the partial; hover and focus are captured by ui-capture.py on [data-specimen-state]; narrow layouts are
   the 1024, 768 and 390 captures of this page. The sections live in pages/styleguide/*.html. */ -}}
 {{- $asof := partialCached "ui/latest-date.html" "latest" "latest" -}}
+{{- $keys := slice -}}
+{{- range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
+{{- /* the index: named groups of quiet links, a column each (never a wrap of arrowed links) */ -}}
 {{- $toc := slice
-  (dict "id" "colour" "t" "Colour") (dict "id" "type" "t" "Type") (dict "id" "formats" "t" "Formats") (dict "id" "space" "t" "Space and grid")
-  (dict "id" "icons" "t" "Icons") (dict "id" "header" "t" "Header and footer") (dict "id" "page-head" "t" "Page head")
-  (dict "id" "section-card" "t" "Section and card") (dict "id" "metrics" "t" "Metric strip") (dict "id" "stat-list" "t" "Stat list")
-  (dict "id" "badges" "t" "Badge, tag, count, note, delta, callout") (dict "id" "buttons" "t" "Buttons and links") (dict "id" "menu" "t" "Menu")
-  (dict "id" "tabs" "t" "Tabs") (dict "id" "filter-bar" "t" "Filter bar") (dict "id" "list-card" "t" "List card") (dict "id" "tables" "t" "Tables")
-  (dict "id" "sla-table" "t" "SLA rule table") (dict "id" "by-repository" "t" "Repository breakdown") (dict "id" "charts" "t" "Charts")
-  (dict "id" "sparkline" "t" "Sparkline, bars, distribution") (dict "id" "text" "t" "Text primitives") (dict "id" "redirect" "t" "Redirect stub") -}}
+  (dict "t" "Foundations" "items" (slice
+    (dict "id" "colour" "t" "Colour") (dict "id" "type" "t" "Type") (dict "id" "formats" "t" "Formats") (dict "id" "space" "t" "Space and grid")
+    (dict "id" "icons" "t" "Icons") (dict "id" "text" "t" "Text primitives")))
+  (dict "t" "Page" "items" (slice
+    (dict "id" "header" "t" "Header and footer") (dict "id" "page-head" "t" "Page head") (dict "id" "section-card" "t" "Section and card")
+    (dict "id" "metrics" "t" "Metric strip") (dict "id" "stat-list" "t" "Stat list") (dict "id" "redirect" "t" "Redirect stub")))
+  (dict "t" "Controls" "items" (slice
+    (dict "id" "badges" "t" "Badge, tag, count, note, delta, callout") (dict "id" "buttons" "t" "Buttons and links") (dict "id" "menu" "t" "Menu")
+    (dict "id" "tabs" "t" "Tabs") (dict "id" "filter-bar" "t" "Filter bar") (dict "id" "list-card" "t" "List card")))
+  (dict "t" "Data" "items" (slice
+    (dict "id" "tables" "t" "Tables") (dict "id" "sla-table" "t" "SLA rule table") (dict "id" "by-repository" "t" "Repository breakdown")
+    (dict "id" "charts" "t" "Charts") (dict "id" "sparkline" "t" "Sparkline, bars, distribution"))) -}}
 {{ partial "ui/page-head.html" (dict "eyebrow" "" "title" "Styleguide" "id" "sg"
     "desc" "Every VISR component in every state, rendered by the partials the pages use. If it is not on this page, it may not appear on a page."
-    "meta" (slice (dict "icon" "calendar" "label" "Data as of" "value" (dict "kind" "date" "d" $asof "year" true)))) }}
+    "sources" (partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")))) }}
 
 <section class="v-section" aria-label="Contents">
   <div class="v-grid">
     <article class="v-card v-span-12"><div class="v-card-body"><nav class="v-sg-toc" aria-label="Styleguide sections">
-      {{- range $toc }}{{ partial "ui/link-action.html" (dict "text" .t "href" (printf "#%s" .id)) }}{{ end -}}
+      {{- range $toc }}
+      <div><p class="v-sg-toc-h">{{ .t }}</p><ul>
+        {{- range .items }}<li><a class="v-link-quiet" href="#{{ .id }}">{{ .t }}</a></li>{{ end -}}
+      </ul></div>
+      {{- end }}
     </nav></div></article>
   </div>
 </section>

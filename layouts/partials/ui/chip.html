@@ -1,5 +1,5 @@
 {{- /* Facet chip (design system v4 4.12): one filter of a list's filter bar. ui/filterbar.html renders these from its facets.
-  Dict {key, label, title, kind, count, options, pressed, disabled, id}.
+  Dict {key, label, title, kind, count, options, pressed, disabled, id, noun, value, open}.
     key      the facet key of 4.15 (overdue, over7, status, rule, repo...): the URL parameter and the data-facets token.
     title    the one-line definition (required on pages).
     kind     "check" (default): an attribute a row has or lacks. button.v-chip[aria-pressed] with a checkbox mark, the label and a
@@ -9,6 +9,9 @@
     count    rows that would match (check). options: slice of {value, label, count} (select); a row matches an option through the
                data-facets token "key:value".
     id       the list's id prefix; the select menu is "{id}-{key}-menu".
+    noun     the plural the counts count, capitalised ("PRs", "Issues", "SEPs"): the right-hand column label of a select menu.
+               ui/filterbar.html passes it.
+    value    (select) the chosen value's label, for a static specimen of the active state. open: true renders the menu open.
   Rows carry data-facets="overdue auth author:maintainer rule:first-review"; ui.js keeps the counts live. Sorting is never a chip, and
   a chip never navigates. */ -}}
 {{- $c := . -}}
@@ -20,7 +23,9 @@
 {{- range $c.options }}{{ $items = $items | append (dict "text" (.label | default .value) "value" .value "count" .count "checked" .checked) }}{{ end -}}
 <div class="v-menu-wrap" data-menu data-facet="{{ $key }}">
   <button type="button" class="v-chip is-select" aria-haspopup="menu" aria-expanded="false" aria-controls="{{ $menuID }}"{{ with $c.title }} title="{{ . }}"{{ end }}{{ if $c.value }} data-active{{ end }}{{ if $c.disabled }} disabled{{ end }}><span class="v-chip-label">{{ $c.label }}</span><span class="v-chip-value" data-facet-value{{ if not $c.value }} hidden{{ end }}>{{ $c.value }}</span>{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 14 "class" "is-chev") }}</button>
-  {{ partial "ui/menu.html" (dict "id" $menuID "bare" true "variant" "select" "multi" true "label" $c.label "items" $items "open" $c.open) }}
+  {{- /* counts are shown, so the menu names both columns: the facet and the noun counted ("Status", "PRs") */}}
+  {{ partial "ui/menu.html" (dict "id" $menuID "bare" true "variant" "select" "multi" true "label" $c.label "items" $items "open" $c.open
+      "cols" (slice $c.label ($c.noun | default "Items"))) }}
 </div>
 {{- else -}}
 {{- $zero := false }}{{ if ne $c.count nil }}{{ $zero = eq (float $c.count) 0.0 }}{{ end -}}

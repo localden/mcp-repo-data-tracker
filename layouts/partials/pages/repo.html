@@ -1,10 +1,10 @@
 {{- /* Repository page /repos/<repo>/ (design system v4 5.8); the /repos/ index when .Params.repo is empty (5.9; content/repos/_index.md
   sets page: repo). Context: the page. This file reads the data once and hands one dict to each module, in render order:
-    pages/repo/summary.html    1. Summary: metric strip lg, trend, 4 link tiles
+    pages/repo/summary.html    1. Summary: metric strip lg, trend, 4 link tiles (the four of the Overview)
     pages/repo/attention.html  2. Needs attention: the overdue strip, then two preview lists
     pages/repo/activity.html   3. Activity: a pair of chart cards, Issues and PRs
-    pages/repo/flow.html       4. Opened and closed: one matrix table
-    pages/repo/downloads.html  5. Downloads: one chart card (repositories with a registry package)
+    pages/repo/flow.html       4. Opened and closed: a pair of kept tables, Issues and PRs, measures as rows
+    pages/repo/downloads.html  5. Downloads: chart card and stat list (repositories with a registry package)
     pages/repo/community.html  6. Community: metric strip, chart pair; then 7. People, its own section (pages/repo/people.html)
   The dict: {r, m, c, roles, dl, s, sla, wi, wp, first}. wi and wp are data/waiting.html for issues and PRs: every waiting count on
   the page and the lists those counts open come from them.
@@ -69,13 +69,13 @@
   (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
   (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
   (dict "term" "Waiting" "text" "Calendar days since the issue or PR opened.")
-  (dict "term" "Net change" "text" "Opened minus closed in the window. For PRs, opened minus merged minus closed without merging.") -}}
+  (dict "term" "Net change" "text" "Issues opened minus issues closed in the window.") -}}
 {{- range slice "triage" "p0" "p1" "first-review" -}}
   {{- $rule := partial "data/sla-rules.html" . -}}
   {{- $defs = $defs | append (dict "term" (printf "%s deadline" $rule.name) "text" (printf "%s. Source: %s." $rule.deadline $rule.source)) -}}
 {{- end -}}
-{{- $defs = $defs | append (dict "term" "Closed without merging" "text" "PRs closed without a merge. Tracked for 90 days only, and so is the PR net change.") -}}
-{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "The sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported. A package with fewer complete days shows the sum of the days it has, with a coverage note. A day the registry has not reported is missing, never zero.") }}{{ end -}}
+{{- $defs = $defs | append (dict "term" "Closed without merging" "text" "PRs closed without a merge. Tracked for 90 days only, so the shorter windows have no value.") -}}
+{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "The sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported, so it can end before this registry's own Complete through day. A package with fewer complete days shows the sum of the days it has, with a coverage note. A day the registry has not reported is missing, never zero.") }}{{ end -}}
 {{- $defs = $defs | append (dict "term" "Active contributors" "text" (cond (isset $c "active_people")
     "Distinct people, known bots excluded, who opened an issue or PR, authored a commit, reviewed or commented in the last 30 days."
     "Distinct people, known bots excluded, who opened an issue or PR or authored a commit in the last 30 days. Reviews and comments are not counted yet.")) -}}
@@ -86,8 +86,8 @@
 {{- else -}}
   {{- $defs = $defs | append (dict "term" "Maintainers" "text" "No maintainer group is defined for this repository.") -}}
 {{- end -}}
-{{- $defs = $defs | append (dict "term" "People" "text" "Everyone active in the last 30 days, together with this repository's maintainers.") -}}
-{{- $defs = $defs | append (dict "term" "Commits per week" "text" "Commits on the default branch in each 7-day period up to the last data collection.") -}}
+{{- $defs = $defs | append (dict "term" "People" "text" "Everyone active in the last 30 days, together with this repository's maintainers. Active first, then A to Z.") -}}
+{{- $defs = $defs | append (dict "term" "Commits per week" "text" "Commits on the default branch, counted in 7-day periods ending on the day of the last update. A period is not a calendar week.") -}}
 
 {{- $head := dict "scope" (dict "kind" "repo" "repo" $r.key) "desc" ($r.cfg.description | default "") "meta" $meta "sources" $src
     "gap" (dict "repos" (slice $r.key) "days" 364) "notes" $notes "defs" $defs "facts" $facts -}}

@@ -1,0 +1,15 @@
+{{- /* Status cell (design system v4 4.16): the Status column of a work row. Emits the whole <td class="v-c-status">: the status
+  badge on the title's line and, when the row has one, the detail phrase on the meta line under it. There is no Detail column.
+  Dict {status, detail, order}.
+    status  a ui/badge.html dict, normally the result of data/pr-status.html or data/issue-status.html ({label, tone, tip, order}).
+    detail  a ui/detail.html dict {text, who, ref, days, title}: the one row-specific fact the badge cannot say ("Reviewed by"
+            travisbreaks, "Backport of" #1521, "Changes requested" 228d). Omit it when the badge says it all.
+    order   the sort key (data-v); default: the status dict's order.
+  Below 64rem the cell dissolves into the row's grid: the badge is line 3 (beside the Overdue object), the detail line 5. */ -}}
+{{- $c := . -}}
+{{- $st := $c.status | default dict -}}
+{{- $order := $c.order -}}{{- if eq $order nil }}{{ $order = $st.order }}{{ end -}}
+<td class="v-c-status"{{ if ne $order nil }} data-v="{{ $order }}"{{ end }}>
+  {{- with $c.status }}{{ partial "ui/badge.html" . }}{{ end -}}
+  {{- with $c.detail }}{{ partial "ui/detail.html" . }}{{ end -}}
+</td>

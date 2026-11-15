@@ -2,25 +2,25 @@
     r    a row from pages/issues/rows.html.
     off  true when the row is outside the default view (data-off: hidden at first paint).
     k    the row's index inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
-  Cells in the fixed order: Issue (ui/row-item.html: id, author and role, priority, flags, labels), Status (one badge), Detail (a short
-  phrase that may end in one component), Overdue (ui/sla.html), Age (whole days; the title names the opening date). An empty Detail
-  cell is exactly empty, so it takes no line in list form. */ -}}
+  Cells in the fixed order: Issue (ui/row-item.html: id, author and role, priority, flags, labels), Status (ui/status-cell.html: the
+  badge and, under it, the detail phrase, a short phrase that may end in one component), Overdue (ui/sla.html), Age (whole days; the
+  title names the opening date). There is no Detail column; a row without a detail has the badge alone. */ -}}
 {{- $r := .r }}{{ $k := int (.k | default 0) -}}
+{{- $d := dict -}}
+{{- with $r.detail -}}
+  {{- if eq .kind "reporter-waiting" -}}
+    {{- $d = dict "text" "Reporter waiting" -}}
+    {{- if ne .days nil }}{{ $d = merge $d (dict "days" .days "title" (partial "fmt/count.html" (dict "v" .bd "noun" "business day")).text) }}{{ end -}}
+  {{- else if eq .kind "fix" -}}
+    {{- $d = dict "text" "Fix in" "ref" (printf "#%d" (int .pr)) -}}
+  {{- else if eq .kind "reporter" -}}
+    {{- $d = dict "text" "Waiting on reporter" -}}
+  {{- end -}}
+{{- end }}
 <tr data-row data-row-link id="issue-{{ $r.n }}" data-views="{{ $r.view }}" data-facets="{{ delimit $r.tok " " }}"{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
   {{ partial "ui/row-item.html" (dict "title" $r.title "href" $r.url "id" (printf "#%s" $r.n) "author" $r.author "role" $r.role
       "prio" $r.prio "flags" $r.flags "tags" $r.labels) }}
-  <td class="v-c-status" data-v="{{ $r.st.order }}">{{ partial "ui/badge.html" $r.st }}</td>
-  <td class="v-c-detail">
-    {{- with $r.detail -}}
-      {{- if eq .kind "reporter-waiting" -}}
-        {{- partial "ui/detail.html" (dict "text" "Reporter waiting" "days" .days "title" (partial "fmt/count.html" (dict "v" .bd "noun" "business day")).text) -}}
-      {{- else if eq .kind "fix" -}}
-        {{- partial "ui/detail.html" (dict "text" "Fix in" "ref" (printf "#%d" .pr)) -}}
-      {{- else if eq .kind "reporter" -}}
-        {{- partial "ui/detail.html" (dict "text" "Waiting on reporter") -}}
-      {{- end -}}
-    {{- end -}}
-  </td>
+  {{ partial "ui/status-cell.html" (dict "status" $r.st "detail" $d) }}
   {{ partial "ui/sla.html" (dict "rules" $r.rules) }}
   <td class="num" data-v="{{ printf "%.1f" $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" $r.opened) }}</td>
 </tr>

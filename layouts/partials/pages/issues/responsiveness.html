@@ -22,8 +22,8 @@
   {{- if hasSuffix . "_days" -}}
     {{- $h := slice -}}
     {{- range $pts -}}
-      {{- if ne .value nil }}{{ $h = $h | append (dict "date" .date "value" (mul (float .value) 24.0)) -}}
-      {{- else }}{{ $h = $h | append (dict "date" .date "value" nil) }}{{ end -}}
+      {{- if ne .value nil }}{{ $h = $h | append (dict "date" .date "value" (mul (float .value) 24.0) "end" (.end | default "")) -}}
+      {{- else }}{{ $h = $h | append (dict "date" .date "value" nil "end" "") }}{{ end -}}
     {{- end -}}
     {{- $pts = $h -}}
   {{- end -}}

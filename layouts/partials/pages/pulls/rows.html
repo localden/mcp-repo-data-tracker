@@ -4,9 +4,10 @@
        {pr, view, state, st (data/pr-status.html), role, rules, tok, id, age, opened, k, parent}.
        Every PR of a duplicate cluster is its own row, so every count on the page (a view, All, the result count, a tile) is a count
        of open PRs and All equals Open PRs. The other members of a cluster carry parent (the number of the primary PR, drawn as the
-       attribute tag "Duplicate of #N"), sit in the view of their primary and follow it in the default sort.
+       attribute tag "Duplicate of #N") and sit in the view of their primary. Each has its own sort key, so the emitted order is exactly
+       the order the Overdue header states and a click on any header can be undone by clicking Overdue again.
      views: rows per view {needs, housekeeping, close, author}; def: the default view (the first that is not empty); all: every row;
-       over: rows past a review deadline (needs view only).
+       over: rows past a review deadline. Only rows of the needs view can be overdue, so this is also the count of ?view=all&overdue=1.
    Views (disjoint piles, by who has the next step; a view never shares its name with a status that lives in another view):
      needs         classifier tiers 0 to 3 and unclassified PRs ("Needs a maintainer").
      author        the not-our-move pile of the classifier, plus the tier 4 PRs whose status says the author has the next step
@@ -49,7 +50,7 @@
           {{- end -}}
         {{- end -}}
       {{- end -}}
-      {{- $pview := string $g.view }}{{ $pk := 0.0 }}{{ $pn := 0 -}}
+      {{- $pview := string $g.view }}{{ $pn := 0 -}}
       {{- range $j, $p := $members -}}
         {{- $state := string ($p.state | default $s.name | default "unknown") -}}
         {{- $st := partialCached "data/pr-status.html" $state $state -}}
@@ -85,9 +86,9 @@
             "id" (printf "pr-%d" (int ($p.number | default 0))) "age" $age "opened" ($asof.AddDate 0 0 (int (sub 0 (math.Floor $age))))
             "k" $key -}}
         {{- if eq $j 0 -}}
-          {{- $pk = $key }}{{ $pn = int ($p.number | default 0) -}}
+          {{- $pn = int ($p.number | default 0) -}}
         {{- else -}}
-          {{- $row = merge $row (dict "k" (sub $pk (mul 0.001 (float $j))) "parent" $pn) -}}
+          {{- $row = merge $row (dict "parent" $pn) -}}
         {{- end -}}
         {{- $top = $top | append $row -}}
       {{- end -}}

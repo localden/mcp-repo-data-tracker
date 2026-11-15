@@ -2,13 +2,15 @@
   Dict {rules}. rules: slice of {key, days}: every rule of data/sla-rules.html the row breaches, with the days overdue (nil when
   unknown). An empty slice is an empty cell (a row that is not overdue).
   The cell shows the rule with the most days overdue: its registry name in caption text-2, then the days in strong danger; further
-  rules fold into a "+N" tag that names them in its title. CSS draws that tag before the rule name, so the days keep the column's
-  right edge whatever the row breaches. The cell's title is the rule's "{deadline}, {source}".
+  rules fold into a "+N" tag that names them in its title. The order is rule, +N, days ("P1 bug" +1 324d): the tag belongs to
+  the rule name, and the days are last, so they keep the column's right edge whatever the row breaches. The cell's title is the
+  rule's "{deadline}, {source}".
   With days unknown the value is the danger badge "Overdue". data-v is the days (the sort key); data-rules lists every breached rule
   ("p1:514,follow-up:12") so ui.js can swap in the chosen rule while the SLA rule filter is active. The row's data-facets must carry
   "overdue" and one "rule:{key}" token per rule. No icon; the rendering never changes shape with the data.
   List form below 64rem has no column header, so the word "overdue" shows between the rule and the days ("First review overdue 269d",
-  the word order every other page uses); it is hidden from 64rem and beside the badge, which already says it. */ -}}
+  the word order every other page uses); it is hidden from 64rem and beside the badge, which already says it. The +N tag is not
+  drawn there: its names live in a title, which touch cannot open, and the SLA rule filter lists every rule. */ -}}
 {{- $rules := slice -}}
 {{- range .rules }}{{ if reflect.IsMap . }}{{ if .key -}}
   {{- $d := -1.0 }}{{ if ne .days nil }}{{ $d = math.Max 0.0 (math.Floor (float .days)) }}{{ end -}}
@@ -24,12 +26,12 @@
     {{- if gt $i 0 }}{{ $others = $others | append (partial "data/sla-rules.html" $r.key).name }}{{ end -}}
   {{- end -}}
 <td class="num v-sla-cell"{{ if ge $top.d 0.0 }} data-v="{{ printf "%.0f" $top.d }}"{{ end }} data-rules="{{ delimit $list "," }}"><span class="v-sla" title="{{ $reg.title }}"><span class="v-sla-rule">{{ $reg.name }}</span><span class="v-sla-label" aria-hidden="true">overdue</span>
+  {{- with $others }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (len .)) "kind" "more" "title" (delimit . ", ")) }}{{ end -}}
   {{- if ge $top.d 0.0 -}}
   <span class="v-over">{{ partial "ui/value.html" (dict "kind" "dur" "d" $top.d "unit" "d" "compact" true "title" $reg.title) }}<span class="sr-only"> overdue</span></span>
   {{- else -}}
   {{ partial "ui/badge.html" (dict "text" "Overdue" "tone" "danger") }}
   {{- end -}}
-  {{- with $others }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (len .)) "kind" "more" "title" (delimit . ", ")) }}{{ end -}}
 </span></td>
 {{- else -}}
 <td class="num v-sla-cell"></td>

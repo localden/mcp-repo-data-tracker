@@ -4,7 +4,7 @@
       always render; an empty one is disabled and keeps its place. The default is the first that is not empty.
     Facets, the same six on every repository: Overdue, Waiting for a reply (checks); Status, Type, Priority, SLA rule (selects).
       First-paint counts are the rows of the default view; ui.js keeps them live.
-    Columns: Issue, Status, Detail, Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
+    Columns: Issue, Status (badge over the detail phrase), Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
     One tr per issue, no group rows. Rows outside the default view carry data-off; inside it, rows past the first step carry data-over. */ -}}
 {{- $r := .r }}{{ $q := .q }}{{ $id := .id | default "iq" -}}
 {{- $n := int $q.all -}}
@@ -44,16 +44,15 @@
       (dict "key" "priority" "label" "Priority" "title" "The priority label on the issue." "kind" "select" "options" $priority)
       (dict "key" "rule" "label" "SLA rule" "title" "The Response SLA the issue is past." "kind" "select" "options" $rule) }}
     <article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="issues" data-noun-one="issue">
-      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
+      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "noun" "Issues" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
       <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
         {{ partial "ui/filterbar.html" (dict "id" $id "noun" "issue" "total" $nDef "facets" $facets) }}
         {{ partial "ui/list-band.html" (dict "id" $id "noun" "issue" "total" $nDef) }}
         <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="queue">
-          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <colgroup><col><col class="v-col-status"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
           <thead><tr>
             {{ partial "ui/th.html" (dict "label" "Issue") }}
-            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
-            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "title" "The next step. The line under it is the one fact the status cannot say." "sort" (dict "key" "status" "type" "order" "asc" "Status, in workflow order")) }}
             {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "title" "Calendar days past the deadline of the rule named beside it."
                 "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
             {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the issue opened."

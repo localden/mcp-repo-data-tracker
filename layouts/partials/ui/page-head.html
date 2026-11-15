@@ -12,9 +12,16 @@
     sources   ui/sources.html output: adds the freshness item (the oldest GitHub metrics time, or "Complete through" when every source
               is a registry) and fills the Sources list of Data notes.
     note      a ui/note.html dict shown after the meta items: {since: "2026-11-10"} is "Tracking since Nov 10". Once per page, here.
-    callout   a ui/callout.html dict {title, items}. gap: {repos, days, key} computes the data-gap callout from ui/page-gaps.html instead.
-    defs      Data notes definitions: slice of {term, text}. notes: further sentences (slice of strings). facts: Sources rows, slice of
-              {label, value: {kind, ...}} (a tracking start date, a star count). Every sentence removed from a page lands here.
+    callout   a ui/callout.html dict {title, items}: only for a condition that is true now (collection failing, registry data
+              older than 3 days; the second is computed from sources).
+    gap       {repos, days, key}: the missing runs of the charted window, from ui/page-gaps.html. Each is one warning item at the
+              end of the meta row ("Data gap" and its range, the sentence in title) and a Coverage row of Data notes. A past gap
+              is never a callout.
+    defs      Data notes definitions: slice of {term, text, group}. notes: further sentences (slice of strings). facts: Sources
+              rows, slice of {label, value: {kind, ...}} (a tracking start date, a star count). registries: ui/sources.html
+              output listed under "Complete through" in Data notes without becoming page sources. coverage: slice of
+              {label, part, whole, noun, title}, the Coverage rows ("Issue classification" 2 of 9 repositories). Every sentence
+              removed from a page lands in Data notes, as a definition or a labelled value.
     id        element id prefix (default "page"): H1 "{id}-title", panel "{id}-notes", menu "{id}-scope-menu".
   No page head holds a work count or a popularity count. */ -}}
 {{- $c := . -}}
@@ -63,18 +70,17 @@
 {{- else if and $allThru $thru }}{{ $items = $items | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $thru)) -}}
 {{- else if $oldT }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $oldT)) }}{{ end -}}
 
-{{- /* callout: passed in, or computed from the charted window's gaps */ -}}
-{{- $callout := $c.callout | default dict }}{{ $gaps := dict -}}
+{{- /* a past data gap is a fact about the charted window, not a condition of the page: it is one warning item in the meta row
+     ("Data gap" and its range, the sentence in title), and Data notes lists it under Coverage. The charts key it themselves.
+     The callout is kept for what is true now: data that has stopped arriving. */ -}}
+{{- $callout := $c.callout | default dict }}{{ $gaps := dict }}{{ $gapItems := slice -}}
 {{- if reflect.IsMap $c.gap -}}
   {{- $gaps = partial "ui/page-gaps.html" $c.gap -}}
   {{- $noun := $c.gap.noun | default "GitHub data" -}}
-  {{- $ci := slice -}}
-  {{- range $i, $run := $gaps.runs -}}
-    {{- $t := printf "No %s from {range}%s." $noun (cond (eq $run.outage true) " (collection outage)" "") -}}
-    {{- if eq $i 0 }}{{ $t = printf "%s Charts show the gap." $t }}{{ end -}}
-    {{- $ci = $ci | append (dict "text" $t "from" $run.from "to" $run.to) -}}
+  {{- range $gaps.runs -}}
+    {{- $t := printf "No %s from %s%s. Charts show the gap." $noun (partial "fmt/range.html" (dict "from" .from "to" .to)).text (cond (eq .outage true) " (collection outage)" "") -}}
+    {{- $gapItems = $gapItems | append (dict "from" .from "to" .to "title" $t) -}}
   {{- end -}}
-  {{- if $ci }}{{ $callout = dict "title" "Data gap" "items" ($ci | append $stale) }}{{ end -}}
 {{- end -}}
 {{- if and (not $callout.items) $stale }}{{ $callout = dict "title" "Stale data" "items" $stale }}{{ end -}}
 
@@ -83,7 +89,7 @@
 {{- $defs := $c.defs | default slice -}}
 {{- $facts := $c.facts | default slice -}}
 {{- if reflect.IsMap $c.notes }}{{ with $c.notes.defs }}{{ $defs = . }}{{ end }}{{ with $c.notes.facts }}{{ $facts = . }}{{ end }}{{ with $c.notes.sentences }}{{ $noteList = . }}{{ end }}{{ end -}}
-{{- $hasNotes := or $srcs $gaps.runs $gaps.reconstructed $noteList $defs $facts -}}
+{{- $hasNotes := or $srcs $gaps.runs $gaps.reconstructed $noteList $defs $facts $c.registries $c.coverage -}}
 <header class="v-page-head">
   {{- with $eyebrow }}
   <p class="v-eyebrow">{{ . }}</p>
@@ -99,7 +105,7 @@
   {{- with $c.desc | default $c.description }}
   <p class="v-page-desc v-prose v-clamp">{{ . }}</p>
   {{- end }}
-  {{- if or $items $noteArg }}
+  {{- if or $items $noteArg $gapItems }}
   <ul class="v-page-meta">
     {{- range $items }}
     {{- $ic := "" }}{{ with .icon }}{{ $ic = partial "ui/icon.html" . }}{{ end }}
@@ -121,12 +127,15 @@
     <li><span class="v-meta-item">{{ partial "ui/icon.html" "clock" }}<span>{{ $nt }}{{ with $nd }} {{ partial "ui/value.html" (dict "kind" "date" "d" .) }}{{ end }}</span></span></li>
     {{- end }}
     {{- end }}
+    {{- range $gapItems }}
+    <li><span class="v-meta-item is-warning" title="{{ .title }}">{{ partial "ui/icon.html" "circle-alert" }}<span>Data gap {{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</span></span></li>
+    {{- end }}
   </ul>
   {{- end }}
   {{- with $callout.items }}
   {{ partial "ui/callout.html" $callout }}
   {{- end }}
   {{- if $hasNotes }}
-  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $noteList "defs" $defs "facts" $facts "open" $c.notes_open) }}
+  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $noteList "defs" $defs "facts" $facts "registries" $c.registries "coverage" $c.coverage "open" $c.notes_open) }}
   {{- end }}
 </header>

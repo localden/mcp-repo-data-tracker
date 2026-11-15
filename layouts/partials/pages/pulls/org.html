@@ -30,6 +30,10 @@
 {{- $defAny := "The same PRs at any age: every row of the list on this page." -}}
 {{- $defOpen := "PRs open now, drafts included, summed over all tracked repositories." -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
+{{- /* the dated change of the over-7-days tile, and how many repositories it compares: a Coverage row of Data notes */ -}}
+{{- $ch := partial "pages/issues/org-change.html" "pulls.without_review_7d" -}}
+{{- $cov := slice -}}
+{{- if $ch.has }}{{ $cov = slice (dict "label" "Change on the waiting tile" "part" $ch.k "whole" $ch.n "noun" "repository" "title" "Repositories that have a snapshot about 30 days older.") }}{{ end -}}
 {{ partial "ui/page-head.html" (dict "scope" (dict "kind" "pulls" "repo" "") "sources" $src
     "defs" (slice
       (dict "term" "Waiting for first review" "text" $defWait)
@@ -37,14 +41,14 @@
       (dict "term" "Waiting" "text" "Calendar days since the PR opened.")
       (dict "term" "Longest wait" "text" "The longest wait among a repository's PRs that have waited more than 7 days.")
       (dict "term" "Open PRs" "text" $defOpen)
-      (dict "term" "Change on the waiting tile" "text" "Compares the repositories that have a snapshot about 30 days older; the note under the value says how many that is."))) }}
+      (dict "term" "Change on the waiting tile" "text" "Compares only the repositories that have a snapshot about 30 days older, so like is compared with like. Coverage says how many that is."))
+    "coverage" $cov) }}
 
 {{- /* 1 Summary. Every tile has one context (4.5): the dated change when a snapshot about 30 days older exists, else the longest
      wait; the whole the any-age pile is part of; the fixed reference pair. The any-age count has no stored history, so the strip
      has no sparklines (one visual per strip, all tiles or none); the By repository table carries the 12-week trends. */ -}}
 {{- $longest := dict "kind" "dur" "unit" "d" "reason" "no-data" -}}
 {{- with $rows }}{{ $longest = dict "kind" "dur" "d" (float (index . 0).w) "unit" "d" }}{{ end -}}
-{{- $ch := partial "pages/issues/org-change.html" "pulls.without_review_7d" -}}
 {{- $t1 := dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
     "value" (dict "kind" "count" "v" $n7)
     "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)

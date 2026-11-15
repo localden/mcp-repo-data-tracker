@@ -5,8 +5,9 @@
             stage on the specification repository, else "")}.
        org  true adds the Repository cell and the repository slot of the item cell (shown below 64rem).
        off  true when the row is outside the default view. k: the row's index inside the default view (first-paint marks).
-     Cells in the fixed order: Repository, PR, Waiting. Item meta slots: id, repository, author (with the role tag "Bot" where the data
-     says so; these rows carry no other role), lines changed, "SEP {stage}", labels. Tokens: over7, repo:<slug>. */ -}}
+     Cells in the fixed order: Repository, PR, Waiting (headed "Age" on a list with views). Item meta slots: id, repository, author (with the role tag "Bot" where the data
+     says so; these rows carry no other role), lines changed, "SEP {stage}", "Needs working group" (an open SEP with the
+     wg-support-needed label), labels. Tokens: over7, repo:<slug>. */ -}}
 {{- $row := .row }}{{ $it := $row.it }}{{ $org := eq .org true }}{{ $k := int (.k | default 0) -}}
 {{- $num := int ($it.number | default 0) -}}
 {{- $author := string ($it.author | default "") -}}
@@ -14,6 +15,11 @@
 {{- $role := partial "data/role.html" (dict "author" $author "bot" $it.isBot) -}}
 {{- $sep := partial "data/sep-stage.html" (dict "stage" $row.stage "repo" $row.slug "number" $it.number "labels" $it.labels) -}}
 {{- $attrs := $sep.attrs }}{{ $tags := $sep.tags -}}
+{{- /* an open SEP that carries wg-support-needed shows the attribute "Needs working group", exactly as its row on /seps/ does */ -}}
+{{- if and $attrs (in $tags "wg-support-needed") -}}
+  {{- $attrs = slice (index $attrs 0) (dict "text" "Needs working group" "title" "Carries the wg-support-needed label.") -}}
+  {{- $tags = complement (slice "wg-support-needed") $tags -}}
+{{- end -}}
 {{- $tok := slice -}}
 {{- if ge $row.w 7.0 }}{{ $tok = $tok | append "over7" }}{{ end -}}
 {{- if $org }}{{ $tok = $tok | append (printf "repo:%s" $row.slug) }}{{ end -}}

@@ -2,7 +2,8 @@
   Context: dict "e" (the seps.json entry) "stage" (one of "proposal", "draft", "in-review", "accepted", "parked", "merged")
   "ref" (Unix seconds of seps.json lastUpdated) "core" (lowercased core and lead maintainer logins).
   Keys:
-    num (the PR number); sep: the id of the first meta slot, "SEP-2028" parsed anywhere in the title, else "#3440";
+    num (the PR number); sep: the id of the first meta slot, always in the one grammar "SEP-2028": the number the title names, else the PR
+      number (a SEP is numbered by its PR), so one list never mixes "SEP-3392" and "#3440";
     title: verbatim, minus the leading "SEP-2028: " prefix (the id is the first meta slot); url; author; createdAt;
     sponsor + sponsorKind: "handle", "self" (the sponsor is the author, or there is no sponsor and the author is a core or lead
       maintainer) or "none"; needsSponsor: a proposal with none;
@@ -16,7 +17,7 @@
 
 {{- $sepNum := "" -}}
 {{- with findRE `(?i)SEP-[0-9]+` $raw 1 }}{{ $sepNum = replaceRE `(?i)^SEP-` "" (index . 0) }}{{ end -}}
-{{- $sep := printf "#%d" $num }}{{ with $sepNum }}{{ $sep = printf "SEP-%s" . }}{{ end -}}
+{{- $sep := printf "SEP-%d" $num }}{{ with $sepNum }}{{ $sep = printf "SEP-%s" . }}{{ end -}}
 {{- $title := strings.TrimSpace (replaceRE `^\s*(?i:sep\(\s*SEP-[0-9]+\s*\)|SEP(-[0-9]+)?)\s*:\s*` "" $raw) -}}
 {{- if not $title }}{{ $title = $raw }}{{ end -}}
 

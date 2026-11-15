@@ -65,6 +65,7 @@ check "details element: disclosures are button[aria-expanded][aria-controls] + a
 check "superscript footnote: definitions go in a title, a qualifier or Data notes" \
   '<sup[ >]|¹|²|³|⁰|⁴|⁵|⁶|⁷|⁸|⁹'
 check "metric strip outside a card (ui/metrics.html renders the card)" 'class="v-metrics"'
+check "rank table without its list form: every .v-dt.is-rank is also .is-list, the form it takes below 64rem (design system v4 4.14)" 'class="[^"]*is-rank[^"]*"' 'class="[^"]*(is-rank[^"]*is-list|is-list[^"]*is-rank)[^"]*"'
 check "digit in a section description: a window belongs in a card sub line, a header sub line or a label" 'class="v-section-desc[^>]*>[^<{]*[0-9]'
 
 # ---------------------------------------------------------------- separators and values
@@ -156,6 +157,8 @@ for my $ch (split //, $css) {
         }
         print "state\t$at\n" if $sel =~ /:hover/ and $p =~ /^background(-color)?$/ and $v =~ /var\(--surface-2\)/;
         print "state\t$at\n" if $v =~ /color-mix\(/;
+        print "stripe\t$at\n" if ($p =~ /^border-(left|inline-start)(-width)?$/ and $v =~ /(?<![\d.])([2-9]|\d\d+)px/)
+                                 or ($p eq 'box-shadow' and $v =~ /inset\s+-?[1-9]\d*px\s+0(px)?\s+0/);
       }
       print "state\t$at\n" if $sel =~ /\.is-(hover|focus)([^a-z0-9-]|$)/;
     }
@@ -177,6 +180,8 @@ if [ -f "$root/assets/css/main.css" ]; then
     "$(printf '%s\n' "$scan" | awk -F'\t' '$1 == "space" { print $2 }')"
   report "state styling: hover is a layer (never background: var(--surface-2)), no .is-hover or .is-focus classes, no color-mix() (design system v4 2.4)" \
     "$(printf '%s\n' "$scan" | awk -F'\t' '$1 == "state" { print $2 }')"
+  report "accent stripe on a left edge (thick border-left or an inset left box-shadow): notes, callouts, cards and rows never carry a side bar; use a full border, a fill and an icon" \
+    "$(printf '%s\n' "$scan" | awk -F'\t' '$1 == "stripe" { print $2 }')"
 fi
 if [ -f "$root/static/js/charts.js" ]; then
   report "text painted on a canvas: charts.js draws marks and axis ticks only (design system v4 4.19)" \

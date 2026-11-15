@@ -10,23 +10,28 @@
   <div class="v-grid">
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Work rows, issue queue shape") }}
       <table class="v-dt is-work is-list" aria-label="Issue queue, fixture">
-        <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Issue") }}{{ partial "ui/th.html" (dict "label" "Status") }}{{ partial "ui/th.html" (dict "label" "Detail") }}{{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days") }}{{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days") }}</tr></thead>
+        <colgroup><col><col class="v-col-status"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Issue") }}{{ partial "ui/th.html" (dict "label" "Status") }}{{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days") }}{{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days") }}</tr></thead>
         <tbody>
           <tr data-row data-row-link id="sg-issue-74">
             {{ partial "ui/row-item.html" (dict "title" "Publish on the JSR" "href" "https://github.com/modelcontextprotocol/typescript-sdk/issues/74" "id" "#74" "author" "a-reporter" "role" "Contributor"
                 "flags" (slice (dict "text" "Type conflict" "title" "bug, enhancement")) "tags" (slice "enhancement" "P1" "ready for work" "transport" "auth" "docs" "good first issue")) }}
-            <td class="v-c-status">{{ partial "ui/badge.html" (partial "data/issue-status.html" "untriaged") }}</td>
-            <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" "Reporter waiting" "days" 81) }}</td>
+            {{ partial "ui/status-cell.html" (dict "status" (partial "data/issue-status.html" "untriaged") "detail" (dict "text" "Reporter waiting" "days" 81)) }}
             {{ partial "ui/sla.html" (dict "rules" (slice (dict "key" "p1" "days" 514) (dict "key" "follow-up" "days" 12))) }}
             <td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 716 "unit" "d" "compact" true "opened" "2024-11-27") }}</td>
           </tr>
           <tr data-row data-row-link id="sg-issue-192">
             {{ partial "ui/row-item.html" (dict "title" "Consider defaulting resetTimeoutOnProgress to true" "href" "https://github.com/modelcontextprotocol/typescript-sdk/issues/192" "id" "#192" "author" "second-reporter" "role" "Maintainer" "prio" "P3" "tags" (slice "question")) }}
-            <td class="v-c-status">{{ partial "ui/badge.html" (partial "data/issue-status.html" "waiting") }}</td>
-            <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" "Fix in" "ref" "#2051") }}</td>
+            {{ partial "ui/status-cell.html" (dict "status" (partial "data/issue-status.html" "waiting") "detail" (dict "text" "Fix in" "ref" "#2051")) }}
             {{ partial "ui/sla.html" (dict "rules" slice) }}
             <td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 610 "unit" "d" "compact" true "opened" "2025-03-13") }}</td>
+          </tr>
+          {{- /* the longest status of either vocabulary, in a real status cell: the capture check cell-inset guards its fit */}}
+          <tr data-row data-row-link id="sg-issue-1512">
+            {{ partial "ui/row-item.html" (dict "title" "How do I resume a stream after the server restarts?" "href" "https://github.com/modelcontextprotocol/typescript-sdk/issues/1512" "id" "#1512" "author" "third-reporter" "role" "Contributor" "tags" (slice "question")) }}
+            {{ partial "ui/status-cell.html" (dict "status" (partial "data/issue-status.html" "answer")) }}
+            {{ partial "ui/sla.html" (dict "rules" (slice (dict "key" "question" "days" 6))) }}
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 9 "unit" "d" "compact" true "opened" "2026-11-05") }}</td>
           </tr>
         </tbody>
       </table>
@@ -38,20 +43,20 @@
     {{- $prSep := partial "data/sep-stage.html" (dict "stage" "Draft" "labels" (slice "SEP" "draft" "security")) }}
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "One item, every list") }}
       <table class="v-dt is-work is-list" aria-label="One item on every list, fixture">
-        <colgroup><col><col class="v-col-detail"></colgroup>
+        <colgroup><col><col class="v-col-name"></colgroup>
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Item") }}{{ partial "ui/th.html" (dict "label" "Drawn on") }}</tr></thead>
         <tbody>
           {{- range slice (dict "where" "Issues, all repositories" "repo" "TypeScript SDK") (dict "where" "Issues, one repository" "repo" "") (dict "where" "Repository, preview list" "repo" "") }}
           <tr data-row>
             {{ partial "ui/row-item.html" (dict "title" "Publish on the JSR" "href" "https://github.com/modelcontextprotocol/typescript-sdk/issues/74" "id" "#74" "repo" .repo "tags" $issueTags) }}
-            <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" .where) }}</td>
+            <td class="v-c-who">{{ .where }}</td>
           </tr>
           {{- end }}
           {{- range slice (dict "where" "PRs, all repositories" "repo" "MCP Specification") (dict "where" "PRs, one repository" "repo" "") (dict "where" "Repository, preview list" "repo" "") }}
           <tr data-row>
             {{ partial "ui/row-item.html" (dict "title" "Server identity" "href" "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/1913" "id" "#1913" "repo" .repo
                 "author" "sep-author" "role" $prRole "diff" (dict "add" 212 "del" 9) "attrs" $prSep.attrs "tags" $prSep.tags) }}
-            <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" .where) }}</td>
+            <td class="v-c-who">{{ .where }}</td>
           </tr>
           {{- end }}
         </tbody>
@@ -100,28 +105,14 @@
       {{ partial "ui/list-empty.html" (dict "noun" "sep") }}
       {{ partial "ui/list-foot.html" (dict "list" "sg-seps" "n" 4 "limit" 25) }}
     </article>
-    {{- /* a kept table: a matrix of a few short numeric columns that stays a table below 64rem, with short headers */}}
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Waiting by repository" "sub" "Over 7 days") }}
-      <table class="v-dt is-keep" aria-label="Kept table, fixture">
-        <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th.html" (dict "label" "Repository") }}
-          {{ partial "ui/th.html" (dict "label" "Issues waiting for a reply" "short" "Issues" "num" true "class" "v-c-bar") }}
-          {{ partial "ui/th.html" (dict "label" "PRs waiting for first review" "short" "PRs" "num" true "class" "v-c-bar") }}
-          {{ partial "ui/th.html" (dict "label" "Overdue" "num" true) }}
-        </tr></thead>
-        <tbody>
-          {{- range slice (slice "TypeScript SDK" 209 263 227) (slice "Python SDK" 207 49 0) (slice "MCP Specification" 31 6 3) }}
-          <tr data-row-link>
-            {{ partial "ui/name-cell.html" (dict "name" (index . 0) "href" "#tables") }}
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 209 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 1)) }}</span></td>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 2) "max" 263 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 2)) }}</span></td>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 3)) }}</td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
-    </article>
+    {{- /* the kept table: Overview's "Waiting by repository" itself (ui/waiting-table.html) with fixture rows. From 64rem: the
+         spanner, number then bar, bar fill. Below 64rem it stays a table: Repository, Issues, PRs, Overdue; no bars, no chevron */}}
+    {{ partial "ui/waiting-table.html" (dict "id" "sg-waiting-by-repository" "rows" (slice
+      (dict "name" "TypeScript SDK" "slug" "typescript-sdk" "issues" 209 "prs" 263 "overdue" 394 "author" 17)
+      (dict "name" "Python SDK" "slug" "python-sdk" "issues" 207 "prs" 49 "overdue" 0 "author" 30)
+      (dict "name" "MCP Specification" "slug" "modelcontextprotocol" "issues" 31 "prs" 6 "overdue" 3 "author" 0)
+      (dict "name" "Rust SDK" "slug" "rust-sdk" "issues" 0 "prs" 12)
+      (dict "name" "Ruby SDK" "slug" "ruby-sdk"))) }}
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Matrix with spanner headers") }}
       <table class="v-dt is-matrix has-sub" aria-label="Matrix, fixture">
         <colgroup><col><col class="v-col-num-xs"><col class="v-col-num"><col class="v-col-spark"><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
@@ -169,9 +160,9 @@
       </table>
     </article>
     <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, share mode" "sub" "Last 30 days") }}
-      <table class="v-dt is-rank is-list" aria-label="Versions in use, fixture">
+      <table class="v-dt is-rank is-list" data-numw="3" aria-label="Versions in use, fixture">
         <colgroup><col><col class="v-col-num"><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Version") }}{{ partial "ui/th.html" (dict "label" "Downloads" "num" true) }}{{ partial "ui/th.html" (dict "label" "Share" "num" true) }}</tr></thead>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Version") }}{{ partial "ui/th.html" (dict "label" "Downloads" "num" true) }}{{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar") }}</tr></thead>
         <tbody>
           {{- range slice (slice "1.30.0" 25600000 29 true) (slice "1.29.2" 14100000 16 false) (slice "1.28.0" 1700000 2 false) (slice "Other versions" 0 0 false) }}
           <tr><th scope="row" class="v-name">{{ if eq (index . 0) "Other versions" }}<span>{{ index . 0 }}</span>{{ else }}<span class="v-name-line">{{ partial "ui/value.html" (dict "kind" "ver" "v" (index . 0)) }}{{ if index . 3 }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ end }}</span>{{ end }}</th>
@@ -182,9 +173,9 @@
       </table>
     </article>
     <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, rank mode" "sub" "Last 90 days") }}
-      <table class="v-dt is-rank is-list" aria-label="Files, fixture">
+      <table class="v-dt is-rank is-list" data-numw="2" aria-label="Files, fixture">
         <colgroup><col><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "File") }}{{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true) }}</tr></thead>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "File") }}{{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "class" "v-c-bar") }}</tr></thead>
         <tbody>
           {{- range slice (slice "src/client/streamableHttp.ts" 24 false) (slice "docs/migration/upgrade-to-v2.md" 12 false) (slice "src/server" 7 true) (slice "" 0 true) }}
           <tr><th scope="row" class="v-name">{{ partial "ui/value.html" (dict "kind" "path" "v" (index . 0) "dir" (index . 2)) }}</th>
@@ -193,26 +184,31 @@
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Opened and closed") }}
-      <table class="v-dt is-matrix" aria-label="Opened and closed, fixture">
-        <colgroup><col><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-xl"><col class="v-col-num-sm"></colgroup>
-        <thead>
-          <tr class="v-dt-span"><th></th><th class="v-span" colspan="3" scope="colgroup"><span>Issues</span></th><th class="v-span" colspan="4" scope="colgroup"><span>PRs</span></th></tr>
-          <tr>{{ partial "ui/th.html" (dict "label" "Period") }}
-            {{- range slice (slice "Opened" "Issues opened") (slice "Closed" "Issues closed") (slice "Net change" "Net change in issues") (slice "Opened" "PRs opened") (slice "Merged" "PRs merged") (slice "Closed without merging" "PRs closed without merging") (slice "Net change" "Net change in PRs") }}
-            {{ partial "ui/th.html" (dict "label" (index . 0) "record" (index . 1) "num" true) }}
-            {{- end }}</tr>
-        </thead>
+    {{- /* a period table (4.14, 5.8 module 4): measures as rows and the windows as columns, a kept table, so it stays a table
+         below 64rem; a 6 + 6 pair with three rows each */}}
+    {{- $sgWins := slice }}{{ range slice 7 30 90 }}{{ $sgW := (partial "fmt/label.html" (dict "window" (dict "n" . "unit" "day"))).window }}{{ $sgWins = $sgWins | append (dict "label" $sgW "short" (strings.TrimPrefix "Last " $sgW)) }}{{ end }}
+    {{- range slice
+      (dict "id" "sg-flow-issues" "title" "Issues" "rows" (slice
+        (dict "name" "Opened" "cells" (slice (dict "kind" "count" "v" 11) (dict "kind" "count" "v" 52) (dict "kind" "count" "v" 158)))
+        (dict "name" "Closed" "cells" (slice (dict "kind" "count" "v" 1) (dict "kind" "count" "v" 14) (dict "kind" "count" "v" 158)))
+        (dict "name" "Net change" "cells" (slice (dict "kind" "net" "v" 10) (dict "kind" "net" "v" 38) (dict "kind" "net" "v" 0)))))
+      (dict "id" "sg-flow-pulls" "title" "PRs" "rows" (slice
+        (dict "name" "Opened" "cells" (slice (dict "kind" "count" "v" 15) (dict "kind" "count" "v" 96) (dict "kind" "count" "v" 350)))
+        (dict "name" "Merged" "cells" (slice (dict "kind" "count" "v" 1) (dict "kind" "count" "v" 19) (dict "kind" "count" "v" 104)))
+        (dict "name" "Closed without merging" "cells" (slice (dict "kind" "count" "reason" "tracked-90") (dict "kind" "count" "reason" "tracked-90") (dict "kind" "count" "v" 155))))) }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" .title "id" .id) }}
+      <table class="v-dt is-keep" aria-labelledby="{{ .id }}">
+        <colgroup><col><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Measure") }}{{ range $sgWins }}{{ partial "ui/th.html" (dict "label" .label "short" .short "num" true) }}{{ end }}</tr></thead>
         <tbody>
-          <tr><th scope="row">{{ (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window }}</th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 11) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 1) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 10) }}</td>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 20) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 1) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "reason" "tracked-90") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "reason" "tracked-90") }}</td></tr>
-          <tr><th scope="row">{{ (partial "fmt/label.html" (dict "window" (dict "n" 90 "unit" "day"))).window }}</th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 158) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 158) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 0) }}</td>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 350) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 104) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 155) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 91) }}</td></tr>
+          {{- range .rows }}
+          <tr>{{ partial "ui/name-cell.html" (dict "name" .name) }}{{ range .cells }}<td class="num">{{ partial "ui/value.html" . }}</td>{{ end }}</tr>
+          {{- end }}
         </tbody>
       </table>
     </article>
+    {{- end }}
+
   </div>
 </section>
 

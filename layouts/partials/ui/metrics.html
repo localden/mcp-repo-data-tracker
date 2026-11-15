@@ -19,11 +19,14 @@
                  {kind "base", date}                 "vs Oct 7" (a level against a snapshot)
                  {kind "base", window "prior7"|"4w"} "vs prior 7 days" (a flow)
                  {kind "whole", n, of}               "of 239 open": a count that is part of a named whole
-                 {kind "ref", label, value {..}}     a caption label and one value: "Oldest" 319d, "Typical week" 5
+                 {kind "ref", label, value {..}}     a pair (ui/pair.html), label left and value right under a hairline:
+                                                     "Oldest" 319d, "Typical week" 5, "Net change, last 30 days" +114
                  {kind "reason", reason, since}      a fmt/na.html reason, only with a missing value
       note     a ui/note.html dict, after the context or alone ({part 7, whole 9, noun "repository"}).
-      points   weekly bins [{date, value}] for visual trend; flow: true draws columns (downloads). reason: "no-history" for a
-               measure with no stored series.
+      points   weekly bins [{date, value, end}] for visual trend; flow: true draws columns (downloads). reason: "no-history" for a
+               measure with no stored series. asof: the date of the value above the sparkline, when the bins do not carry it
+               (ui/spark.html dates the range row: a level ends on the day of its latest reading, a flow on the Sunday that
+               closes its last week; no caller re-dates a bin).
       share    {value, max, split} for visual share.
       href     makes it a link tile: the name is a link stretched over the tile, with an arrow. drill: true marks a same-page list
                target (ui.js applies the view and filters in place). The value of a link tile equals the result count of the list it
@@ -90,7 +93,7 @@
           {{- else if eq .kind "whole" -}}
             <span class="v-whole">of {{ partial "ui/value.html" (dict "kind" "count" "v" .n) }}{{ with .of }} {{ . }}{{ end }}</span>
           {{- else if eq .kind "ref" -}}
-            <span class="v-ref">{{ .label }} {{ partial "ui/value.html" (.value | default (dict "kind" "na")) }}</span>
+            {{- partial "ui/pair.html" (dict "label" .label "value" .value) -}}
           {{- else if eq .kind "reason" -}}
             <span class="v-caption">{{ (partial "fmt/na.html" (dict "reason" .reason "since" .since)).long }}</span>
           {{- else }}{{ warnf "ui/metrics: unknown context kind %q (design system v4 4.5)" (.kind | default "") }}{{ end -}}
@@ -99,7 +102,7 @@
       </div>
       {{- end }}
       {{- if eq $visual "trend" }}
-      <div class="v-metric-visual">{{ partial "ui/spark.html" (dict "points" ($t.points | default slice) "kind" (cond (eq $t.flow true) "flow" "level") "size" "tile" "unit" $vk) }}</div>
+      <div class="v-metric-visual">{{ partial "ui/spark.html" (dict "points" ($t.points | default slice) "kind" (cond (eq $t.flow true) "flow" "level") "size" "tile" "unit" $vk "asof" $t.asof) }}</div>
       {{- else if eq $visual "share" }}
       <div class="v-metric-visual">{{ with $t.share }}{{ partial "ui/meter.html" (dict "value" .value "max" .max "mode" "share" "split" .split) }}{{ end }}</div>
       {{- end }}

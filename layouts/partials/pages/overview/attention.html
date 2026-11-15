@@ -1,34 +1,28 @@
 {{- /* Needs attention (design system v4 5.1 module 2): where items are waiting on a maintainer, and where published deadlines have
   passed. Two table cards, each at 12. Context: the page.
-  "Waiting by repository": a kept table (4.14 .is-keep: it stays a table below 64rem, with short headers, so repositories can be
-    compared on a phone); one row per repository, sorted by issues waiting (descending); every numeric column sorts.
-    Repository         auto        the row link, to /repos/<repo>/
-    Issues, PRs        v-col-bar   under the spanner "Waiting over 7 days": data/waiting.html .over7 as a rank bar and count, a cell link
-                                   to the org waiting list filtered to the repository, so the count equals the list it opens
-    Overdue            v-col-num-sm  the sum over all rules (pages/overview/overdue.html); empty mark "Not classified" otherwise
-    Author waiting     v-col-num-lg  a cell link to the repository's PR queue with the Author waiting filter
+  "Waiting by repository": ui/waiting-table.html (the kept table, also the styleguide's specimen), fed one row per repository:
+    data/waiting.html .over7 for issues and PRs, the overdue sum and the author-waiting count of pages/overview/overdue.html.
   "Overdue by rule": classified repositories only, in repos.json order, no sort. One column per rule under the spanners "Issues"
     (Triage, P0 bug, P1 bug) and "PRs" (First review, Re-review, Maintainer PR); names and titles from data/sla-rules.html. Each cell
     is the overdue count as a cell link to the rule's drill URL; zero is 0; a rule without a count is the empty mark with its reason.
     A column whose every cell would be the empty mark is omitted (4.14 rule 8). Below 64rem its rows are records; on a phone five
     show, then the list foot, like "Backlog and activity" under it.
   Which repositories are classified, and the deadlines, are in Data notes (layouts/index.html). */ -}}
-{{- $rows := slice }}{{ $maxI := 0.0 }}{{ $maxP := 0.0 -}}
+{{- $rows := slice }}{{ $wrows := slice -}}
 {{- range site.Data.repos.repositories -}}
   {{- $o := partial "pages/overview/overdue.html" . -}}
   {{- $wi := partial "data/waiting.html" (dict "repo" . "kind" "issues") -}}
   {{- $wp := partial "data/waiting.html" (dict "repo" . "kind" "pulls") -}}
-  {{- if gt (float $wi.over7) $maxI }}{{ $maxI = float $wi.over7 }}{{ end -}}
-  {{- if gt (float $wp.over7) $maxP }}{{ $maxP = float $wp.over7 }}{{ end -}}
-  {{- $rows = $rows | append (dict "o" $o "r" $o.r "wi" $wi "wp" $wp "sort" (float $wi.over7)) -}}
+  {{- $rows = $rows | append (dict "o" $o "r" $o.r "wi" $wi "wp" $wp) -}}
+  {{- /* the rows of ui/waiting-table.html: a count the data does not have stays out of the dict, which is the empty mark */ -}}
+  {{- $w := dict "name" $o.r.name "slug" $o.r.repo -}}
+  {{- if $wi.has }}{{ $w = merge $w (dict "issues" $wi.over7) }}{{ end -}}
+  {{- if $wp.has }}{{ $w = merge $w (dict "prs" $wp.over7) }}{{ end -}}
+  {{- if ne $o.total nil }}{{ $w = merge $w (dict "overdue" $o.total) }}{{ end -}}
+  {{- if ne $o.author nil }}{{ $w = merge $w (dict "author" $o.author) }}{{ end -}}
+  {{- $wrows = $wrows | append $w -}}
 {{- end -}}
 {{- with $rows }}
-{{- $sorted := sort . "sort" "desc" -}}
-{{- $waitSpan := (partial "fmt/label.html" (dict "metric" "Waiting" "threshold" "over7")).record -}}
-{{- $recI := (partial "fmt/label.html" (dict "metric" "Waiting" "scope" "Issues" "threshold" "over7")).record -}}
-{{- $recP := (partial "fmt/label.html" (dict "metric" "Waiting" "scope" "PRs" "threshold" "over7")).record -}}
-{{- /* the spanner in a kept table below 64rem: the threshold alone ("Over 7 days"), over the short headers "Issues" and "PRs" */ -}}
-{{- $waitShort := strings.FirstUpper (partial "fmt/label.html" (dict "threshold" "over7")).threshold -}}
 
 {{- /* Overdue by rule: classified rows, and the rule columns that have a count somewhere */ -}}
 {{- $ruleRows := slice }}{{ range . }}{{ if or .o.iss .o.cls }}{{ $ruleRows = $ruleRows | append . }}{{ end }}{{ end -}}
@@ -52,58 +46,7 @@
   {{ partial "ui/section-head.html" (dict "id" "needs-attention" "title" "Needs attention"
       "desc" "Where items are waiting on a maintainer, and where published deadlines have passed.") }}
   <div class="v-grid">
-    <article class="v-card v-span-12">
-      {{ partial "ui/card-head.html" (dict "title" "Waiting by repository" "id" "waiting-by-repository") }}
-      <table class="v-dt is-keep" aria-labelledby="waiting-by-repository">
-        <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num-sm"><col class="v-col-num-lg"></colgroup>
-        <thead>
-          <tr class="v-dt-span"><th></th><th class="v-span" colspan="2" scope="colgroup"><span><span class="v-th-full">{{ $waitSpan }}</span><span class="v-th-short" aria-hidden="true">{{ $waitShort }}</span></span></th><th></th><th></th></tr>
-          <tr>
-            {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
-            {{ partial "ui/th.html" (dict "label" "Issues" "short" "Issues" "num" true "class" "v-c-bar" "record" $recI "active" "descending"
-                "title" "Open issues with no reply from a maintainer, opened more than 7 days ago."
-                "sort" (dict "key" "issues" "type" "num" "desc" "Most issues waiting first" "asc" "Fewest issues waiting first")) }}
-            {{ partial "ui/th.html" (dict "label" "PRs" "short" "PRs" "num" true "class" "v-c-bar" "record" $recP
-                "title" "Open PRs that are not drafts, with no review from a maintainer, opened more than 7 days ago."
-                "sort" (dict "key" "prs" "type" "num" "desc" "Most PRs waiting first" "asc" "Fewest PRs waiting first")) }}
-            {{ partial "ui/th.html" (dict "label" "Overdue" "short" "Overdue" "num" true "record" "Overdue, all rules"
-                "title" "Open issues and PRs past a published deadline, added up over every rule."
-                "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Fewest overdue first")) }}
-            {{ partial "ui/th.html" (dict "label" "Author waiting" "short" "Author" "num" true "record" "Author waiting"
-                "title" "PRs whose author answered maintainer feedback and is waiting for a maintainer."
-                "sort" (dict "key" "author-waiting" "type" "num" "desc" "Most authors waiting first" "asc" "Fewest authors waiting first")) }}
-          </tr>
-        </thead>
-        <tbody>
-          {{- range $row := $sorted }}
-          {{- $r := $row.r }}{{ $o := $row.o }}{{ $wi := $row.wi }}{{ $wp := $row.wp }}
-          <tr data-row-link>
-            {{ partial "ui/name-cell.html" (dict "name" $r.name "href" (printf "repos/%s/" $r.repo | relURL)) }}
-            <td class="num v-c-bar" data-v="{{ if $wi.has }}{{ $wi.over7 }}{{ end }}">
-              {{- if not $wi.has }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") -}}
-              {{- else if eq $wi.over7 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
-              {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $wi.over7 "max" $maxI "mode" "rank") }}<a class="v-cell-link" href="{{ printf "issues/?repo=%s&over7=1#waiting" $r.repo | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $wi.over7) }}<span class="sr-only"> {{ $recI }}, {{ $r.name }}</span></a></span>{{ end -}}
-            </td>
-            <td class="num v-c-bar" data-v="{{ if $wp.has }}{{ $wp.over7 }}{{ end }}">
-              {{- if not $wp.has }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") -}}
-              {{- else if eq $wp.over7 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
-              {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $wp.over7 "max" $maxP "mode" "rank") }}<a class="v-cell-link" href="{{ printf "pulls/?repo=%s&over7=1#waiting" $r.repo | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $wp.over7) }}<span class="sr-only"> {{ $recP }}, {{ $r.name }}</span></a></span>{{ end -}}
-            </td>
-            <td class="num" data-v="{{ if ne $o.total nil }}{{ printf "%.0f" $o.total }}{{ end }}">
-              {{- if eq $o.total nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "not-classified") -}}
-              {{- else if eq $o.total 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
-              {{- else }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $o.total) }}</span>{{ end -}}
-            </td>
-            <td class="num" data-v="{{ if ne $o.author nil }}{{ printf "%.0f" $o.author }}{{ end }}">
-              {{- if eq $o.author nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "not-classified") -}}
-              {{- else if eq $o.author 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
-              {{- else }}<a class="v-cell-link" href="{{ printf "pulls/%s/?view=all&author-waiting=1#queue" $r.repo | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $o.author) }}<span class="sr-only"> PRs with the author waiting, {{ $r.name }}</span></a>{{ end -}}
-            </td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
-    </article>
+    {{ partial "ui/waiting-table.html" (dict "rows" $wrows) }}
     {{- if and $ruleRows $cols }}
     <article class="v-card v-span-12" id="overdue-rules" data-list data-limit="0" data-limit-phone="5" data-step="50" data-noun="repositories" data-noun-one="repository">
       {{ partial "ui/card-head.html" (dict "title" "Overdue by rule" "id" "overdue-by-rule") }}

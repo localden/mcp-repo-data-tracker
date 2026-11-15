@@ -4,9 +4,9 @@
          All five always render; an empty one is disabled and keeps its place. The default is the first that is not empty.
        Facets, the same six on every repository: Overdue, Author waiting, Touches auth (checks); Status, Author, SLA rule (selects).
          First-paint counts are the rows of the default view; ui.js keeps them live.
-       Columns: PR, Status, Detail, Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
-       One tr per PR, the other PRs of a duplicate cluster included (they carry the tag "Duplicate of #N" and follow their primary
-       in the default sort), so every count is a count of open PRs. Rows outside the default view carry data-off; inside it, rows
+       Columns: PR, Status (badge over the detail phrase), Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
+       One tr per PR, the other PRs of a duplicate cluster included: each is an ordinary row with its own place in the sort and the
+       tag "Duplicate of #N", so every count is a count of open PRs. Rows outside the default view carry data-off; inside it, rows
        past the first step carry data-over. No count on a tab is red: red is for the Overdue filter and the Overdue cells. */ -}}
 {{- $q := .q -}}
 {{- $id := "pq" -}}
@@ -43,16 +43,15 @@
       (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $author)
       (dict "key" "rule" "label" "SLA rule" "title" "The Review SLA the PR is past." "kind" "select" "options" $rule) }}
     <article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="PRs" data-noun-one="PR">
-      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
+      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "noun" "PRs" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
       <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
         {{ partial "ui/filterbar.html" (dict "id" $id "noun" "pr" "total" $nDef "facets" $facets) }}
         {{ partial "ui/list-band.html" (dict "id" $id "noun" "pr" "total" $nDef) }}
         <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="queue">
-          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <colgroup><col><col class="v-col-status"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
           <thead><tr>
             {{ partial "ui/th.html" (dict "label" "PR") }}
-            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
-            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "title" "The next step. The line under it is the one fact the status cannot say." "sort" (dict "key" "status" "type" "order" "asc" "Status, in workflow order")) }}
             {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "title" "Calendar days past the deadline of the rule named beside it."
                 "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
             {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the PR opened."

@@ -1,7 +1,8 @@
 {{- /* Backlog composition (design system v4 5.3 module 6, 4.21, 4.14). Ctx: dict {r (data/repo.html)}.
     6 + 6: the distribution card "Open issues by last activity" (metrics.json issues.open_count split by stale_30d, stale_60d and
-    stale_90d into four parts, zeros included) beside the rank table card "Labels on open issues": Label (as a tag), Open (rank bar and
-    number), Share (of open issues); five rows at rest, then the list foot.
+    stale_90d into four parts, zeros included) beside the table card "Labels on open issues", the same three facts in the same form as
+    "Versions in use" on Downloads: Label (as a tag), Open (the count), Share (of open issues: the share bar on its track, then the
+    percent, so the bar always draws the number beside it); five rows at rest, then the list foot.
     Labels: issues.by_label without the labels the queue already carries (type, priority and status labels), most used first, at
     most 10. With fewer than four labels the card is omitted and the distribution takes the row at 12 (its legend in two columns).
     The section is omitted when the repository has no last-activity counts. */ -}}
@@ -25,7 +26,6 @@
 {{- if $labels }}{{ $labels = first 10 (sort $labels "n" "desc") }}{{ end -}}
 {{- $nl := len $labels -}}
 {{- $pair := ge $nl 4 -}}
-{{- $max := 1.0 }}{{ if $pair }}{{ $max = math.Max 1.0 (index $labels 0).n }}{{ end }}
 <section class="v-section" aria-labelledby="composition">
   {{ partial "ui/section-head.html" (dict "id" "composition" "title" "Backlog composition") }}
   <div class="v-grid">
@@ -33,19 +33,19 @@
     {{- if $pair }}
     <article class="v-card is-list v-span-6" data-list id="il" data-limit="5" data-limit-phone="5" data-step="50" data-noun="labels" data-noun-one="label">
       {{ partial "ui/card-head.html" (dict "title" "Labels on open issues" "id" "il-title") }}
-      <table class="v-dt is-rank is-list" id="il-table" aria-labelledby="il-title">
-        <colgroup><col><col class="v-col-bar"><col class="v-col-num-sm"></colgroup>
+      <table class="v-dt is-rank is-list" id="il-table" data-numw="4" aria-labelledby="il-title">
+        <colgroup><col><col class="v-col-num-sm"><col class="v-col-bar"></colgroup>
         <thead><tr>
           {{ partial "ui/th.html" (dict "label" "Label") }}
           {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open issues" "title" "Open issues that carry the label. An issue can carry several labels.") }}
-          {{ partial "ui/th.html" (dict "label" "Share" "num" true "record" "Share of open issues" "title" "Share of all open issues.") }}
+          {{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar" "record" "Share of open issues" "title" "Share of all open issues.") }}
         </tr></thead>
         <tbody>
           {{- range $i, $l := $labels }}
           <tr data-row{{ if ge $i 5 }} data-over{{ end }}>
             <th scope="row" class="v-name">{{ partial "ui/tag.html" (dict "text" $l.label) }}</th>
-            <td class="num v-c-bar" data-v="{{ printf "%.0f" $l.n }}"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $l.n "max" $max "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" $l.n) }}</span></td>
-            <td class="num">{{ if gt $open 0.0 }}{{ partial "ui/value.html" (dict "kind" "share" "part" $l.n "whole" $open) }}{{ else }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") }}{{ end }}</td>
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $l.n) }}</td>
+            <td class="num v-c-bar">{{ if gt $open 0.0 }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $l.n "max" $open "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "part" $l.n "whole" $open) }}</span>{{ else }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") }}{{ end }}</td>
           </tr>
           {{- end }}
         </tbody>

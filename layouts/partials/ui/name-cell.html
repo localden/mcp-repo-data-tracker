@@ -1,9 +1,11 @@
 {{- /* Name cell (design system v4 4.14): the row header of a matrix or rank table. Emits <th scope="row" class="v-name">.
-  Dict {name, href, sub, note, external, site, drill}.
+  Dict {name, href, sub, keep_sub, note, external, site, drill}.
     name    the row's name. href: makes it the row link (a.v-row-link); put data-row-link on the tr so the whole row is clickable.
             drill: true marks a link to a list on the same page (a[data-drill]).
     sub     a sub line (caption text-3; the whole table then takes class has-sub): "npm @modelcontextprotocol/sdk". It may shorten,
             with the full text in title.
+    keep_sub  a line a kept table (.v-dt.is-keep) shows under the name below 64rem only, carrying the fact of a column that is
+            dropped there (the deadline phrase of an SLA rule).
     note    a ui/note.html dict under the name.
   Below 64rem the name is the title of the row's record or list row, with a 16px chevron-right at the right end when the row links.
   No table has a chevron column from 64rem: the name is the link. */ -}}
@@ -16,5 +18,6 @@
   <span>{{ $c.name }}</span>
   {{- end -}}
   {{- with $c.sub }}<span class="v-cell-sub" title="{{ . }}">{{ . }}</span>{{ end -}}
+  {{- with $c.keep_sub }}<span class="v-cell-sub v-keep-sub">{{ . }}</span>{{ end -}}
   {{- with $c.note }}<span class="v-cell-note">{{ partial "ui/note.html" . }}</span>{{ end -}}
 </th>

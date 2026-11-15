@@ -8,7 +8,9 @@
        repos       the Repository options [{value (slug), label, count}] (org only).
        views       true adds the view tabs; drafts are decided by GitHub's draft state, never by a label.
        labelledby  the id of the section title.
-     Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, PR, Waiting; default sort Waiting,
+     Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, PR, then the time column: "Waiting"
+     on /pulls/ (every row waits for a first review), "Age" on a list with views (the same days since opening; a draft is not waiting).
+     Default sort: that column,
      descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default "pq" -}}
@@ -31,7 +33,7 @@
 {{- end }}
 <article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="PRs" data-noun-one="PR">
   {{- if $views }}
-  {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" (slice
+  {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "noun" "PRs" "panel" (printf "%s-panel" $id) "selected" $def "tabs" (slice
       (dict "key" "review" "label" "Waiting for first review" "count" $nReview)
       (dict "key" "drafts" "label" "Drafts" "count" $nDrafts))) }}
   <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
@@ -45,8 +47,14 @@
         {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
         {{- end }}
         {{ partial "ui/th.html" (dict "label" "PR") }}
+        {{- /* a list with views holds drafts too, and a draft is not waiting for a review: its time column is the PR's age */ -}}
+        {{- if $views }}
+        {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the PR opened."
+            "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
+        {{- else }}
         {{ partial "ui/th.html" (dict "label" "Waiting" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the PR opened."
             "sort" (dict "key" "waiting" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
+        {{- end }}
       </tr></thead>
       <tbody>
         {{- range $i, $row := $review }}

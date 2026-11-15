@@ -1,13 +1,17 @@
 {{- /* Stat list (design system v4 4.6): three to seven facts beside the chart or table they explain. A card for the 4-column cell of an
   8 + 4 row; its rows share the card's height, so it is exactly as tall as its neighbour.
-  Dict {title, rows, wide, id, class}.
+  Dict {title, rows, wide, pending, id, class}.
     title   the card title ("Opened and closed", "Pace"). No sub line: the window is part of every label.
     rows    slice of {label, title, value, detail}.
               label   body text-2, up to 40 characters, from fmt/label.html ("Opened, last 30 days"). title: its definition.
               value   {kind, ...} for ui/value.html (kind net for a net change). Strong, never wraps.
               detail  one component before the value: {link: {text, href}} (a quiet link), {tag: ...} (ui/tag.html),
-                      {badge: ...} (ui/badge.html), {note: ...} (ui/note.html), {delta: ...} (ui/delta.html). Never a sentence.
-    wide    true: alone at 12 under a pending chart (4.22); rows flow in two columns from 64rem.
+                      {badge: ...} (ui/badge.html), {note: ...} (ui/note.html), {delta: ...} (ui/delta.html), {range: {from, to} } (the days a window covers, through
+                      ui/value.html, in caption text-3: "Nov 3–9"). Never a sentence.
+    wide    true: alone at 12 where its chart is pending (4.22); rows flow in two columns from 64rem.
+    pending a pending text from the closed list of 4.22 ("Too few complete weeks to draw a trend"): the chart this list would sit
+            beside cannot be drawn and has no readout, so the pending bar closes this card instead of standing in a card of its
+            own. Only with wide.
     class   the grid span, default "v-span-4" ("v-span-12" with wide).
   Three rows minimum, seven maximum; two facts are never a card. Below 64rem rows flow in two columns on a tablet, one on a phone. */ -}}
 {{- $c := . -}}
@@ -26,11 +30,15 @@
         {{- else if .tag }}{{ partial "ui/tag.html" .tag }}
         {{- else if .badge }}{{ partial "ui/badge.html" .badge }}
         {{- else if .note }}{{ partial "ui/note.html" .note }}
-        {{- else if .delta }}{{ partial "ui/delta.html" .delta }}{{ end -}}
+        {{- else if .delta }}{{ partial "ui/delta.html" .delta }}
+        {{- else if .range }}<span class="v-caption">{{ partial "ui/value.html" (dict "kind" "range" "from" .range.from "to" .range.to) }}</span>{{ end -}}
       {{- end -}}
       {{- partial "ui/value.html" (.value | default (dict "kind" "na")) -}}
     </dd></div>
     {{- end }}
   </dl>
+  {{- with $c.pending }}
+  <div class="v-card-pending">{{ partial "ui/icon.html" "clock" }}<span>{{ . }}</span></div>
+  {{- end }}
 </article>
 {{- end -}}

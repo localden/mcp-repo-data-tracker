@@ -2,7 +2,7 @@
    every number is HTML (the readout, the notes row, the tooltip, the table view). Loaded only on pages that render a chart.
    Contract (layouts/partials/ui/chart.html and ui/trellis.html, built by ui/chart-canvas.html):
      <canvas data-viz="line|column" data-unit="count|downloads|hours" data-gran="day|week" data-metric="issues" data-scope="TypeScript SDK"
-       data-size="main|panel" data-xaxis="on|off" [data-chart-pin="42"]
+       data-size="main|panel" data-xaxis="on|off" data-polarity-key="open-issues|downloads|..." [data-chart-pin="42"]
        data-series='{"labels":[every date],"series":[{"label":"...","role":"accent|context","data":[n|null]}],
          "marks":[{"date":"YYYY-MM-DD","label":"..."}],"avg":{"value":n,"label":"..."}|null,"reconstructed":[from,to]|null,"metricOne":"issue"}'>
    Card hooks: [data-chart] card ([data-trellis] for small multiples), the Chart and Table segments (ui/tabs.html; ui.js dispatches
@@ -19,7 +19,23 @@
   function parts(s) { var p = String(s).split('-'); return { y: +p[0], m: +p[1] - 1, d: +(p[2] || 1) }; }
   function addDays(s, n) { var p = parts(s), t = new Date(Date.UTC(p.y, p.m, p.d + n)); return t.toISOString().slice(0, 10); }
   function periodEnd(s, gran) { return gran === 'week' ? addDays(s, 6) : s; }
-  function periodText(s, gran) { return gran === 'week' ? F.range({ from: s, to: addDays(s, 6) }).text : F.date({ d: s, weekday: true }).text; }
+  /* a week never ends after the as-of day: the newest week of a level series reads "Nov 9–14" on a page updated Nov 14 */
+  var ASOF = (root.getAttribute('data-asof') || '').slice(0, 10);
+  function weekEnd(s, clamp) { var e = addDays(s, 6); return clamp && ASOF && e > ASOF && s <= ASOF ? ASOF : e; }
+  function periodText(s, gran, clamp) { return gran === 'week' ? F.range({ from: s, to: weekEnd(s, clamp) }).text : F.date({ d: s, weekday: true }).text; }
+  /* a change of the chart's first series: a delta toned by the metric's polarity key (ui/chart.html data-polarity-key), in the
+     unit's form. Without a key the measure is neutral and the change is a plain signed number, never a grey badge. */
+  function changeOf(unit, key, cur, prev) {
+    if (cur == null || prev == null) return null;
+    var a = { cur: cur, prev: prev }; if (key) a.metric = key;
+    if (unit === 'downloads') a.unit = 'percent'; else if (unit === 'hours') a.unit = 'hours';
+    var ch = F.change(a); return ch.state === 'na' ? null : ch;
+  }
+  function changeEl(ch, key) {
+    if (!key && ch.state !== 'zero') { var p = el('span', 'v-val', ch.text); p.setAttribute('data-kind', 'net'); p.title = ch.sr; return p; }
+    var d = el('span', 'v-delta is-' + (ch.polarity || 'flat')); d.appendChild(el('span', 'sr-only', ch.sr));
+    var vis = el('span', '', ch.text); vis.setAttribute('aria-hidden', 'true'); d.appendChild(vis); return d;
+  }
   function cap1(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
   function value(unit, v) { return unit === 'downloads' ? F.volume(v).text : unit === 'hours' ? F.dur({ h: v }).text : F.count(v).text; }
   function exact(unit, v) { return unit === 'downloads' ? F.volume(v).exact : unit === 'hours' ? F.dur({ h: v }).text : F.count(v).text; }
@@ -30,7 +46,7 @@
     function g(n) { return cs.getPropertyValue(n).trim(); }
     return { accent: g('--chart-1') || g('--accent'), context: g('--series-context'), grid: g('--chart-grid') || g('--border-subtle'),
       axis: g('--chart-axis') || g('--border'), gap: g('--gap'), surface: g('--surface'), text3: g('--text-3'), strong: g('--border-strong'),
-      hover: g('--hover'), font: getComputedStyle(document.body).fontFamily };
+      accentStrong: g('--chart-1-strong') || g('--accent-text'), font: getComputedStyle(document.body).fontFamily };
   }
   /* Columns are 40% of their slot, between 16 and 40px, so a 12-slot chart reads the same at 6 and at 12 grid columns. */
   function barMax(width, n) { return Math.max(16, Math.min(40, Math.round((Math.max(0, width - 52) / Math.max(1, n)) * 0.4))); }
@@ -80,8 +96,9 @@
     }
     return function (v) { return F.count(v).text; };
   }
-  /* X labels: 14 slots or fewer use short dates; otherwise month names at month starts, the year on the first tick and each January,
-     at a stride of 1, 2, 3 or 6 months. There is no special last-date tick. */
+  /* X labels: 14 slots or fewer use short dates; otherwise month names at month starts, at a stride of 1, 2, 3 or 6 months. The
+     date rule of 3.2 holds here too: a year is printed only when it differs from the as-of year, on the first tick of that year
+     ("Dec 2025, Jan, Feb"); a window inside the as-of year shows none. There is no special last-date tick. */
   function xTicks(scale, labels, gran) {
     var n = labels.length, out = {}, w = scale.width || 600, i;
     if (!n) return out;
@@ -99,10 +116,12 @@
     if (!starts.length) return out;
     var per = starts.length > 1 ? (starts[starts.length - 1] - starts[0]) / (starts.length - 1) * slot : w, stride = 6;
     [1, 2, 3, 6].some(function (s) { if (per * s >= 64) { stride = s; return true; } return false; });
+    var asofY = ASOF ? parts(ASOF).y : parts(labels[n - 1]).y, seen = {};
     starts.forEach(function (ix, k) {
       if (k % stride) return;
-      var q = parts(labels[ix]);
-      out[ix] = k === 0 || q.m === 0 ? MONTHS[q.m] + ' ' + q.y : MONTHS[q.m];
+      var q = parts(labels[ix]), year = q.y !== asofY && !seen[q.y];
+      seen[q.y] = true;
+      out[ix] = year ? MONTHS[q.m] + ' ' + q.y : MONTHS[q.m];
     });
     return out;
   }
@@ -158,31 +177,56 @@
     ctx.restore();
   } };
   function slotW(c) { var n = c.data.labels.length, x = c.scales.x; return n > 1 ? Math.abs(x.getPixelForValue(1) - x.getPixelForValue(0)) : c.chartArea.width; }
-  function vline(c, i, stroke, dash, shift) {
-    var a = c.chartArea, ctx = c.ctx, x = Math.round(Math.min(c.scales.x.getPixelForValue(i) + (shift || 0), a.right + 6)) + 0.5;
+  function vline(c, i, stroke, dash, shift) {   /* never on or outside the plot's right edge, where it would read as a border */
+    var a = c.chartArea, ctx = c.ctx, x = Math.round(Math.max(a.left, Math.min(c.scales.x.getPixelForValue(i) + (shift || 0), a.right - 1))) + 0.5;
     ctx.save(); ctx.strokeStyle = stroke; ctx.lineWidth = 1; if (dash) ctx.setLineDash(dash);
     ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke(); ctx.restore();
+    return x;
   }
-  /* Event markers: 1px border-strong, dashed so one is never read as an axis or a plot edge, keyed in the notes row. In a weekly
-     chart the marker sits at its day inside the week's slot, so it does not hide behind that week's point. */
+  /* Event markers: 1px border-strong, dashed so one is never read as an axis or a plot edge, capped by a 6px diamond (the mark
+     the notes row keys). A point of a weekly line chart stands at the centre of its week's slot, the geometry the gap band uses,
+     so the marker sits at its day inside that slot: [x - w/2, x + w/2]. An event one day into a week lands just after the band
+     that ends the week before and before that week's point, never past it. */
   var marks = { id: 'visrMarks', beforeDatasetsDraw: function (c) {
     var st = S(c); if (!st) return;
-    var w = slotW(c);
-    st.marks.forEach(function (m) { vline(c, m.i, T.strong, [2, 3], st.kind === 'line' ? m.frac * w : 0); });
+    var w = slotW(c), a = c.chartArea, ctx = c.ctx;
+    st.marks.forEach(function (m) {
+      var x = vline(c, m.i, T.strong, [2, 3], st.kind === 'line' ? (m.frac - 0.5) * w : 0), y = a.top - 4;
+      ctx.save(); ctx.fillStyle = T.text3; ctx.beginPath();
+      ctx.moveTo(x, y - 3); ctx.lineTo(x + 3, y); ctx.lineTo(x, y + 3); ctx.lineTo(x - 3, y); ctx.closePath(); ctx.fill(); ctx.restore();
+    });
+  } };
+  /* A hole in one of two series (the other has values, so there is no gap band): a 1px neutral connector joins the readings on
+     either side, the same mark as a sparkline's bridge, and the notes row keys it. Nothing crosses a gap band. */
+  var bridges = { id: 'visrBridges', beforeDatasetsDraw: function (c) {
+    var st = S(c); if (!st || st.kind !== 'line' || st.series.length < 2) return;
+    var ctx = c.ctx;
+    st.info.forEach(function (info, d) {
+      var meta = c.getDatasetMeta(d), data = st.series[d].data;
+      info.runs.forEach(function (r) {
+        var s = r[0], e = r[1], i;
+        if (s <= info.first || e >= info.last || data[s - 1] == null || data[e + 1] == null) return;
+        for (i = s; i <= e; i++) if (inBand(st, i)) return;
+        var p = meta.data[s - 1], q = meta.data[e + 1]; if (!p || !q) return;
+        ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
+      });
+    });
   } };
   var avgRule = { id: 'visrAvgRule', beforeDatasetsDraw: function (c) {   /* 1px context rule; its value is a readout item */
     var st = S(c), avg = st && st.spec.avg; if (!avg || avg.value == null) return;
     var a = c.chartArea, y = Math.round(c.scales.y.getPixelForValue(avg.value)) + 0.5, ctx = c.ctx;
     ctx.save(); ctx.strokeStyle = T.context; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.left, y); ctx.lineTo(a.right, y); ctx.stroke(); ctx.restore();
   } };
-  /* The hover mark: a crosshair on a line chart, the hovered slot filled with the hover layer on a column chart (drawn in every
-     panel of a trellis, so each shows which week is selected). */
-  var crosshair = { id: 'visrCrosshair', beforeDatasetsDraw: function (c) {
-    var st = S(c); if (!st || st.index == null) return;
-    if (st.kind === 'line') { vline(c, st.index, T.strong); return; }
+  /* The hover mark: a crosshair on a line chart. On a column chart the hovered column takes the strong series colour (the
+     dataset's hover colour) and a 2px tick marks its slot on the x axis; a full-height fill would be the gap band's mark. Drawn
+     in every panel of a trellis, so each shows which week is selected. */
+  var crosshair = { id: 'visrCrosshair', afterDatasetsDraw: function (c) {
+    var st = S(c); if (!st || st.index == null || st.kind === 'line') return;
     var a = c.chartArea, w = slotW(c), x = c.scales.x.getPixelForValue(st.index), ctx = c.ctx;
-    var l = Math.max(a.left, Math.round(x - w / 2)), r = Math.min(a.right, Math.round(x + w / 2));
-    ctx.save(); ctx.fillStyle = T.hover; ctx.fillRect(l, a.top, r - l, a.bottom - a.top); ctx.restore();
+    var l = Math.max(a.left, Math.round(x - w / 2) + 1), r = Math.min(a.right, Math.round(x + w / 2) - 1);
+    ctx.save(); ctx.fillStyle = T.text3; ctx.fillRect(l, Math.round(a.bottom) - 1, r - l, 2); ctx.restore();
+  }, beforeDatasetsDraw: function (c) {
+    var st = S(c); if (st && st.index != null && st.kind === 'line') vline(c, st.index, T.strong);
   } };
 
   /* Hover, touch and keyboard share one index. A tap pins the nearest slot; a horizontal drag scrubs (touch-action: pan-y in CSS). */
@@ -228,24 +272,25 @@
     st.tip = tip;
     return tip;
   }
-  function extent(c, st, x0, x1) {   /* the vertical span of the marks between two x pixels: {top, bottom} */
-    var a = c.chartArea, pad = slotW(c), top = a.bottom, bottom = a.top, any = false;
-    c.data.datasets.forEach(function (ds, d) {
-      var m = c.getDatasetMeta(d); if (m.hidden) return;
-      m.data.forEach(function (pt, i) {
-        if (ds.data[i] == null || pt.x < x0 - pad || pt.x > x1 + pad) return;
-        any = true; if (pt.y < top) top = pt.y; if (pt.y > bottom) bottom = pt.y;
-      });
+  /* how many pixels of a box (x0..x1, y0..y1) the marks of one dataset cover vertically: a line's span between its points in
+     that x range, a column from its top to the axis */
+  function overlap(c, st, d, x0, x1, y0, y1) {
+    var a = c.chartArea, pad = slotW(c), ds = c.data.datasets[d], m = c.getDatasetMeta(d), top = Infinity, bottom = -Infinity;
+    if (m.hidden) return 0;
+    m.data.forEach(function (pt, i) {
+      if (ds.data[i] == null || pt.x < x0 - pad || pt.x > x1 + pad) return;
+      if (pt.y < top) top = pt.y; if (pt.y > bottom) bottom = pt.y;
     });
-    if (!any) return { top: a.bottom, bottom: a.top };
-    return { top: top, bottom: st.kind === 'line' ? bottom : a.bottom };
+    if (top === Infinity) return 0;
+    if (st.kind !== 'line') bottom = a.bottom;
+    return Math.max(0, Math.min(y1, bottom + 6) - Math.max(y0, top - 6));
   }
-  function tipRow(list, keyCls, valText, name, isNA) {
-    var li = el('li'), key = el('span', 'v-key ' + keyCls), val = el('span', 'v-tip-value', isNA ? '' : valText), nm = el('span', 'v-tip-name', name);
-    key.setAttribute('aria-hidden', 'true');
-    if (isNA) { var na = el('span', 'v-val is-na'); na.title = 'No data'; na.appendChild(el('span', 'sr-only', 'No data')); val.appendChild(na); }
-    li.appendChild(key); li.appendChild(val); li.appendChild(nm); list.appendChild(li);
-    return (isNA ? 'No data' : valText) + ' ' + name;
+  /* a tooltip row: key (omitted in a trellis, where every row is the same series), right-aligned value, name */
+  function tipRow(list, keyCls, valText, name) {
+    var li = el('li');
+    if (keyCls) { var key = el('span', 'v-key ' + keyCls); key.setAttribute('aria-hidden', 'true'); li.appendChild(key); }
+    li.appendChild(el('span', 'v-tip-value', valText)); li.appendChild(el('span', 'v-tip-name', name)); list.appendChild(li);
+    return valText + ' ' + name;
   }
   function showTip(c, st, i, announce) {
     var tip = st.tip;
@@ -253,36 +298,35 @@
     tip = tipEl(c, st);
     tip.textContent = '';
     var spoken = [], label = st.labels[i], keyForm = st.kind === 'line' ? 'is-line' : 'is-bar';
-    var title = el('p', 'v-tip-title', periodText(label, st.gran)); tip.appendChild(title); spoken.push(title.textContent);
-    var list = el('ul', 'v-tip-rows'), rows = 0, others = siblings(c);
-    if (others.length) {   /* trellis: one row per panel, labelled by its scope */
+    /* the period: a week of a level series ends on the as-of day at the latest */
+    var title = el('p', 'v-tip-title', periodText(label, st.gran, st.kind === 'line')); tip.appendChild(title); spoken.push(title.textContent);
+    var others = siblings(c), list = el('ul', 'v-tip-rows' + (others.length ? ' is-plain' : '')), rows = 0, missing = [];
+    if (others.length) {   /* trellis: one row per panel, named by its scope; every row is the same series, so there is no key */
       [c].concat(others).sort(function (a, b) { return a.canvas.compareDocumentPosition(b.canvas) & 4 ? -1 : 1; }).forEach(function (o) {
-        var os = S(o), v = os.series[0] ? os.series[0].data[i] : null;
-        spoken.push(tipRow(list, keyForm + ' is-accent', v == null ? '' : value(os.unit, v), os.scope || (os.series[0] && os.series[0].label) || '', v == null)); rows++;
+        var os = S(o), v = os.series[0] ? os.series[0].data[i] : null, name = os.scope || (os.series[0] && os.series[0].label) || '';
+        if (v == null) { if (!inBand(os, i)) missing.push(name); return; }
+        spoken.push(tipRow(list, '', value(os.unit, v), name)); rows++;
       });
     } else if (!inBand(st, i)) {
+      /* the name is the series label, exactly as the readout and the card title print it ("949" "Open issues") */
       st.series.forEach(function (s) {
-        var v = s.data[i]; if (v == null && st.single) return;
-        var name = st.single ? (v === 1 ? st.metricOne : st.metric) : s.label;
-        spoken.push(tipRow(list, keyForm + ' is-' + (s.role === 'context' ? 'context' : 'accent'), v == null ? '' : value(st.unit, v), name, v == null)); rows++;
+        var v = s.data[i]; if (v == null) { if (!st.single) missing.push(s.label); return; }
+        spoken.push(tipRow(list, keyForm + ' is-' + (s.role === 'context' ? 'context' : 'accent'), value(st.unit, v), s.label)); rows++;
       });
     }
     if (rows) tip.appendChild(list);
     function note(text) { tip.appendChild(el('p', 'v-tip-note', text)); spoken.push(text); }
     function changeRow(ch, base) {   /* a change is the delta badge and its base, never a typed sentence */
-      var row = el('p', 'v-tip-change'), badge = el('span', 'v-delta is-' + (ch.polarity || 'flat'));
-      badge.appendChild(el('span', 'sr-only', ch.sr));
-      var vis = el('span', '', ch.text); vis.setAttribute('aria-hidden', 'true'); badge.appendChild(vis);
-      row.appendChild(badge); row.appendChild(el('span', 'v-base', base)); tip.appendChild(row);
+      var row = el('p', 'v-tip-change');
+      row.appendChild(changeEl(ch, st.polarity)); row.appendChild(el('span', 'v-base', base)); tip.appendChild(row);
       spoken.push(ch.sr + ' ' + base);
     }
+    /* a series with no value at this slot has no row: one caption line says so, in the words of the notes key */
     if (!rows) note('No data');
+    else if (missing.length) note(missing.join(', ') + ' not recorded');
     if (st.single && !others.length && st.kind === 'column' && st.gran === 'week' && i > 0) {   /* change against the prior week */
-      var v0 = st.series[0].data[i], v1 = st.series[0].data[i - 1];
-      if (v0 != null && v1 != null) {
-        var ch = st.unit === 'downloads' ? F.change({ cur: v0, prev: v1, unit: 'percent', metric: 'downloads' }) : F.change({ cur: v0, prev: v1 });
-        if (ch.state !== 'na') changeRow(ch, 'vs prior 7 days');
-      }
+      var ch = changeOf(st.unit, st.polarity, st.series[0].data[i], st.series[0].data[i - 1]);
+      if (ch) changeRow(ch, F.base('prior-week').text);
     }
     tip.hidden = false;
     var host = tip.parentNode, a = c.chartArea, x = c.scales.x.getPixelForValue(i), w = tip.offsetWidth, h = tip.offsetHeight;
@@ -292,21 +336,26 @@
     if (hx - 12 - w >= 0) sides.push(hx - 12 - w);
     if (!sides.length) sides.push(Math.max(0, Math.min(host.clientWidth - w, hx + 12)));
     var left = sides[0], top = oy + a.top;
-    if (others.length) {   /* trellis: the top of the first panel */
-      var firstCv = [c].concat(others).map(function (o) { return o.canvas; }).sort(function (p, q) { return p.compareDocumentPosition(q) & 4 ? -1 : 1; })[0];
-      var fc = live.get(firstCv);
-      top = firstCv.getBoundingClientRect().top - hb.top + (fc && fc.chartArea ? fc.chartArea.top : 0);
+    if (others.length) {
+      /* trellis: in the label gutter of the hovered row, left of the y axis, where it covers no column; when the label cell sits
+         above the panel (below 64rem) there is no gutter and it goes beside the hovered slot at the top of that panel */
+      if (ox - 8 - w >= 0) left = ox - 8 - w;
+      top = Math.max(0, Math.min(host.clientHeight - h, oy + a.top));
     } else {
+      /* candidates: the bottom edge, then the top edge, each right then left of the crosshair. The first that covers no mark of
+         any series wins; otherwise the one that covers least, the subject series counting far more than the context series */
       var best = null;
-      sides.forEach(function (sx) {
-        if (best && best.free) return;
-        var e = extent(c, st, sx - ox, sx - ox + w), cand;
-        if (a.top + h + 8 <= e.top) cand = { left: sx, top: oy + a.top, free: true, room: e.top };
-        else if (a.bottom - h - 8 >= e.bottom && a.bottom - h - 8 >= a.top) cand = { left: sx, top: oy + a.bottom - h - 8, free: true, room: e.top };
-        else cand = { left: sx, top: oy + a.top, free: false, room: e.top };
-        if (!best || cand.free || cand.room > best.room) best = cand;
+      [oy + a.bottom - h - 8, oy + a.top].forEach(function (ty) {
+        if (ty < oy + a.top) return;
+        sides.forEach(function (sx) {
+          var score = 0;
+          c.data.datasets.forEach(function (ds, d) {
+            score += overlap(c, st, d, sx - ox, sx - ox + w, ty - oy, ty - oy + h) * (st.series[d] && st.series[d].role === 'context' ? 1 : 1000);
+          });
+          if (!best || score < best.score) best = { left: sx, top: ty, score: score };
+        });
       });
-      left = best.left; top = best.top;
+      if (best) { left = best.left; top = best.top; }
     }
     tip.style.left = Math.round(left) + 'px'; tip.style.top = Math.round(top) + 'px';
     if (announce && st.live) st.live.textContent = spoken.join('. ');
@@ -324,7 +373,7 @@
       if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day' ? 3 : false,
         pointRadius: a.radius, pointHoverRadius: 4, pointHitRadius: 0, pointBackgroundColor: c, pointBorderColor: T.surface, pointBorderWidth: 2,
         pointHoverBackgroundColor: c, pointHoverBorderColor: T.surface, pointHoverBorderWidth: 2 };
-      return { label: s.label, data: s.data, order: order, backgroundColor: c, hoverBackgroundColor: c, borderWidth: 0, borderRadius: { topLeft: 3, topRight: 3 }, borderSkipped: false };
+      return { label: s.label, data: s.data, order: order, backgroundColor: c, hoverBackgroundColor: s.role === 'context' ? c : T.accentStrong, borderWidth: 0, borderRadius: { topLeft: 3, topRight: 3 }, borderSkipped: false };
     });
     var max = 0;
     series.forEach(function (s) { s.data.forEach(function (v) { if (v != null && v > max) max = v; }); });
@@ -342,11 +391,11 @@
     if (!line) datasets.forEach(function (ds) { ds.maxBarThickness = barMax(boxW, labels.length); });
     state.set(canvas, { kind: kind, unit: unit, gran: gran, spec: spec, labels: labels, series: series, info: info, bands: bands, marks: marksAt,
       single: single, index: null, tip: null, live: host && host.querySelector('[data-chart-live]'), scope: canvas.dataset.scope || '',
-      metric: canvas.dataset.metric || '', metricOne: spec.metricOne || canvas.dataset.metric || '' });
+      metric: canvas.dataset.metric || '', metricOne: spec.metricOne || canvas.dataset.metric || '', polarity: canvas.getAttribute('data-polarity-key') || '' });
     return {
       type: line ? 'line' : 'bar',
       data: { labels: labels, datasets: datasets },
-      plugins: [gapBand, marks, avgRule, crosshair, hover],
+      plugins: [gapBand, marks, bridges, avgRule, crosshair, hover],
       options: {
         layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
         onResize: function (chart, size) {   /* column width follows the slot width */
@@ -409,8 +458,12 @@
 
   /* Table view: the switch swaps the plot for a flush compact table in the same box, newest first, across the full card width (CSS:
      a fixed period column, the value columns share the rest). Values use the one format of their kind; a volume carries its exact
-     figure in title. A daily series over 90 days is shown as week ranges. A gap is one ordinary row: the range in the date cell,
-     the empty mark in each value cell. A trellis row that cannot draw keeps its column. */
+     figure in title. A column of weeks shows each week by its Monday, as a date under the header "Week of", with the range of the
+     week in title: one form down the column, never ranges that alternate between "Nov 2–8" and "Oct 26 to Nov 1". A daily series
+     over 90 days is shown as weeks, and the header says so. A gap is one ordinary row: it is a span, so its first cell is a range,
+     and each value cell holds the empty mark. A "Change" column (one series) carries its base as the sub line of its header, like
+     every Change column on the site. A series with no value anywhere has no column (4.14 rule 8); a trellis row that cannot draw
+     is named under the table by ui/trellis.html. The box shows the header and whole rows; the fade appears only after scrolling. */
   function weekStart(s) { var p = parts(s), t = new Date(Date.UTC(p.y, p.m, p.d)); return addDays(s, -((t.getUTCDay() + 6) % 7)); }
   function toWeekly(labels, cols, flow) {
     var keys = [], at = {};
@@ -421,29 +474,32 @@
       return { label: col.label, unit: col.unit, data: bins.map(function (b) { return flow ? (b.n === 7 ? b.sum : null) : b.last; }) };
     }) };
   }
-  function naCell(td) { var s = el('span', 'v-val is-na'); s.title = 'No data'; s.appendChild(el('span', 'sr-only', 'No data')); td.appendChild(s); }
+  function naCell(td, reason) { var s = el('span', 'v-val is-na'); s.title = reason || 'No data'; s.appendChild(el('span', 'sr-only', reason || 'No data')); td.appendChild(s); }
   function buildTable(card, host) {
     var canvases = Array.prototype.slice.call(card.querySelectorAll('canvas[data-viz]')); if (!canvases.length) return;
     var first = canvases[0], spec0 = JSON.parse(first.dataset.series), gran = first.dataset.gran === 'week' ? 'week' : 'day', flow = first.dataset.viz === 'column';
-    var labels = spec0.labels || [], cols = [], trellis = card.hasAttribute('data-trellis');
-    /* a trellis row that cannot draw still has its column (ui/trellis.html puts its name and series on the pending line) */
-    var sources = trellis ? Array.prototype.slice.call(card.querySelectorAll('canvas[data-viz], [data-pending-col]')) : canvases;
-    sources.forEach(function (cv) {
+    var labels = spec0.labels || [], cols = [], trellis = card.hasAttribute('data-trellis'), key = first.getAttribute('data-polarity-key') || '';
+    canvases.forEach(function (cv) {
       var spec = cv === first ? spec0 : JSON.parse(cv.getAttribute('data-series') || '{}'), unit = cv.getAttribute('data-unit') || 'count', ser = spec.series || [];
-      if (trellis) cols.push({ label: cv.getAttribute('data-scope') || cv.getAttribute('data-pending-col') || (ser[0] && ser[0].label) || '', unit: unit, data: ser[0] ? ser[0].data : [] });
-      else ser.slice(0, 2).forEach(function (s) { cols.push({ label: (ser.length === 1 ? cap1(cv.dataset.metric || s.label) : s.label), unit: unit, data: s.data }); });
+      if (trellis) cols.push({ label: cv.getAttribute('data-scope') || (ser[0] && ser[0].label) || '', unit: unit, data: ser[0] ? ser[0].data : [] });
+      else ser.slice(0, 2).forEach(function (s) { cols.push({ label: s.label, unit: unit, data: s.data }); });
     });
+    /* a column whose every cell would be the empty mark is omitted */
+    cols = cols.filter(function (c) { return c.data.some(function (v) { return v != null; }); });
+    if (!cols.length) return;
     var gapTitle = first.getAttribute('data-gap-title') || '';
-    var g = gran;
-    if (gran === 'day' && labels.length > 90) { var wk = toWeekly(labels, cols, flow); labels = wk.labels; cols = wk.cols; g = 'week'; }
+    var g = gran, binned = false;
+    if (gran === 'day' && labels.length > 90) { var wk = toWeekly(labels, cols, flow); labels = wk.labels; cols = wk.cols; g = 'week'; binned = true; }
     var change = cols.length === 1;
     var tbl = el('table', 'v-dt is-compact'), cap = tbl.createCaption(); cap.className = 'sr-only';
-    cap.textContent = cap1(first.dataset.metric || '') + (trellis ? '' : (first.dataset.scope ? ', ' + first.dataset.scope : ''));
+    var how = binned ? (flow ? 'Weekly totals' : 'Weekly, last reading of each week') : '';
+    cap.textContent = cap1(first.dataset.metric || '') + (trellis ? '' : (first.dataset.scope ? ', ' + first.dataset.scope : '')) + (how ? '. ' + how : '');
     var hr = tbl.createTHead().insertRow();
-    function th(text, num) { var h = el('th', num ? 'num' : '', text); h.scope = 'col'; hr.appendChild(h); }
-    th(g === 'week' ? 'Week' : 'Date', false);
+    function th(text, num, sub) { var h = el('th', num ? 'num' : '', text); h.scope = 'col'; if (sub) h.appendChild(el('span', 'v-th-sub', sub)); hr.appendChild(h); return h; }
+    var ph = th(g === 'week' ? 'Week of' : 'Date', false);
+    if (how) ph.title = how;
     cols.forEach(function (c) { th(c.label, true); });
-    if (change) th('Change', true);
+    if (change) th('Change', true, F.base(g === 'week' ? 'prior-week' : 'prior-day').text);
     var tb = tbl.createTBody();
     function empty(i) { return cols.every(function (c) { return c.data[i] == null; }); }
     /* slots before the first measured one are not rows: nothing was tracked yet */
@@ -455,11 +511,12 @@
       if (empty(i)) {
         var j = i; while (j > firstData && empty(j - 1)) j--;
         h.textContent = F.range({ from: labels[j], to: periodEnd(labels[i], g) }).text;
-        if (gapTitle) h.title = gapTitle;   /* the row keeps its bins; the title names the outage's own dates */
+        if (gapTitle) h.title = gapTitle;   /* the row keeps its bins; the title names the dates of the outage itself */
         gapCells(r);
         i = j - 1;
       } else {
-        h.textContent = g === 'week' ? F.range({ from: labels[i], to: addDays(labels[i], 6) }).text : F.date({ d: labels[i] }).text;
+        h.textContent = F.date({ d: labels[i] }).text;
+        if (g === 'week') h.title = F.range({ from: labels[i], to: weekEnd(labels[i], !flow) }).text;
         cols.forEach(function (c) {
           var td = r.insertCell(); td.className = 'num';
           if (c.data[i] == null) { naCell(td); return; }
@@ -469,20 +526,31 @@
           s.setAttribute('data-kind', c.unit === 'downloads' ? 'volume' : c.unit === 'hours' ? 'dur' : 'count'); td.appendChild(s);
         });
         if (change) {
-          var td = r.insertCell(), prev = i > 0 ? cols[0].data[i - 1] : null, cur = cols[0].data[i]; td.className = 'num';
-          var ch = prev == null || cur == null ? null : cols[0].unit === 'downloads' ? F.change({ cur: cur, prev: prev, unit: 'percent', metric: 'downloads' })
-            : cols[0].unit === 'hours' ? F.change({ cur: cur, prev: prev, unit: 'hours' }) : F.change({ cur: cur, prev: prev });
-          if (!ch || ch.state === 'na') { var m = el('span', 'v-val is-na'); m.title = 'No baseline'; m.appendChild(el('span', 'sr-only', 'No baseline')); td.appendChild(m); }
-          else { var d = el('span', 'v-delta is-' + (ch.polarity || 'flat')); d.appendChild(el('span', 'sr-only', ch.sr)); var vis = el('span', '', ch.text); vis.setAttribute('aria-hidden', 'true'); d.appendChild(vis); td.appendChild(d); }
+          var td = r.insertCell(), ch = changeOf(cols[0].unit, key, cols[0].data[i], i > 0 ? cols[0].data[i - 1] : null); td.className = 'num';
+          if (!ch) naCell(td, 'No baseline'); else td.appendChild(changeEl(ch, key));
         }
         i--;
       }
     }
     host.setAttribute('aria-label', cap1(first.dataset.metric || '') + ' table');
     host.appendChild(tbl);
-    function clip() { host.classList.toggle('is-clipped', host.scrollTop + host.clientHeight < host.scrollHeight - 1); }
+    /* the fade only once the reader has scrolled and rows remain below: at rest the box ends on a whole row */
+    function clip() { host.classList.toggle('is-clipped', host.scrollTop > 0 && host.scrollTop + host.clientHeight < host.scrollHeight - 1); }
     host.addEventListener('scroll', clip, { passive: true });
-    host._clip = clip;
+  }
+  /* The table box shows its header and whole rows: the height CSS gives it is trimmed to the last full row and the remainder
+     becomes its bottom margin, so the card keeps its height. --sbw is the width a classic scrollbar takes from the box, so the
+     values of the last column still end on the card inset. */
+  function fitTable(host) {
+    var tbl = host.querySelector('table'); if (!tbl || !tbl.tHead || !tbl.tBodies[0] || !tbl.tBodies[0].rows.length) return;
+    host.style.height = ''; host.style.maxHeight = ''; host.style.marginBottom = '';
+    var cs = getComputedStyle(host), auto = host.classList.contains('v-trellis-table');
+    var box = auto ? parseFloat(cs.maxHeight) : host.offsetHeight; if (!(box > 0)) return;
+    var edge = host.offsetHeight - host.clientHeight, head = tbl.tHead.offsetHeight, row = tbl.tBodies[0].rows[0].offsetHeight || 36;
+    var n = Math.max(1, Math.floor((box - edge - head) / row)), fit = edge + head + n * row;
+    if (auto) host.style.maxHeight = fit + 'px';
+    else if (tbl.offsetHeight + edge > box) { host.style.height = fit + 'px'; host.style.marginBottom = (box - fit) + 'px'; }
+    host.style.setProperty('--sbw', (host.offsetWidth - host.clientWidth) + 'px');
   }
   document.addEventListener('visr:tabchange', function (e) {
     var panel = e.detail && e.detail.panel; if (!panel) return;
@@ -491,9 +559,12 @@
     card.setAttribute('data-view', panel === host ? 'table' : 'chart');   /* CSS drops the keyed notes row in table view */
     if (panel === host) {
       if (!host.hasAttribute('data-built')) { buildTable(card, host); host.setAttribute('data-built', ''); }
-      if (host._clip) host._clip();
+      fitTable(host);
       card.querySelectorAll('canvas[data-viz]').forEach(function (cv) { if (live.has(cv) && !cv.hasAttribute('data-chart-pin')) { var c = live.get(cv); setIndex(c, null); var st = state.get(cv); if (st) hideTip(st); } });
     }
+  });
+  window.addEventListener('resize', function () {
+    document.querySelectorAll('[data-chart][data-view="table"] > .v-chart-table').forEach(fitTable);
   });
 
   function boot() {

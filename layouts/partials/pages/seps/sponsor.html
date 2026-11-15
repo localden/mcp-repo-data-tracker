@@ -2,7 +2,9 @@
   Dict {r, ord}: r is a pages/seps/entry.html row, ord the handle ranks from pages/seps/data.html.
   Four forms, one fixed vocabulary: badge action "Needs sponsor" (a proposal with none), badge neutral "No sponsor" (a later stage
   with none), badge neutral "Self-sponsored", or the sponsor's handle. data-v is the sort key in workflow order: Needs sponsor, No
-  sponsor, Self-sponsored, then handles A to Z. */ -}}
+  sponsor, Self-sponsored, then handles A to Z.
+  Below 64rem the list has no column header, so a handle is the phrase "Sponsored by {handle}" (the words are a .v-who-label,
+  shown only in list form, like the word "overdue" of the Overdue object) and the cell sits on the row's state line. */ -}}
 {{- $r := .r -}}
 {{- $v := "1" -}}
 {{- if $r.needsSponsor }}{{ $v = "0" -}}
@@ -11,6 +13,6 @@
 <td class="v-c-who" data-v="{{ $v }}">
   {{- if $r.needsSponsor }}{{ partial "ui/badge.html" (dict "text" "Needs sponsor" "tone" "action" "title" "A proposal with no sponsor whose author is not a core or lead maintainer.") -}}
   {{- else if eq $r.sponsorKind "self" }}{{ partial "ui/badge.html" (dict "text" "Self-sponsored" "tone" "neutral" "title" "Written by a core or lead maintainer, who sponsors it.") -}}
-  {{- else if eq $r.sponsorKind "handle" }}<span class="v-who">{{ $r.sponsor }}</span>
+  {{- else if eq $r.sponsorKind "handle" }}<span class="v-who" title="Sponsored by {{ $r.sponsor }}"><span class="v-who-label">Sponsored by </span>{{ $r.sponsor }}</span>
   {{- else }}{{ partial "ui/badge.html" (dict "text" "No sponsor" "tone" "neutral" "title" "Past the proposal stage with no sponsor.") }}{{ end -}}
 </td>

@@ -77,13 +77,24 @@
   }
   all('table.v-dt').forEach(function (t) {
     var heads = all('thead tr:last-child > th', t); if (!heads.length) return;
+    /* a bar column: its header sits over the number (left), like its cells; and the number slot in front of the bars is as wide
+       as the widest number of the table (data-numw), unless the template set it */
+    var bars = all('tbody td.v-c-bar', t);
+    if (bars.length) {
+      bars.forEach(function (c) { var h = heads[c.cellIndex]; if (h) h.classList.add('v-c-bar'); });
+      if (!t.hasAttribute('data-numw')) {
+        var w = 1;
+        bars.forEach(function (c) { var v = c.querySelector('.v-val'); if (v) w = Math.max(w, v.textContent.trim().length); });
+        t.setAttribute('data-numw', String(Math.min(7, w)));
+      }
+    }
     var labels = heads.map(function (th) { return th.getAttribute('data-record') || headText(th); });
     var listForm = t.classList.contains('is-list');
     all('tbody > tr', t).forEach(function (r) {
       if (r.classList.contains('v-group')) return;
       Array.prototype.forEach.call(r.cells, function (c, i) {
         if (i === 0 || c.hasAttribute('data-label') || !labels[i]) return;
-        if (listForm && c.matches('.v-item, .v-c-status, .v-sla-cell, .v-c-detail, .v-c-repo, .v-c-bar, .v-c-spark')) return;
+        if (listForm && c.matches('.v-item, .v-c-status, .v-sla-cell, .v-c-repo, .v-c-bar, .v-c-spark')) return;
         c.setAttribute('data-label', labels[i]);
       });
     });
@@ -169,7 +180,7 @@
     });
     var first = this.first(), limit = this.more === Infinity ? Infinity : first + this.more;
     var matched = 0, shown = 0, inAll = 0, last = null, groups = new Map(), firsts = [];
-    var chipN = {}, optN = {};
+    var chipN = {}, optN = {}, viewN = {};
     this.checks.forEach(function (c) { chipN[c.getAttribute('data-facet')] = 0; });
     this.rows.forEach(function (r) {
       var hit = !q.length || (function () { var t = self.text(r); return q.every(function (w) { return t.indexOf(w) !== -1; }); })();
@@ -177,6 +188,8 @@
       if (hit) facets.forEach(function (f) { if (!f.test(r)) { fails++; failKey = f.key; } });
       if (hit && !fails) inAll++;
       var inView = self.inView(r), ok = inView && hit && !fails;
+      /* what the view holds at all, with no search and no filter: an option that no row of the view can have is not offered */
+      if (inView) r._f.forEach(function (tok) { if (tok.indexOf(':') > 0) viewN[tok] = (viewN[tok] || 0) + 1; });
       /* live counts: rows that would match with the current view, search and the OTHER filters applied */
       if (inView && hit && fails <= 1) {
         self.checks.forEach(function (c) {
@@ -206,7 +219,9 @@
     });
     syncChildren(this.el);
 
-    /* chips and options: live counts; zero disables while not pressed or checked */
+    /* chips and options: live counts; zero disables while not pressed or checked. An option the view cannot hold at all (a
+       status that belongs to another view) is hidden, so a menu never lists rows that are dead by construction; an option that is
+       zero only because of the search or the other filters stays, disabled */
     this.checks.forEach(function (c) {
       var k = c.getAttribute('data-facet'), on = c.getAttribute('aria-pressed') === 'true', n = chipN[k] || 0;
       var b = c.querySelector('[data-facet-count]'); if (b) b.textContent = n0(n);
@@ -218,6 +233,7 @@
         var n = optN[k + ':' + o.getAttribute('data-value')] || 0, on = o.getAttribute('aria-checked') === 'true';
         var b = o.querySelector('[data-opt-count]'); if (b) b.textContent = n0(n);
         if (!on && n === 0) o.setAttribute('aria-disabled', 'true'); else o.removeAttribute('aria-disabled');
+        if (o.parentElement && o.parentElement.tagName === 'LI') o.parentElement.hidden = !on && !viewN[k + ':' + o.getAttribute('data-value')];
       });
     });
 
@@ -271,7 +287,7 @@
     }
     this.syncSortLabel();
     this.swapRules();
-    if (wide.matches) this.fold();
+    if (this.table) foldTags(this.table);
     if (owner === this) this.writeURL(false);
   };
 
@@ -291,34 +307,11 @@
       if (lab) lab.textContent = this.viewLabel();
       if (cnt) { cnt.textContent = c ? c.textContent : ''; cnt.hidden = !c; }
     }
-    this.syncSla();
     if (!quiet) this.apply();
     return true;
   };
-  /* ---- a view in which nothing can be overdue has no Overdue column (4.14 rule 8, per view): the table takes data-no-sla, CSS
-     drops the column, and while it is gone the rows sort by the primary time instead; the stored sort and the URL do not change */
-  List.prototype.syncSla = function () {
-    var t = this.table, self = this; if (!t) return;
-    if (this._slaTh === undefined) {
-      var cell = t.querySelector('tbody td.v-sla-cell'), head = cell && t.querySelector('thead tr:last-child');
-      this._slaTh = (head && head.cells[cell.cellIndex]) || null;
-      if (this._slaTh) {
-        this._slaTh.setAttribute('data-sla-col', '');
-        var col = all('colgroup > col', t)[cell.cellIndex]; if (col) col.setAttribute('data-sla-col', '');
-      }
-    }
-    if (!this._slaTh) return;
-    var off = !this.rows.some(function (r) { return self.inView(r) && r.querySelector('td.v-sla-cell > *'); });
-    if (off === t.hasAttribute('data-no-sla')) return;
-    if (off) t.setAttribute('data-no-sla', ''); else t.removeAttribute('data-no-sla');
-    var heads = all('th[data-sort]', t).filter(function (h) { return h !== self._slaTh; }), fallback = heads[heads.length - 1];
-    if (off && this._slaTh.hasAttribute('aria-sort') && fallback) { sortTable(t, fallback, 'descending'); this._slaSwap = true; this.readRows(); }
-    else if (!off && this._slaSwap) {
-      this._slaSwap = false;
-      var th = this.sort && t.querySelector('th[data-sort="' + esc(this.sort.key) + '"]');
-      if (th) { sortTable(t, th, this.sort.dir === 'asc' ? 'ascending' : 'descending'); this.readRows(); }
-    }
-  };
+  /* A view never changes the table's columns: tabs switch piles, not grids. A view in which no row is overdue keeps the Overdue
+     header over empty cells, and its rows keep the server order (Overdue, then the primary time). */
 
   /* ---- sort: rows sort inside each tbody by the cell's data-v (else its text); cluster members follow their primary row */
   List.prototype.sortBy = function (key, dir, quiet) {
@@ -364,10 +357,16 @@
     var m = this.sortMenu, ul = m && m.querySelector('.v-menu'); if (!ul || !this.table) return;
     var heads = all('th[data-sort]', this.table);
     if (!heads.length) { m.hidden = true; return; }
-    heads.forEach(function (th) {
-      var label = headText(th), text = th.getAttribute('data-sort-type') === 'text';
-      [['desc', th.getAttribute('data-desc') || (label + (text ? ', Z to A' : ', highest first'))],
-       ['asc', th.getAttribute('data-asc') || (label + (text ? ', A to Z' : ', lowest first'))]].forEach(function (o) {
+    /* order: the list's default sort leads, then its primary time (the last sortable column), then the rest in column order.
+       Within a column the first-click direction comes first: A to Z for text, the larger value first for numbers. A column in
+       workflow order has one choice: its reverse is not a question anyone asks */
+    var lead = this.table.querySelector('th[data-sort][aria-sort]'), time = heads[heads.length - 1], order = [];
+    [lead, time].concat(heads).forEach(function (h) { if (h && order.indexOf(h) === -1) order.push(h); });
+    order.forEach(function (th) {
+      var label = headText(th), type = th.getAttribute('data-sort-type') || 'num', text = type === 'text';
+      var desc = ['desc', th.getAttribute('data-desc') || (label + (text ? ', Z to A' : ', highest first'))];
+      var asc = ['asc', th.getAttribute('data-asc') || (label + (text ? ', A to Z' : type === 'order' ? ', in workflow order' : ', lowest first'))];
+      (type === 'order' ? [asc] : type === 'num' ? [desc, asc] : [asc, desc]).forEach(function (o) {
         var li = el('li'); li.setAttribute('role', 'none');
         var b = el('button', 'v-menu-opt'); b.type = 'button'; b.setAttribute('role', 'menuitemradio'); b.setAttribute('aria-checked', 'false');
         b.setAttribute('data-value', th.getAttribute('data-sort') + ':' + o[0]);
@@ -409,33 +408,50 @@
     });
   };
 
-  /* ---- label tags that do not fit the meta line fold into the +N tag (from 64rem; below, the tag line wraps) */
-  List.prototype.fold = function () {
-    this.rows.forEach(function (r) {
+  /* ---- label tags that do not fit the meta line fold into the +N tag. Every work table, in a list card or not (the preview
+     lists of a repository page are plain cards). From 64rem only: below, the tag line wraps and shows every tag. The tag line is
+     one 20px line that wraps into a clipped second line (CSS), so a tag that does not fit has dropped out whole; here the labels
+     that dropped are folded, last first, until the line holds. Priority, flag and attribute tags, the +N and the expander never
+     fold: when they alone do not fit, the meta line goes tight and the author gives way (ellipsis) instead. */
+  function tagBox(r) { return r.querySelector ? r.querySelector('.v-tags') : null; }
+  function spills(box) {
+    var kids = Array.prototype.filter.call(box.children, function (k) { return k.offsetParent !== null; });
+    if (!kids.length) return false;
+    return kids[kids.length - 1].offsetTop > kids[0].offsetTop + 4 || box.scrollWidth > box.clientWidth + 1;
+  }
+  function foldTags(table) {
+    if (!wide.matches) return;
+    all('tbody > tr', table).forEach(function (r) {
       if (r.hidden || r._folded) return;
-      var box = r.querySelector('.v-tags'); if (!box) { r._folded = true; return; }
-      if (box.clientWidth === 0) return;
-      var labels = all('.v-tag.is-label', box), more = box.querySelector('.v-tag.is-more');
+      var box = tagBox(r); if (!box) { r._folded = true; return; }
+      if (box.offsetParent === null || box.clientWidth === 0) return;   /* not laid out yet: fold when the row is shown */
+      var labels = all('.v-tag.is-label', box).filter(function (t) { return t.offsetParent !== null; });
+      var more = box.querySelector('.v-tag.is-more:not([data-only="narrow"])');
       if (!box._more0) box._more0 = more ? { text: more.textContent, title: more.getAttribute('title') || '' } : { text: '', title: '' };
       var n = parseInt(box._more0.text.replace(/\D/g, ''), 10) || 0, names = box._more0.title ? [box._more0.title] : [];
-      while (box.scrollWidth > box.clientWidth + 1 && labels.length) {
+      while (labels.length && spills(box)) {
         var t = labels.pop(); names.unshift(t.textContent.trim()); t.hidden = true; t.setAttribute('data-folded', ''); n++;
-        if (!more) { more = el('span', 'v-tag is-more'); more.setAttribute('data-made', ''); box.appendChild(more); }
+        if (!more) { more = el('span', 'v-tag is-more'); more.setAttribute('data-made', ''); box.insertBefore(more, t.nextSibling); }
         more.textContent = '+' + n; more.setAttribute('title', names.join(', '));
       }
+      var meta = box.parentElement;
+      if (meta && spills(box)) meta.classList.add('is-tight');
       r._folded = true;
     });
-  };
-  List.prototype.unfold = function () {   /* back to the server-rendered tags, before a new layout is measured */
-    this.rows.forEach(function (r) {
+  }
+  function unfoldTags(table) {   /* back to the server-rendered tags, before a new layout is measured */
+    all('tbody > tr', table).forEach(function (r) {
       r._folded = false;
-      var box = r.querySelector('.v-tags'); if (!box || !box._more0) return;
+      var box = tagBox(r); if (!box) return;
+      if (box.parentElement) box.parentElement.classList.remove('is-tight');
+      if (!box._more0) return;
       all('.v-tag[data-folded]', box).forEach(function (t) { t.hidden = false; t.removeAttribute('data-folded'); });
-      var more = box.querySelector('.v-tag.is-more'); if (!more) return;
+      var more = box.querySelector('.v-tag.is-more:not([data-only="narrow"])'); if (!more) return;
       if (more.hasAttribute('data-made')) more.remove();
       else { more.textContent = box._more0.text; more.setAttribute('title', box._more0.title); }
     });
-  };
+  }
+  function refold() { all('table.v-dt.is-work').forEach(function (t) { unfoldTags(t); foldTags(t); }); }
 
   /* ---- URL state (4.15): the first [data-list][data-url] owns the query string */
   List.prototype.writeURL = function (push) {
@@ -488,7 +504,6 @@
   List.prototype.init = function () {
     this.buildSortMenu();
     if (owner === this) { var p = null; try { p = new URLSearchParams(location.search); } catch (e) {} if (p) this.readState(p); }
-    this.syncSla();
     this.apply();
     this.el.setAttribute('data-ready', '');
   };
@@ -615,8 +630,22 @@
     if (hit && hit.matches('tr[data-row]')) { var HL = listOf(hit); if (HL) HL.reveal(hit); }
     else if (hit && hit.closest('[data-list]')) hit.scrollIntoView({ block: 'start' });
   }
-  function relayout() { lists.forEach(function (L) { L.unfold(); L.more = 0; L.apply(); }); }
+  function relayout() { all('table.v-dt.is-work').forEach(unfoldTags); lists.forEach(function (L) { L.more = 0; L.apply(); }); refold(); }
   if (wide.addEventListener) { wide.addEventListener('change', relayout); phone.addEventListener('change', relayout); }
+  /* fold once the shipped font has set the tag widths, and again whenever a work table changes width */
+  refold();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refold);
+  if (window.ResizeObserver) {
+    var widths = new WeakMap(), pending = false;
+    var ro = new ResizeObserver(function (entries) {
+      var changed = false;
+      entries.forEach(function (en) { var w = Math.round(en.contentRect.width); if (widths.get(en.target) !== w) { if (widths.has(en.target)) changed = true; widths.set(en.target, w); } });
+      if (!changed || pending) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; refold(); });
+    });
+    all('table.v-dt.is-work').forEach(function (t) { ro.observe(t); });
+  }
 
   /* ---- styleguide: each swatch prints its token's computed value (the active theme only) */
   function swatches() {

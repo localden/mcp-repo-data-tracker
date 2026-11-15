@@ -1,52 +1,56 @@
-{{- /* 7. People (design system v4 5.8 module 6, 4.13): its own section, so the list card opens with its views and has no card head
-  (the title would repeat the section title). Emits the whole section, or nothing when the repository has no people to list.
-  Dict {p}: the result of pages/repo/people-data.html.
+{{- /* 7. People (design system v4 5.8 module 6, 4.13, 4.16, ruling 40): its own section, so the list card opens with its views and
+  has no card head (the title would repeat the section title). Emits the whole section, or nothing when the repository has no
+  people to list. Dict {p}: the result of pages/repo/people-data.html.
   Views (disjoint piles; "All" is their union): Maintainers, Contributors, All. Default: the first that is not empty. Filter bar:
-  search "Search people" and the count "{n} people"; no facets. 10 rows, then the list foot.
-  Rows are one line (48px, the rank-table row): a person has two facts, not a title and a meta line.
-  Columns: Person (the handle, the row link to GitHub, with the role tag Maintainer beside it; the default role, Contributor, has no
-  tag, as in every item row), Last 30 days (badge success "Active" or badge neutral "No activity"), and, once the data carries
-  per-person counts, PRs, Issues, Reviews and Commits (num-sm). Without counts the name column is 16rem and the badge column takes
-  the rest, so the badge sits next to the name; with counts the table spreads like every rank table.
-  Default sort: active people first, then A to Z by handle. Person and every other column sort.
+  search "Search people" and the count "{n} people"; no facets.
+  Two forms, decided by the data:
+    Roster (today: one fact per person). table.v-dt.is-roster: one 48px cell per person, the handle (the row link to GitHub) on
+      the left and, for a maintainer, the badge on the right edge of the cell: success "Active" or neutral "No activity", both
+      about the last 30 days (the badge title says so). A contributor is on the list because they were active, so a badge on
+      each of them would be one word repeated a hundred times; their cell is the handle. Cells flow in three columns from 64rem, two from 40rem, one below, so the card is never
+      a name and a badge beside 850px of nothing, and a phone row is one line. 30 people, then the list foot (10 on a phone).
+      Fixed order, active people first and then A to Z by handle: there is no header row and nothing to sort.
+    Table (once the data carries per-person counts): the rank table Person, Last 30 days, PRs, Issues, Reviews, Commits, spread
+      like every rank table; every column sorts; 10 rows, then the list foot.
+  The role tag "Maintainer" sits beside the handle in both forms and is drawn only in the All view, where it tells the two piles
+  apart (CSS reads the selected view tab); in the Maintainers view it would repeat on every row. The default role, Contributor,
+  has no tag, as in every item row.
   One tr per person: data-views places it in its pile, Hugo marks the first paint. */ -}}
 {{- $p := .p -}}
 {{- if $p.rows -}}
 {{- $def := cond (gt $p.nM 0) "maintainers" (cond (gt $p.nC 0) "contributors" "all") -}}
 {{- $nDef := cond (eq $def "maintainers") $p.nM (cond (eq $def "contributors") $p.nC $p.n) -}}
-{{- $limit := 10 -}}
+{{- $limit := cond $p.detail 10 30 }}{{ $limitPhone := 10 -}}
 {{- /* active first; each half keeps the A to Z order of people-data.html */ -}}
 {{- $rows := slice -}}
 {{- range $p.rows }}{{ if .active }}{{ $rows = $rows | append . }}{{ end }}{{ end -}}
 {{- range $p.rows }}{{ if not .active }}{{ $rows = $rows | append . }}{{ end }}{{ end -}}
-{{- $w30 := (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window }}
+{{- $w30 := (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window -}}
+{{- $bActive := dict "text" "Active" "tone" "success" "title" "Active in this repository in the last 30 days." -}}
+{{- $bIdle := dict "text" "No activity" "tone" "neutral" "title" "No activity in this repository in the last 30 days." -}}
+{{- $roleTag := dict "text" "Maintainer" "kind" "role" "title" "A member of this repository's maintainer group." }}
 <section class="v-section" aria-labelledby="people-title">
-  {{ partial "ui/section-head.html" (dict "id" "people-title" "title" "People" "desc" "Everyone active in this repository in the last month, together with its maintainers.") }}
+  {{ partial "ui/section-head.html" (dict "id" "people-title" "title" "People" "desc" "Everyone active in this repository, together with its maintainers.") }}
   <div class="v-grid">
-    <article class="v-card is-list v-span-12" data-list id="people" data-url data-limit="{{ $limit }}" data-limit-phone="{{ $limit }}" data-step="50" data-noun="people" data-noun-one="person">
-      {{ partial "ui/tabs.html" (dict "id" "people" "label" "Views" "panel" "people-panel" "variant" "views" "selected" $def "tabs" (slice
+    <article class="v-card is-list v-span-12" data-list id="people" data-url data-limit="{{ $limit }}" data-limit-phone="{{ $limitPhone }}" data-step="50" data-noun="people" data-noun-one="person">
+      {{ partial "ui/tabs.html" (dict "id" "people" "label" "Views" "panel" "people-panel" "variant" "views" "noun" "People" "selected" $def "tabs" (slice
           (dict "key" "maintainers" "label" "Maintainers" "count" $p.nM)
           (dict "key" "contributors" "label" "Contributors" "count" $p.nC)
           (dict "key" "all" "label" "All" "count" $p.n))) }}
       <div role="tabpanel" id="people-panel">
         {{ partial "ui/filterbar.html" (dict "id" "people" "noun" "person" "total" $nDef) }}
         {{ partial "ui/list-band.html" (dict "id" "people" "noun" "person" "total" $nDef) }}
+        {{- if $p.detail }}
         <table class="v-dt is-rank is-list" id="people-table" aria-labelledby="people-title">
-          {{- if $p.detail }}
           <colgroup><col><col class="v-col-status"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"></colgroup>
-          {{- else }}
-          <colgroup><col class="v-col-name"><col></colgroup>
-          {{- end }}
           <thead><tr>
             {{ partial "ui/th.html" (dict "label" "Person" "sort" (dict "key" "person" "type" "text" "asc" "Person, A to Z" "desc" "Person, Z to A")) }}
             {{ partial "ui/th.html" (dict "label" $w30 "title" "Whether the person was active in this repository in the last 30 days." "active" "ascending"
-                "sort" (dict "key" "activity" "type" "order" "asc" "Active first" "desc" "No activity first")) }}
-            {{- if $p.detail }}
+                "sort" (dict "key" "activity" "type" "order" "asc" "Active first")) }}
             {{ partial "ui/th.html" (dict "label" "PRs" "num" true "record" "PRs opened" "sort" (dict "key" "prs" "type" "num" "desc" "Most PRs first" "asc" "Fewest PRs first")) }}
             {{ partial "ui/th.html" (dict "label" "Issues" "num" true "record" "Issues opened" "sort" (dict "key" "issues" "type" "num" "desc" "Most issues first" "asc" "Fewest issues first")) }}
             {{ partial "ui/th.html" (dict "label" "Reviews" "num" true "sort" (dict "key" "reviews" "type" "num" "desc" "Most reviews first" "asc" "Fewest reviews first")) }}
             {{ partial "ui/th.html" (dict "label" "Commits" "num" true "sort" (dict "key" "commits" "type" "num" "desc" "Most commits first" "asc" "Fewest commits first")) }}
-            {{- end }}
           </tr></thead>
           <tbody>
             {{- $k := 0 }}
@@ -54,24 +58,37 @@
             {{- $view := cond .maint "maintainers" "contributors" }}
             {{- $in := or (eq $def "all") (eq $view $def) }}
             <tr data-row data-row-link data-views="{{ $view }}"{{ if not $in }} data-off{{ else if ge $k $limit }} data-over{{ end }}>
-              <th scope="row" class="v-name" data-v="{{ .k }}"><span class="v-name-line"><a class="v-row-link" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a>{{ if .maint }}{{ partial "ui/tag.html" (dict "text" "Maintainer" "kind" "role" "title" "A member of this repository's maintainer group.") }}{{ end }}</span>{{ partial "ui/icon.html" (dict "name" "chevron-right" "class" "v-row-chev") }}</th>
-              <td data-v="{{ if .active }}0{{ else }}1{{ end }}">
-                {{- if .active }}{{ partial "ui/badge.html" (dict "text" "Active" "tone" "success") -}}
-                {{- else }}{{ partial "ui/badge.html" (dict "text" "No activity" "tone" "neutral") }}{{ end -}}
-              </td>
-              {{- if $p.detail }}
+              <th scope="row" class="v-name" data-v="{{ .k }}"><span class="v-name-line"><a class="v-row-link" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a>{{ if .maint }}{{ partial "ui/tag.html" $roleTag }}{{ end }}</span>{{ partial "ui/icon.html" (dict "name" "chevron-right" "class" "v-row-chev") }}</th>
+              <td data-v="{{ if .active }}0{{ else }}1{{ end }}">{{ partial "ui/badge.html" (cond .active $bActive $bIdle) }}</td>
               {{- $st := .stats | default dict }}
               {{- $prs := $st.prs_opened | default 0 }}{{ $iss := $st.issues_opened | default 0 }}{{ $rev := $st.reviews | default 0 }}{{ $com := $st.commits | default 0 }}
               <td class="num" data-v="{{ $prs }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $prs) }}</td>
               <td class="num" data-v="{{ $iss }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $iss) }}</td>
               <td class="num" data-v="{{ $rev }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $rev) }}</td>
               <td class="num" data-v="{{ $com }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $com) }}</td>
+            </tr>
+            {{- if $in }}{{ $k = add $k 1 }}{{ end }}
+            {{- end }}
+          </tbody>
+        </table>
+        {{- else }}
+        <table class="v-dt is-roster" id="people-table" role="table" aria-labelledby="people-title">
+          <tbody role="rowgroup">
+            {{- $k := 0 }}
+            {{- range $rows }}
+            {{- $view := cond .maint "maintainers" "contributors" }}
+            {{- $in := or (eq $def "all") (eq $view $def) }}
+            <tr role="row" data-row data-row-link data-views="{{ $view }}"{{ if not $in }} data-off{{ else if ge $k $limit }} data-over{{ else if ge $k $limitPhone }} data-over-phone{{ end }}>
+              <th scope="row" role="rowheader" class="v-name"><span class="v-name-line"><a class="v-row-link" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a>{{ if .maint }}{{ partial "ui/tag.html" $roleTag }}{{ end }}</span></th>
+              {{- if .maint }}
+              <td role="cell">{{ partial "ui/badge.html" (cond .active $bActive $bIdle) }}</td>
               {{- end }}
             </tr>
             {{- if $in }}{{ $k = add $k 1 }}{{ end }}
             {{- end }}
           </tbody>
         </table>
+        {{- end }}
         {{ partial "ui/list-empty.html" (dict "noun" "person") }}
         {{ partial "ui/list-foot.html" (dict "list" "people" "n" $nDef "limit" $limit) }}
       </div>

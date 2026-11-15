@@ -22,20 +22,21 @@
 </section>
 {{- else }}
 
-{{- /* label hygiene (once the data carries the flags): one Data notes sentence per rule, naming the PRs */ -}}
+{{- /* label hygiene (once the data carries the flags): one Coverage row of Data notes per rule, a ratio of the open SEPs with
+     the ids in its title (Data notes holds labelled values, never a sentence that lists names) */ -}}
 {{- $hygLabel := slice }}{{ $hygSponsor := slice -}}
 {{- $raw := $d.r.data.seps -}}
 {{- range $l := slice "proposals" "drafts" "inReview" "accepted" -}}
   {{- range (index $raw $l | default slice) -}}
     {{- if reflect.IsMap . -}}
-      {{- if eq .needsLabel true }}{{ $hygLabel = $hygLabel | append (printf "#%d" (int (.number | default 0))) }}{{ end -}}
-      {{- if eq .sponsoredButProposal true }}{{ $hygSponsor = $hygSponsor | append (printf "#%d" (int (.number | default 0))) }}{{ end -}}
+      {{- if eq .needsLabel true }}{{ $hygLabel = $hygLabel | append (printf "SEP-%d" (int (.number | default 0))) }}{{ end -}}
+      {{- if eq .sponsoredButProposal true }}{{ $hygSponsor = $hygSponsor | append (printf "SEP-%d" (int (.number | default 0))) }}{{ end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- $notes := slice -}}
-{{- with $hygLabel }}{{ $notes = $notes | append (printf "Titled as a SEP without the SEP label: %s." (delimit . ", ")) }}{{ end -}}
-{{- with $hygSponsor }}{{ $notes = $notes | append (printf "Sponsored but still labeled proposal: %s." (delimit . ", ")) }}{{ end -}}
+{{- $coverage := slice -}}
+{{- with $hygLabel }}{{ $coverage = $coverage | append (dict "label" "Titled as a SEP, no SEP label" "part" (len .) "whole" (len $d.open) "noun" "sep" "title" (delimit . ", ")) }}{{ end -}}
+{{- with $hygSponsor }}{{ $coverage = $coverage | append (dict "label" "Sponsored, still labeled proposal" "part" (len .) "whole" (len $d.open) "noun" "sep" "title" (delimit . ", ")) }}{{ end -}}
 
 {{- $defNeeds := "Proposals with no sponsor whose author is not a core or lead maintainer." -}}
 {{- $defReview := "Open SEPs in the In review stage, waiting for a core maintainer decision." -}}
@@ -56,7 +57,7 @@
   (dict "term" "Reached final" "text" "SEP PRs merged in the last 90 days.")
   (dict "term" "Median time to final" "text" "Median calendar days from opening the PR to merging it, over the SEPs that reached final in the last 90 days.") -}}
 
-{{ partial "ui/page-head.html" (dict "eyebrow" "SEPs" "meta" $meta "sources" $src "defs" $defs "notes" $notes) }}
+{{ partial "ui/page-head.html" (dict "eyebrow" "SEPs" "meta" $meta "sources" $src "defs" $defs "coverage" $coverage) }}
 
 {{- /* 1. Summary: three link tiles. A tile links only when the rows it names are on the page under that link. */ -}}
 {{- $gReview := dict "n" 0 "old_h" -1.0 "id" "sep-in-review" }}{{ $gAccepted := dict "n" 0 "old_h" -1.0 "id" "sep-accepted" -}}
@@ -99,7 +100,7 @@
         <colgroup><col><col class="v-col-who"><col class="v-col-num-lg"><col class="v-col-date"></colgroup>
         <thead><tr>
           {{ partial "ui/th.html" (dict "label" "SEP") }}
-          {{ partial "ui/th.html" (dict "label" "Sponsor" "sort" (dict "key" "sponsor" "type" "order" "asc" "Needs sponsor first" "desc" "Named sponsors first")) }}
+          {{ partial "ui/th.html" (dict "label" "Sponsor" "sort" (dict "key" "sponsor" "type" "order" "asc" "Sponsor, in workflow order")) }}
           {{ partial "ui/th.html" (dict "label" "Last activity" "num" true "unit" ", days" "title" $defAct
               "sort" (dict "key" "activity" "type" "num" "desc" "Longest without activity first" "asc" "Most recent activity first")) }}
           {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" $defAge "active" "descending"
@@ -143,10 +144,10 @@
         <colgroup><col><col class="v-col-who"><col class="v-col-num-lg"><col class="v-col-date"></colgroup>
         <thead><tr>
           {{ partial "ui/th.html" (dict "label" "SEP") }}
-          {{ partial "ui/th.html" (dict "label" "Sponsor" "sort" (dict "key" "sponsor" "type" "order")) }}
+          {{ partial "ui/th.html" (dict "label" "Sponsor" "sort" (dict "key" "sponsor" "type" "order" "asc" "Sponsor, in workflow order")) }}
           {{ partial "ui/th.html" (dict "label" "Time to final" "num" true "unit" ", days" "title" "Calendar days from opening the PR to merging it."
-              "sort" (dict "key" "time" "type" "num")) }}
-          {{ partial "ui/th.html" (dict "label" "Merged" "num" true "active" "descending" "sort" (dict "key" "merged" "type" "num")) }}
+              "sort" (dict "key" "time" "type" "num" "desc" "Longest time to final first" "asc" "Shortest time to final first")) }}
+          {{ partial "ui/th.html" (dict "label" "Merged" "num" true "active" "descending" "sort" (dict "key" "merged" "type" "num" "desc" "Most recently merged first" "asc" "Earliest merged first")) }}
         </tr></thead>
         <tbody>
           {{- range $d.final }}

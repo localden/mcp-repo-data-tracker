@@ -14,10 +14,13 @@
               so callers pass raw labels and never pre-sort.
     flags     slice of {text, title} (flag tags). attrs: slice of strings or {text, title} (attribute tags; a PR's SEP stage comes
               from data/sep-stage.html).
-    tags      GitHub labels: at most two are emitted, the rest are named in the title of a "+N" tag; ui.js folds any label that does
-              not fit the line into the +N. Priority, flag and attribute tags, the +N and the expander are never clipped.
+    tags      GitHub labels. From 64rem a row shows two and a "+N" tag that names the rest in its title; ui.js folds any label that
+              does not fit the line into that +N. Below 64rem the tag line wraps and shows up to six (a title is no use on touch),
+              with a "+N" only past six. Priority, flag and attribute tags, the +N and the expander are never clipped.
     kids      {n, id}: the row expander for a duplicate cluster, last in the line; id is this row's id (children carry
               data-child-of="{id}").
+  Identity slots are designed sub-components, never three runs of grey text: the id is the label role in text; the author is a 12px
+  user icon and the handle; lines changed are a 12px diff icon and the two counts. 12px apart.
   Tag order: priority, flags, attributes, labels, +N, expander. No sentence ever enters the meta line. */ -}}
 {{- $c := . -}}
 {{- $ext := ne $c.external false -}}
@@ -44,17 +47,18 @@
   <span class="v-meta"><span class="v-meta-id">
     {{- with $c.id }}<span class="v-id">{{ . }}</span>{{ end -}}
     {{- with $c.repo }}<span class="v-repo">{{ . }}</span>{{ end -}}
-    {{- with $c.author }}<span class="v-who">{{ strings.TrimPrefix "app/" (string .) }}</span>{{ end -}}
+    {{- with $c.author }}<span class="v-who">{{ partial "ui/icon.html" (dict "name" "user" "size" 12) }}<span>{{ strings.TrimPrefix "app/" (string .) }}</span></span>{{ end -}}
     {{- with $role }}{{ partial "ui/tag.html" (dict "text" . "kind" "role") }}{{ end -}}
-    {{- with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" .add "dels" .del) }}{{ end }}{{ end -}}
+    {{- with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" .add "dels" .del "icon" true) }}{{ end }}{{ end -}}
   </span>
   {{- if $hasTags -}}
   <span class="v-tags">
     {{- with $prio }}{{ partial "ui/tag.html" (dict "text" . "kind" "prio") }}{{ end -}}
     {{- range $c.flags }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "flag")) }}{{ end -}}
     {{- range $c.attrs }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "attr")) }}{{ end -}}
-    {{- range first 2 $labels }}{{ partial "ui/tag.html" (dict "text" . "kind" "label") }}{{ end -}}
-    {{- if gt $nl 2 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 2)) "kind" "more" "title" (delimit (after 2 $labels) ", ")) }}{{ end -}}
+    {{- range $i, $l := first 6 $labels }}{{ partial "ui/tag.html" (dict "text" $l "kind" "label" "extra" (ge $i 2)) }}{{ end -}}
+    {{- if gt $nl 2 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 2)) "kind" "more" "only" "wide" "title" (delimit (after 2 $labels) ", ")) }}{{ end -}}
+    {{- if gt $nl 6 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 6)) "kind" "more" "only" "narrow" "title" (delimit (after 6 $labels) ", ")) }}{{ end -}}
     {{- with $c.kids }}{{ if gt (int (.n | default 0)) 0 -}}
       <button type="button" class="v-btn v-btn-xs is-ghost" data-expander="{{ .id }}" aria-expanded="false">{{ (partial "fmt/count.html" (dict "v" .n "noun" "duplicate")).text }}{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 12 "class" "is-chev") }}</button>
     {{- end }}{{ end -}}

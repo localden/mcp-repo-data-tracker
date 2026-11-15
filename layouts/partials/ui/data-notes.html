@@ -1,21 +1,46 @@
 {{- /* Data notes (design system v4 4.2): the full-width card the page head's "Data notes" button opens, 8 + 4 inside.
-  ui/page-head.html renders it. Dict {id, defs, notes, sources, facts, gaps, open}.
-    Left, "Definitions": defs is a slice of {term, text}: the term in medium, the sentence in body text-2, at most 72ch. Every
-      definition used in a title on the page is listed here. notes: further sentences (strings), one paragraph each.
-    Right, "Sources": one labelled value per line, never prose. sources is ui/sources.html output (a timestamp per GitHub source, a
-      "complete through" date per registry). facts: slice of {label, value: {kind, ...}} for anything else (the tracking start date,
-      the star count). gaps: ui/page-gaps.html output; each missing run and each reconstructed span is a row with its range.
-  The panel is neutral when open; Escape closes it (ui.js). */ -}}
+  ui/page-head.html renders it. Dict {id, defs, notes, sources, registries, facts, coverage, gaps, open}.
+    Left, "Definitions": defs is a slice of {term, text, group}: the term in medium, the sentence in body text-2, at most 72ch.
+      Every definition used in a title on the page is listed here. group: consecutive definitions with the same group sit under
+      one sub-head ("Queue and filters", "Statuses", "SLA rules", "Measures"), so a long list can be scanned; leave it out for a
+      short list. notes: further sentences (strings), one paragraph each; a sentence never carries a number or a list of names.
+    Right, labelled values only, never prose. Every label is one line.
+      "Sources", in two groups named by what the value is, so no label repeats it:
+        "Updated"           one row per GitHub-side source of ui/sources.html (label, timestamp)
+        "Complete through"  one row per registry (label, date): the registry rows of sources, then registries (ui/sources.html
+                            output a page lists here without making them page sources)
+        facts               slice of {label, value: {kind, ...}} under the sub-head "Repository" (tracking start date, stars)
+      "Coverage": what part of the data a figure is built from.
+        coverage            slice of {label, part, whole, noun, title}: a ratio ("Issue classification" 2 of 9 repositories; the
+                            names in title)
+        gaps                ui/page-gaps.html output: each missing run ("No data", or "Collection outage") and each
+                            reconstructed span is a row with its range
+  The panel is neutral when open; Escape closes it (ui.js). On a phone the right column comes first. */ -}}
 {{- $c := . -}}
 {{- $g := $c.gaps | default dict -}}
-{{- $hasSrc := or $c.sources $c.facts $g.runs $g.reconstructed -}}
+{{- $upd := slice }}{{ $thru := slice -}}
+{{- range $c.sources }}{{ if .through }}{{ $thru = $thru | append . }}{{ else if .at }}{{ $upd = $upd | append . }}{{ end }}{{ end -}}
+{{- range $c.registries }}{{ if .through }}{{ $thru = $thru | append . }}{{ end }}{{ end -}}
+{{- $hasCov := or $c.coverage $g.runs $g.reconstructed -}}
+{{- $hasSrc := or $upd $thru $c.facts $hasCov -}}
+{{- /* definitions in runs of one group */ -}}
+{{- $groups := slice }}{{ $cur := "" }}{{ $items := slice }}{{ $started := false -}}
+{{- range $c.defs -}}
+  {{- $gr := .group | default "" -}}
+  {{- if and $started (ne $gr $cur) }}{{ $groups = $groups | append (dict "title" $cur "items" $items) }}{{ $items = slice }}{{ end -}}
+  {{- $cur = $gr }}{{ $started = true }}{{ $items = $items | append . -}}
+{{- end -}}
+{{- if $started }}{{ $groups = $groups | append (dict "title" $cur "items" $items) }}{{ end -}}
 <div class="v-card v-notes" id="{{ $c.id }}"{{ if not $c.open }} hidden{{ end }}>
-  {{- if or $c.defs $c.notes }}
+  {{- if or $groups $c.notes }}
   <div class="v-notes-col is-defs">
     <p class="v-notes-h">Definitions</p>
-    {{- with $c.defs }}
+    {{- range $groups }}
+    {{- with .title }}
+    <p class="v-notes-sub">{{ . }}</p>
+    {{- end }}
     <dl class="v-defs">
-      {{- range . }}
+      {{- range .items }}
       <div><dt>{{ .term }}</dt><dd>{{ .text }}</dd></div>
       {{- end }}
     </dl>
@@ -31,27 +56,49 @@
   {{- end }}
   {{- if $hasSrc }}
   <div class="v-notes-col is-sources">
+    {{- if or $upd $thru $c.facts }}
     <p class="v-notes-h">Sources</p>
+    {{- with $upd }}
+    <p class="v-notes-sub">Updated</p>
     <dl class="v-kv">
-      {{- range $c.sources }}
-      {{- if .through }}
-      <div><dt>{{ .label }}, complete through</dt><dd>{{ partial "ui/value.html" (dict "kind" "date" "d" .through) }}</dd></div>
-      {{- else }}
-      <div><dt>{{ .label }}, updated</dt><dd>{{ partial "ui/value.html" (dict "kind" "ts" "t" .at) }}</dd></div>
+      {{- range . }}
+      <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "ts" "t" .at) }}</dd></div>
       {{- end }}
+    </dl>
+    {{- end }}
+    {{- with $thru }}
+    <p class="v-notes-sub">Complete through</p>
+    <dl class="v-kv">
+      {{- range . }}
+      <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "date" "d" .through) }}</dd></div>
       {{- end }}
+    </dl>
+    {{- end }}
+    {{- with $c.facts }}
+    <p class="v-notes-sub">Repository</p>
+    <dl class="v-kv">
       {{- /* one date rule inside the list: a date drops the year like its neighbours; only the timestamp prints it */ -}}
-      {{- range $c.facts }}
+      {{- range . }}
       {{- $v := .value }}{{ if reflect.IsMap $v }}{{ if eq $v.kind "date" }}{{ $v = merge $v (dict "year" false) }}{{ end }}{{ end }}
       <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" $v }}</dd></div>
       {{- end }}
+    </dl>
+    {{- end }}
+    {{- end }}
+    {{- if $hasCov }}
+    <p class="v-notes-h">Coverage</p>
+    <dl class="v-kv">
+      {{- range $c.coverage }}
+      <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "ratio" "part" .part "whole" .whole "noun" .noun "title" .title) }}</dd></div>
+      {{- end }}
       {{- range $g.runs }}
-      <div><dt>No data{{ if .outage }}, collection outage{{ end }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
+      <div><dt>{{ if .outage }}Collection outage{{ else }}No data{{ end }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
       {{- end }}
       {{- range $g.reconstructed }}
-      <div><dt>Reconstructed from GitHub history</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
+      <div><dt title="Reconstructed from GitHub history.">Reconstructed</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
       {{- end }}
     </dl>
+    {{- end }}
   </div>
   {{- end }}
 </div>

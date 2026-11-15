@@ -12,7 +12,7 @@
 {{- $since := $s.iOpen.first | default $s.pOpen.first | default "" -}}
 {{- if or $s.iOpen.n $s.pOpen.n $s.iWait.n $s.pWait.n }}
 <section class="v-section" aria-labelledby="activity">
-  {{ partial "ui/section-head.html" (dict "id" "activity" "title" "Activity" "desc" "Open items, and the ones that have waited more than a week for a maintainer.") }}
+  {{ partial "ui/section-head.html" (dict "id" "activity" "title" "Activity" "desc" "Open items, and how many of them are still waiting for a maintainer.") }}
   <div class="v-grid">
     {{- range slice
       (dict "id" "repo-issues" "title" "Issues" "metric" "issues" "one" "issue" "open" $s.iOpen "wait" $s.iWait)

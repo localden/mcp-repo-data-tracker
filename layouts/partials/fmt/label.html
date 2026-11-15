@@ -5,8 +5,11 @@
     it ("Median" with metric "time to merge" gives "Median time to merge").
   window: {n, unit: "day" | "week"} ("Last 7 days"), or "wtd" ("Week to date"), or "latest-week" ("Latest week").
   threshold: "over7" ("over 7 days"), "any" ("any age"), "answered" ("answered only").
-  base: {date} ("vs Oct 7", a level against a snapshot), or "prior7" ("vs prior 7 days"), or "4w" ("vs 4 weeks earlier") for a flow.
-  cadence: {every: "day" | "week" | "complete-week", weeks, since, own_scale}: "Daily, last 26 weeks", "Weekly, last 52 weeks",
+  base: {date} ("vs Oct 7", a level against a snapshot), or "prior7" ("vs prior 7 days"), or "4w" ("vs 4 weeks earlier") for a flow;
+    "prior-week" ("vs prior week") and "prior-day" ("vs prior day") for the Change column of a chart's table view.
+  cadence: {every: "day" | "week" | "complete-week" | "period7", weeks, since, own_scale}: "Daily, last 26 weeks", "Weekly, last 52 weeks",
+    "7-day periods, last 12" (period7: rolling 7-day buckets that do not start on a Monday, so they are never called weeks; weeks is
+    then the number of periods),
     "Complete weeks, last 52 weeks, each row on its own scale", "Daily, since Nov 10" (since replaces the window).
   bucket: "active30" | "idle30" | "idle60" | "idle90", the last-activity parts.
   scope: "Issues" or "PRs", the spanner a record line has to carry below 64rem.
@@ -37,13 +40,16 @@
   {{- if reflect.IsMap . }}{{ with .date }}{{ $base = printf "vs %s" (partial "fmt/date.html" .).text }}{{ end -}}
   {{- else if eq . "prior7" }}{{ $base = "vs prior 7 days" -}}
   {{- else if eq . "4w" }}{{ $base = "vs 4 weeks earlier" -}}
+  {{- else if eq . "prior-week" }}{{ $base = "vs prior week" -}}
+  {{- else if eq . "prior-day" }}{{ $base = "vs prior day" -}}
   {{- else }}{{ errorf "fmt/label: unknown base %q (design system v4 3.2)" . }}{{ end -}}
 {{- end -}}
 {{- $cadence := "" -}}
 {{- with $c.cadence -}}
   {{- $every := .every | default "day" -}}
   {{- $lead := index (dict "day" "Daily" "week" "Weekly" "complete-week" "Complete weeks") $every | default "Daily" -}}
-  {{- if .since }}{{ $cadence = printf "%s, since %s" $lead (partial "fmt/date.html" .since).text -}}
+  {{- if eq $every "period7" }}{{ $cadence = printf "7-day periods, last %d" (int (.weeks | default 12)) -}}
+  {{- else if .since }}{{ $cadence = printf "%s, since %s" $lead (partial "fmt/date.html" .since).text -}}
   {{- else }}{{ $cadence = printf "%s, last %d weeks" $lead (int (.weeks | default 26)) }}{{ end -}}
   {{- if .own_scale }}{{ $cadence = printf "%s, each row on its own scale" $cadence }}{{ end -}}
 {{- end -}}

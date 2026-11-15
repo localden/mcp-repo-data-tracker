@@ -7,6 +7,8 @@
     canvas     true when there are at least 14 daily points or 4 weekly bins in some series (else the card is pending)
     any        true when any series has a point                             first: the first date with a value in any series
     gaps       runs where no series has a value, after the first value: [{from, to, n}] (3 or more days, or any week); gapN: their labels
+    holes      per series, the slots where it has no value while the other series has: [{label, n}] (two-series charts only)
+    polarity   the fmt/change.html metric key for a change of this chart's first series ("open-issues", "downloads", "" when neutral)
     marks      the event markers that fall inside the domain [{date, label}]
     rec        the reconstructed span inside the domain {from, to}, or an empty dict
     json       the data-series attribute: {"labels":[...],"series":[{"label","role","data":[n|null]}],"marks":[{"date","label"}],
@@ -82,6 +84,40 @@
   {{- $gapOut = $gapOut | append (dict "from" .from "to" $gt "n" .n) -}}
 {{- end -}}
 
+{{- /* holes: spans where one of two series has no value while the other has (3 or more days, or any week), closed by a later
+     value. charts.js joins the two readings with a 1px neutral connector, and the notes row keys it with the days it covers.
+     Shorter holes (one or two days) are bridged by the line itself. */ -}}
+{{- $holes := slice -}}
+{{- if gt (len $series) 1 -}}
+  {{- range $i, $s := $series -}}
+    {{- $m := $sc.Get (printf "s%d" $i) | default dict -}}
+    {{- $hn := 0 }}{{ $run := 0 }}{{ $seen := false -}}
+    {{- range $j, $d := $labels -}}
+      {{- if ne (index $m $d) nil -}}
+        {{- if and $seen (ge $run $minRun) }}{{ $hn = add $hn $run }}{{ end -}}
+        {{- $run = 0 }}{{ $seen = true -}}
+      {{- else if $seen -}}
+        {{- $other := false -}}
+        {{- range $k, $o := $series }}{{ if ne $k $i }}{{ if ne (index ($sc.Get (printf "s%d" $k) | default dict) $d) nil }}{{ $other = true }}{{ end }}{{ end }}{{ end -}}
+        {{- if $other }}{{ $run = add $run 1 }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if gt $hn 0 }}{{ $holes = $holes | append (dict "label" ($s.label | default "") "n" $hn) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* polarity key of the Change column and the tooltip change (fmt/change.html): the caller's, else read from the metric */ -}}
+{{- $pol := $c.polarity | default "" -}}
+{{- if not (isset $c "polarity") -}}
+  {{- $lm := lower (string $metric) -}}
+  {{- if eq $unit "downloads" }}{{ $pol = "downloads" -}}
+  {{- else if strings.Contains $lm "waiting" }}{{ $pol = "waiting" -}}
+  {{- else if strings.Contains $lm "contributor" }}{{ $pol = "contributors" -}}
+  {{- else if strings.Contains $lm "merged" }}{{ $pol = "merged" -}}
+  {{- else if strings.Contains $lm "issue" }}{{ $pol = "open-issues" -}}
+  {{- else if strings.Contains $lm "pr" }}{{ $pol = "open-prs" }}{{ end -}}
+{{- end -}}
+
 {{- /* a weekly domain ends on its last week START: an event inside that last week (start + 6 days) is still in the domain */ -}}
 {{- $markTo := $to }}{{ if and $to (eq $gran "week") }}{{ $markTo = ((time.AsTime $to).AddDate 0 0 6).Format "2006-01-02" }}{{ end -}}
 {{- $marks := slice }}{{ $mj := slice -}}
@@ -115,4 +151,4 @@
   {{- range $gapOut }}{{ $aria = printf "%s No data %s." $aria (partial "fmt/range.html" (dict "from" .from "to" .to)).text }}{{ end -}}
 {{- end -}}
 {{- return dict "labels" $labels "from" $from "to" $to "rows" $rows "canvas" $canvas "any" (gt $nMax 0) "first" $first
-  "gaps" $gapOut "gapN" $gapN "marks" $marks "rec" $rec "json" $json "aria" $aria "kind" $kind "unit" $unit "gran" $gran "metric" $metric -}}
+  "gaps" $gapOut "gapN" $gapN "holes" $holes "polarity" $pol "marks" $marks "rec" $rec "json" $json "aria" $aria "kind" $kind "unit" $unit "gran" $gran "metric" $metric -}}

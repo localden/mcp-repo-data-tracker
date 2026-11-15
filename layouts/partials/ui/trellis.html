@@ -11,6 +11,9 @@
                        ("Week to date" with its value and coverage note).
              note      a ui/note.html dict; default: when the row has missing weeks, their coverage ratio ("10 of 52 weeks").
              pending   the pending text for a row that cannot draw (default: "Trend available from {date}", or the closed list).
+  The label cell holds the name, then the row's one fact as a pair (ui/pair.html: label left, value on the label column's right
+  edge) with its note on the next line. A row that cannot draw shows the pending line in place of its panel and has no column in
+  the pivot table; the table view lists it under the table with the same line.
   Leading untracked weeks are gap bands. The notes row keys the gap band ("No data") without a figure, since coverage is per row.
   Below 64rem the label cell sits above its panel. Sets the page's "charts" flag. */ -}}
 {{- $c := . -}}
@@ -27,7 +30,16 @@
   {{- $n := 0 }}{{ with index $d.rows 0 }}{{ $n = .n }}{{ end -}}
   {{- $nl = len $d.labels -}}
   {{- if $d.canvas }}{{ $lastDrawn = $i }}{{ if lt $n $nl }}{{ $anyGap = true }}{{ end }}{{ end -}}
-  {{- $rows = $rows | append (dict "row" $row "d" $d "n" $n) -}}
+  {{- /* the pending line of a row that cannot draw, from the closed list of 4.22 */ -}}
+  {{- $pt := "" -}}
+  {{- if not $d.canvas -}}
+    {{- $at := "" }}{{ if and (not $row.pending) $d.first }}{{ $at = ((time.AsTime $d.first).AddDate 0 0 (cond (eq $gran "week") 28 13)).Format "2006-01-02" }}{{ end -}}
+    {{- if $row.pending }}{{ $pt = $row.pending -}}
+    {{- else if and $at (gt $at $d.to) }}{{ $pt = printf "Trend available from %s" (partial "ui/value.html" (dict "kind" "date" "d" $at)) | safeHTML -}}
+    {{- else if $d.any }}{{ $pt = "Too few complete weeks to draw a trend" -}}
+    {{- else }}{{ $pt = "No data collected yet" }}{{ end -}}
+  {{- end -}}
+  {{- $rows = $rows | append (dict "row" $row "d" $d "n" $n "pending" $pt) -}}
 {{- end -}}
 <article class="v-card is-trellis {{ $c.class | default "v-span-12" }}" data-chart data-trellis aria-labelledby="{{ $id }}-title">
   <header class="v-card-head">
@@ -46,28 +58,32 @@
         {{- if $row.href }}<a class="v-trellis-name" href="{{ $row.href }}">{{ $row.name }}</a>{{ else }}<span class="v-trellis-name">{{ $row.name }}</span>{{ end -}}
         {{- $ro := $row.readout }}{{ if reflect.IsSlice $ro }}{{ if $ro }}{{ $ro = index $ro 0 }}{{ end }}{{ end -}}
         {{- if reflect.IsMap $ro }}
-        <p class="v-trellis-fact">{{ $ro.label }} {{ partial "ui/value.html" ($ro.value | default (dict "kind" "na")) }}{{ with $ro.note }}{{ partial "ui/note.html" . }}{{ end }}</p>
+        {{ partial "ui/pair.html" (dict "label" $ro.label "value" $ro.value) }}
+        {{- with $ro.note }}{{ partial "ui/note.html" . }}{{ end }}
         {{- end }}
         {{- if $row.note }}{{ partial "ui/note.html" $row.note -}}
         {{- else if and $d.canvas (lt $e.n (len $d.labels)) }}{{ partial "ui/note.html" (dict "part" $e.n "whole" (len $d.labels) "noun" (cond (eq $gran "week") "week" "day")) }}{{ end -}}
       </div>
       {{- if $d.canvas }}
-      <div class="v-trellis-panel"><canvas id="{{ $rid }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $row.name }}" data-size="panel" data-xaxis="{{ if eq $i $lastDrawn }}on{{ else }}off{{ end }}" data-series="{{ $d.json }}"></canvas></div>
+      <div class="v-trellis-panel"><canvas id="{{ $rid }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $row.name }}" data-size="panel" data-xaxis="{{ if eq $i $lastDrawn }}on{{ else }}off{{ end }}" data-polarity-key="{{ $d.polarity }}" data-series="{{ $d.json }}"></canvas></div>
       {{- else }}
-      {{- $at := "" }}{{ if and (not $row.pending) $d.first }}{{ $at = ((time.AsTime $d.first).AddDate 0 0 (cond (eq $gran "week") 28 13)).Format "2006-01-02" }}{{ end }}
-      {{- /* a row that cannot draw still has its column in the table view: charts.js reads the name and the series from here */}}
-      <div class="v-card-pending" data-pending-col="{{ $row.name }}" data-unit="{{ $unit }}" data-series="{{ $d.json }}">{{ partial "ui/icon.html" "clock" }}<span>
-        {{- if $row.pending }}{{ $row.pending -}}
-        {{- else if and $at (gt $at $d.to) }}Trend available from {{ partial "ui/value.html" (dict "kind" "date" "d" $at) -}}
-        {{- else if $d.any }}Too few complete weeks to draw a trend
-        {{- else }}No data collected yet{{ end -}}
-      </span></div>
+      <div class="v-card-pending">{{ partial "ui/icon.html" "clock" }}<span>{{ $e.pending }}</span></div>
       {{- end }}
     </div>
     {{- end }}
   </div>
   {{- if ge $lastDrawn 0 }}
   <div class="v-chart-table v-trellis-table" id="{{ $id }}-table" role="tabpanel" aria-labelledby="{{ $id }}-tab-table" tabindex="0" hidden></div>
+  {{- /* a row that cannot draw has no column in the pivot table (4.14 rule 8: a column of empty marks is omitted); the table
+       view names it under the table instead, with the same pending line */}}
+  {{- $pend := slice }}{{ range $rows }}{{ if not .d.canvas }}{{ $pend = $pend | append . }}{{ end }}{{ end }}
+  {{- with $pend }}
+  <ul class="v-trellis-pendings">
+    {{- range . }}
+    <li class="v-card-pending">{{ partial "ui/icon.html" "clock" }}<span class="v-trellis-name">{{ .row.name }}</span><span>{{ .pending }}</span></li>
+    {{- end }}
+  </ul>
+  {{- end }}
   <p class="sr-only" aria-live="polite" data-chart-live></p>
   {{- if $anyGap }}
   <ul class="v-chart-notes"><li><span class="v-key is-gap" aria-hidden="true"></span><span class="v-chart-note-label">No data</span></li></ul>

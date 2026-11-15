@@ -8,14 +8,33 @@
   Every figure comes from data/downloads.html (complete days only) and data/versions.html, through pages/downloads/packages.html. */ -}}
 {{- $x := partial "pages/downloads/packages.html" . -}}
 
-{{- /* freshness: one source per registry; the earliest is the page's "Complete through" day and the versions staleness reference */ -}}
+{{- /* freshness: one entry per registry. The earliest day is the page's "Complete through" meta item and the versions staleness
+     reference; every registry's own day is a "Complete through" row of Data notes (passed as registries, so the page head raises
+     no callout of its own). The callout "Registry delay" is raised only for a registry more than 3 days behind the newest one:
+     the usual lag of a registry is stated once, in the meta row, and on each row's coverage note. */ -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $x.keys "use" (slice "downloads")) -}}
 {{- $asof := "" -}}
 {{- range $src }}{{ with .at }}{{ $day := (time.AsTime .).Format "2006-01-02" }}{{ if or (eq $asof "") (lt $day $asof) }}{{ $asof = $day }}{{ end }}{{ end }}{{ end -}}
+{{- $thru := "" }}{{ $newest := "" -}}
+{{- range $src }}{{ with .through -}}
+  {{- $d := string . -}}
+  {{- if or (eq $thru "") (lt $d $thru) }}{{ $thru = $d }}{{ end -}}
+  {{- if gt $d $newest }}{{ $newest = $d }}{{ end -}}
+{{- end }}{{ end -}}
+{{- $late := slice -}}
+{{- range $s := $src }}{{ with $s.through -}}
+  {{- $d := string . -}}
+  {{- if gt (div (sub (time.AsTime $newest).Unix (time.AsTime $d).Unix) 86400) 3 -}}
+    {{- $late = $late | append (dict "text" (printf "%s is complete through {date}." ($s.noun | default "Data")) "date" $d) -}}
+  {{- end -}}
+{{- end }}{{ end -}}
 {{- $meta := slice -}}
 {{- range partial "ui/sources.html" (dict "repo" $x.keys "use" (slice "metrics")) -}}
   {{- with .at }}{{ $meta = slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" .)) }}{{ end -}}
 {{- end -}}
+{{- with $thru }}{{ $meta = $meta | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" .)) }}{{ end -}}
+{{- $head := dict "title" (.Title | default "SDK packages") "eyebrow" "Downloads" "meta" $meta "registries" $src -}}
+{{- with $late }}{{ $head = merge $head (dict "callout" (dict "title" "Registry delay" "items" .)) }}{{ end -}}
 
 {{- /* Data notes: the definitions behind the columns, then how each registry counts a day */ -}}
 {{- $regs := slice }}{{ range $x.pkgs }}{{ $regs = $regs | append .d.registry }}{{ end -}}
@@ -31,7 +50,7 @@
 {{- if in $regs "crates" }}{{ $defs = $defs | append (dict "term" "crates.io" "text" "Daily counts from the crates.io range API.") }}{{ end -}}
 {{- if in $regs "nuget" }}{{ $defs = $defs | append (dict "term" "NuGet" "text" "A day is the change in the lifetime total. Days on which the total did not move are missing.") }}{{ end -}}
 {{- if in $regs "rubygems" }}{{ $defs = $defs | append (dict "term" "RubyGems" "text" "A day is the change in the lifetime total. Days on which the total did not move are missing.") }}{{ end }}
-{{ partial "ui/page-head.html" (dict "title" (.Title | default "SDK packages") "eyebrow" "Downloads" "meta" $meta "sources" $src "defs" $defs) }}
+{{ partial "ui/page-head.html" (merge $head (dict "defs" $defs)) }}
 {{- if $x.pkgs }}
 
 <section class="v-section" aria-labelledby="packages">

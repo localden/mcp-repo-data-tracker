@@ -4,9 +4,9 @@
      off  true when the row is outside the default view (data-off: hidden at first paint).
      k    the index of the row inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
      Cells in the fixed order: PR (ui/row-item.html: id, author and role, lines changed, "Touches auth", "Duplicate of #N"), Status
-     (one badge), Detail (pages/pulls/reason.html through ui/detail.html), Overdue (ui/sla.html), Age (whole days; the title names
-     the opening date). The data has no labels for classified PRs. An empty Detail cell is exactly empty.
-     One duration rule: every day count is floored, and a Detail day count is never larger than the Age of the row. */ -}}
+     (ui/status-cell.html: the badge and, under it, the detail phrase of pages/pulls/reason.html), Overdue (ui/sla.html), Age (whole
+     days; the title names the opening date). There is no Detail column. The data has no labels for classified PRs.
+     One duration rule: every day count is floored, and a detail day count is never larger than the Age of the row. */ -}}
 {{- $r := .r }}{{ $pr := $r.pr }}{{ $k := int (.k | default 0) -}}
 {{- $num := int ($pr.number | default 0) -}}
 {{- $attrs := slice -}}
@@ -17,8 +17,7 @@
 <tr data-row data-row-link id="{{ $r.id }}" data-views="{{ $r.view }}" data-facets="{{ delimit $r.tok " " }}"{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
   {{ partial "ui/row-item.html" (dict "title" (string ($pr.title | default "")) "href" $pr.url "id" (printf "#%d" $num) "author" $pr.author "role" $r.role
       "diff" (dict "add" $pr.additions "del" $pr.deletions) "attrs" $attrs) }}
-  <td class="v-c-status" data-v="{{ $r.st.order }}">{{ partial "ui/badge.html" $r.st }}</td>
-  <td class="v-c-detail">{{- partial "ui/detail.html" $d -}}</td>
+  {{ partial "ui/status-cell.html" (dict "status" $r.st "detail" $d) }}
   {{ partial "ui/sla.html" (dict "rules" $r.rules) }}
   <td class="num" data-v="{{ printf "%.1f" $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" $r.opened) }}</td>
 </tr>

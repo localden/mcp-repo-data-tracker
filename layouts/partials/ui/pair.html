@@ -1,0 +1,11 @@
+{{- /* Pair (design system v4 4.5, 4.19): one label and one value, the anatomy of a stat-list row and a record line at caption size.
+  The only way a label and a value sit together outside a table, a stat list or a readout: the reference context of a metric tile
+  ("Net change, last 30 days" +114) and the one fact in a trellis label cell ("Week to date" 58.7M).
+  Dict {label, value, title}.
+    label   a phrase from fmt/label.html, or a name from a registry. Never ends in a colon.
+    value   a ui/value.html dict; nil is the empty mark.
+    title   the definition of the label.
+  From 40rem the label is on the left and the value on the right edge of the pair's box; on a phone, where a tile is a row, the two
+  sit 8px apart. Never typed inline with a space. */ -}}
+{{- $c := . -}}
+<span class="v-pair"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-pair-label">{{ $c.label }}</span>{{ partial "ui/value.html" ($c.value | default (dict "kind" "na")) }}</span>

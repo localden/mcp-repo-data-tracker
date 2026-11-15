@@ -3,8 +3,8 @@
        Median first review   metrics.json pulls.review_time.median_hours
        90% reviewed within   pulls.review_time.p90_hours (its own tile: a second statistic never sits in a context line)
        Median time to merge  pulls.merge_time.median_hours
-       Merged, last 7 days   pulls.merged_7d; its sparkline is one reading a week, the series "Typical week" is the median of
-     Sparklines: the weekly level of the same snapshot fields over 12 weeks. ui/metrics.html draws them only when every tile has four
+       Merged, last 7 days   pulls.merged_7d; a weekly flow, so its sparkline is one column a week (flow: true), not a level line
+     Sparklines: the weekly readings of the same snapshot fields over 12 weeks. ui/metrics.html draws them only when every tile has four
      weekly points; a repository with a short history gets the same four tiles without them. */ -}}
 {{- $r := .r -}}
 {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
@@ -30,6 +30,6 @@
         "value" (dict "kind" "dur" "h" $mt.median_hours) "points" (index $bins "merge_time.median_hours"))
       (dict "name" "Merged" "qual" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).qual
         "title" "PRs merged in the last 7 days."
-        "value" (dict "kind" "count" "v" $pl.merged_7d) "points" (index $bins "merged_7d")))) }}
+        "value" (dict "kind" "count" "v" $pl.merged_7d) "points" (index $bins "merged_7d") "flow" true))) }}
   </div>
 </section>

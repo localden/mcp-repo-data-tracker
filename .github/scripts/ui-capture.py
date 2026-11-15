@@ -40,7 +40,7 @@ VIEWPORTS = {'desktop': (1440, 900, 1), 'mobile': (390, 844, 2), 'laptop': (1024
 #   mobile light   up to 16 tiles  menu, switcher, notes, focus, and the phone forms of the list controls: the facet panel
 #                                  with one chip pressed, the sort menu, the view menu, the stuck search row, the empty result
 #   desktop dark   first 4 tiles   menu, switcher, notes, table, hover     (overlays and charts on dark tokens)
-#   mobile dark    first 6 tiles   menu
+#   mobile dark    up to 16 tiles  menu                                    (the whole page, like mobile light: lists, charts, footer)
 #   laptop light   up to 12 tiles  no states: 1024px, where every table plan must still fit (component test 7)
 #   tablet light   up to 12 tiles  no states: 768px, list form and records with tablet gutters
 # The styleguide is the inventory, so it is captured to its footer in every combination (TILE_CAPS). The laptop and tablet rows
@@ -49,7 +49,7 @@ ALL_STATES = ('menu', 'switcher', 'notes', 'table', 'hover', 'tabs', 'filter', '
 MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('mobile', 'light', 16, ('menu', 'switcher', 'notes', 'focus', 'facets', 'sort', 'views', 'stuck', 'empty', 'expander')),
           ('desktop', 'dark', 4, ('menu', 'switcher', 'notes', 'table', 'hover')),
-          ('mobile', 'dark', 6, ('menu',)),
+          ('mobile', 'dark', 16, ('menu',)),
           ('laptop', 'light', 12, ()),
           ('tablet', 'light', 12, ())]
 TILE_CAPS = {'styleguide': 60}
@@ -79,7 +79,10 @@ TEXT_BANS_V4 = [(re.compile(p, re.M), label) for p, label in [
     (r' \| ', 'spaced pipe'), (r' / ', 'spaced slash'), (r'(^|\s)[' + _DASHES + r'](\s|$)', 'spaced or lone dash'),
     (r'\b\d+(\.\d)?y\b', 'years in a duration'), (r'\b\d+\.\d+[hd]\b', 'decimal in a duration'), (r'\b\d+[hd] over\b', '"over" meaning overdue'),
     (r'\bwk\b', 'wk'), (r'\bavg\b', 'avg'), (r'\brepos?\b', 'repo'), (r'\bn ?= ?\d', 'n = '), (r'\(\d+%\)', 'percent in parentheses'),
-    (r'\d+(\.\d+)?K stars', 'compact star count'), (r'^Since [A-Z]', 'Since ...'), (r'Week of ', 'Week of'), (r'No change', 'No change'),
+    (r'\d+(\.\d+)?K stars', 'compact star count'), (r'^Since [A-Z]', 'Since ...'),
+    # "Week of" is the header of a column of weeks in a chart table view (each row is its Monday); the banned form is the phrase
+    # with a date typed after it
+    (r'Week of [A-Z][a-z]{2} \d', 'Week of Nov 9'), (r'No change', 'No change'),
     (r'days old', 'days old'), (r'\bvs\.', 'vs.'), (r'Team SLA', 'Team SLA'), (r'WG ', 'WG'), (r'PR \d+\b', 'PR 123'),
     (r'OPEN PRS', 'OPEN PRS'), (r'OPEN ISSUES', 'OPEN ISSUES'), (r'Untriaged', 'Untriaged'), (r'Data through', 'Data through'),
     (r'Need a ', 'Need a')]]
@@ -112,6 +115,10 @@ RULES = {
                 '(design system v4 2.2)',
     'notes-layout': 'Data notes open at 64rem and up: Sources sits to the right of Definitions (the 8 + 4 grid applies)',
     'th-baseline': 'in a column header row every label sits on one line: equal top edges for plain labels and sort buttons',
+    'td-baseline': 'in a table row every value, cell link and row link ends its first line at the same y (a row with a sub line or '
+                   'a note aligns every cell to its first line)',
+    'spark-attached': 'no level sparkline shows a loose point: the end dot is the end of the line or of a bridge (design system v4 4.20)',
+    'brand': 'the header brand mark has painted pixels at least 3 to 1 against the header surface in this theme (design system v4 4.1)',
     'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
     'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical (chart-2 is declared for the validator only), ord-1..4 ordinal',
@@ -175,6 +182,29 @@ PROBE = r"""() => {
         const r = document.createRange(); r.selectNodeContents(n); const b = r.getClientRects(); if (b.length) return Math.round(b[0].top * 2) / 2; }
       return null; }).filter(v => v !== null);
     if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 1 && thBaseline.length < 10) thBaseline.push({ el: path(tr), tops: tops.join(', ') }); });
+  // the values of one table row share a line: every value, cell link and row link of a row ends its first line at the same y
+  // (a row with a sub line or a note aligns every cell to its first line; design system v4 4.14)
+  const tdBaseline = [];
+  document.querySelectorAll('.v-dt tbody tr').forEach(tr => { if (tdBaseline.length >= 10 || !shown(tr) || getComputedStyle(tr).display !== 'table-row') return;
+    const ys = [...tr.querySelectorAll(':scope > * > .v-val:not(.is-na), :scope > * > .v-row-link, :scope > * > .v-cell-link .v-val, :scope > * > .v-barnum .v-val, :scope > * > .v-over .v-val')]
+      .filter(shown).map(e => { const b = e.getClientRects(); return b.length ? Math.round(b[0].bottom * 2) / 2 : null; }).filter(v => v !== null);
+    if (ys.length > 1 && Math.max(...ys) - Math.min(...ys) > 1.5) tdBaseline.push({ el: path(tr), ys: [...new Set(ys)].join(', ') }); });
+  // a level sparkline never shows a loose point: its end dot is the end of the line or of a bridge (design system v4 4.20)
+  const sparkLoose = [];
+  document.querySelectorAll('.v-spark svg').forEach(svg => { const dot = svg.querySelector('.v-spark-dot'), line = svg.querySelector('.v-spark-line'); if (!dot || !line) return;
+    const m = /M\s*([\d.-]+,[\d.-]+)/.exec(dot.getAttribute('d') || ''); if (!m) return;
+    const to = 'L' + m[1], hit = (line.getAttribute('d') || '').includes(to) || [...svg.querySelectorAll('.v-spark-bridge')].some(b => (b.getAttribute('d') || '').includes(to));
+    if (!hit && sparkLoose.length < 10) sparkLoose.push({ el: path(svg.closest('.v-spark') || svg) }); });
+  // brand: the header mark has painted pixels at least 3 to 1 against the header surface, in this theme (design system v4 4.1)
+  let brand = null; const bm = document.querySelector('.v-header .v-brand-mark');
+  if (bm && bm.complete && bm.naturalWidth) { try {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 48; const cx = cv.getContext('2d'); cx.drawImage(bm, 0, 0, 48, 48);
+    const d = cx.getImageData(0, 0, 48, 48).data, f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const lum = (r, g, b) => 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    const m = /(\d+)[, ]+(\d+)[, ]+(\d+)/.exec(getComputedStyle(document.querySelector('.v-header')).backgroundColor) || [0, 255, 255, 255], bg = lum(+m[1], +m[2], +m[3]);
+    let best = 1, painted = 0;
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 200) continue; painted++; const l = lum(d[i], d[i + 1], d[i + 2]), c = (Math.max(l, bg) + 0.05) / (Math.min(l, bg) + 0.05); if (c > best) best = c; }
+    brand = { painted, contrast: Math.round(best * 100) / 100 }; } catch (e) { brand = { error: String(e) }; } }
   // table cells whose content runs past the cell (fixed columns narrower than a header or value)
   const cellOverflow = [...document.querySelectorAll('.v-dt th, .v-dt td')].filter(shown).filter(c => c.scrollWidth > c.clientWidth + 1)
     .slice(0, 25).map(c => ({ el: path(c), text: (c.innerText || '').trim().slice(0, 60), over: c.scrollWidth - c.clientWidth }));
@@ -196,7 +226,7 @@ PROBE = r"""() => {
   return { title: document.title, theme: document.documentElement.dataset.theme,
     scrollWidth: document.documentElement.scrollWidth, clientWidth: vw, height: document.documentElement.scrollHeight,
     overflow, clipped, innerScroll, fontSizes: fonts, fontSamples, textColors: colors, lineStartDots: dots, cellOverflow,
-    fontLoaded, numerals, valueTruncated, cellInset, thBaseline,
+    fontLoaded, numerals, valueTruncated, cellInset, thBaseline, tdBaseline, sparkLoose, brand,
     charts: { total: canvases.length, shown: canvases.filter(shown).length, mounted: canvases.filter(mounted).length,
               shownNotMounted: canvases.filter(c => shown(c) && !mounted(c)).map(c => c.id || path(c)) },
     canvases: [...document.querySelectorAll('canvas')].map(c => ({ el: c.id || path(c), metric: c.dataset.metric || null, label: c.getAttribute('aria-label') })),
@@ -768,6 +798,13 @@ def page_checks(cid, vp, rep, page_text, ban_text=''):
     if vp in ('desktop', 'laptop'):
         tb = rep.get('thBaseline', [])
         record('th-baseline', cid, not tb, '; '.join(f"{c['el']} label tops {c['tops']}" for c in tb[:5]) or 'none')
+        td = rep.get('tdBaseline', [])
+        record('td-baseline', cid, not td, '; '.join(f"{c['el']} first lines end at {c['ys']}" for c in td[:5]) or 'none')
+    sl = rep.get('sparkLoose', [])
+    record('spark-attached', cid, not sl, '; '.join(c['el'] for c in sl[:5]) or 'none')
+    br = rep.get('brand')
+    record('brand', cid, 'skip' if not br else (not br.get('error') and br.get('contrast', 0) >= 3),
+           'no brand mark in the header' if not br else br.get('error') or f"{br.get('painted', 0)} painted pixels, best contrast {br.get('contrast')} to 1")
     hits = (text_bans(page_text) + text_bans_v4(ban_text)
             + [f"a middot starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']])
     record('text-bans', cid, not hits, '; '.join(hits[:8]) + (f' (+{len(hits) - 8} more)' if len(hits) > 8 else '') or 'none')

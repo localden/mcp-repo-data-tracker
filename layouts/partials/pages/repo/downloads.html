@@ -2,35 +2,77 @@
   carries the link-action "All downloads".
   8   Chart card "Weekly downloads": complete weeks over the last 26 weeks, as columns. Its readout is the plotted series only
       (ui/chart.html default: "Latest week", the value of the last column and that week's range), so the readout equals a column.
-  4   Stat list "Download totals": every figure that is not a column of the chart (ruling 21), one label and one value per row:
-        Last 7 days       the rolling window ending on the last complete day (the summary tile's figure); with fewer than 7 complete
-                          days, the sum of the days it has and the coverage note
-        Last 30 days      the same for 30 days (omitted until 30 complete days exist)
-        Week to date      the unfinished week, never plotted, with its coverage note
-        Lifetime          the registry's running total; the note "From {date}" when the total was first recorded after the package began
-        Complete through  the last complete day of registry data
-  With fewer than 4 complete weeks the chart is the pending card (a week counts only when the registry reported all 7 days); the
-  stat list then goes under it, wide (4.22).
+  4   Stat list "Download totals": every figure that is not a column of the chart (ruling 21), one label and one value per row.
+      Every window says which days it covers, so no two figures of the pair can be read as the same seven days:
+        Last 7 days             the window every package shares (the figure of the Downloads page), with its range as the detail;
+                                with fewer than 7 complete days, the sum of the days it has and the coverage note (its title
+                                names the days)
+        Change vs prior 7 days  the delta badge, when both windows are complete
+        Last 30 days            the 30 days ending on the same day, with its range; when a day is missing, the sum of the days
+                                it has and the coverage note, as on the Downloads page
+        Week to date            the unfinished week, never plotted, with its coverage note in the info tone: a week in progress
+                                is expected, not a data fault
+        Lifetime                the registry's running total; the note "From {date}" when the total was first recorded after the
+                                package began
+        Complete through        the last complete day this registry has reported (its own day, not the shared window's end)
+      Five or six rows beside the chart, so a row is 49 to 66px (4.6).
+  With fewer than 4 complete weeks there is no chart to draw and no latest week to read out, so the pair folds into one card at 12
+  (4.22): the stat list, wide, closed by the pending bar. "Week to date" is left out there when it repeats the "Last 7 days" row
+  (the same days and the same sum). With fewer than three facts the pending chart card stands alone.
   Context: the dict from pages/repo.html (dl = data/downloads.html for this package, on the window shared with the other pages). */ -}}
 {{- $r := .r }}{{ $d := .dl -}}
 {{- $w := partial "data/week-bins.html" (dict "points" ($d.points | default slice) "agg" "sum" "weeks" 26 "end" ($d.complete_through | default "")) -}}
+{{- $drawn := ge (int $w.n) 4 -}}
+{{- $covered := int ($d.days_covered | default 0) -}}
 {{- $rows := slice -}}
-{{- $l7 := (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window -}}
+
+{{- /* last 7 days, and its change */ -}}
+{{- $l7 := partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day")) -}}
+{{- $t7 := "Downloads over the 7 complete days every package shares." -}}
 {{- if ne $d.dl7 nil -}}
-  {{- $rows = $rows | append (dict "label" $l7 "title" "Downloads over the 7 complete days that end on the Complete through day." "value" (dict "kind" "volume" "v" $d.dl7)) -}}
-{{- else if gt (int ($d.days_covered | default 0)) 0 -}}
-  {{- $rows = $rows | append (dict "label" $l7 "value" (dict "kind" "volume" "v" $d.sum7)
-      "detail" (dict "note" (dict "part" (int $d.days_covered) "whole" 7 "noun" "day" "days" (dict "from" $d.from "to" $d.end)))) -}}
+  {{- $rows = $rows | append (dict "label" $l7.window "title" $t7 "value" (dict "kind" "volume" "v" $d.dl7) "detail" (dict "range" (dict "from" $d.from "to" $d.end))) -}}
+  {{- if ne $d.prev7 nil -}}
+    {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "metric" "Change" "base" "prior7")).record
+        "title" "The last 7 days against the 7 days before them."
+        "value" (dict "kind" "change" "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "metric" "downloads")) -}}
+  {{- end -}}
+{{- else if gt $covered 0 -}}
+  {{- $rows = $rows | append (dict "label" $l7.window "title" $t7 "value" (dict "kind" "volume" "v" $d.sum7)
+      "detail" (dict "note" (dict "part" $covered "whole" 7 "noun" "day" "days" (dict "from" $d.from "to" $d.end)))) -}}
 {{- end -}}
+
+{{- /* last 30 days: the 30 days that end on the same day; a window with a missing day shows the sum of the days it has */ -}}
+{{- $l30 := partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day")) -}}
+{{- $t30 := "Downloads over the 30 days that end on the same day as the last 7 days." -}}
+{{- $from30 := "" }}{{ with $d.end }}{{ $from30 = ((time.AsTime .).AddDate 0 0 -29).Format "2006-01-02" }}{{ end -}}
+{{- $covered30 := int ($d.days_covered30 | default 0) -}}
 {{- if ne $d.dl30 nil -}}
-  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window "value" (dict "kind" "volume" "v" $d.dl30)) -}}
+  {{- $rows = $rows | append (dict "label" $l30.window "title" $t30 "value" (dict "kind" "volume" "v" $d.dl30) "detail" (dict "range" (dict "from" $from30 "to" $d.end))) -}}
+{{- else if and (gt $covered30 0) $from30 -}}
+  {{- $sum30 := 0.0 }}{{ $a30 := "" }}{{ $z30 := "" -}}
+  {{- range $d.points | default slice -}}
+    {{- if and (ne .value nil) (ge .date $from30) (le .date $d.end) -}}
+      {{- $sum30 = add $sum30 (float .value) }}{{ if eq $a30 "" }}{{ $a30 = .date }}{{ end }}{{ $z30 = .date -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $a30 -}}
+    {{- $rows = $rows | append (dict "label" $l30.window "title" $t30 "value" (dict "kind" "volume" "v" $sum30)
+        "detail" (dict "note" (dict "part" $covered30 "whole" 30 "noun" "day" "days" (dict "from" $a30 "to" $z30)))) -}}
+  {{- end -}}
 {{- end -}}
+
+{{- /* week to date: left out of the single pending card when it is the "Last 7 days" row again */ -}}
 {{- with $w.wtd }}{{ if ne .value nil -}}
-  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "title" "The unfinished week. It is never plotted."
-      "value" (dict "kind" "volume" "v" .value) "detail" (dict "note" (dict "part" (int .days) "whole" 7 "noun" "day" "days" (dict "from" .start "to" .end)))) -}}
+  {{- $same := and (not $drawn) (eq $d.dl7 nil) (eq (int .days) $covered) (eq (float .value) (float ($d.sum7 | default 0))) -}}
+  {{- if not $same -}}
+    {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "title" "The unfinished week. It is never plotted."
+        "value" (dict "kind" "volume" "v" .value)
+        "detail" (dict "note" (dict "part" (int .days) "whole" 7 "noun" "day" "tone" "info" "days" (dict "from" .start "to" .end)))) -}}
+  {{- end -}}
 {{- end }}{{ end -}}
+
 {{- if ne $d.lifetime nil -}}
-  {{- $it := dict "label" "Lifetime" "value" (dict "kind" "volume" "v" $d.lifetime) -}}
+  {{- $it := dict "label" "Lifetime" "title" "The registry's running total of downloads." "value" (dict "kind" "volume" "v" $d.lifetime) -}}
   {{- /* the npm total is a running sum the collector started itself, so it has a first day; the other registries report their own */ -}}
   {{- if eq $d.registry "npm" -}}
     {{- $seed := "" }}{{ with index $r.data "downloads-daily" }}{{ $seed = .seeded_from | default "" }}{{ end -}}
@@ -38,10 +80,10 @@
   {{- end -}}
   {{- $rows = $rows | append $it -}}
 {{- end -}}
-{{- with $d.complete_through }}{{ $rows = $rows | append (dict "label" "Complete through" "title" "The last complete day of registry data." "value" (dict "kind" "date" "d" .)) }}{{ end -}}
+{{- with $d.complete_through }}{{ $rows = $rows | append (dict "label" "Complete through" "title" "The last complete day this registry has reported." "value" (dict "kind" "date" "d" .)) }}{{ end -}}
+
 {{- /* no complete week yet, though days exist: say so instead of "No data collected yet" */ -}}
 {{- $pending := "" }}{{ if and (eq (int $w.n) 0) (gt (int ($d.days_total | default 0)) 0) }}{{ $pending = "Too few complete weeks to draw a trend" }}{{ end -}}
-{{- $drawn := ge (int $w.n) 4 -}}
 {{- /* one "since" date per page: registry data that starts within a week of the repository's first snapshot is dated by that
      snapshot, the date the page head and the Activity cards print. A package whose data starts at another time keeps its own. */ -}}
 {{- $since := $d.first | default "" -}}
@@ -49,17 +91,23 @@
   {{- $gap := div (float (sub (time.AsTime .first).Unix (time.AsTime $since).Unix)) 86400.0 -}}
   {{- if and (ge $gap -7.0) (le $gap 7.0) }}{{ $since = .first }}{{ end -}}
 {{- end -}}
-{{- $pair := and $drawn (ge (len $rows) 3) }}
+{{- $list := ge (len $rows) 3 -}}
+{{- $pair := and $drawn $list }}
 <section class="v-section" aria-labelledby="downloads">
   {{ partial "ui/section-head.html" (dict "id" "downloads" "title" "Downloads" "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
   <div class="v-grid">
+    {{- if or $drawn (not $list) }}
     {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Weekly downloads" "class" (cond $pair "v-span-8" "v-span-12")
         "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 26))).cadence
         "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column"
         "series" (slice (dict "label" "Downloads" "role" "accent" "points" $w.points))
         "since" $since "pending" $pending) }}
-    {{- if ge (len $rows) 3 }}
-    {{ partial "ui/stat-list.html" (dict "id" "repo-download-totals" "title" "Download totals" "rows" $rows "wide" (not $pair)) }}
+    {{- end }}
+    {{- if $pair }}
+    {{ partial "ui/stat-list.html" (dict "id" "repo-download-totals" "title" "Download totals" "rows" $rows) }}
+    {{- else if $list }}
+    {{ partial "ui/stat-list.html" (dict "id" "repo-download-totals" "title" "Download totals" "rows" $rows "wide" true
+        "pending" "Too few complete weeks to draw a trend") }}
     {{- end }}
   </div>
 </section>

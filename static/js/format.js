@@ -179,7 +179,15 @@
     return { n: narrowed ? nf(0, matched) + ' of ' + nf(0, total) : nf(0, total), word: (narrowed ? total : total) === 1 ? one : other };
   }
 
-  var fmt = { count: count, stat: function (a) { a = arg(a, 'v'); return count({ v: a.v, stat: true, col: a.col }); }, volume: volume, share: share,
+  /* the closed list of delta bases (3.2), the mirror of fmt/label.html "base" */
+  var BASES = { prior7: 'vs prior 7' + NBSP + 'days', '4w': 'vs 4' + NBSP + 'weeks earlier', 'prior-week': 'vs prior week', 'prior-day': 'vs prior day' };
+  function base(a) {
+    a = arg(a, 'key');
+    var text = a.date ? 'vs ' + date(a.date).text : (BASES[String(a.key || '')] || '');
+    return { text: text, long: text, state: text ? 'value' : 'na', kind: 'base' };
+  }
+
+  var fmt = { count: count, stat: function (a) { a = arg(a, 'v'); return count({ v: a.v, stat: true, col: a.col }); }, volume: volume, share: share, base: base,
     change: change, net: net, dur: dur, date: date, range: range, ts: ts, ratio: ratio, lines: lines, noun: noun, na: na,
     result: result, iso: iso, toDate: toDate };
   window.VISR = Object.assign(window.VISR || {}, { fmt: fmt });

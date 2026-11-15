@@ -1,8 +1,7 @@
 {{- /* Backlog trend (design system v4 5.5 module 4 classified, module 3 unclassified; 4.19, 4.6, 4.22).
      Ctx: dict {r (data/repo.html), m (metrics.json), classified}.
-     8 + 4: the chart card (daily, last 26 weeks) beside the stat list "Opened and closed". The card is titled after its subject
-     series: "Actionable PRs" on a classified repository (the same figure as the reference pair of the Estimated review effort
-     tile), "Open PRs" otherwise.
+     8 + 4: the chart card (daily, last 26 weeks) beside the stat list "Opened and closed". The card is titled "Open PRs" on every
+     repository, the same grammar as "Open issues" on the Issues page: the title names the measure and the readout names the series.
        Classified: two series. The subject (accent) is "Actionable", snapshots actionability.actionable_count, the classifier's daily
          count of PRs a maintainer can act on. The context series is "Not draft", snapshots pulls.open minus pulls.draft_count. Neither
          is the set behind a tile or a view; Data notes defines both.
@@ -49,7 +48,7 @@
 <section class="v-section" aria-labelledby="backlog">
   {{ partial "ui/section-head.html" (dict "id" "backlog" "title" "Backlog trend") }}
   <div class="v-grid">
-    {{ partial "ui/chart.html" (dict "id" "pulls-open" "title" (cond (eq .classified true) "Actionable PRs" "Open PRs") "class" (cond $drawn "v-span-8" "v-span-12")
+    {{ partial "ui/chart.html" (dict "id" "pulls-open" "title" "Open PRs" "class" (cond $drawn "v-span-8" "v-span-12")
         "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "day" "weeks" 26))).cadence
         "metric" "open PRs" "metric_one" "open PR" "scope" $r.name "unit" "count" "gran" "day" "kind" "line"
         "from" $open.from "to" $open.to "since" $open.first "series" $series) }}

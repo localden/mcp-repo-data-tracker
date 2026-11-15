@@ -1,7 +1,10 @@
-{{- /* Callout (design system v4 4.8): the one boxed notice, last row of the page head, at most one per page.
-  Dict {title, items}. title: strong ("Data gap"). items: slice of {text, from, to, date}; each is one sentence. The token {range} in
+{{- /* Callout (design system v4 4.8): the one boxed notice, last row of the page head, at most one per page. It is kept for a
+  condition that is true now (collection has stopped, registry data is more than 3 days old). A past data gap is never a callout: it
+  is a warning item of the page-head meta row (ui/page-head.html "gap"). A soft warning fill with its own edge and the warning icon;
+  no side stripe.
+  Dict {title, items}. title: strong ("Stale data"). items: slice of {text, from, to, date}; each is one sentence. The token {range} in
   text is replaced by a range built from from and to, the token {date} by a date built from date, so no date is typed:
-    "No GitHub data from {range} (collection outage). Charts show the gap."     "PyPI data is complete through {date}."
+    "PyPI data is complete through {date}."     "No GitHub data since {date}."
   It holds no metric value. Renders nothing without items. */ -}}
 {{- $c := . -}}
 {{- with $c.items -}}

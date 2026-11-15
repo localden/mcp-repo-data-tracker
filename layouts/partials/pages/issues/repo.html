@@ -26,37 +26,40 @@
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
 {{- $defWait := "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago." -}}
 {{- $defNet := "Issues opened minus issues closed in the window." -}}
-{{- $defs := slice (dict "term" "Waiting for a reply" "text" $defWait) -}}
+{{- $gQ := "Queue and filters" }}{{ $gS := "Statuses" }}{{ $gR := "SLA rules" }}{{ $gM := "Measures" -}}
+{{- $defs := slice -}}
 {{- $notes := slice -}}
 {{- if $classified -}}
   {{- $defs = $defs | append
-    (dict "term" "Overdue" "text" "Past a deadline in the Response SLAs table. SEP-1730 sets the reply, triage, P0 and question deadlines; the follow-up, P1 and repro deadlines are team targets.")
-    (dict "term" "Overdue column" "text" "Calendar days past the deadline of the rule named beside the value. For the business-day rules the figure is converted from business days.")
-    (dict "term" "Needs a maintainer" "text" "Open issues whose next step is a maintainer's: triage, a reply, an answer, a decision, a design or a review of a proposed fix.")
-    (dict "term" "Ready" "text" "Triaged issues that someone can pick up or is working on, and the backlog.")
-    (dict "term" "Waiting on reporter" "text" "A maintainer asked the reporter for a repro or a confirmation and is waiting.")
-    (dict "term" "Close candidates" "text" "Issues that are likely resolved, stale or out of scope.")
-    (dict "term" "Waiting for a reply, any age" "text" "The same issues at any age, from the repository's waiting list: the whole under the Waiting for a reply tile.")
-    (dict "term" "Detail" "text" "Reporter waiting gives the calendar days since the reporter answered; the tooltip gives the business days. It is left out where the Overdue column already shows the Follow-up rule.")
-    (dict "term" "Age" "text" "Calendar days since the issue opened.") -}}
-  {{- range partial "data/issue-status.html" "*" }}{{ $defs = $defs | append (dict "term" .label "text" .tip) }}{{ end -}}
-  {{- range partial "data/sla-rules.html" "issue" }}{{ $defs = $defs | append (dict "term" (printf "%s rule" .name) "text" (printf "%s. Source: %s." .deadline .source)) }}{{ end -}}
-  {{- $notes = $notes | append "First reply has no overdue count yet: the classifier does not export it." -}}
-  {{- $notes = $notes | append "A repository without priority labels shows no counts for the P0 bug and P1 bug rules." -}}
+    (dict "group" $gQ "term" "Needs a maintainer" "text" "Open issues whose next step is a maintainer's: triage, a reply, an answer, a decision, a design or a review of a proposed fix.")
+    (dict "group" $gQ "term" "Ready" "text" "Triaged issues that someone can pick up or is working on, and the backlog.")
+    (dict "group" $gQ "term" "Waiting on reporter" "text" "A maintainer asked the reporter for a repro or a confirmation and is waiting.")
+    (dict "group" $gQ "term" "Close candidates" "text" "Issues that are likely resolved, stale or out of scope.")
+    (dict "group" $gQ "term" "Overdue" "text" "Past a deadline in the Response SLAs table, in any view.")
+    (dict "group" $gQ "term" "Overdue column" "text" "Calendar days past the deadline of the rule named beside the value. For the business-day rules the figure is converted from business days.")
+    (dict "group" $gQ "term" "Waiting for a reply" "text" $defWait)
+    (dict "group" $gQ "term" "Waiting for a reply, any age" "text" "The same issues at any age, from the repository's waiting list: the whole under the Waiting for a reply tile.")
+    (dict "group" $gQ "term" "Line under the status" "text" "The one fact the status cannot say. Reporter waiting gives the calendar days since the reporter answered, with the business days in its tooltip; it is left out where the Overdue column already shows the Follow-up rule.")
+    (dict "group" $gQ "term" "Age" "text" "Calendar days since the issue opened.") -}}
+  {{- range partial "data/issue-status.html" "*" }}{{ $defs = $defs | append (dict "group" $gS "term" .label "text" .tip) }}{{ end -}}
+  {{- range partial "data/sla-rules.html" "issue" }}{{ $defs = $defs | append (dict "group" $gR "term" .name "text" (printf "%s. Source: %s." .deadline .source)) }}{{ end -}}
+  {{- $defs = $defs | append
+    (dict "group" $gR "term" "Rules without a count" "text" "The first-reply rule has no overdue count until the classifier exports it. The priority rules have no counts on a repository that uses no priority labels.") -}}
 {{- else -}}
   {{- $defs = $defs | append
-    (dict "term" "Waiting for a reply, any age" "text" "The same issues at any age: every row of the list on this page.")
-    (dict "term" "Waiting" "text" "Calendar days since the issue opened.") -}}
-  {{- $notes = $notes | append "Response SLAs need issue classification, which does not run for this repository." -}}
+    (dict "group" $gQ "term" "Waiting for a reply" "text" $defWait)
+    (dict "group" $gQ "term" "Waiting for a reply, any age" "text" "The same issues at any age: every row of the list on this page.")
+    (dict "group" $gQ "term" "Waiting" "text" "Calendar days since the issue opened.")
+    (dict "group" $gR "term" "Response SLAs" "text" "Response SLAs need issue classification, which does not run for this repository.") -}}
 {{- end -}}
 {{- $defs = $defs | append
-  (dict "term" "Net change" "text" $defNet)
-  (dict "term" "Median first reply" "text" "Median time to the first maintainer comment, over the issues that got one. Issues never answered are left out.")
-  (dict "term" "90% answered within" "text" "Nine in ten of the answered issues got their first maintainer comment within this time.")
-  (dict "term" "Median time to close" "text" "Median time from open to close, over issues closed in the last 90 days.")
-  (dict "term" "90% closed within" "text" "Nine in ten of the issues closed in the last 90 days were closed within this time.")
-  (dict "term" "Open issues by last activity" "text" "Open issues by the time since their last comment, label or edit.")
-  (dict "term" "Labels on open issues" "text" "The most used labels, leaving out type, priority and status labels. The card is omitted when fewer than four are left.") -}}
+  (dict "group" $gM "term" "Net change" "text" $defNet)
+  (dict "group" $gM "term" "Median first reply" "text" "Median time to the first maintainer comment, over the issues that got one. Issues never answered are left out.")
+  (dict "group" $gM "term" "90% answered within" "text" "Nine in ten of the answered issues got their first maintainer comment within this time.")
+  (dict "group" $gM "term" "Median time to close" "text" "Median time from open to close, over issues closed in the last 90 days.")
+  (dict "group" $gM "term" "90% closed within" "text" "Nine in ten of the issues closed in the last 90 days were closed within this time.")
+  (dict "group" $gM "term" "Open issues by last activity" "text" "Open issues by the time since their last comment, label or edit.")
+  (dict "group" $gM "term" "Labels on open issues" "text" "The most used labels, leaving out type, priority and status labels, each with its share of all open issues. An issue can carry several labels. The card is omitted when fewer than four are left.") -}}
 {{- $head := dict "scope" (dict "kind" "issues" "repo" $r.key)
     "meta" (slice (dict "icon" "github" "text" $r.key "href" (printf "https://github.com/%s/issues" $r.key) "site" "GitHub"))
     "sources" $src "gap" (dict "repos" (slice $r.key) "days" 182) "defs" $defs "notes" $notes -}}

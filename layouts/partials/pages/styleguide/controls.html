@@ -24,10 +24,11 @@
   {{ partial "ui/section-head.html" (dict "id" "menu" "title" "Menu" "desc" "One popover for navigation, select filters and, on narrow screens, the view and sort choices.") }}
   <div class="v-grid">
     <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Multi-select options") }}<div class="v-card-body"><div class="v-sg-pop is-short">
-      {{ partial "ui/menu.html" (dict "id" "sg-menu-multi" "bare" true "multi" true "open" true "label" "Status" "cols" (slice "Status" "PRs") "items" (slice
-        (dict "text" "Needs review" "value" "needs-review" "count" 212 "checked" true) (dict "text" "Needs re-review" "value" "needs-re-review" "count" 31 "checked" true)
-        (dict "text" "Needs decision" "value" "needs-decision" "count" 9) (dict "text" "Backport" "value" "backport" "count" 0 "disabled" true))) }}
-    </div><p class="v-sg-cap">ui/menu.html multi: two checked, a disabled option at zero, the labelled count column</p></div></article>
+      {{ partial "ui/menu.html" (dict "id" "sg-menu-multi" "bare" true "multi" true "open" true "label" "Status" "cols" (slice "Status" "Issues") "items" (slice
+        (dict "text" "Needs triage" "value" "untriaged" "count" 105 "checked" true) (dict "text" "Needs reply" "value" "needs-maintainer" "count" 31 "checked" true)
+        (dict "text" "Unanswered question" "value" "answer" "count" 3) (dict "text" "Needs decision" "value" "decide" "count" 9)
+        (dict "text" "Needs fix review" "value" "fix-proposed" "count" 0 "disabled" true))) }}
+    </div><p class="v-sg-cap">ui/menu.html multi, as a select chip opens it: the label row names both columns, two checked, the longest status of the vocabulary with its count clear of it, a disabled option at zero (zero under the current search and filters; a status the view cannot hold is not listed)</p></div></article>
     <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Radio options") }}<div class="v-card-body"><div class="v-sg-pop is-short">
       {{ partial "ui/menu.html" (dict "id" "sg-menu-radio" "bare" true "open" true "label" "Sort" "items" (slice
         (dict "text" "Longest wait first" "value" "waiting:desc" "checked" true) (dict "text" "Shortest wait first" "value" "waiting:asc")
@@ -41,9 +42,17 @@
   <div class="v-grid">
     <article class="v-card v-span-12">
       {{ partial "ui/tabs.html" (dict "id" "sg-views-five" "label" "Views, five" "panel" "sg-views-five-panel" "tabs" (slice
-        (dict "key" "needs" "label" "Needs a maintainer" "count" 288 "danger" true) (dict "key" "housekeeping" "label" "Housekeeping" "count" 31)
+        (dict "key" "needs" "label" "Needs a maintainer" "count" 288) (dict "key" "housekeeping" "label" "Housekeeping" "count" 31)
         (dict "key" "close" "label" "Close candidates" "count" 0) (dict "key" "author" "label" "Waiting on author" "count" 56) (dict "key" "all" "label" "All" "count" 375))) }}
-      <div class="v-card-body" id="sg-views-five-panel" role="tabpanel"><p class="v-sg-cap">ui/tabs.html variant views: five views, a danger count, one view disabled at zero. Below 64rem the band is the view button.</p></div>
+      <div class="v-card-body" id="sg-views-five-panel" role="tabpanel"><p class="v-sg-cap">ui/tabs.html variant views: five views with neutral counts, one view disabled at zero. Below 64rem the band is the view button, closed here.</p></div>
+    </article>
+    <article class="v-card v-span-12">
+      <div class="v-sg-pop">
+      {{ partial "ui/tabs.html" (dict "id" "sg-views-open" "label" "Views, open" "panel" "sg-views-open-panel" "open" true "noun" "PRs" "tabs" (slice
+        (dict "key" "needs" "label" "Needs a maintainer" "count" 288) (dict "key" "housekeeping" "label" "Housekeeping" "count" 31)
+        (dict "key" "close" "label" "Close candidates" "count" 0) (dict "key" "author" "label" "Waiting on author" "count" 56) (dict "key" "all" "label" "All" "count" 375))) }}
+      </div>
+      <div class="v-card-body" id="sg-views-open-panel" role="tabpanel"><p class="v-sg-cap">the same five views with the view button open (below 64rem): radio rows, the current row with the check, the count column, the view at zero disabled</p></div>
     </article>
     <article class="v-card v-span-6">
       {{ partial "ui/tabs.html" (dict "id" "sg-views-two" "label" "Views, two" "panel" "sg-views-two-panel" "selected" "drafts" "tabs" (slice
@@ -65,27 +74,27 @@
   <div class="v-grid">
     <article class="v-card v-span-12">
       {{ partial "ui/filterbar.html" (dict "id" "sg-fb-search" "noun" "person" "total" 123) }}
-      <div class="v-card-body"><p class="v-sg-cap">ui/filterbar.html with search only (People): the hint at rest, the result count</p></div>
+      <div class="v-card-body"><p class="v-sg-cap">ui/filterbar.html with search only (People): the hint at rest, the result count; Clear filters appears left of the count while a search is active</p></div>
     </article>
     <article class="v-card v-span-12">
-      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-rest" "noun" "pr" "total" 288 "facets" (slice
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-rest" "noun" "pr" "total" 288 "open" true "facets" (slice
         (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249)
         (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 41)
         (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 0)
         (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts)
         (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts)
         (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts))) }}
-      <div class="v-card-body"><p class="v-sg-cap">six facets at rest: three checkbox chips (one disabled at zero), three select chips</p></div>
+      <div class="v-card-body"><p class="v-sg-cap">six facets at rest: three checkbox chips (one disabled at zero), three select chips. Below 64rem the Filters button is shown open here, with the panel under it; the list card below shows it closed</p></div>
     </article>
     <article class="v-card v-span-12">
-      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-active" "noun" "pr" "total" 288 "matched" 12 "facets" (slice
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-active" "noun" "pr" "total" 288 "matched" 12 "open" true "facets" (slice
         (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249 "pressed" true)
         (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 41 "pressed" true)
         (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 0 "pressed" true)
         (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts "value" "2 selected")
         (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts "value" "Maintainer")
         (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts "value" "Maintainer PR"))) }}
-      <div class="v-card-body"><p class="v-sg-cap">every facet active at once (the wrap case): pressed chips, a pressed chip at zero, select chips with one value and with several, the narrowed result count and Clear filters</p></div>
+      <div class="v-card-body"><p class="v-sg-cap">every facet active at once: pressed chips, a pressed chip at zero, select chips with one value and with several. Clear filters and the narrowed result count sit together on the right of row 1, so the chips never push them around; below 64rem the Filters button carries the count of active facets and Clear filters closes the panel</p></div>
     </article>
   </div>
 </section>
@@ -107,16 +116,16 @@
 {{- $views := slice (dict "key" "needs" "label" "Needs a maintainer") (dict "key" "housekeeping" "label" "Housekeeping") (dict "key" "close" "label" "Close candidates") (dict "key" "author" "label" "Waiting on author") -}}
 {{- $tabs := slice }}{{ $nNeeds := 0 -}}
 {{- range $v := $views -}}
-  {{- $k := 0 }}{{ $d := false }}{{ range $rows }}{{ if eq .view $v.key }}{{ $k = add $k 1 }}{{ if .rules }}{{ $d = true }}{{ end }}{{ end }}{{ end -}}
+  {{- $k := 0 }}{{ range $rows }}{{ if eq .view $v.key }}{{ $k = add $k 1 }}{{ end }}{{ end -}}
   {{- if eq $v.key "needs" }}{{ $nNeeds = $k }}{{ end -}}
-  {{- $tabs = $tabs | append (dict "key" $v.key "label" $v.label "count" $k "danger" $d) -}}
+  {{- $tabs = $tabs | append (dict "key" $v.key "label" $v.label "count" $k) -}}
 {{- end -}}
 {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" (len $rows)) -}}
 <section class="v-section" aria-labelledby="list-card">
   {{ partial "ui/section-head.html" (dict "id" "list-card" "title" "List card" "desc" "Every list of issues, PRs, SEPs or people is one card with fixed bands: views, filter bar, table, list foot.") }}
   <div class="v-grid">
     <article class="v-card is-list v-span-12" data-list id="sg-list" data-limit="5" data-limit-phone="3" data-step="50" data-noun="PRs" data-noun-one="PR">
-      {{ partial "ui/tabs.html" (dict "id" "sg-list" "label" "Views" "panel" "sg-list-panel" "tabs" $tabs) }}
+      {{ partial "ui/tabs.html" (dict "id" "sg-list" "label" "Views" "panel" "sg-list-panel" "noun" "PRs" "tabs" $tabs) }}
       <div role="tabpanel" id="sg-list-panel">
         {{ partial "ui/filterbar.html" (dict "id" "sg-list" "noun" "pr" "total" $nNeeds "facets" (slice
           (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 3)
@@ -127,11 +136,10 @@
           (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts))) }}
         {{ partial "ui/list-band.html" (dict "id" "sg-list" "noun" "pr" "total" $nNeeds) }}
         <table class="v-dt is-work is-list" id="sg-list-table" aria-label="PR queue, fixture">
-          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <colgroup><col><col class="v-col-status"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
           <thead><tr>
             {{ partial "ui/th.html" (dict "label" "PR") }}
-            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
-            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, in workflow order")) }}
             {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
             {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the PR opened." "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
           </tr></thead>
@@ -147,8 +155,7 @@
             <tr data-row data-row-link id="{{ $rid }}" data-views="{{ $r.view }}" data-facets="{{ delimit $facets " " }}"{{ if ne $r.view "needs" }} data-off{{ end }}>
               {{ partial "ui/row-item.html" (dict "title" $r.title "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" $r.n) "id" (printf "#%d" $r.n)
                   "author" $r.author "role" $r.role "diff" (dict "add" $r.add "del" $r.del) "attrs" $attrs "kids" (cond (ne $r.kids nil) (dict "n" $r.kids "id" $rid) nil)) }}
-              <td class="v-c-status" data-v="{{ $st.order }}">{{ partial "ui/badge.html" $st }}</td>
-              <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" $r.detail "who" $r.who "ref" $r.ref "days" $r.days) }}</td>
+              {{ partial "ui/status-cell.html" (dict "status" $st "detail" (dict "text" $r.detail "who" $r.who "ref" $r.ref "days" $r.days)) }}
               {{ partial "ui/sla.html" (dict "rules" ($r.rules | default slice)) }}
               <td class="num" data-v="{{ $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" ((time.AsTime $asof).AddDate 0 0 (int (sub 0 $r.age)))) }}</td>
             </tr>
@@ -157,8 +164,7 @@
             <tr data-row data-child-of="{{ $rid }}" data-views="{{ $r.view }}">
               {{ partial "ui/row-item.html" (dict "title" (printf "%s, attempt %d" $r.title $k) "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" (add $r.n (mul $k 7))) "id" (printf "#%d" (add $r.n (mul $k 7)))
                   "author" "copycat" "role" "Contributor" "attrs" (slice (printf "Duplicate of #%d" $r.n))) }}
-              <td class="v-c-status">{{ partial "ui/badge.html" (partial "data/pr-status.html" "duplicate-cluster-member") }}</td>
-              <td class="v-c-detail"></td>
+              {{ partial "ui/status-cell.html" (dict "status" (partial "data/pr-status.html" "duplicate-cluster-member")) }}
               {{ partial "ui/sla.html" (dict "rules" slice) }}
               <td class="num" data-v="{{ sub $r.age $k }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" (sub $r.age $k) "unit" "d" "compact" true) }}</td>
             </tr>
@@ -169,6 +175,36 @@
         </table>
         {{ partial "ui/list-empty.html" (dict "noun" "pr") }}
         {{ partial "ui/list-foot.html" (dict "list" "sg-list" "n" $nNeeds "limit" 5) }}
+      </div>
+    </article>
+    {{- /* roster (4.16): the People list while the data has one fact per person. Cells flow in three columns from 64rem, two
+         from 40rem, one below. A maintainer carries the activity badge; the role tag shows only in the All view */}}
+    {{- $sgPeople := slice
+      (dict "h" "felixweinberger" "maint" true "active" true) (dict "h" "KKonstantinov" "maint" true "active" true)
+      (dict "h" "bhosmer-ant" "maint" true "active" false) (dict "h" "ochafik" "maint" true "active" false)
+      (dict "h" "a-contributor-with-a-very-long-handle-39" "maint" false "active" true) (dict "h" "dagangtj" "maint" false "active" true)
+      (dict "h" "LucaButBoring" "maint" false "active" true) (dict "h" "techtoboggan" "maint" false "active" true)
+      (dict "h" "vrv" "maint" false "active" true) }}
+    <article class="v-card is-list v-span-12" data-list id="sg-people" data-limit="30" data-limit-phone="10" data-step="50" data-noun="people" data-noun-one="person">
+      {{ partial "ui/tabs.html" (dict "id" "sg-people" "label" "Views" "panel" "sg-people-panel" "noun" "People" "selected" "all" "tabs" (slice
+          (dict "key" "maintainers" "label" "Maintainers" "count" 4) (dict "key" "contributors" "label" "Contributors" "count" 5) (dict "key" "all" "label" "All" "count" 9))) }}
+      <div role="tabpanel" id="sg-people-panel">
+        {{ partial "ui/filterbar.html" (dict "id" "sg-people" "noun" "person" "total" 9) }}
+        {{ partial "ui/list-band.html" (dict "id" "sg-people" "noun" "person" "total" 9) }}
+        <table class="v-dt is-roster" id="sg-people-table" role="table" aria-label="People, fixture">
+          <tbody role="rowgroup">
+            {{- range $sgPeople }}
+            <tr role="row" data-row data-row-link data-views="{{ cond .maint "maintainers" "contributors" }}">
+              <th scope="row" role="rowheader" class="v-name"><span class="v-name-line"><a class="v-row-link" href="https://github.com/{{ .h }}" target="_blank" rel="noopener">{{ .h }}<span class="sr-only"> (opens GitHub)</span></a>{{ if .maint }}{{ partial "ui/tag.html" (dict "text" "Maintainer" "kind" "role" "title" "A member of this repository's maintainer group.") }}{{ end }}</span></th>
+              {{- if .maint }}
+              <td role="cell">{{ partial "ui/badge.html" (cond .active (dict "text" "Active" "tone" "success" "title" "Active in this repository in the last 30 days.") (dict "text" "No activity" "tone" "neutral" "title" "No activity in this repository in the last 30 days.")) }}</td>
+              {{- end }}
+            </tr>
+            {{- end }}
+          </tbody>
+        </table>
+        {{ partial "ui/list-empty.html" (dict "noun" "person") }}
+        {{ partial "ui/list-foot.html" (dict "list" "sg-people" "n" 9 "limit" 30) }}
       </div>
     </article>
     {{ partial "ui/empty.html" (dict "title" "No SEPs reached final" "body" "Nothing reached the final stage in this window." "class" "v-span-12") }}

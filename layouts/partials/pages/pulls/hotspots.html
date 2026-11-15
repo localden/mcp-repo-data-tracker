@@ -28,11 +28,11 @@
     {{- $max := 1.0 }}{{ range $pn.rows }}{{ $max = math.Max $max (float (.pr_count | default 0)) }}{{ end }}
     <article class="v-card v-span-6">
       {{ partial "ui/card-head.html" (dict "title" $pn.title "sub" $sub "id" (printf "hot-%s-title" $pn.key)) }}
-      <table class="v-dt is-rank is-list" aria-labelledby="hot-{{ $pn.key }}-title">
+      <table class="v-dt is-rank is-list" data-numw="{{ len (partial "fmt/count.html" (dict "v" $max)).text }}" aria-labelledby="hot-{{ $pn.key }}-title">
         <colgroup><col><col class="v-col-bar"></colgroup>
         <thead><tr>
           {{ partial "ui/th.html" (dict "label" $pn.head) }}
-          {{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "title" "Merged PRs from the last 90 days that changed the path.") }}
+          {{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "class" "v-c-bar" "title" "Merged PRs from the last 90 days that changed the path.") }}
         </tr></thead>
         <tbody>
           {{- range $pn.rows }}

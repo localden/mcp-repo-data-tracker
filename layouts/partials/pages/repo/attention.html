@@ -1,37 +1,54 @@
 {{- /* 2. Needs attention (design system v4 5.8 module 2). Context: the dict from pages/repo.html.
   12       Metric strip md, visual none: one tile per rule that has a count, in registry order, named by the rule (data/sla-rules.html)
-           with the qualifier "overdue": Triage, P0 bug, P1 bug (issues.json summary.sla), First review (actionability.json
-           summary.sla). Every tile has the whole "of {n} open": open issues for the issue rules, the PRs eligible for a first
-           review for First review. Breach tone; a zero stays neutral and is not a link. A tile above zero links to
-           the rule's drill URL on the repository's Issues or PR page. The priority rules need priority labels on the repository.
-           The strip is left out when fewer than two rules have a count. The other rules are on the Issues and PR pages.
+           with the qualifier "overdue": Triage, P0 bug, P1 bug, First review. Value and whole are the two numbers the rule's row
+           shows in the SLA rule table of the Issues or PR page (Overdue and In scope), read from the same rows: the queue rows
+           that breach the rule (pages/issues/rows.html, pages/pulls/rows.html), so a tile equals the list its link opens, and
+           the open items the rule applies to, as the whole "of {n} in scope". A strip is all or none (4.5): when any rule of the
+           strip has no population, no tile carries a context. Breach tone; a zero stays neutral and is not a link. A tile above
+           zero links to the rule's drill URL on the repository's Issues or PR page. The priority rules need priority labels on
+           the repository. The strip is left out when fewer than two rules have a count. The other rules are on the Issues and
+           PR pages.
   6 + 6    Two preview list cards under the pair rule: the same number of rows (at most 5), the longest waits first.
            "Issues waiting for a reply" and "PRs waiting for first review", each with a link-action that carries the count of the
            list it opens. Rows and counts come from data/waiting.html, so they equal that list.
   Preview rows: Issue or PR, Waiting; not sortable. Meta slots: id, labels; PRs add the author and role. */ -}}
 {{- $r := .r }}{{ $m := .m }}{{ $sla := .sla }}{{ $wi := .wi }}{{ $wp := .wp -}}
-{{- $is := $m.issues | default dict -}}
 {{- $issuesURL := printf "issues/%s/" $r.repo | relURL }}{{ $pullsURL := printf "pulls/%s/" $r.repo | relURL -}}
 
-{{- /* the overdue strip */ -}}
-{{- $hasP := false }}{{ range $k, $_ := $is.by_label | default dict }}{{ if in (slice "P0" "P1" "P2" "P3") $k }}{{ $hasP = true }}{{ end }}{{ end -}}
-{{- $psla := dict }}{{ with $r.data.actionability }}{{ with .summary }}{{ with .sla }}{{ $psla = . }}{{ end }}{{ end }}{{ end -}}
-{{- /* every tile of the strip carries the same context, a whole (4.5: one context per tile, or none): the open issues the issue
-     rules are counted over (issues.json), and the PRs eligible for a first review */ -}}
-{{- $iOpen := $is.open_count }}{{ with $r.data.issues }}{{ with .summary }}{{ if ne .open_count nil }}{{ $iOpen = .open_count }}{{ end }}{{ end }}{{ end -}}
-{{- $tiles := slice -}}
-{{- range slice
-  (dict "key" "triage" "v" (index $sla "triage_2bd_breach") "ok" true "base" $issuesURL "whole" $iOpen)
-  (dict "key" "p0" "v" (index $sla "p0_7d_breach") "ok" $hasP "base" $issuesURL "whole" $iOpen)
-  (dict "key" "p1" "v" (index $sla "p1_90d_breach") "ok" $hasP "base" $issuesURL "whole" $iOpen)
-  (dict "key" "first-review" "v" (index $psla "first_review_7d_breach") "ok" true "base" $pullsURL "whole" (index $psla "first_review_eligible")) -}}
-  {{- if and .ok (ne .v nil) -}}
-    {{- $rule := partial "data/sla-rules.html" .key -}}
-    {{- $t := dict "name" $rule.name "qual" "overdue" "title" $rule.title "tone" "breach" "value" (dict "kind" "count" "v" .v) -}}
-    {{- if gt (float .v) 0.0 }}{{ $t = merge $t (dict "href" (printf "%s?view=all&overdue=1&rule=%s#queue" .base .key)) }}{{ end -}}
-    {{- if ne .whole nil }}{{ $t = merge $t (dict "context" (dict "kind" "whole" "n" .whole "of" "open")) }}{{ end -}}
-    {{- $tiles = $tiles | append $t -}}
+{{- /* the overdue strip: the same rows and the same populations as Response SLAs and Review SLAs */ -}}
+{{- $specs := slice -}}
+{{- $it := dict }}{{ with $r.data.issues }}{{ if reflect.IsMap . }}{{ $it = . }}{{ end }}{{ end -}}
+{{- if gt (len $it) 0 -}}
+  {{- $iq := partial "pages/issues/rows.html" (dict "t" $it "wait" dict) -}}
+  {{- range slice "triage" "p0" "p1" -}}
+    {{- if or (eq . "triage") $iq.prio -}}
+      {{- $n := int (index ($iq.rules | default dict) . | default 0) -}}
+      {{- $open := int (index ($iq.elig | default dict) . | default 0) -}}
+      {{- $spec := dict "key" . "v" $n "base" $issuesURL -}}
+      {{- if ge $open $n }}{{ $spec = merge $spec (dict "whole" $open) }}{{ end -}}
+      {{- $specs = $specs | append $spec -}}
+    {{- end -}}
   {{- end -}}
+{{- end -}}
+{{- $a := dict }}{{ with $r.data.actionability }}{{ if reflect.IsMap . }}{{ $a = . }}{{ end }}{{ end -}}
+{{- if and (gt (len $a) 0) (ne $a.tiers nil) -}}
+  {{- $psla := dict }}{{ with $a.summary }}{{ if reflect.IsMap . }}{{ with .sla }}{{ if reflect.IsMap . }}{{ $psla = . }}{{ end }}{{ end }}{{ end }}{{ end -}}
+  {{- $pq := partialCached "pages/pulls/rows.html" $a $r.key -}}
+  {{- $n := 0 -}}
+  {{- range $pq.rows }}{{ range .rules }}{{ if eq .key "first-review" }}{{ $n = add $n 1 }}{{ end }}{{ end }}{{ end -}}
+  {{- $spec := dict "key" "first-review" "v" $n "base" $pullsURL -}}
+  {{- $elig := index $psla "first_review_eligible" -}}
+  {{- if ne $elig nil }}{{ if ge (int $elig) $n }}{{ $spec = merge $spec (dict "whole" (int $elig)) }}{{ end }}{{ end -}}
+  {{- $specs = $specs | append $spec -}}
+{{- end -}}
+{{- $allWhole := true }}{{ range $specs }}{{ if eq .whole nil }}{{ $allWhole = false }}{{ end }}{{ end -}}
+{{- $tiles := slice -}}
+{{- range $specs -}}
+  {{- $rule := partial "data/sla-rules.html" .key -}}
+  {{- $t := dict "name" $rule.name "qual" "overdue" "title" $rule.title "tone" "breach" "value" (dict "kind" "count" "v" .v) -}}
+  {{- if gt .v 0 }}{{ $t = merge $t (dict "href" (printf "%s?view=all&overdue=1&rule=%s#queue" .base .key)) }}{{ end -}}
+  {{- if $allWhole }}{{ $t = merge $t (dict "context" (dict "kind" "whole" "n" .whole "of" "in scope")) }}{{ end -}}
+  {{- $tiles = $tiles | append $t -}}
 {{- end -}}
 
 {{- /* the preview lists: equal row counts when both have rows */ -}}

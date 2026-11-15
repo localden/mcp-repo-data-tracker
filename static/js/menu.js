@@ -16,7 +16,7 @@
     return list ? { wrap: wrap, btn: btn, list: list } : null;
   }
   function items(m) {
-    return Array.prototype.slice.call(m.list.querySelectorAll('.v-menu-opt')).filter(function (x) { return x.getAttribute('aria-disabled') !== 'true'; });
+    return Array.prototype.slice.call(m.list.querySelectorAll('.v-menu-opt')).filter(function (x) { return x.getAttribute('aria-disabled') !== 'true' && !(x.parentElement && x.parentElement.hidden); });
   }
   function isOpen(m) { return m.btn.getAttribute('aria-expanded') === 'true'; }
   function close(m, refocus) {

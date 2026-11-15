@@ -1,16 +1,22 @@
 {{- /* Sparkline (design system v4 4.20). One height (24px), one colour (chart-1), never red, no area fill, no dashes, no text inside.
   It always emits one element: the trend, or the empty baseline.
-  Dict {points, kind, size, reason, unit}.
-    points  weekly bins [{date, value | nil}] (data/week-bins.html, data/org-weekly.html).
+  Dict {points, kind, size, reason, unit, asof}.
+    points  weekly bins [{date, value | nil, end}] (data/week-bins.html, data/org-weekly.html). date is the week's Monday; end, when
+            the bin has it, is the day of the last reading inside the week.
     kind    "level" (default): a 1.5px line with an end dot. "flow": one column per week, at most 8px wide; downloads are a flow
             everywhere.
-    size    "tile" (default): the full width of a metric tile's visual slot, plus a 16px row with the first and last week as dates.
+    size    "tile" (default): the full width of a metric tile's visual slot, plus a 16px row with the first and last date.
             "cell": 80 by 24 in a v-col-spark column, no range row.
     reason  "no-history": the measure has no stored series (the empty baseline, titled "No history for this measure").
     unit    how the wrapper title prints low and high: "count" (default), "volume" or "dur" (hours).
-  Gaps: at sparkline size a gap is a 2px strip on the baseline over the missing weeks (leading and trailing runs included), and the
-  line breaks across it. A full-height band is for plots and trellis panels only: at 24px it reads as a broken image. A missing week
-  in a flow sparkline is a 2px stub in the same colour.
+    asof    the day of the latest reading, for bins that carry no end.
+  The range row is dated here and nowhere else, so every page agrees. Its first date is the first week's Monday. Its last date is,
+  for a level, the day of the latest reading (the last bin's end, else asof, else its Monday): the date of the value printed above
+  the sparkline and of the chart readout. For a flow it is the Sunday that closes the last complete week.
+  Gaps. Level: the line breaks at the missing weeks and a 1px neutral bridge (border-strong) joins the reading before the gap to
+  the reading after it, so measured weeks are blue, unmeasured weeks are a grey hairline, and no point floats: the end dot is
+  always attached to a line or a bridge. Leading and trailing missing weeks draw nothing. Flow: a missing week is its slot filled
+  with the gap colour, the plot's gap band at column size.
   Empty (fewer than four non-null points, or no history): a solid baseline. It appears in table cells only: ui/metrics.html draws
   sparklines in a strip only when every tile has one. The drawing is aria-hidden; the wrapper title gives the window, low and high. */ -}}
 {{- $pts := .points | default slice -}}
@@ -18,6 +24,7 @@
 {{- $kind := .kind | default "level" -}}
 {{- if in (slice "column" "flow") $kind }}{{ $kind = "flow" }}{{ else }}{{ $kind = "level" }}{{ end -}}
 {{- $unit := .unit | default "count" -}}
+{{- $asof := string (.asof | default "") -}}
 {{- $n := 0 }}{{ $lo := 0.0 }}{{ $hi := 0.0 -}}
 {{- range $pts -}}
   {{- if ne .value nil -}}
@@ -26,16 +33,23 @@
   {{- end -}}
 {{- end -}}
 {{- $len := len $pts -}}
+{{- $lastEnd := "" }}{{ range $pts }}{{ if ne .value nil }}{{ with .end }}{{ $lastEnd = string . }}{{ end }}{{ end }}{{ end -}}
 {{- $empty := or (lt $n 4) (eq .reason "no-history") (lt $len 2) -}}
-{{- $first := "" }}{{ $last := "" -}}
-{{- if gt $len 0 }}{{ $first = (index $pts 0).date }}{{ $last = (index $pts (sub $len 1)).date }}{{ end -}}
+{{- $first := "" }}{{ $last := "" }}{{ $to := "" -}}
+{{- if gt $len 0 -}}
+  {{- $lp := index $pts (sub $len 1) -}}
+  {{- $first = string (index $pts 0).date }}{{ $last = string $lp.date }}{{ $to = $last -}}
+  {{- if eq $kind "flow" }}{{ $to = ((time.AsTime $last).AddDate 0 0 6).Format "2006-01-02" -}}
+  {{- else if $lastEnd }}{{ $to = $lastEnd -}}
+  {{- else if and $asof (gt $asof $last) }}{{ $to = $asof }}{{ end -}}
+{{- end -}}
 {{- $title := "Trend available after 4 weeks of data" -}}
 {{- if eq .reason "no-history" }}{{ $title = "No history for this measure" -}}
 {{- else if not $empty -}}
   {{- $fk := cond (eq $unit "volume") "fmt/volume.html" (cond (eq $unit "dur") "fmt/dur.html" "fmt/count.html") -}}
   {{- $loT := (partial $fk (cond (eq $unit "dur") (dict "h" $lo) (dict "v" $lo))).text -}}
   {{- $hiT := (partial $fk (cond (eq $unit "dur") (dict "h" $hi) (dict "v" $hi))).text -}}
-  {{- $title = printf "%s, low %s, high %s" (partial "fmt/range.html" (dict "from" $first "to" $last)).text $loT $hiT -}}
+  {{- $title = printf "%s, low %s, high %s" (partial "fmt/range.html" (dict "from" $first "to" $to)).text $loT $hiT -}}
 {{- end -}}
 <span class="v-spark is-{{ $size }}{{ if $empty }} is-empty{{ else if eq $kind "flow" }} is-cols{{ end }}" title="{{ $title }}">
 {{- if $empty -}}
@@ -60,33 +74,27 @@
     {{- $mid := div (add $hi $lo) 2.0 }}{{ $lo = sub $mid (div $minSpan 2.0) }}{{ $hi = add $mid (div $minSpan 2.0) -}}
     {{- if and $nonNeg (lt $lo 0.0) }}{{ $hi = sub $hi $lo }}{{ $lo = 0.0 }}{{ end -}}
   {{- end -}}
-  {{- $span := sub $hi $lo }}{{ $step := div 100.0 (float (sub $len 1)) }}{{ $half := div $step 2.0 -}}
-  {{- $d := "" }}{{ $run := 0 }}{{ $lx := 0.0 }}{{ $ly := 0.0 }}{{ $gaps := slice }}{{ $gs := -1 }}{{ $dots := slice }}{{ $prev := "" -}}
+  {{- $span := sub $hi $lo }}{{ $step := div 100.0 (float (sub $len 1)) -}}
+  {{- /* one path for the measured runs, one bridge per interior gap (from the reading before it to the reading after it) */ -}}
+  {{- $d := "" }}{{ $run := 0 }}{{ $lx := 0.0 }}{{ $ly := 0.0 }}{{ $have := false }}{{ $bridges := slice -}}
   {{- range $i, $p := $pts -}}
     {{- if ne $p.value nil -}}
-      {{- if ge $gs 0 }}{{ $gaps = $gaps | append (dict "a" $gs "b" (sub $i 1)) }}{{ $gs = -1 }}{{ end -}}
       {{- $x := mul (float $i) $step -}}
       {{- $y := sub (sub $h $pad) (mul (div (sub (float $p.value) $lo) $span) (sub $h (mul 2.0 $pad))) -}}
-      {{- $pt := printf "%.2f,%.2f" $x $y -}}
-      {{- if eq $run 0 }}{{ $d = printf "%sM%s" $d $pt }}{{ else }}{{ $d = printf "%s L%s" $d $pt }}{{ end -}}
-      {{- $run = add $run 1 }}{{ $lx = $x }}{{ $ly = $y }}{{ $prev = $pt -}}
+      {{- if and $have (eq $run 0) }}{{ $bridges = $bridges | append (printf "M%.2f,%.2f L%.2f,%.2f" $lx $ly $x $y) }}{{ end -}}
+      {{- if eq $run 0 }}{{ $d = printf "%s M%.2f,%.2f" $d $x $y }}{{ else }}{{ $d = printf "%s L%.2f,%.2f" $d $x $y }}{{ end -}}
+      {{- $run = add $run 1 }}{{ $lx = $x }}{{ $ly = $y }}{{ $have = true -}}
     {{- else -}}
-      {{- if eq $run 1 }}{{ $dots = $dots | append $prev }}{{ end -}}
-      {{- if lt $gs 0 }}{{ $gs = $i }}{{ end }}{{ $run = 0 -}}
+      {{- $run = 0 -}}
     {{- end -}}
   {{- end -}}
-  {{- if ge $gs 0 }}{{ $gaps = $gaps | append (dict "a" $gs "b" (sub $len 1)) }}{{ end -}}
   {{- $end := printf "M%.2f,%.2f l0.01,0" $lx $ly -}}
   <span class="v-spark-plot" aria-hidden="true"><svg viewBox="0 0 100 24" preserveAspectRatio="none" focusable="false">
-    {{- range $gaps -}}
-      {{- $x0 := math.Max 0.0 (sub (mul (float .a) $step) $half) }}{{ $x1 := math.Min 100.0 (add (mul (float .b) $step) $half) -}}
-      <rect class="v-spark-gap" x="{{ printf "%.2f" $x0 }}" y="22" width="{{ printf "%.2f" (sub $x1 $x0) }}" height="2"/>
-    {{- end -}}
-    <path class="v-spark-line" d="{{ $d }}"/>
-    {{- range $dots }}<path class="v-spark-dot" d="M{{ . }} l0.01,0"/>{{ end -}}
+    {{- range $bridges }}<path class="v-spark-bridge" d="{{ . }}"/>{{ end -}}
+    <path class="v-spark-line" d="{{ strings.TrimSpace $d }}"/>
     <path class="v-spark-ring" d="{{ $end }}"/><path class="v-spark-dot" d="{{ $end }}"/></svg></span>
 {{- end -}}
 {{- if eq $size "tile" -}}
-  <span class="v-spark-range">{{ if and $first (not $empty) }}{{ partial "ui/value.html" (dict "kind" "date" "d" $first) }}{{ partial "ui/value.html" (dict "kind" "date" "d" $last) }}{{ end }}</span>
+  <span class="v-spark-range">{{ if and $first (not $empty) }}{{ partial "ui/value.html" (dict "kind" "date" "d" $first) }}{{ partial "ui/value.html" (dict "kind" "date" "d" $to) }}{{ end }}</span>
 {{- end -}}
 </span>

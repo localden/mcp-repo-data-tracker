@@ -1,12 +1,14 @@
 {{- /* 6. Community (design system v4 5.8 module 6). Context: the dict from pages/repo.html. Two rows in one grid, then
   the People section (pages/repo/people.html), which this partial emits after its own section:
-  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers"; its bar is the maintainers'
-           share of the active people, on the same track as the other two bars, so the strip holds one kind of bar), New contributors
+  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers"; a split bar: the maintainers'
+           part in the chart colour, everyone else in the neutral series colour, so it never reads as a share bar that is 3 percent full), New contributors
            (whole "of {n} active", share bar), Maintainers active (whole "of {n} maintainers", share bar; left out for a repository
            with no maintainer group). A strip is all or none (4.5): a repository with no maintainer group has two tiles with
            neither context nor bar.
   6 + 6    A chart pair of different measures (4.19): "Active contributors", weekly over the last 52 weeks, one series; "Commits per
-           week", weekly over the last 12 weeks, columns with the 12-week average as a context line. Each sub line states its own
+           week", the last 12 rolling 7-day periods of metrics.json as columns, with their average as a context line. The periods end
+           on the day of the last update and do not start on a Monday, so nothing on the card calls one a week: the sub line is
+           "7-day periods, last 12", the readout "Last 7 days" with its range, the average "12-period average". Each sub line states its own
            window and hover is not shared. A pending chart never shares a row, so when either is pending each card takes its own
            12 row, in the same order.
   Maintainers are this repository's groups only (pages/repo/roles.html), matched ignoring case. The split stays in the tile: the
@@ -21,7 +23,7 @@
     "title" "Distinct people, known bots excluded, active in this repository in the last 30 days." -}}
 {{- if and $roles.defined (ne $active nil) -}}
   {{- $t1 = merge $t1 (dict "context" (dict "kind" "ref" "label" "Maintainers" "value" (dict "kind" "count" "v" $p.nActiveM))
-      "share" (dict "value" $p.nActiveM "max" $active)) -}}
+      "share" (dict "value" $p.nActiveM "max" $active "split" true)) -}}
 {{- end -}}
 {{- $t2 := dict "name" "New contributors" "qual" $w30 "value" (dict "kind" "count" "v" $c.first_time_30d)
     "title" "Active contributors with no earlier activity on record." -}}
@@ -72,10 +74,16 @@
 {{- $commitsPending := lt (len $cpts) 4 -}}
 {{- $span := cond (or $trendPending $commitsPending) "v-span-12" "v-span-6" -}}
 {{- $commits := dict "id" "repo-commits" "title" "Commits per week" "class" $span
-    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 12))).cadence
+    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "period7" "weeks" 12))).cadence
     "metric" "commits" "metric_one" "commit" "scope" $r.name "unit" "count" "gran" "week" "kind" "column"
     "series" (slice (dict "label" "Commits" "role" "accent" "points" $cpts)) -}}
-{{- if not $commitsPending }}{{ $commits = merge $commits (dict "avg" $avg "avg_label" "12-week average" "reserve_notes" (and $trendNotes (not $trendPending))) -}}
+{{- if not $commitsPending -}}
+  {{- $lastC := index $cpts (sub (len $cpts) 1) -}}
+  {{- $commits = merge $commits (dict "avg" $avg "avg_label" "12-period average" "tall" (and $trendNotes (not $trendPending))
+      "readout" (slice
+        (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window "key" "accent" "value" (dict "kind" "count" "v" $lastC.value)
+              "range" (dict "from" $lastC.date "to" (((time.AsTime $lastC.date).AddDate 0 0 6).Format "2006-01-02")))
+        (dict "label" "12-period average" "key" "context" "keyform" "line" "value" (dict "kind" "stat" "v" $avg)))) -}}
 {{- else if $trend }}{{ $commits = merge $commits (dict "pending" "No commits in the last 12 weeks") }}{{ end }}
 <section class="v-section" aria-labelledby="community">
   {{ partial "ui/section-head.html" (dict "id" "community" "title" "Community" "desc" "Who is active in this repository, and how much lands on its default branch.") }}

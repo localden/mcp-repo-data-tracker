@@ -2,7 +2,8 @@
 {{- $asof := .asof -}}
 {{- $y := substr (string $asof) 0 4 -}}
 {{- $w := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 600 "slope" 12)).points -}}
-{{- $wg := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 400 "slope" 9 "gapFrom" 4 "gapTo" 6)).points -}}
+{{- /* the shape every page has after the outage: seven weekly readings, four missing weeks, one reading */ -}}
+{{- $wg := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 400 "slope" 9 "gapFrom" 7 "gapTo" 10)).points -}}
 {{- $flat := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 20 "slope" 1)).points -}}
 {{- $dl := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 80000000 "slope" 700000)).points -}}
 {{- $base := dict "kind" "base" "date" ((time.AsTime $asof).AddDate 0 0 -38) -}}
@@ -20,7 +21,7 @@
     {{- /* none: pile sizes. Breach, breach at zero, a whole, a reference pair */}}
     {{ partial "ui/metrics.html" (dict "label" "Summary, decision first" "size" "lg" "visual" "none" "id" "sg-metrics-none" "tiles" (slice
       (dict "name" "Overdue" "tone" "breach" "value" (dict "kind" "count" "v" 249) "context" (dict "kind" "whole" "n" 288 "of" "in Needs a maintainer") "href" "#metrics")
-      (dict "name" "Overdue" "qual" "P0 bug" "tone" "breach" "value" (dict "kind" "count" "v" 0) "context" (dict "kind" "whole" "n" 4 "of" "open") "href" "#metrics")
+      (dict "name" "Overdue" "qual" "P0 bug" "tone" "breach" "value" (dict "kind" "count" "v" 0) "context" (dict "kind" "whole" "n" 4 "of" "in scope") "href" "#metrics")
       (dict "name" "Estimated review effort" "title" "The classifier's estimate of the review time the queue needs." "value" (dict "kind" "dur" "h" 113 "unit" "h") "context" (dict "kind" "ref" "label" "PRs counted" "value" (dict "kind" "count" "v" 262)))
       (dict "name" "Open PRs" "value" (dict "kind" "count" "v" 375) "context" (dict "kind" "ref" "label" "Merged, last 30 days" "value" (dict "kind" "count" "v" 275)) "href" "#metrics"))) }}
     {{- /* none, three tiles: an "any age" tile with its whole, a missing value with its reason, a value with a data-quality note */}}
@@ -112,15 +113,16 @@
     </div></div></article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Count, note, delta") }}<div class="v-card-body"><div class="v-sg-specs">
       <div class="v-sg-spec"><div class="v-sg-row"><span class="v-count">{{ (partial "fmt/count.html" 288).text }}</span><span class="v-count is-danger">{{ (partial "fmt/count.html" 249).text }}</span><span class="v-count">{{ (partial "fmt/count.html" 0).text }}</span></div><p class="v-sg-cap">.v-count: neutral, danger, zero</p></div>
-      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "part" 5 "whole" 7 "noun" "day" "days" (dict "from" (printf "%s-11-04" $y) "to" (printf "%s-11-08" $y))) }}{{ partial "ui/note.html" (dict "part" 7 "whole" 9 "noun" "repository") }}</div><p class="v-sg-cap">ui/note.html warning: a coverage ratio</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "part" 5 "whole" 7 "noun" "day" "days" (dict "from" (printf "%s-11-04" $y) "to" (printf "%s-11-08" $y))) }}{{ partial "ui/note.html" (dict "part" 7 "whole" 9 "noun" "repository") }}</div><p class="v-sg-cap">ui/note.html warning: a closed window or a set built from incomplete data</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "part" 4 "whole" 7 "noun" "day" "tone" "info") }}</div><p class="v-sg-cap">ui/note.html info: the coverage of a period that is not over yet (Week to date)</p></div>
       <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "since" $asof) }}{{ partial "ui/note.html" (dict "from" (printf "%s-01-15" $y)) }}</div><p class="v-sg-cap">ui/note.html info: the data is young or starts late</p></div>
       <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/delta.html" (dict "cur" 741 "prev" 602 "metric" "waiting") }}{{ partial "ui/delta.html" (dict "cur" 275 "prev" 240 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 5 "prev" 5 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") }}{{ partial "ui/delta.html" (dict "d" 48 "unit" "hours" "metric" "median") }}{{ partial "ui/delta.html" (dict "cur" 12 "prev" 9 "metric" "opened") }}</div><p class="v-sg-cap">ui/delta.html: bad, good, flat, percent, duration, neutral</p></div>
     </div></div></article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Callout") }}<div class="v-card-body">
-      <div class="v-sg-spec">{{ partial "ui/callout.html" (dict "title" "Data gap" "items" (slice (dict "text" "No GitHub data from {range} (collection outage). Charts show the gap." "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y)))) }}</div>
+      <div class="v-sg-spec">{{ partial "ui/callout.html" (dict "title" "Collection stopped" "items" (slice (dict "text" "No GitHub data since {date}. Figures on this page are from that day." "date" (printf "%s-11-09" $y)))) }}</div>
       <div class="v-sg-spec">{{ partial "ui/callout.html" (dict "title" "Stale data" "items" (slice
           (dict "text" "PyPI data is complete through {date}." "date" (printf "%s-11-09" $y))
           (dict "text" "NuGet data is complete through {date}." "date" (printf "%s-11-11" $y)))) }}</div>
-      <p class="v-sg-cap">ui/callout.html: the one boxed notice, at most one per page, in the page head. One item, and two items on their own lines</p></div></article>
+      <p class="v-sg-cap">ui/callout.html: the one boxed notice, at most one per page, in the page head, only for a condition that is true now (a past data gap is a meta item of the page head). A soft warning fill with its own edge and icon, never a side stripe. One item, and two items on their own lines</p></div></article>
   </div>
 </section>

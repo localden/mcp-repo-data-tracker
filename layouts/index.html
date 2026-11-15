@@ -3,8 +3,8 @@
   Overview at the site root (design system v4 5.1): the org view of every tracked repository, decision first.
   Page head (4.2): eyebrow "Overview", H1 "All repositories" (plain text), meta "Updated": the oldest GitHub-side source the page
     uses (GitHub metrics, issue and PR classification, SEP data). The registries keep their "Complete through" days in Data notes and
-    never move "Updated": their days always trail the GitHub data. The callout carries the data gap of the charted 26 weeks and
-    nothing else. Every section head has a one-sentence description, so every head block has the same height.
+    never move "Updated": their days always trail the GitHub data. A data gap in the charted 26 weeks is one warning item in the
+    meta row. Every section head has a one-sentence description, so every head block has the same height.
   Modules, in order:
     1 Summary               metric strip, four link tiles                 pages/overview/summary.html
     2 Needs attention       two matrix cards, 12 and 12                   pages/overview/attention.html
@@ -20,13 +20,9 @@
 {{- $title := .Title | default "All repositories" -}}
 {{- if $keys }}
   {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability" "seps")) -}}
-  {{- /* registries: each one's "complete through" day is a Sources row of Data notes (a fact, in the wording ui/data-notes.html uses
-       for a registry source). They are not page sources here, so they never move "Updated" and add no sentence to the callout: the
-       callout carries the GitHub gap only, and a partial download window is flagged on its own value in "SDK adoption". */ -}}
-  {{- $facts := slice -}}
-  {{- range $s := partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
-    {{- with $s.through }}{{ $facts = $facts | append (dict "label" (printf "%s, complete through" $s.label) "value" (dict "kind" "date" "d" .)) }}{{ end -}}
-  {{- end -}}
+  {{- /* registries: each one's "complete through" day is a Sources row of Data notes. They are not page sources here, so they
+       never move "Updated" and raise no callout: a partial download window is flagged on its own value in "SDK adoption". */ -}}
+  {{- $registries := partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
 
   {{- /* Data notes. Definitions: the terms used in titles on the page, then every rule shown in "Overdue by rule" from the registry. */ -}}
   {{- $defs := slice
@@ -47,20 +43,21 @@
     (dict "term" "Downloads, 12 weeks" "text" "Weekly totals over the last 12 complete weeks, Monday to Sunday. A week with a missing day is not drawn.")
     (dict "term" "Reached final" "text" "SEP PRs merged in the 90 days before the SEP data was collected.") -}}
 
-  {{- /* further sentences: which repositories are classified (a name list, never a count) */ -}}
+  {{- $defs = $defs | append
+    (dict "term" "Overdue by rule" "text" "Lists classified repositories only. The other issue rules are on each repository's Issues page.") -}}
+
+  {{- /* which repositories are classified: Coverage rows of Data notes, a ratio each with the names in its title */ -}}
   {{- $iss := slice }}{{ $cls := slice -}}
   {{- range site.Data.repos.repositories -}}
     {{- $o := partial "pages/overview/overdue.html" . -}}
     {{- if $o.iss }}{{ $iss = $iss | append $o.r.name }}{{ end -}}
     {{- if $o.cls }}{{ $cls = $cls | append $o.r.name }}{{ end -}}
   {{- end -}}
-  {{- $notes := slice -}}
-  {{- with $iss }}{{ $notes = $notes | append (printf "Issue classification runs for %s." (delimit . ", " " and ")) -}}
-  {{- else }}{{ $notes = $notes | append "Issue classification does not run for any repository yet." }}{{ end -}}
-  {{- with $cls }}{{ $notes = $notes | append (printf "PR classification runs for %s." (delimit . ", " " and ")) -}}
-  {{- else }}{{ $notes = $notes | append "PR classification does not run for any repository yet." }}{{ end -}}
-  {{- $notes = $notes | append "Overdue by rule lists classified repositories only. The other issue rules are on each repository's Issues page." }}
-  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs "notes" $notes "facts" $facts) }}
+  {{- $nRepos := len site.Data.repos.repositories -}}
+  {{- $coverage := slice
+    (dict "label" "Issue classification" "part" (len $iss) "whole" $nRepos "noun" "repository" "title" (delimit $iss ", "))
+    (dict "label" "PR classification" "part" (len $cls) "whole" $nRepos "noun" "repository" "title" (delimit $cls ", ")) }}
+  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs "registries" $registries "coverage" $coverage) }}
   {{ partial "pages/overview/summary.html" . }}
   {{ partial "pages/overview/attention.html" . }}
   <section class="v-section" aria-labelledby="backlog-and-activity">

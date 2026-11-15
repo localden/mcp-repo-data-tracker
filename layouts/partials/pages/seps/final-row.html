@@ -1,7 +1,7 @@
 {{- /* One row of "Reached final" (design system v4 4.16): SEP, Sponsor, Time to final, Merged. One tr per SEP.
   Dict {r, merged, merged_unix, ttf, ord}: r is a pages/seps/entry.html row, merged the mergedAt time, ttf whole days from opening
   the PR to merging it (-1 when unknown), ord the handle ranks from pages/seps/data.html.
-  Meta slots: id ("SEP-3392", or "#3440" when the title names none) and author. */ -}}
+  Meta slots: id ("SEP-3392", always that grammar) and author. */ -}}
 {{- $r := .r -}}
 {{- $ttf := dict "kind" "dur" "unit" "d" "compact" true -}}
 {{- if ge .ttf 0 }}{{ $ttf = merge $ttf (dict "d" .ttf) }}{{ end }}
