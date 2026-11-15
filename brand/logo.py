@@ -3,13 +3,20 @@
 Run headless (CI does this, see .github/workflows/logo-render.yml):
 
     blender -b --factory-startup --python brand/logo.py -- \
-        --out out/renders [--concepts a,b] [--samples 192] [--res 1024] \
-        [--blend out/visr.blend]
+        --out out/renders [--concepts visr,visr_s] [--samples 256] \
+        [--res 1024] [--blend out/visr.blend] [--shard 0/4]
 
 Every concept is a function that builds a complete scene (geometry, materials,
 lights, camera) with bpy only. One invocation renders every requested concept
-to <out>/<concept>.png with a transparent background and writes
-<out>/concepts.json for brand/post.py. The scene of FINAL is saved as a .blend.
+to <out>/<concept>.png on a transparent background and writes
+<out>/concepts.<shard>.json for brand/post.py. The scene of MARK is saved as
+the .blend.
+
+The mark is `visr`: a blue helmet tile whose dark glass visor shows a trend
+line ending in one warm signal point. `visr_s` is the same mark drawn heavier
+for 32 px and below, `visr_hero` is the three-quarter beauty angle. Everything
+else in CONCEPTS is the exploration that led there, kept so the contact sheet
+can be regenerated.
 
 Conventions: X is right, Z is up, the camera looks along +Y. The icon tile
 spans -1..1 in X and Z and its front face sits at y = 0; relief grows toward
@@ -37,8 +44,9 @@ GRAPHITE = "#151518"
 WHITE = "#f4f4f5"
 SIGNAL = "#eb6834"
 
-FINAL = "k1"
-DEFAULT_SET = ["k1", "k2", "ks", "k4"]
+MARK = "visr"
+MARK_SMALL = "visr_s"
+MARK_HERO = "visr_hero"
 
 
 def _lin(c):
@@ -137,12 +145,12 @@ def setup_world(scene, strength=0.45, bottom=0.03, top=0.85):
     scene.world = world
 
 
-def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.0), ellipse=False):
+def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.0)):
     light = bpy.data.lights.new(name, "AREA")
     light.energy = energy
     light.color = color
     if size_y:
-        light.shape = "ELLIPSE" if ellipse else "RECTANGLE"
+        light.shape = "RECTANGLE"
         light.size = size
         light.size_y = size_y
     else:
@@ -154,20 +162,24 @@ def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.
     return ob
 
 
-def studio(key=420.0, fill=110.0, rim=320.0, top=140.0, sheen=0.0):
-    """Three-point area lighting plus a grazing top strip for the bevels."""
+def studio(key=420.0, fill=110.0, rim=320.0, top=140.0):
+    """Three-point area lighting plus a grazing top strip for the bevels.
+
+    Key: large disk, upper left, in front. It shapes the tile and throws the
+    soft shadows down-right. Fill: lower right, diffuse only, so the glass
+    never shows a second highlight. Rim: behind, upper right, for the tile's
+    edge. Top strip: overhead, for the hairline on bevels and the glass rim.
+    """
     area_light("Key", (-3.2, -5.2, 4.2), (0.0, 0.0, 0.0), key, 4.0, color=(1.0, 0.98, 0.96))
     fill_ob = area_light("Fill", (4.2, -4.5, -1.2), (0.0, 0.0, 0.0), fill, 6.0, color=(0.94, 0.97, 1.0))
-    fill_ob.visible_glossy = False  # shadows only; keeps a second blob off the visor glass
+    fill_ob.visible_glossy = False
     area_light("Rim", (3.0, 2.6, 3.8), (0.0, 0.0, 0.0), rim, 3.0)
     area_light("TopStrip", (0.0, -0.9, 4.6), (0.0, 0.0, 0.0), top, 5.0, 0.8)
-    if sheen:
-        # Low ellipse in front: the only light the shallow visor dome can
-        # mirror. Kept dim so it reads as a faint window in the glass.
-        area_light("VisorWindow", (-0.42, -8.0, 2.3), (-0.42, 0.0, 0.3), sheen, 0.66, 1.7, ellipse=True)
 
 
-def camera(scene, loc=(0.0, -10.0, 0.0), target=(0.0, 0.0, 0.0), ortho_scale=2.28):
+def camera(scene, loc=(0.0, -10.0, 0.0), target=(0.0, 0.0, 0.0), ortho_scale=2.0 / 0.88):
+    """Orthographic, straight on. The default frame leaves the 2-unit tile
+    6% padding per side, so the 1024 px render is already the final crop."""
     cam = bpy.data.cameras.new("Camera")
     cam.type = "ORTHO"
     cam.ortho_scale = ortho_scale
@@ -255,6 +267,28 @@ def mat_signal(emit=0.0):
                       emission=SIGNAL if emit else None, emission_strength=emit)
 
 
+def mat_screen_dark():
+    return principled("Screen", "#0b0c11", rough=0.35, coat=0.3)
+
+
+def mat_screen_lit():
+    return principled("Screen", BLUE, rough=0.45, emission=BLUE, emission_strength=0.9)
+
+
+def mat_cover(tint=(0.9, 0.94, 1.0, 1.0)):
+    return glass("VisorGlass", tint, body=0.02, fresnel=0.4, rough=0.06)
+
+
+def mat_line():
+    # Mostly lit by the key through the glass; a little emission keeps the
+    # stroke near #f4f4f5 inside the recess without flattening its shading.
+    return mat_white(emit=0.8)
+
+
+def mat_dot():
+    return principled("Signal", SIGNAL, rough=0.45, emission=SIGNAL, emission_strength=0.75)
+
+
 # ----------------------------------------------------------------------------
 # Outlines (2D point lists in the icon plane: x right, y up)
 # ----------------------------------------------------------------------------
@@ -269,25 +303,9 @@ def _dedupe(pts, eps=1e-6):
     return out
 
 
-def rrect_pts(w, h, r, cx=0.0, cy=0.0, seg=20):
-    r = max(1e-4, min(r, w / 2.0, h / 2.0))
-    corners = (
-        (cx + w / 2 - r, cy + h / 2 - r, 0.0),
-        (cx - w / 2 + r, cy + h / 2 - r, 90.0),
-        (cx - w / 2 + r, cy - h / 2 + r, 180.0),
-        (cx + w / 2 - r, cy - h / 2 + r, 270.0),
-    )
-    pts = []
-    for x, y, a0 in corners:
-        for i in range(seg + 1):
-            a = math.radians(a0 + 90.0 * i / seg)
-            pts.append((x + r * math.cos(a), y + r * math.sin(a)))
-    return _dedupe(pts)
-
-
 def visor_pts(w, h, r, cx=0.0, cy=0.0, notch=None, seg=20):
     """Rounded rectangle; `notch=(width, height)` lifts a soft nose bridge
-    into the bottom edge, which turns a plain band into a visor/goggle."""
+    into the bottom edge, which turns a plain band into a visor."""
     r = max(1e-4, min(r, w / 2.0, h / 2.0))
 
     def arc(x, y, a0):
@@ -306,6 +324,10 @@ def visor_pts(w, h, r, cx=0.0, cy=0.0, notch=None, seg=20):
             pts.append((cx + t * nw / 2, cy - h / 2 + nh * (0.5 + 0.5 * math.cos(math.pi * t))))
     pts += arc(cx + w / 2 - r, cy - h / 2 + r, 270.0)
     return _dedupe(pts)
+
+
+def rrect_pts(w, h, r, cx=0.0, cy=0.0, seg=20):
+    return visor_pts(w, h, r, cx, cy, None, seg)
 
 
 def squircle_pts(half, n=5.0, count=320, cx=0.0, cy=0.0):
@@ -462,7 +484,70 @@ def prism(name, pts, y0, y1):
 
 
 # ----------------------------------------------------------------------------
-# Concepts
+# The mark
+# ----------------------------------------------------------------------------
+
+# Stroke paths as (x, dz) offsets from the visor centre.
+CHECK = ((-0.42, 0.12), (-0.14, -0.12), (0.42, 0.20))
+SPARK_FLAT = ((-0.52, -0.12), (-0.26, 0.08), (-0.04, -0.06), (0.42, 0.20))
+SPARK = ((-0.54, -0.15), (-0.25, 0.10), (-0.02, -0.09), (0.42, 0.22))
+
+
+def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
+               w=1.68, h=0.96, r=0.38, z=0.02, notch=(0.64, 0.24), line=SPARK,
+               recess=0.12, bulge=0.05, line_r=0.085, dot_r=0.13, ghost_bars=False, fillet=0.02):
+    """Helmet tile whose visor shows one thing: the trend, and where it ends.
+
+    The tile is the helmet. The hole cut through it (with the nose bridge) is
+    the visor opening; its rounded lip is the tile's own bevel. Behind the
+    opening sits a dark screen carrying the trend stroke and the signal point,
+    and a shallow glass dome closes it, slightly proud of the tile.
+    """
+    bevel = 0.06
+    hole = visor_pts(w + 2 * bevel, h + 2 * bevel, r + bevel, 0.0, z, notch)
+    tile(tile_mat, bevel=bevel, holes=[hole])
+    plate("Screen", visor_pts(w + 0.12, h + 0.12, r + 0.06, 0.0, z, notch), 0.03, 0.0, screen_mat, recess)
+    if ghost_bars:
+        ghost = principled("GhostBar", "#141d2e", rough=0.5, emission=BLUE, emission_strength=0.10)
+        for i, top in enumerate((-0.22, -0.10, 0.00, 0.10, 0.24)):
+            x = -0.56 + i * 0.28
+            bottom = -0.75
+            rplate(f"Ghost{i}", 0.18, top - bottom, 0.05, 0.012, 0.0, ghost, x, z + (top + bottom) / 2, recess - 0.012)
+    pts = [(x, z + dz) for x, dz in line]
+    tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.7, flat=0.7)
+    sphere("SignalPoint", (pts[-1][0], recess - dot_r * 0.6, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.6, 1.0))
+    gap = 0.012
+    dome("VisorGlass", visor_pts(w - 2 * gap, h - 2 * gap, r - gap, 0.0, z, notch),
+         max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.005, half=h / 2.0, fillet=fillet)
+
+
+def the_mark(**kw):
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), **kw)
+
+
+def concept_visr(scene):
+    """The mark: blue helmet, dark visor with nose bridge, trend and signal."""
+    the_mark()
+    studio()
+    camera(scene)
+
+
+def concept_visr_s(scene):
+    """Optical small size (32 px and below): heavier line and signal point."""
+    the_mark(line_r=0.105, dot_r=0.16, recess=0.15)
+    studio()
+    camera(scene)
+
+
+def concept_visr_hero(scene):
+    """The mark seen three-quarter."""
+    the_mark()
+    studio()
+    camera(scene, loc=(3.6, -8.8, 2.6), ortho_scale=2.7)
+
+
+# ----------------------------------------------------------------------------
+# Exploration (kept so brand/concepts.png can be regenerated)
 # ----------------------------------------------------------------------------
 
 def check_trend(tile_mat, stroke_mat, dot_mat, radius=0.115, dot=0.2):
@@ -483,13 +568,6 @@ def concept_e(scene):
     check_trend(mat_blue(), mat_white(), mat_signal(emit=0.4))
     studio()
     camera(scene)
-
-
-def concept_a3(scene):
-    """Concept a seen three-quarter, to judge a tilted hero angle."""
-    check_trend(mat_graphite(), mat_blue(), mat_white(emit=0.6))
-    studio()
-    camera(scene, loc=(4.2, -8.6, 3.0), ortho_scale=2.75)
 
 
 def visor_shell(slot_w=1.5, slot_h=0.64, slot_z=0.10, recess=0.085):
@@ -586,116 +664,8 @@ def concept_d(scene):
     camera(scene, ortho_scale=2.1)
 
 
-SPARK = ((-0.52, -0.12), (-0.26, 0.08), (-0.04, -0.06), (0.42, 0.20))
-SPARK2 = ((-0.54, -0.15), (-0.25, 0.10), (-0.02, -0.09), (0.42, 0.22))
-CHECK = ((-0.42, 0.12), (-0.14, -0.12), (0.42, 0.20))
-
-
-def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
-               w=1.68, h=0.96, r=0.38, z=0.02, notch=(0.64, 0.24), line=SPARK,
-               recess=0.12, bulge=0.05, line_r=0.085, dot_r=0.13, ghost_bars=False, fillet=0.02):
-    """Helmet tile whose visor shows one thing: the trend, and where it ends.
-
-    The tile is the helmet, the domed glass is the visor, and the stroke under
-    the glass is a chart line whose last leg is a check mark.
-    """
-    bevel = 0.06
-    hole = visor_pts(w + 2 * bevel, h + 2 * bevel, r + bevel, 0.0, z, notch)
-    tile(tile_mat, bevel=bevel, holes=[hole])
-    plate("Screen", visor_pts(w + 0.12, h + 0.12, r + 0.06, 0.0, z, notch), 0.03, 0.0, screen_mat, recess)
-    if ghost_bars:
-        ghost = principled("GhostBar", "#141d2e", rough=0.5, emission=BLUE, emission_strength=0.10)
-        for i, top in enumerate((-0.22, -0.10, 0.00, 0.10, 0.24)):
-            x = -0.56 + i * 0.28
-            bottom = -0.75
-            rplate(f"Ghost{i}", 0.18, top - bottom, 0.05, 0.012, 0.0, ghost, x, z + (top + bottom) / 2, recess - 0.012)
-    pts = [(x, z + dz) for x, dz in line]
-    tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.7, flat=0.7)
-    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.6, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.6, 1.0))
-    gap = 0.012
-    dome("VisorGlass", visor_pts(w - 2 * gap, h - 2 * gap, r - gap, 0.0, z, notch),
-         max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.005, half=h / 2.0, fillet=fillet)
-
-
-def mat_screen_dark():
-    return principled("Screen", "#0b0c11", rough=0.35, coat=0.3)
-
-
-def mat_screen_lit():
-    return principled("Screen", BLUE, rough=0.45, emission=BLUE, emission_strength=0.9)
-
-
-def mat_cover(tint=(0.9, 0.94, 1.0, 1.0)):
-    return glass("VisorGlass", tint, body=0.02, fresnel=0.4, rough=0.06)
-
-
-def mat_line():
-    return mat_white(emit=0.55)
-
-
-def mat_dot():
-    return principled("Signal", SIGNAL, rough=0.45, emission=SIGNAL, emission_strength=0.5)
-
-
-def final_mark(**kw):
-    kw.setdefault("line", SPARK2)
-    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), **kw)
-
-
-def concept_k1(scene):
-    """The mark: blue helmet, dark visor with nose bridge, trend and signal."""
-    final_mark()
-    studio()
-    camera(scene)
-
-
-def concept_k2(scene):
-    """As k1 with a faint window reflection in the glass."""
-    final_mark()
-    studio(sheen=3.5)
-    camera(scene)
-
-
-def concept_ks(scene):
-    """Optical small size: heavier line and signal point."""
-    final_mark(line_r=0.105, dot_r=0.16, recess=0.15)
-    studio()
-    camera(scene)
-
-
-def concept_k4(scene):
-    """The mark seen three-quarter (hero angle)."""
-    final_mark()
-    studio()
-    camera(scene, loc=(3.6, -8.8, 2.6), ortho_scale=2.7)
-
-
-def concept_i1(scene):
-    """Round 4: straight sparkline."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover())
-    studio()
-    camera(scene)
-
-
-def concept_h2(scene):
-    """Round 3: nose bridge with the plain check stroke."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=0.3), mat_signal(emit=0.7), mat_cover(), line=CHECK,
-               w=1.66, h=0.90, r=0.36, z=0.06, notch=(0.62, 0.22), recess=0.11, line_r=0.075, dot_r=0.125)
-    studio()
-    camera(scene)
-
-
-def concept_h4(scene):
-    """Round 3: sparkline over ghost bars."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=0.3), mat_signal(emit=0.7), mat_cover(),
-               w=1.66, h=0.90, r=0.36, z=0.06, notch=(0.62, 0.22), recess=0.11, line_r=0.075, dot_r=0.125,
-               ghost_bars=True)
-    studio()
-    camera(scene)
-
-
 def concept_g1(scene):
-    """Graphite helmet, lit blue visor (round 2 geometry)."""
+    """Graphite helmet, lit blue visor, no nose bridge."""
     lighter = principled("Graphite", "#26262c", rough=0.42, coat=0.35, coat_rough=0.18)
     visor_mark(lighter, mat_screen_lit(), mat_white(emit=1.2), mat_signal(emit=1.0), mat_cover(),
                w=1.60, h=0.78, r=0.30, z=0.08, notch=None, line=CHECK)
@@ -704,38 +674,48 @@ def concept_g1(scene):
 
 
 def concept_g4(scene):
-    """White helmet, dark glass visor, blue trend (round 2 geometry)."""
+    """White helmet, dark glass visor, blue trend."""
     visor_mark(mat_white(), mat_screen_dark(), mat_blue(emit=2.2), mat_signal(emit=1.4), mat_cover(),
                w=1.60, h=0.78, r=0.30, z=0.08, notch=None, line=CHECK)
     studio()
     camera(scene)
 
 
-def concept_e2(scene):
-    check_trend(mat_blue(), mat_white(), mat_signal(emit=0.4), radius=0.13, dot=0.21)
+def concept_h2(scene):
+    """Blue helmet with nose bridge, plain check stroke."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=0.5), mat_dot(), mat_cover(), line=CHECK,
+               w=1.66, h=0.90, r=0.36, z=0.06, notch=(0.62, 0.22), recess=0.11, line_r=0.075, dot_r=0.125)
     studio()
     camera(scene)
 
 
+def concept_h4(scene):
+    """Blue helmet with nose bridge, sparkline over ghost bars."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=0.5), mat_dot(), mat_cover(), line=SPARK_FLAT,
+               w=1.66, h=0.90, r=0.36, z=0.06, notch=(0.62, 0.22), recess=0.11, line_r=0.075, dot_r=0.125,
+               ghost_bars=True)
+    studio()
+    camera(scene)
+
+
+# key: (builder, label for the contact sheet). The first three are the mark;
+# the rest is the exploration, in the order it happened.
 CONCEPTS = {
-    "k1": (concept_k1, "visor: final candidate"),
-    "k2": (concept_k2, "visor: window reflection"),
-    "ks": (concept_ks, "visor: small optical size"),
-    "k4": (concept_k4, "visor: three-quarter"),
-    "i1": (concept_i1, "visor: straight sparkline"),
-    "h2": (concept_h2, "visor: nose bridge, check"),
-    "h4": (concept_h4, "visor: sparkline over ghost bars"),
-    "g1": (concept_g1, "visor: graphite helmet, lit blue visor"),
-    "g4": (concept_g4, "visor: white helmet, blue trend"),
-    "e2": (concept_e2, "check-trend, blue tile, heavier"),
-    "a": (concept_a, "check-trend, graphite tile"),
-    "b": (concept_b, "helmet visor, bars in slot"),
-    "c": (concept_c, "bars under a glass visor band"),
+    "visr": (concept_visr, "the mark"),
+    "visr_s": (concept_visr_s, "the mark, small optical size"),
+    "visr_hero": (concept_visr_hero, "the mark, three-quarter"),
+    "a": (concept_a, "check-trend on graphite"),
+    "e": (concept_e, "check-trend on blue"),
+    "b": (concept_b, "helmet slot with bars"),
+    "f": (concept_f, "helmet slot with trend"),
+    "c": (concept_c, "bars under a glass band"),
     "d": (concept_d, "helmet orb"),
-    "e": (concept_e, "check-trend, blue tile"),
-    "f": (concept_f, "helmet visor, trend in slot"),
-    "a3": (concept_a3, "check-trend, three-quarter"),
+    "g1": (concept_g1, "graphite helmet, lit visor"),
+    "g4": (concept_g4, "white helmet, dark visor"),
+    "h2": (concept_h2, "nose bridge, check stroke"),
+    "h4": (concept_h4, "nose bridge, ghost bars"),
 }
+MARK_SET = (MARK, MARK_SMALL, MARK_HERO)
 
 
 # ----------------------------------------------------------------------------
@@ -746,19 +726,22 @@ def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     ap = argparse.ArgumentParser(prog="logo.py")
     ap.add_argument("--out", default="out/renders")
-    ap.add_argument("--concepts", default=",".join(DEFAULT_SET))
-    ap.add_argument("--samples", type=int, default=160)
+    ap.add_argument("--concepts", default="all", help="comma-separated ids, 'mark' or 'all'")
+    ap.add_argument("--samples", type=int, default=256, help="samples for the mark")
+    ap.add_argument("--study-samples", type=int, default=96, help="samples for exploration concepts")
     ap.add_argument("--res", type=int, default=1024)
-    ap.add_argument("--blend", default="")
-    ap.add_argument("--final", default=FINAL)
+    ap.add_argument("--blend", default="", help="save the scene of the mark here")
     ap.add_argument("--shard", default="0/1", help="i/n: render every n-th concept starting at i")
     args = ap.parse_args(argv)
 
     out_dir = os.path.abspath(args.out)
     os.makedirs(out_dir, exist_ok=True)
-    wanted = [c.strip() for c in args.concepts.split(",") if c.strip()]
-    if wanted == ["all"]:
+    if args.concepts == "all":
         wanted = list(CONCEPTS)
+    elif args.concepts == "mark":
+        wanted = list(MARK_SET)
+    else:
+        wanted = [c.strip() for c in args.concepts.split(",") if c.strip()]
     shard_i, shard_n = (int(v) for v in args.shard.split("/"))
     index = {key: i for i, key in enumerate(wanted)}
     wanted = [key for i, key in enumerate(wanted) if i % shard_n == shard_i]
@@ -772,16 +755,15 @@ def main():
         print(f"logo: === concept {key}: {label} ===", flush=True)
         try:
             scene = new_scene()
-            setup_render(scene, args.samples, args.res)
+            setup_render(scene, args.samples if key in MARK_SET else args.study_samples, args.res)
             setup_world(scene)
             build(scene)
-            scene.render.filepath = os.path.join(out_dir, key + ".png")
-            if args.blend and key == args.final:
+            if args.blend and key == MARK:
                 blend_path = os.path.abspath(args.blend)
                 os.makedirs(os.path.dirname(blend_path), exist_ok=True)
                 scene.render.filepath = "//" + key + ".png"
                 bpy.ops.wm.save_as_mainfile(filepath=blend_path, compress=True, relative_remap=False)
-                scene.render.filepath = os.path.join(out_dir, key + ".png")
+            scene.render.filepath = os.path.join(out_dir, key + ".png")
             bpy.ops.render.render(write_still=True)
             done.append(key)
         except Exception:
@@ -789,8 +771,9 @@ def main():
             print(f"logo: concept {key} FAILED\n{failed[key]}", flush=True)
 
     meta = {
-        "order": done,
-        "final": args.final if args.final in done else "",
+        "mark": MARK,
+        "mark_small": MARK_SMALL,
+        "mark_hero": MARK_HERO,
         "concepts": {k: {"label": CONCEPTS[k][1], "index": index[k]} for k in done},
         "failed": failed,
     }

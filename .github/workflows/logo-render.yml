@@ -9,17 +9,19 @@ on:
   push:
     branches:
       - 'logo/**'
+    # Only the scripts trigger a render; committing the rendered PNGs, the
+    # .blend or the README under brand/ does not start another one.
     paths:
-      - 'brand/**'
+      - 'brand/*.py'
       - '.github/workflows/logo-render.yml'
   workflow_dispatch:
     inputs:
       concepts:
-        description: 'Comma-separated concept ids, or "all" (empty = the default set in brand/logo.py)'
+        description: 'Comma-separated concept ids, "mark" or "all" (empty = all)'
         required: false
         default: ''
       samples:
-        description: 'Cycles samples per pixel (empty = default)'
+        description: 'Cycles samples per pixel for the mark (empty = 256)'
         required: false
         default: ''
 

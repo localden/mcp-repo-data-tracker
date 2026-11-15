@@ -1,28 +1,33 @@
 """Post-process VISR logo renders (runs in CI, needs Pillow >= 10.1).
 
-  python brand/post.py --in out/renders --out out [--final CONCEPT]
+    python brand/post.py --in out/renders --out out
 
 For every `<concept>.png` in --in this writes:
-  out/marks/<concept>-<size>.png   tight square crop, ~6% padding, transparent
-  out/strips/<concept>.png         small sizes on #ffffff and #151518 (+4x zooms)
+    out/marks/<concept>-<size>.png   tight square crop, ~6% padding, transparent
+    out/strips/<concept>.png         small sizes on #ffffff and #151518 (+4x zooms)
 and for the whole set:
-  out/contact-sheet.png            every concept on light and dark
-  out/small-strip.png              all strips stacked
-With --final, the site deliverables for that concept land in out/final/.
+    out/contact-sheet.png            every concept on light and dark
+    out/small-strip.png              all strips stacked
+When the mark itself was rendered, out/final/ mirrors the repository layout
+(static/..., brand/...) so its contents can be copied over the checkout as is.
 """
 
 import argparse
 import glob
 import json
 import os
+import shutil
 
 from PIL import Image, ImageDraw, ImageFont
 
 LIGHT = (255, 255, 255, 255)
 DARK = (0x15, 0x15, 0x18, 255)
 PAPER = (0xF4, 0xF4, 0xF5, 255)
+INK = (0x15, 0x15, 0x18, 255)
 SIZES = (1024, 512, 256, 128, 64, 32, 24, 16)
 PAD = 0.06
+# Sizes at or below this use the heavier small-size drawing of the mark.
+SMALL_MAX = 32
 
 
 def font(size):
@@ -96,7 +101,7 @@ def contact_sheet(entries, cols=3):
     for i, (label, marks) in enumerate(entries):
         cx = margin + (i % cols) * (cell_w + margin)
         cy = margin + (i // cols) * (cell_h + margin)
-        draw.text((cx + 4, cy + 8), label, fill=(0x15, 0x15, 0x18, 255), font=f)
+        draw.text((cx + 4, cy + 8), label, fill=INK, font=f)
         big = scaled(marks[512], 360)
         for j, bg in enumerate((LIGHT, DARK)):
             px = cx + j * panel
@@ -119,72 +124,86 @@ def stack(images, labels):
     draw = ImageDraw.Draw(out)
     y = 0
     for im, label in zip(images, labels):
-        draw.text((8, y + 5), label, fill=(0x15, 0x15, 0x18, 255), font=f)
+        draw.text((8, y + 5), label, fill=INK, font=f)
         out.alpha_composite(im, (0, y + label_h))
         y += im.height + label_h
     return out
 
 
-def write_final(mark, dest):
-    """Site deliverables for the chosen concept."""
+def write_final(dest, big, small, hero):
+    """Site deliverables. `big` and `small` are size -> image dicts."""
     brand = os.path.join(dest, "static", "brand")
     os.makedirs(brand, exist_ok=True)
+    os.makedirs(os.path.join(dest, "brand"), exist_ok=True)
+    delivered = {s: (small if s <= SMALL_MAX else big)[s] for s in SIZES}
     for s in (1024, 512, 256, 128, 64, 32):
-        scaled(mark, s).save(os.path.join(brand, f"visr-mark-{s}.png"), optimize=True)
-    scaled(mark, 32).save(os.path.join(dest, "static", "favicon-32.png"), optimize=True)
+        delivered[s].save(os.path.join(brand, f"visr-mark-{s}.png"), optimize=True)
+    delivered[32].save(os.path.join(dest, "static", "favicon-32.png"), optimize=True)
     # Apple touch icon: opaque, the OS applies its own corner mask.
     touch = Image.new("RGBA", (180, 180), DARK)
-    inner = scaled(mark, 156)
-    touch.alpha_composite(inner, (12, 12))
+    touch.alpha_composite(scaled(big[1024], 152), (14, 14))
     touch.convert("RGB").save(os.path.join(dest, "static", "apple-touch-icon.png"), optimize=True)
+    strip(delivered).convert("RGB").save(os.path.join(dest, "small-sizes.png"), optimize=True)
+    if hero is not None:
+        hero.save(os.path.join(dest, "brand", "visr-hero.png"), optimize=True)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="src", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--final", default="")
     args = ap.parse_args()
 
     # Each render shard writes its own concepts.<i>.json; merge them.
-    labels, rank, final = {}, {}, args.final
+    labels, rank, names = {}, {}, {}
     for meta_path in sorted(glob.glob(os.path.join(args.src, "concepts*.json"))):
         with open(meta_path, encoding="utf-8") as fh:
             meta = json.load(fh)
         for key, info in meta.get("concepts", {}).items():
             labels[key] = info.get("label", key)
             rank[key] = info.get("index", len(rank))
-        final = final or meta.get("final", "")
+        for role in ("mark", "mark_small", "mark_hero"):
+            names[role] = meta.get(role, names.get(role, ""))
         for key, err in meta.get("failed", {}).items():
             print(f"post: concept {key} failed to render:\n{err}")
     order = sorted(os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(args.src, "*.png")))
     order.sort(key=lambda k: rank.get(k, 1000))
+    if not order:
+        raise SystemExit("no renders found in " + args.src)
 
     os.makedirs(os.path.join(args.out, "marks"), exist_ok=True)
     os.makedirs(os.path.join(args.out, "strips"), exist_ok=True)
 
-    entries, strips, names = [], [], []
+    entries, strips, titles, by_key = [], [], [], {}
     for key in order:
         raw = Image.open(os.path.join(args.src, key + ".png")).convert("RGBA")
         mark = tight_square(raw)
         marks = {s: scaled(mark, s) for s in SIZES}
+        by_key[key] = marks
         for s, im in marks.items():
             im.save(os.path.join(args.out, "marks", f"{key}-{s}.png"), optimize=True)
         st = strip(marks)
         st.save(os.path.join(args.out, "strips", f"{key}.png"))
-        label = f"{key}: {labels.get(key, key)}"
-        entries.append((label, marks))
+        title = f"{key}: {labels.get(key, key)}"
+        entries.append((title, marks))
         strips.append(st)
-        names.append(label)
-        if key == final:
-            write_final(mark, os.path.join(args.out, "final"))
-            st.save(os.path.join(args.out, "final", "small-sizes.png"))
+        titles.append(title)
 
-    if not entries:
-        raise SystemExit("no renders found in " + args.src)
-    contact_sheet(entries).convert("RGB").save(os.path.join(args.out, "contact-sheet.png"), optimize=True)
-    stack(strips, names).convert("RGB").save(os.path.join(args.out, "small-strip.png"), optimize=True)
-    print(f"post: {len(entries)} concept(s); final={final or 'none'}")
+    sheet_path = os.path.join(args.out, "contact-sheet.png")
+    contact_sheet(entries).convert("RGB").save(sheet_path, optimize=True)
+    stack(strips, titles).convert("RGB").save(os.path.join(args.out, "small-strip.png"), optimize=True)
+
+    big = by_key.get(names.get("mark", ""))
+    if big is not None:
+        final = os.path.join(args.out, "final")
+        small = by_key.get(names.get("mark_small", ""), big)
+        hero = by_key.get(names.get("mark_hero", ""))
+        write_final(final, big, small, hero[1024] if hero else None)
+        shutil.copyfile(sheet_path, os.path.join(final, "brand", "concepts.png"))
+        blend = os.path.join(args.out, "visr.blend")
+        if os.path.exists(blend):
+            shutil.copyfile(blend, os.path.join(final, "brand", "visr.blend"))
+    print(f"post: {len(entries)} concept(s); mark={'yes' if big is not None else 'no'}")
 
 
 if __name__ == "__main__":
