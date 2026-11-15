@@ -1,47 +1,65 @@
 {{- /* Item cell (design system v4 4.16): the first content cell of every work row. Emits the whole <td class="v-item">: the title link,
   then one meta line of designed sub-components in a fixed order. A slot with no data is omitted and the order never changes.
+  The decisions live HERE, not in the callers, so the same issue or PR is drawn the same way on every page.
   Dict {title, href, id, repo, author, role, diff, prio, flags, attrs, tags, kids, external, site}.
     title     verbatim, never re-cased; one line with ellipsis from 64rem, two lines below. (A SEP title drops its "SEP-2028: " prefix
               in the row template, because the id is the first meta slot.)
     href      the row link (a.v-row-link). external: default true, opens a new tab with sr-only " (opens {site})"; site default GitHub.
     id        "#1521", "SEP-2028" (verbatim).
     repo      the repository name: only on org lists, shown only below 64rem (from 64rem the Repository column carries it).
-    author    the handle ("app/" is stripped). role: "Maintainer", "Bot" or "Contributor" (a role tag after the handle).
+    author    the handle ("app/" is stripped). role: from data/role.html. A role tag follows the handle only for "Maintainer" and
+              "Bot"; "Contributor" is the default and prints nothing (the Author facet still has it, from data-facets).
     diff      {add, del}: lines changed (PRs).
-    prio      "P0" to "P3". flags: slice of {text, title} (flag tags). attrs: slice of strings or {text, title} (attribute tags).
-    kids      {n, id}: the row expander for a duplicate cluster; id is this row's id (children carry data-child-of="{id}").
-    tags      GitHub labels: at most two are emitted, the rest are named in the title of a "+N" tag; ui.js folds any label that does not
-              fit the line into the +N. Priority, flag and attribute tags, the expander and the +N are never clipped.
-  No sentence ever enters the meta line. */ -}}
+    prio      "P0" to "P3". Left empty, the first label P0 to P3 in tags is taken out of the labels and drawn as the priority tag,
+              so callers pass raw labels and never pre-sort.
+    flags     slice of {text, title} (flag tags). attrs: slice of strings or {text, title} (attribute tags; a PR's SEP stage comes
+              from data/sep-stage.html).
+    tags      GitHub labels: at most two are emitted, the rest are named in the title of a "+N" tag; ui.js folds any label that does
+              not fit the line into the +N. Priority, flag and attribute tags, the +N and the expander are never clipped.
+    kids      {n, id}: the row expander for a duplicate cluster, last in the line; id is this row's id (children carry
+              data-child-of="{id}").
+  Tag order: priority, flags, attributes, labels, +N, expander. No sentence ever enters the meta line. */ -}}
 {{- $c := . -}}
 {{- $ext := ne $c.external false -}}
-{{- $labels := slice }}{{ range $c.tags }}{{ $t := . }}{{ if reflect.IsMap . }}{{ $t = .text }}{{ end }}{{ with $t }}{{ $labels = $labels | append (string .) }}{{ end }}{{ end -}}
+{{- $prio := string ($c.prio | default "") -}}
+{{- $labels := slice -}}
+{{- range $c.tags -}}
+  {{- $t := . }}{{ if reflect.IsMap . }}{{ $t = .text }}{{ end -}}
+  {{- with $t -}}
+    {{- $s := string . -}}
+    {{- if and (not $prio) (in (slice "P0" "P1" "P2" "P3") $s) }}{{ $prio = $s -}}
+    {{- else if ne $s $prio }}{{ $labels = $labels | append $s }}{{ end -}}
+  {{- end -}}
+{{- end -}}
 {{- $nl := len $labels -}}
-{{- $hasTags := or $c.prio $c.flags $c.attrs $c.kids $labels -}}
+{{- $role := "" }}{{ if in (slice "Maintainer" "Bot") (string ($c.role | default "")) }}{{ $role = string $c.role }}{{ end -}}
+{{- $hasTags := or $prio $c.flags $c.attrs $c.kids $labels -}}
 <td class="v-item">
   {{- if $c.href -}}
   <a class="v-row-link" href="{{ $c.href }}"{{ if $ext }} target="_blank" rel="noopener"{{ end }}>{{ $c.title }}{{ if $ext }}<span class="sr-only"> (opens {{ $c.site | default "GitHub" }})</span>{{ end }}</a>
   {{- else -}}
   <span class="v-row-link">{{ $c.title }}</span>
   {{- end -}}
+  {{- if or $c.id $c.repo $c.author $role $c.diff $hasTags -}}
   <span class="v-meta"><span class="v-meta-id">
     {{- with $c.id }}<span class="v-id">{{ . }}</span>{{ end -}}
     {{- with $c.repo }}<span class="v-repo">{{ . }}</span>{{ end -}}
     {{- with $c.author }}<span class="v-who">{{ strings.TrimPrefix "app/" (string .) }}</span>{{ end -}}
-    {{- with $c.role }}{{ partial "ui/tag.html" (dict "text" . "kind" "role") }}{{ end -}}
+    {{- with $role }}{{ partial "ui/tag.html" (dict "text" . "kind" "role") }}{{ end -}}
     {{- with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" .add "dels" .del) }}{{ end }}{{ end -}}
   </span>
   {{- if $hasTags -}}
   <span class="v-tags">
-    {{- with $c.prio }}{{ partial "ui/tag.html" (dict "text" . "kind" "prio") }}{{ end -}}
+    {{- with $prio }}{{ partial "ui/tag.html" (dict "text" . "kind" "prio") }}{{ end -}}
     {{- range $c.flags }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "flag")) }}{{ end -}}
     {{- range $c.attrs }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "attr")) }}{{ end -}}
+    {{- range first 2 $labels }}{{ partial "ui/tag.html" (dict "text" . "kind" "label") }}{{ end -}}
+    {{- if gt $nl 2 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 2)) "kind" "more" "title" (delimit (after 2 $labels) ", ")) }}{{ end -}}
     {{- with $c.kids }}{{ if gt (int (.n | default 0)) 0 -}}
       <button type="button" class="v-btn v-btn-xs is-ghost" data-expander="{{ .id }}" aria-expanded="false">{{ (partial "fmt/count.html" (dict "v" .n "noun" "duplicate")).text }}{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 12 "class" "is-chev") }}</button>
     {{- end }}{{ end -}}
-    {{- range first 2 $labels }}{{ partial "ui/tag.html" (dict "text" . "kind" "label") }}{{ end -}}
-    {{- if gt $nl 2 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 2)) "kind" "more" "title" (delimit (after 2 $labels) ", ")) }}{{ end -}}
   </span>
   {{- end -}}
   </span>
+  {{- end -}}
 </td>

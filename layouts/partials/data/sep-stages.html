@@ -1,0 +1,9 @@
+{{- /* Open SEP stages of one repository, by PR number. Input: a repository key ("owner/repo" or the repository name).
+  Call it cached: partialCached "data/sep-stages.html" $repo $repo. Returns dict "2028" -> "Proposal" (see
+  pages/pulls/sep-stages.html, the one place that reads seps.json for this); an empty dict for a repository without SEP data. */ -}}
+{{- $out := dict -}}
+{{- with . -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- with $r.data }}{{ $out = partial "pages/pulls/sep-stages.html" . }}{{ end -}}
+{{- end -}}
+{{- return $out -}}

@@ -1,22 +1,27 @@
 {{- /* Backlog trend (design system v4 5.3 module 4, 4.19, 4.6, 4.22). Ctx: dict {r (data/repo.html)}.
     8 + 4: the chart card "Open issues" (snapshots issues.open, daily, last 26 weeks; readout "Latest" with its date; the gap key in
-    the notes row) beside the stat list "Opened and closed", five rows: Opened and Closed over the last 30 days, then Net change over
-    7, 30 and 90 days (opened minus closed, a plain signed value).
-    Short history (fewer than 14 daily points): the pending chart card at 12, then the stat list wide at 12. */ -}}
+    the notes row) beside the stat list "Opened and closed", six rows, the same pattern as the PR list: Opened, Closed and Net change
+    over the last 30 days, then over the last 90 days (net change is opened minus closed, a plain signed value).
+    Short history (fewer than 14 daily points): the pending chart card at 12, then the stat list wide at 12. Six rows fill its two
+    columns (the wide form takes an even number of rows). */ -}}
 {{- $r := .r -}}
 {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ if reflect.IsMap . }}{{ $iss = . }}{{ end }}{{ end }}{{ end -}}
 {{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open") -}}
 {{- $drawn := ge (int $open.n) 14 -}}
-{{- $rows := slice
-  (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" (dict "n" 30 "unit" "day"))).text "value" (dict "kind" "count" "v" $iss.opened_30d))
-  (dict "label" (partial "fmt/label.html" (dict "metric" "Closed" "window" (dict "n" 30 "unit" "day"))).text "value" (dict "kind" "count" "v" $iss.closed_30d)) -}}
-{{- range $w := slice 7 30 90 -}}
+{{- $rows := slice -}}
+{{- range $w := slice 30 90 -}}
+  {{- $win := dict "n" $w "unit" "day" -}}
   {{- $o := index $iss (printf "opened_%dd" $w) }}{{ $c := index $iss (printf "closed_%dd" $w) -}}
   {{- $v := dict "kind" "net" "reason" "no-data" -}}
   {{- if and (ne $o nil) (ne $c nil) }}{{ $v = dict "kind" "net" "v" (sub (float $o) (float $c)) }}{{ end -}}
-  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" (dict "n" $w "unit" "day"))).text
+  {{- $rows = $rows | append
+    (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $win)).text "value" (dict "kind" "count" "v" $o))
+    (dict "label" (partial "fmt/label.html" (dict "metric" "Closed" "window" $win)).text "value" (dict "kind" "count" "v" $c))
+    (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $win)).text
       "title" "Issues opened minus issues closed in the window." "value" $v) -}}
-{{- end }}
+{{- end -}}
+{{- /* the wide form flows row by row in two columns: pair each 30-day row with its 90-day twin */ -}}
+{{- if not $drawn }}{{ $rows = slice (index $rows 0) (index $rows 3) (index $rows 1) (index $rows 4) (index $rows 2) (index $rows 5) }}{{ end }}
 <section class="v-section" aria-labelledby="backlog">
   {{ partial "ui/section-head.html" (dict "id" "backlog" "title" "Backlog trend") }}
   <div class="v-grid">

@@ -1,0 +1,16 @@
+{{- /* Detail phrase (design system v4 4.16): the content of a work row's Detail cell. The one row-specific fact the status badge
+  cannot say: a short phrase from a closed list that may end in one component. Emits span.v-detail, or nothing without text.
+  Dict {text, who, ref, days, title}.
+    text   the phrase ("Reviewed by", "Backport of", "Changes requested", "Parked by a maintainer").
+    who    a handle that completes the phrase ("Reviewed by" travisbreaks); part of the phrase, so it may shorten with it.
+    ref    an issue or PR reference ("#1521"): a .v-id at the phrase's size, medium.
+    days   whole days (ui/value.html, compact). title: the title of the days value (a business-day figure).
+  Only the phrase (.v-detail-text) may shorten, with an ellipsis; the reference or the days that close it never truncate. ui.js puts
+  the full phrase in title on hover when it is cut. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
+{{- with $c.text -}}
+<span class="v-detail"><span class="v-detail-text">{{ . }}{{ with $c.who }} {{ . }}{{ end }}</span>
+  {{- with $c.ref }}{{ partial "ui/value.html" (dict "kind" "id" "v" .) }}{{ end -}}
+  {{- if ne $c.days nil }}{{ partial "ui/value.html" (dict "kind" "dur" "d" $c.days "unit" "d" "compact" true "title" $c.title) }}{{ end -}}
+</span>
+{{- end -}}

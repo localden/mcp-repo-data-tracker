@@ -16,28 +16,32 @@
 
 {{- /* the two waiting tiles */ -}}
 {{- range slice
-  (dict "w" $wi "ser" $s.iWait "kind" "issues" "name" "Issues waiting for a reply"
-        "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 or more days ago.")
-  (dict "w" $wp "ser" $s.pWait "kind" "pulls" "name" "PRs waiting for first review"
-        "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago.") -}}
-  {{- $t := dict "name" .name "qual" $over7 "title" .title
+  (dict "w" $wi "ser" $s.iWait "kind" "issues" "open" $is.open_count "name" "Issues waiting for a reply"
+        "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
+  (dict "w" $wp "ser" $s.pWait "kind" "pulls" "open" $pr.open_count "name" "PRs waiting for first review"
+        "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.") -}}
+  {{- $t := dict "name" .name "qual" $over7 "title" .title "asof" (.ser.cur_date | default "")
       "points" (partial "data/week-bins.html" (dict "points" (.ser.points | default slice) "agg" "last" "weeks" 12)).points -}}
   {{- if .w.has -}}
     {{- $t = merge $t (dict "value" (dict "kind" "count" "v" .w.over7)) -}}
     {{- if gt .w.over7 0 }}{{ $t = merge $t (dict "href" (printf "%s/?repo=%s&over7=1#waiting" .kind $r.repo | relURL)) }}{{ end -}}
     {{- $w := .w -}}
-    {{- with .ser.cmp30 -}}
-      {{- $t = merge $t (dict "delta" (dict "cur" $w.over7 "prev" .value "metric" "waiting") "context" (dict "kind" "base" "date" .date)) -}}
+    {{- if .ser.cmp30 -}}
+      {{- with .ser.cmp30 -}}
+        {{- $t = merge $t (dict "delta" (dict "cur" $w.over7 "prev" .value "metric" "waiting") "context" (dict "kind" "base" "date" .date)) -}}
+      {{- end -}}
+    {{- else if ne .open nil -}}
+      {{- $t = merge $t (dict "context" (dict "kind" "whole" "n" .open "of" "open")) -}}
     {{- end -}}
   {{- else -}}
-    {{- $t = merge $t (dict "value" (dict "kind" "count" "reason" "no-data")) -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "count" "reason" "no-data") "context" (dict "kind" "reason" "reason" "no-data")) -}}
   {{- end -}}
   {{- $tiles = $tiles | append $t -}}
 {{- end -}}
 
 {{- /* open issues: the fixed definition, a reference pair and no delta */ -}}
 {{- $t := dict "name" "Open issues" "value" (dict "kind" "count" "v" $is.open_count) "href" (printf "issues/%s/" $r.repo | relURL)
-    "points" (partial "data/week-bins.html" (dict "points" ($s.iOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
+    "asof" ($s.iOpen.cur_date | default "") "points" (partial "data/week-bins.html" (dict "points" ($s.iOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
 {{- if and (ne $is.opened_30d nil) (ne $is.closed_30d nil) -}}
   {{- $t = merge $t (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $w30)).text
       "value" (dict "kind" "net" "v" (sub (float $is.opened_30d) (float $is.closed_30d))))) -}}
@@ -64,13 +68,30 @@
   {{- $tiles = $tiles | append $t -}}
 {{- else -}}
   {{- $t = dict "name" "Open PRs" "value" (dict "kind" "count" "v" $pr.open_count) "href" (printf "pulls/%s/" $r.repo | relURL)
-      "points" (partial "data/week-bins.html" (dict "points" ($s.pOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
+      "asof" ($s.pOpen.cur_date | default "") "points" (partial "data/week-bins.html" (dict "points" ($s.pOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
   {{- if ne $pr.merged_30d nil -}}
     {{- $t = merge $t (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $w30)).text
         "value" (dict "kind" "count" "v" $pr.merged_30d))) -}}
   {{- end -}}
   {{- $tiles = $tiles | append $t -}}
-{{- end }}
+{{- end -}}
+
+{{- /* The range row under a tile sparkline prints the dates of its first and last point. A bin is dated by its Monday, so the row
+     would read as if the data ended on that Monday. The last point is re-dated to the last day it covers: the day of the latest
+     reading for a level (the date the value above it is from), the Sunday that closes the week for a flow. Positions are by index,
+     so the drawing does not change. */ -}}
+{{- $dated := slice -}}
+{{- range $tiles -}}
+  {{- $t := . }}{{ $pts := .points | default slice }}{{ $n := len $pts -}}
+  {{- if gt $n 0 -}}
+    {{- $last := index $pts (sub $n 1) }}{{ $to := "" -}}
+    {{- if eq .flow true }}{{ $to = ((time.AsTime $last.date).AddDate 0 0 6).Format "2006-01-02" -}}
+    {{- else if and .asof (gt (string .asof) (string $last.date)) }}{{ $to = string .asof }}{{ end -}}
+    {{- if $to }}{{ $t = merge $t (dict "points" (first (sub $n 1) $pts | append (merge $last (dict "date" $to)))) }}{{ end -}}
+  {{- end -}}
+  {{- $dated = $dated | append $t -}}
+{{- end -}}
+{{- $tiles = $dated }}
 <section class="v-section v-summary" aria-label="Summary">
   <div class="v-grid">
     {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" $tiles) }}

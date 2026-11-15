@@ -1,12 +1,14 @@
-{{- /* 6. Community (design system v4 5.8 module 6). Context: the dict from pages/repo.html. Three rows in one grid:
-  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers", split bar), New contributors
+{{- /* 6. Community (design system v4 5.8 module 6). Context: the dict from pages/repo.html. Two rows in one grid, then
+  the People section (pages/repo/people.html), which this partial emits after its own section:
+  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers"; its bar is the maintainers'
+           share of the active people, on the same track as the other two bars, so the strip holds one kind of bar), New contributors
            (whole "of {n} active", share bar), Maintainers active (whole "of {n} maintainers", share bar; left out for a repository
-           with no maintainer group).
+           with no maintainer group). A strip is all or none (4.5): a repository with no maintainer group has two tiles with
+           neither context nor bar.
   6 + 6    A chart pair of different measures (4.19): "Active contributors", weekly over the last 52 weeks, one series; "Commits per
            week", weekly over the last 12 weeks, columns with the 12-week average as a context line. Each sub line states its own
            window and hover is not shared. A pending chart never shares a row, so when either is pending each card takes its own
            12 row, in the same order.
-  12       The People list card (pages/repo/people.html).
   Maintainers are this repository's groups only (pages/repo/roles.html), matched ignoring case. The split stays in the tile: the
   stored series is not split by this repository's roles. */ -}}
 {{- $r := .r }}{{ $m := .m }}{{ $c := .c }}{{ $roles := .roles -}}
@@ -19,11 +21,11 @@
     "title" "Distinct people, known bots excluded, active in this repository in the last 30 days." -}}
 {{- if and $roles.defined (ne $active nil) -}}
   {{- $t1 = merge $t1 (dict "context" (dict "kind" "ref" "label" "Maintainers" "value" (dict "kind" "count" "v" $p.nActiveM))
-      "share" (dict "value" $p.nActiveM "max" $active "split" true)) -}}
+      "share" (dict "value" $p.nActiveM "max" $active)) -}}
 {{- end -}}
 {{- $t2 := dict "name" "New contributors" "qual" $w30 "value" (dict "kind" "count" "v" $c.first_time_30d)
     "title" "Active contributors with no earlier activity on record." -}}
-{{- if and (ne $c.first_time_30d nil) (ne $active nil) -}}
+{{- if and $roles.defined (ne $c.first_time_30d nil) (ne $active nil) -}}
   {{- $t2 = merge $t2 (dict "context" (dict "kind" "whole" "n" $active "of" "active") "share" (dict "value" $c.first_time_30d "max" $active)) -}}
 {{- end -}}
 {{- $tiles := slice $t1 $t2 -}}
@@ -49,6 +51,14 @@
   {{- $trendSub = (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "since" $tot.first))).cadence -}}
 {{- end -}}
 {{- $trendNotes := or $trendGap (ne $tot.reconstructed nil) -}}
+{{- /* the readout is the latest reading with the day it was taken: a weekly bin is dated by its Monday, which is not the as-of day */ -}}
+{{- $trendChart := dict "id" "repo-contributors" "title" "Active contributors" "sub" $trendSub
+    "metric" "active contributors" "metric_one" "active contributor" "scope" $r.name "unit" "count" "gran" "week" "kind" "line"
+    "from" $trendFrom
+    "series" (slice (dict "label" "Active contributors" "role" "accent" "points" $totW.points "reconstructed" $tot.reconstructed)) -}}
+{{- if and (ne $tot.cur nil) $tot.cur_date -}}
+  {{- $trendChart = merge $trendChart (dict "readout" (slice (dict "label" "Latest" "key" "accent" "value" (dict "kind" "count" "v" $tot.cur) "date" $tot.cur_date))) -}}
+{{- end -}}
 
 {{- /* commits per week: the 12 rolling 7-day buckets of metrics.json, oldest first, each dated by its first day */ -}}
 {{- $trend := $c.commits_per_week_trend | default slice -}}
@@ -73,11 +83,8 @@
     {{- if ge (len $tiles) 2 }}
     {{ partial "ui/metrics.html" (dict "label" "Community" "size" "md" "visual" "share" "tiles" $tiles) }}
     {{- end }}
-    {{ partial "ui/chart.html" (dict "id" "repo-contributors" "title" "Active contributors" "class" $span "sub" $trendSub
-        "metric" "active contributors" "metric_one" "active contributor" "scope" $r.name "unit" "count" "gran" "week" "kind" "line"
-        "from" $trendFrom
-        "series" (slice (dict "label" "Active contributors" "role" "accent" "points" $totW.points "reconstructed" $tot.reconstructed))) }}
+    {{ partial "ui/chart.html" (merge $trendChart (dict "class" $span)) }}
     {{ partial "ui/chart.html" $commits }}
-    {{ partial "pages/repo/people.html" (dict "p" $p) }}
   </div>
 </section>
+{{ partial "pages/repo/people.html" (dict "p" $p) }}

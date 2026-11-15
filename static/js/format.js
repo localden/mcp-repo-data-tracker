@@ -38,10 +38,11 @@
     a = arg(a, 'v');
     if (!has(a.v)) return missing('count');
     var v = +a.v, abs = Math.abs(v), text = nf(0, Math.round(abs));
-    if (a.stat) { var r = Math.round(abs * 10) / 10; if (r < 100 && r !== Math.floor(r)) text = nf(1, r); }
+    var long = '';
+    if (a.stat) { var r = Math.round(abs * 10) / 10; if (r < 100 && r !== Math.floor(r)) { if (a.col) long = (v < 0 ? MINUS : '') + nf(1, r); else text = nf(1, r); } }
     if (v < 0 && text !== '0') text = MINUS + text;
     if (a.noun) text += NBSP + noun({ key: a.noun, n: v }).text;
-    return { text: text, long: text, state: v === 0 ? 'zero' : 'value', kind: 'count', v: v };
+    return { text: text, long: long || text, state: v === 0 ? 'zero' : 'value', kind: 'count', v: v };
   }
 
   function volume(a) {
@@ -178,7 +179,7 @@
     return { n: narrowed ? nf(0, matched) + ' of ' + nf(0, total) : nf(0, total), word: (narrowed ? total : total) === 1 ? one : other };
   }
 
-  var fmt = { count: count, stat: function (a) { a = arg(a, 'v'); return count({ v: a.v, stat: true }); }, volume: volume, share: share,
+  var fmt = { count: count, stat: function (a) { a = arg(a, 'v'); return count({ v: a.v, stat: true, col: a.col }); }, volume: volume, share: share,
     change: change, net: net, dur: dur, date: date, range: range, ts: ts, ratio: ratio, lines: lines, noun: noun, na: na,
     result: result, iso: iso, toDate: toDate };
   window.VISR = Object.assign(window.VISR || {}, { fmt: fmt });

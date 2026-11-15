@@ -2,15 +2,20 @@
   Dict {label, size, visual, id, class, tiles}.
     label    aria-label of the group (required): "Summary", "Responsiveness".
     size     "lg" (default; 3 or 4 tiles): the page's summary strip, at most one per page. "md" (2 to 4 tiles): every other strip.
-    visual   one kind per strip: "trend" (a tile sparkline with its date range row), "share" (a full-width share bar) or "none".
-             A trend strip in which no tile has four weekly points renders as none.
+    visual   one kind per strip, all tiles or none: "trend" (a tile sparkline with its date range row), "share" (a full-width share
+             bar) or "none". A trend strip draws sparklines only when EVERY tile has four weekly points of stored history, and a
+             share strip only when every tile has a share; otherwise the strip renders as none (and warns), so no tile ever holds
+             an empty visual beside drawn ones.
     tiles    slice of:
       name     at most 28 characters ("Waiting for a reply").   qual: at most 14, a window or threshold from fmt/label.html.
+               The label prints as one phrase in the label grammar of 3.6: "Merged, last 7 days", "Waiting for a reply, any age";
+               a qualifier that starts with "over" joins without a comma ("Waiting for a reply over 7 days", "Triage overdue").
       title    the definition (also listed in Data notes).
       value    {kind, ...} for ui/value.html: count, volume, dur or share, never a ratio. A nil value is the empty mark.
       tone     "breach": a count past a published rule (the value is danger above zero; sr-only "Overdue").
       delta    {cur, prev, metric, unit} for ui/delta.html; requires a base context.
-      context  zero or one designed sub-component, a closed set:
+      context  one designed sub-component, a closed set. Give every tile of a strip one, or none of them (a build warning names
+               a strip that mixes):
                  {kind "base", date}                 "vs Oct 7" (a level against a snapshot)
                  {kind "base", window "prior7"|"4w"} "vs prior 7 days" (a flow)
                  {kind "whole", n, of}               "of 239 open": a count that is part of a named whole
@@ -24,29 +29,45 @@
                target (ui.js applies the view and filters in place). The value of a link tile equals the result count of the list it
                opens, computed from the same rows.
   Slots sit on shared rows (subgrid), so labels, values, contexts and visuals line up across the strip. A strip with fewer than two
-  tiles renders nothing. Below 40rem every strip is a column of rows: label and context left, value right. */ -}}
+  tiles renders nothing. Below 40rem every strip is a column of rows: label over delta and context on the left, the value on the
+  right edge, and the link arrow in a fixed column after it (reserved on every row of a strip that has a link, so values share one
+  right edge). */ -}}
 {{- $c := . -}}
 {{- $tiles := $c.tiles | default slice -}}
 {{- $n := len $tiles -}}
 {{- $size := $c.size | default "lg" -}}
 {{- $visual := $c.visual | default "none" -}}
 {{- if gt $n 4 }}{{ warnf "ui/metrics %q: %d tiles; a strip holds two to four, five facts are two modules (design system v4 4.5)" ($c.label | default "") $n }}{{ end -}}
-{{- if not $c.label }}{{ warnf "ui/metrics: label (the group's aria-label) is required (design system v4 4.5)" }}{{ end -}}
-{{- /* a trend strip needs at least one tile with four weekly points; a context row is reserved when any tile has one */ -}}
-{{- $anyTrend := false }}{{ $anyCtx := false -}}
+{{- if not $c.label }}{{ warnf "ui/metrics: label (the aria-label of the group) is required (design system v4 4.5)" }}{{ end -}}
+{{- /* all or none: how many tiles can draw the strip's visual, how many carry a context, whether any is a link */ -}}
+{{- $nTrend := 0 }}{{ $nShare := 0 }}{{ $nCtx := 0 }}{{ $anyGo := false -}}
 {{- range $tiles -}}
   {{- $k := 0 }}{{ range .points }}{{ if ne .value nil }}{{ $k = add $k 1 }}{{ end }}{{ end -}}
-  {{- if ge $k 4 }}{{ $anyTrend = true }}{{ end -}}
-  {{- if or .context .note }}{{ $anyCtx = true }}{{ end -}}
+  {{- if and (ge $k 4) (ne .reason "no-history") }}{{ $nTrend = add $nTrend 1 }}{{ end -}}
+  {{- if .share }}{{ $nShare = add $nShare 1 }}{{ end -}}
+  {{- if or .context .note }}{{ $nCtx = add $nCtx 1 }}{{ end -}}
+  {{- if .href }}{{ $anyGo = true }}{{ end -}}
 {{- end -}}
-{{- if and (eq $visual "trend") (not $anyTrend) }}{{ $visual = "none" }}{{ end -}}
+{{- if and (eq $visual "trend") (lt $nTrend $n) -}}
+  {{- if gt $nTrend 0 }}{{ warnf "ui/metrics %q: %d of %d tiles have a trend; the strip is drawn without sparklines (one visual per strip, all tiles or none: design system v4 4.5)" ($c.label | default "") $nTrend $n }}{{ end -}}
+  {{- $visual = "none" -}}
+{{- end -}}
+{{- if and (eq $visual "share") (lt $nShare $n) -}}
+  {{- if gt $nShare 0 }}{{ warnf "ui/metrics %q: %d of %d tiles have a share bar; the strip is drawn without bars (design system v4 4.5)" ($c.label | default "") $nShare $n }}{{ end -}}
+  {{- $visual = "none" -}}
+{{- end -}}
+{{- if and (gt $nCtx 0) (lt $nCtx $n) (ge $n 2) -}}
+  {{- warnf "ui/metrics %q: %d of %d tiles have a context; give every tile of a strip one designed context, or none (design system v4 4.5)" ($c.label | default "") $nCtx $n -}}
+{{- end -}}
 {{- if ge $n 2 -}}
 <div class="v-card v-metrics{{ with $c.class }} {{ . }}{{ end }}"{{ with $c.id }} id="{{ . }}"{{ end }} role="group" aria-label="{{ $c.label }}">
-  <ul class="v-metrics-grid" data-n="{{ $n }}" data-size="{{ $size }}" data-visual="{{ $visual }}">
+  <ul class="v-metrics-grid" data-n="{{ $n }}" data-size="{{ $size }}" data-visual="{{ $visual }}"{{ if $anyGo }} data-go{{ end }}>
     {{- range $tiles }}
     {{- $t := . }}
     {{- $breach := eq $t.tone "breach" }}
     {{- $vk := "count" }}{{ with $t.value }}{{ with .kind }}{{ $vk = . }}{{ end }}{{ end }}
+    {{- $qual := string ($t.qual | default "") }}
+    {{- $sep := ", " }}{{ if hasPrefix (lower $qual) "over" }}{{ $sep = " " }}{{ end }}
     <li class="v-metric{{ if $breach }} is-breach{{ end }}">
       <div class="v-metric-label"{{ with $t.title }} title="{{ . }}"{{ end }}>
         {{- if $t.href -}}
@@ -54,15 +75,14 @@
         {{- else -}}
         <span class="v-metric-name">{{ $t.name }}</span>
         {{- end -}}
-        {{- with $t.qual }}<span class="v-metric-qual">{{ . }}</span>{{ end -}}
-        {{- if $t.href }}{{ partial "ui/icon.html" (dict "name" "arrow-right" "size" 14 "class" "v-metric-go") }}{{ end -}}
+        {{- with $qual }}<span class="v-metric-qual">{{ $sep }}{{ . }}</span>{{ end -}}
       </div>
       <div class="v-metric-value">
         {{- if $breach }}<span class="sr-only">Overdue </span>{{ end -}}
         {{- partial "ui/value.html" ($t.value | default (dict "kind" "na")) -}}
         {{- with $t.delta }}{{ partial "ui/delta.html" . }}{{ end -}}
       </div>
-      {{- if $anyCtx }}
+      {{- if gt $nCtx 0 }}
       <div class="v-metric-context">
         {{- with $t.context -}}
           {{- if eq .kind "base" -}}
@@ -79,10 +99,11 @@
       </div>
       {{- end }}
       {{- if eq $visual "trend" }}
-      <div class="v-metric-visual">{{ partial "ui/spark.html" (dict "points" ($t.points | default slice) "kind" (cond (eq $t.flow true) "flow" "level") "size" "tile" "reason" $t.reason "unit" $vk) }}</div>
+      <div class="v-metric-visual">{{ partial "ui/spark.html" (dict "points" ($t.points | default slice) "kind" (cond (eq $t.flow true) "flow" "level") "size" "tile" "unit" $vk) }}</div>
       {{- else if eq $visual "share" }}
       <div class="v-metric-visual">{{ with $t.share }}{{ partial "ui/meter.html" (dict "value" .value "max" .max "mode" "share" "split" .split) }}{{ end }}</div>
       {{- end }}
+      {{- if $t.href }}{{ partial "ui/icon.html" (dict "name" "arrow-right" "size" 14 "class" "v-metric-go") }}{{ end }}
     </li>
     {{- end }}
   </ul>

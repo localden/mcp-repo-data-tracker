@@ -3,7 +3,8 @@
   Overview at the site root (design system v4 5.1): the org view of every tracked repository, decision first.
   Page head (4.2): eyebrow "Overview", H1 "All repositories" (plain text), meta "Updated": the oldest GitHub-side source the page
     uses (GitHub metrics, issue and PR classification, SEP data). The registries keep their "Complete through" days in Data notes and
-    never move "Updated": their days always trail the GitHub data. The callout carries the data gap of the charted 26 weeks.
+    never move "Updated": their days always trail the GitHub data. The callout carries the data gap of the charted 26 weeks and
+    nothing else. Every section head has a one-sentence description, so every head block has the same height.
   Modules, in order:
     1 Summary               metric strip, four link tiles                 pages/overview/summary.html
     2 Needs attention       two matrix cards, 12 and 12                   pages/overview/attention.html
@@ -19,15 +20,18 @@
 {{- $title := .Title | default "All repositories" -}}
 {{- if $keys }}
   {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability" "seps")) -}}
-  {{- /* registries: keep "through" (the staleness sentence, Data notes "complete through"), drop "at" so they never move "Updated" */ -}}
-  {{- range partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
-    {{- $src = $src | append (dict "kind" .kind "label" .label "noun" .noun "through" .through) -}}
+  {{- /* registries: each one's "complete through" day is a Sources row of Data notes (a fact, in the wording ui/data-notes.html uses
+       for a registry source). They are not page sources here, so they never move "Updated" and add no sentence to the callout: the
+       callout carries the GitHub gap only, and a partial download window is flagged on its own value in "SDK adoption". */ -}}
+  {{- $facts := slice -}}
+  {{- range $s := partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
+    {{- with $s.through }}{{ $facts = $facts | append (dict "label" (printf "%s, complete through" $s.label) "value" (dict "kind" "date" "d" .)) }}{{ end -}}
   {{- end -}}
 
   {{- /* Data notes. Definitions: the terms used in titles on the page, then every rule shown in "Overdue by rule" from the registry. */ -}}
   {{- $defs := slice
-    (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 days ago or earlier.")
-    (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 days ago or earlier.")
+    (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
     (dict "term" "Overdue" "text" "Open issues and PRs past a published deadline. The Overdue column adds up every rule, so an item past two rules is counted under each.")
     (dict "term" "Author waiting" "text" "PRs whose author answered maintainer feedback and is waiting for a maintainer, from PR classification.") -}}
   {{- range slice "triage" "p0" "p1" "first-review" "re-review" "maintainer-pr" -}}
@@ -56,11 +60,12 @@
   {{- with $cls }}{{ $notes = $notes | append (printf "PR classification runs for %s." (delimit . ", " " and ")) -}}
   {{- else }}{{ $notes = $notes | append "PR classification does not run for any repository yet." }}{{ end -}}
   {{- $notes = $notes | append "Overdue by rule lists classified repositories only. The other issue rules are on each repository's Issues page." }}
-  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs "notes" $notes) }}
+  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs "notes" $notes "facts" $facts) }}
   {{ partial "pages/overview/summary.html" . }}
   {{ partial "pages/overview/attention.html" . }}
   <section class="v-section" aria-labelledby="backlog-and-activity">
-    {{ partial "ui/section-head.html" (dict "id" "backlog-and-activity" "title" "Backlog and activity") }}
+    {{ partial "ui/section-head.html" (dict "id" "backlog-and-activity" "title" "Backlog and activity"
+        "desc" "Open work and recent activity in each repository.") }}
     <div class="v-grid">
       {{ partial "pages/repo/table.html" (dict "id" "repositories") }}
     </div>
@@ -69,7 +74,9 @@
   {{ partial "pages/overview/adoption.html" . }}
   {{- if (partialCached "pages/seps/data.html" "seps" "seps").has }}
   <section class="v-section" aria-labelledby="spec-proposals">
-    {{ partial "ui/section-head.html" (dict "id" "spec-proposals" "title" "Spec proposals" "action" (dict "text" "All SEPs" "href" ("seps/" | relURL))) }}
+    {{ partial "ui/section-head.html" (dict "id" "spec-proposals" "title" "Spec proposals"
+        "desc" "Open specification proposals by stage, and how fast proposals move."
+        "action" (dict "text" "All SEPs" "href" ("seps/" | relURL))) }}
     <div class="v-grid">
       {{ partial "pages/seps/stages.html" . }}
     </div>

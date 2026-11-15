@@ -5,7 +5,7 @@
     pages/repo/activity.html   3. Activity: a pair of chart cards, Issues and PRs
     pages/repo/flow.html       4. Opened and closed: one matrix table
     pages/repo/downloads.html  5. Downloads: one chart card (repositories with a registry package)
-    pages/repo/community.html  6. Community: metric strip, chart pair, People list (pages/repo/people.html)
+    pages/repo/community.html  6. Community: metric strip, chart pair; then 7. People, its own section (pages/repo/people.html)
   The dict: {r, m, c, roles, dl, s, sla, wi, wp, first}. wi and wp are data/waiting.html for issues and PRs: every waiting count on
   the page and the lists those counts open come from them.
   Page head: eyebrow "Repositories", the H1 is the scope switcher, the repository's description, meta: repository link, registry
@@ -66,8 +66,8 @@
 {{- if not $r.data.issues }}{{ $notes = $notes | append "Issues are not classified for this repository, so the response deadlines are not shown." }}{{ end -}}
 {{- if not $r.data.actionability }}{{ $notes = $notes | append "PRs are not classified for this repository, so the review deadlines are not shown." }}{{ end -}}
 {{- $defs := slice
-  (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 or more days ago.")
-  (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago.")
+  (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
+  (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
   (dict "term" "Waiting" "text" "Calendar days since the issue or PR opened.")
   (dict "term" "Net change" "text" "Opened minus closed in the window. For PRs, opened minus merged minus closed without merging.") -}}
 {{- range slice "triage" "p0" "p1" "first-review" -}}

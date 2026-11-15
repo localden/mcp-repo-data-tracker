@@ -35,7 +35,7 @@
   });
   /* a truncated row title gets its full text as title on hover (rows carry no title attribute: page weight) */
   document.addEventListener('mouseover', function (e) {
-    var a = e.target.closest && e.target.closest('.v-item > .v-row-link, .v-detail'); if (!a || a.hasAttribute('title')) return;
+    var a = e.target.closest && e.target.closest('.v-item > .v-row-link, .v-detail-text'); if (!a || a.hasAttribute('title')) return;
     if (a.scrollWidth > a.clientWidth + 1) a.setAttribute('title', a.textContent.replace(/\s*\(opens [^)]*\)\s*$/, '').trim());
   });
 
@@ -73,7 +73,7 @@
 
   /* ---- cells take their column's record label for the forms below 64rem (th[data-record], else the header text) */
   function headText(th) {
-    var c = th.cloneNode(true); all('.sr-only, .v-th-sub, svg', c).forEach(function (x) { x.remove(); }); return c.textContent.trim();
+    var c = th.cloneNode(true); all('.sr-only, .v-th-sub, .v-th-short, svg', c).forEach(function (x) { x.remove(); }); return c.textContent.trim();
   }
   all('table.v-dt').forEach(function (t) {
     var heads = all('thead tr:last-child > th', t); if (!heads.length) return;
@@ -83,7 +83,7 @@
       if (r.classList.contains('v-group')) return;
       Array.prototype.forEach.call(r.cells, function (c, i) {
         if (i === 0 || c.hasAttribute('data-label') || !labels[i]) return;
-        if (listForm && c.matches('.v-item, .v-c-status, .v-sla-cell, .v-c-detail, .v-c-who, .v-c-repo, .v-c-bar, .v-c-spark')) return;
+        if (listForm && c.matches('.v-item, .v-c-status, .v-sla-cell, .v-c-detail, .v-c-repo, .v-c-bar, .v-c-spark')) return;
         c.setAttribute('data-label', labels[i]);
       });
     });
@@ -168,7 +168,7 @@
       facets.push({ key: k, test: function (r) { return vals.some(function (v) { return r._f.indexOf(k + ':' + v) !== -1; }); } });
     });
     var first = this.first(), limit = this.more === Infinity ? Infinity : first + this.more;
-    var matched = 0, shown = 0, inAll = 0, last = null, groups = new Map();
+    var matched = 0, shown = 0, inAll = 0, last = null, groups = new Map(), firsts = [];
     var chipN = {}, optN = {};
     this.checks.forEach(function (c) { chipN[c.getAttribute('data-facet')] = 0; });
     this.rows.forEach(function (r) {
@@ -190,13 +190,15 @@
       }
       if (ok) matched++;
       var vis = ok && matched <= limit;
-      if (vis) { shown++; last = r; }
+      if (vis) { shown++; last = r; if (firsts.indexOf(r.parentNode) === -1) { firsts.push(r.parentNode); firsts.push(r); } }
       r.hidden = !vis;
-      r.removeAttribute('data-off'); r.removeAttribute('data-over'); r.removeAttribute('data-over-phone'); r.removeAttribute('data-last');
+      r.removeAttribute('data-off'); r.removeAttribute('data-over'); r.removeAttribute('data-over-phone'); r.removeAttribute('data-last'); r.removeAttribute('data-first');
       var g = r.closest('tbody[data-group]');
       if (g) { var s = groups.get(g) || { m: 0, v: 0 }; if (ok) s.m++; if (vis) s.v++; groups.set(g, s); }
     });
     if (last) last.setAttribute('data-last', '');
+    /* the first visible row of each tbody: in list form it drops its top rule, so a band or group row above it has one rule */
+    firsts.forEach(function (x) { if (x.tagName === 'TR') x.setAttribute('data-first', ''); });
     this._matched = matched; this._shown = shown;
     all('tbody[data-group]', this.el).forEach(function (g) {
       var s = groups.get(g) || { m: 0, v: 0 }; g.hidden = s.v === 0;
@@ -289,8 +291,33 @@
       if (lab) lab.textContent = this.viewLabel();
       if (cnt) { cnt.textContent = c ? c.textContent : ''; cnt.hidden = !c; }
     }
+    this.syncSla();
     if (!quiet) this.apply();
     return true;
+  };
+  /* ---- a view in which nothing can be overdue has no Overdue column (4.14 rule 8, per view): the table takes data-no-sla, CSS
+     drops the column, and while it is gone the rows sort by the primary time instead; the stored sort and the URL do not change */
+  List.prototype.syncSla = function () {
+    var t = this.table, self = this; if (!t) return;
+    if (this._slaTh === undefined) {
+      var cell = t.querySelector('tbody td.v-sla-cell'), head = cell && t.querySelector('thead tr:last-child');
+      this._slaTh = (head && head.cells[cell.cellIndex]) || null;
+      if (this._slaTh) {
+        this._slaTh.setAttribute('data-sla-col', '');
+        var col = all('colgroup > col', t)[cell.cellIndex]; if (col) col.setAttribute('data-sla-col', '');
+      }
+    }
+    if (!this._slaTh) return;
+    var off = !this.rows.some(function (r) { return self.inView(r) && r.querySelector('td.v-sla-cell > *'); });
+    if (off === t.hasAttribute('data-no-sla')) return;
+    if (off) t.setAttribute('data-no-sla', ''); else t.removeAttribute('data-no-sla');
+    var heads = all('th[data-sort]', t).filter(function (h) { return h !== self._slaTh; }), fallback = heads[heads.length - 1];
+    if (off && this._slaTh.hasAttribute('aria-sort') && fallback) { sortTable(t, fallback, 'descending'); this._slaSwap = true; this.readRows(); }
+    else if (!off && this._slaSwap) {
+      this._slaSwap = false;
+      var th = this.sort && t.querySelector('th[data-sort="' + esc(this.sort.key) + '"]');
+      if (th) { sortTable(t, th, this.sort.dir === 'asc' ? 'ascending' : 'descending'); this.readRows(); }
+    }
   };
 
   /* ---- sort: rows sort inside each tbody by the cell's data-v (else its text); cluster members follow their primary row */
@@ -461,6 +488,7 @@
   List.prototype.init = function () {
     this.buildSortMenu();
     if (owner === this) { var p = null; try { p = new URLSearchParams(location.search); } catch (e) {} if (p) this.readState(p); }
+    this.syncSla();
     this.apply();
     this.el.setAttribute('data-ready', '');
   };

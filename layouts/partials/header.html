@@ -20,7 +20,7 @@
 <header class="v-header" id="site-header">
   <div class="v-shell v-header-row">
     <a class="v-brand" href="{{ site.Home.RelPermalink }}">
-      {{- if fileExists "static/brand/visr-mark-64.png" }}<img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}" width="24" height="24" alt="">{{ end -}}
+      {{- partial "ui/brand-mark.html" (dict "size" 24) -}}
       <span class="v-brand-word">{{ site.Title }}</span>
     </a>
     <nav class="v-nav" aria-label="Main">

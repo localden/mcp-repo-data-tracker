@@ -2,13 +2,17 @@
   It always emits one element: the trend, or the empty baseline.
   Dict {points, kind, size, reason, unit}.
     points  weekly bins [{date, value | nil}] (data/week-bins.html, data/org-weekly.html).
-    kind    "level" (default): a 1.5px line with an end dot. "flow": one column per week, 2px apart; downloads are a flow everywhere.
+    kind    "level" (default): a 1.5px line with an end dot. "flow": one column per week, at most 8px wide; downloads are a flow
+            everywhere.
     size    "tile" (default): the full width of a metric tile's visual slot, plus a 16px row with the first and last week as dates.
             "cell": 80 by 24 in a v-col-spark column, no range row.
     reason  "no-history": the measure has no stored series (the empty baseline, titled "No history for this measure").
     unit    how the wrapper title prints low and high: "count" (default), "volume" or "dur" (hours).
-  Gaps: a full-height gap rectangle over missing weeks, leading and trailing runs included. Empty (fewer than four non-null points,
-  or no history): a solid baseline. The drawing is aria-hidden; the wrapper title gives the window, low and high. */ -}}
+  Gaps: at sparkline size a gap is a 2px strip on the baseline over the missing weeks (leading and trailing runs included), and the
+  line breaks across it. A full-height band is for plots and trellis panels only: at 24px it reads as a broken image. A missing week
+  in a flow sparkline is a 2px stub in the same colour.
+  Empty (fewer than four non-null points, or no history): a solid baseline. It appears in table cells only: ui/metrics.html draws
+  sparklines in a strip only when every tile has one. The drawing is aria-hidden; the wrapper title gives the window, low and high. */ -}}
 {{- $pts := .points | default slice -}}
 {{- $size := cond (in (slice "cell" "mini") (.size | default "tile")) "cell" "tile" -}}
 {{- $kind := .kind | default "level" -}}
@@ -48,7 +52,7 @@
     {{- end -}}
   </span>
 {{- else -}}
-  {{- /* level: x by index across the window, y inside a 3px inset; flat data reads flat (the span is at least 25% of the high, or 4) */ -}}
+  {{- /* level: x by index across the window, y inside a 4px inset; flat data reads flat (the span is at least 25% of the high, or 4) */ -}}
   {{- $h := 24.0 }}{{ $pad := 4.0 -}}
   {{- $minSpan := math.Max (mul 0.25 (math.Abs $hi)) (cond (eq $unit "dur") 1.0 4.0) -}}
   {{- if lt (sub $hi $lo) $minSpan -}}
@@ -76,7 +80,7 @@
   <span class="v-spark-plot" aria-hidden="true"><svg viewBox="0 0 100 24" preserveAspectRatio="none" focusable="false">
     {{- range $gaps -}}
       {{- $x0 := math.Max 0.0 (sub (mul (float .a) $step) $half) }}{{ $x1 := math.Min 100.0 (add (mul (float .b) $step) $half) -}}
-      <rect class="v-spark-gap" x="{{ printf "%.2f" $x0 }}" y="0" width="{{ printf "%.2f" (sub $x1 $x0) }}" height="24"/>
+      <rect class="v-spark-gap" x="{{ printf "%.2f" $x0 }}" y="22" width="{{ printf "%.2f" (sub $x1 $x0) }}" height="2"/>
     {{- end -}}
     <path class="v-spark-line" d="{{ $d }}"/>
     {{- range $dots }}<path class="v-spark-dot" d="M{{ . }} l0.01,0"/>{{ end -}}

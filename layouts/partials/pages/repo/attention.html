@@ -1,7 +1,8 @@
 {{- /* 2. Needs attention (design system v4 5.8 module 2). Context: the dict from pages/repo.html.
   12       Metric strip md, visual none: one tile per rule that has a count, in registry order, named by the rule (data/sla-rules.html)
            with the qualifier "overdue": Triage, P0 bug, P1 bug (issues.json summary.sla), First review (actionability.json
-           summary.sla, with the whole "of {n} open"). Breach tone; a zero stays neutral and is not a link. A tile above zero links to
+           summary.sla). Every tile has the whole "of {n} open": open issues for the issue rules, the PRs eligible for a first
+           review for First review. Breach tone; a zero stays neutral and is not a link. A tile above zero links to
            the rule's drill URL on the repository's Issues or PR page. The priority rules need priority labels on the repository.
            The strip is left out when fewer than two rules have a count. The other rules are on the Issues and PR pages.
   6 + 6    Two preview list cards under the pair rule: the same number of rows (at most 5), the longest waits first.
@@ -15,11 +16,14 @@
 {{- /* the overdue strip */ -}}
 {{- $hasP := false }}{{ range $k, $_ := $is.by_label | default dict }}{{ if in (slice "P0" "P1" "P2" "P3") $k }}{{ $hasP = true }}{{ end }}{{ end -}}
 {{- $psla := dict }}{{ with $r.data.actionability }}{{ with .summary }}{{ with .sla }}{{ $psla = . }}{{ end }}{{ end }}{{ end -}}
+{{- /* every tile of the strip carries the same context, a whole (4.5: one context per tile, or none): the open issues the issue
+     rules are counted over (issues.json), and the PRs eligible for a first review */ -}}
+{{- $iOpen := $is.open_count }}{{ with $r.data.issues }}{{ with .summary }}{{ if ne .open_count nil }}{{ $iOpen = .open_count }}{{ end }}{{ end }}{{ end -}}
 {{- $tiles := slice -}}
 {{- range slice
-  (dict "key" "triage" "v" (index $sla "triage_2bd_breach") "ok" true "base" $issuesURL)
-  (dict "key" "p0" "v" (index $sla "p0_7d_breach") "ok" $hasP "base" $issuesURL)
-  (dict "key" "p1" "v" (index $sla "p1_90d_breach") "ok" $hasP "base" $issuesURL)
+  (dict "key" "triage" "v" (index $sla "triage_2bd_breach") "ok" true "base" $issuesURL "whole" $iOpen)
+  (dict "key" "p0" "v" (index $sla "p0_7d_breach") "ok" $hasP "base" $issuesURL "whole" $iOpen)
+  (dict "key" "p1" "v" (index $sla "p1_90d_breach") "ok" $hasP "base" $issuesURL "whole" $iOpen)
   (dict "key" "first-review" "v" (index $psla "first_review_7d_breach") "ok" true "base" $pullsURL "whole" (index $psla "first_review_eligible")) -}}
   {{- if and .ok (ne .v nil) -}}
     {{- $rule := partial "data/sla-rules.html" .key -}}
@@ -81,10 +85,12 @@
         </tr></thead>
         <tbody>
           {{- range $pRows }}
-          {{- $who := strings.TrimPrefix "app/" (string (.author | default "")) }}
-          {{- $role := "" }}{{ if $who }}{{ $role = cond (or (hasPrefix (string .author) "app/") (hasSuffix $who "[bot]")) "Bot" (cond (in $maint (lower $who)) "Maintainer" "Contributor") }}{{ end }}
+          {{- /* role, SEP stage and lines changed as on /pulls/: the shared data partials decide, not this template */ -}}
+          {{- $role := partial "data/role.html" (dict "author" .author "bot" .isBot) }}
+          {{- $sep := partial "data/sep-stage.html" (dict "repo" $r.repo "number" .number "labels" .labels) }}
           <tr data-row data-row-link>
-            {{ partial "ui/row-item.html" (dict "title" .title "href" .url "id" (printf "#%d" (int (.number | default 0))) "author" $who "role" $role "tags" .labels) }}
+            {{ partial "ui/row-item.html" (dict "title" .title "href" .url "id" (printf "#%d" (int (.number | default 0))) "author" .author "role" $role
+                "diff" (dict "add" .additions "del" .deletions) "attrs" $sep.attrs "tags" $sep.tags) }}
             <td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" .daysWaiting "unit" "d" "compact" true "opened" .createdAt) }}</td>
           </tr>
           {{- end }}

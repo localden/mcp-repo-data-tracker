@@ -9,7 +9,7 @@
   <div class="v-shell v-footer-row">
     <div class="v-footer-group">
       <a class="v-footer-brand" href="{{ site.Home.RelPermalink }}">
-        {{- if fileExists "static/brand/visr-mark-64.png" }}<img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}" width="20" height="20" alt="">{{ end -}}
+        {{- partial "ui/brand-mark.html" (dict "size" 20) -}}
         <span>{{ site.Title }}</span></a>
       {{ partial "ui/badge.html" (dict "text" "Experimental" "tone" "neutral") }}
       <span class="v-footer-item">Built by <a class="v-link-quiet" href="https://den.dev" target="_blank" rel="noopener">Den Delimarsky</a></span>

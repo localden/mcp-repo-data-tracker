@@ -1,0 +1,25 @@
+{{- /* Author role (design system v4 4.16): the ONE place a row's author becomes "Maintainer", "Bot" or "Contributor". Every row
+  template calls it, so the same person carries the same role on every page. Returns a string, never emits; "" without an author.
+  Dict {author, bot, maintainer}.
+    author      the handle as the data has it ("app/dependabot", "octocat").
+    bot         true when the data marks the author as a bot (is_bot, isBot). A handle that starts with "app/" or ends in "[bot]"
+                is a bot too.
+    maintainer  true when the classifier marks the author as a maintainer (is_maintainer). A handle listed in
+                data/maintainers.json is a maintainer too, so rows without the classifier field agree with rows that have it.
+  ui/row-item.html draws a role tag only for Maintainer and Bot; "Contributor" is the default and prints nothing. The value still
+  feeds the Author facet (data-facets "author:contributor"). */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "author" . }}{{ end -}}
+{{- $raw := string ($c.author | default "") -}}
+{{- $who := lower (strings.TrimPrefix "app/" $raw) -}}
+{{- $role := "" -}}
+{{- if $who -}}
+  {{- $role = "Contributor" -}}
+  {{- if or (eq $c.bot true) (hasPrefix $raw "app/") (hasSuffix $who "[bot]") -}}
+    {{- $role = "Bot" -}}
+  {{- else if eq $c.maintainer true -}}
+    {{- $role = "Maintainer" -}}
+  {{- else -}}
+    {{- with site.Data.maintainers }}{{ range (.maintainers | default slice) }}{{ if eq (lower (string (.github | default ""))) $who }}{{ $role = "Maintainer" }}{{ end }}{{ end }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $role -}}

@@ -12,9 +12,9 @@
 {{- $tiles := slice -}}
 {{- range $t := slice
     (dict "kind" "issues" "name" "Issues waiting for a reply" "path" "issues.without_response_7d"
-      "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 days ago or earlier.")
+      "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
     (dict "kind" "pulls" "name" "PRs waiting for first review" "path" "pulls.without_review_7d"
-      "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 days ago or earlier.") -}}
+      "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.") -}}
   {{- $sum := 0 }}{{ $has := false -}}
   {{- range $repos -}}
     {{- $w := partial "data/waiting.html" (dict "repo" . "kind" $t.kind) -}}

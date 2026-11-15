@@ -113,8 +113,13 @@
       {{- end -}}
     </li>
     {{- end }}
+    {{- /* the tracking entry is a meta item like its neighbours (16px icon, 8px gap, same baseline), not a nested note */ -}}
     {{- with $noteArg }}
-    <li>{{ partial "ui/note.html" . }}</li>
+    {{- $nt := "" }}{{ $nd := "" }}
+    {{- if reflect.IsMap . }}{{ $nt = .text | default "" }}{{ with .since }}{{ $nt = "Tracking since" }}{{ $nd = . }}{{ end }}{{ with .from }}{{ $nt = "From" }}{{ $nd = . }}{{ end }}{{ else }}{{ $nt = string . }}{{ end }}
+    {{- if $nt }}
+    <li><span class="v-meta-item">{{ partial "ui/icon.html" "clock" }}<span>{{ $nt }}{{ with $nd }} {{ partial "ui/value.html" (dict "kind" "date" "d" .) }}{{ end }}</span></span></li>
+    {{- end }}
     {{- end }}
   </ul>
   {{- end }}

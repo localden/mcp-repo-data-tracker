@@ -1,33 +1,24 @@
-{{- /* One row of the classified PR queue (design system v4 4.16). Ctx: dict {r, off, k, parent}.
-     r       a row from pages/pulls/rows.html.
-     off     true when the row is outside the default view (data-off: hidden at first paint).
-     k       the row's index inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
-     parent  for a duplicate-cluster member: its primary row {id, n (the primary's PR number)}. The member renders as a child row
-             (data-child-of) with the attribute tag "Duplicate of #N"; it follows its parent through views, filters and sorting.
-     Cells in the fixed order: PR (ui/row-item.html: id, author and role, lines changed, "Touches auth", the row expander), Status (one
-     badge), Detail (pages/pulls/reason.html), Overdue (ui/sla.html), Age (whole days; the title names the opening date). The data has
-     no labels for classified PRs. An empty Detail cell is exactly empty. */ -}}
-{{- $r := .r }}{{ $pr := $r.pr }}{{ $k := int (.k | default 0) }}{{ $parent := .parent -}}
+{{- /* One row of the classified PR queue (design system v4 4.16). Ctx: dict {r, off, k}.
+     r    a row from pages/pulls/rows.html. A row with r.parent is another PR of a duplicate cluster: an ordinary row that carries
+          the attribute tag "Duplicate of #N" (N is the primary PR of the cluster).
+     off  true when the row is outside the default view (data-off: hidden at first paint).
+     k    the index of the row inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
+     Cells in the fixed order: PR (ui/row-item.html: id, author and role, lines changed, "Touches auth", "Duplicate of #N"), Status
+     (one badge), Detail (pages/pulls/reason.html through ui/detail.html), Overdue (ui/sla.html), Age (whole days; the title names
+     the opening date). The data has no labels for classified PRs. An empty Detail cell is exactly empty.
+     One duration rule: every day count is floored, and a Detail day count is never larger than the Age of the row. */ -}}
+{{- $r := .r }}{{ $pr := $r.pr }}{{ $k := int (.k | default 0) -}}
 {{- $num := int ($pr.number | default 0) -}}
 {{- $attrs := slice -}}
 {{- if eq $pr.is_auth true }}{{ $attrs = $attrs | append "Touches auth" }}{{ end -}}
-{{- with $parent }}{{ $attrs = $attrs | append (printf "Duplicate of #%d" (int .n)) }}{{ end -}}
-{{- $kids := dict -}}
-{{- with $r.kids }}{{ $kids = dict "n" (len .) "id" $r.id }}{{ end -}}
-{{- $d := dict }}{{ if not $parent }}{{ $d = partial "pages/pulls/reason.html" $pr }}{{ end -}}
-{{- if $parent }}
-<tr data-row data-row-link id="{{ $r.id }}" data-child-of="{{ $parent.id }}" data-views="{{ $r.view }}">
-{{- else }}
+{{- with $r.parent }}{{ $attrs = $attrs | append (printf "Duplicate of #%d" (int .)) }}{{ end -}}
+{{- $d := dict }}{{ if not $r.parent }}{{ $d = partial "pages/pulls/reason.html" $pr }}{{ end -}}
+{{- if ne $d.days nil }}{{ $d = merge $d (dict "days" (math.Min (math.Floor (float $d.days)) (math.Floor (float $r.age)))) }}{{ end }}
 <tr data-row data-row-link id="{{ $r.id }}" data-views="{{ $r.view }}" data-facets="{{ delimit $r.tok " " }}"{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
-{{- end }}
   {{ partial "ui/row-item.html" (dict "title" (string ($pr.title | default "")) "href" $pr.url "id" (printf "#%d" $num) "author" $pr.author "role" $r.role
-      "diff" (dict "add" $pr.additions "del" $pr.deletions) "attrs" $attrs "kids" $kids) }}
+      "diff" (dict "add" $pr.additions "del" $pr.deletions) "attrs" $attrs) }}
   <td class="v-c-status" data-v="{{ $r.st.order }}">{{ partial "ui/badge.html" $r.st }}</td>
-  <td class="v-c-detail">
-    {{- with $d.text -}}
-    <span class="v-detail">{{ . }}{{ with $d.who }} {{ . }}{{ end }}{{ with $d.ref }} {{ partial "ui/value.html" (dict "kind" "id" "v" .) }}{{ end }}{{ if ne $d.days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" $d.days "unit" "d" "compact" true) }}{{ end }}</span>
-    {{- end -}}
-  </td>
+  <td class="v-c-detail">{{- partial "ui/detail.html" $d -}}</td>
   {{ partial "ui/sla.html" (dict "rules" $r.rules) }}
   <td class="num" data-v="{{ printf "%.1f" $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" $r.opened) }}</td>
 </tr>

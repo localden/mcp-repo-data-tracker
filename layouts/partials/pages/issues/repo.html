@@ -5,12 +5,13 @@
     2 Queue          pages/issues/queue.html (list card "iq" with views and six facets)
     3 Response SLAs  pages/issues/sla.html (the SLA rule table)
     4 Backlog trend  pages/issues/trend.html
-    5 Responsiveness pages/issues/responsiveness.html (3 tiles)
+    5 Responsiveness pages/issues/responsiveness.html (4 tiles, the same on every repository)
     6 Backlog composition  pages/issues/composition.html
   Unclassified repository:
-    1 Summary        metric strip lg, trend, 3 tiles: Waiting for a reply over 7 days and any age (drill into the list), Open issues
+    1 Summary        metric strip lg, no visual, 3 tiles: Waiting for a reply over 7 days and any age (drill into the list), Open issues
     2 Waiting for a reply, any age (id queue)  pages/issues/waiting.html (list card "iq", facet Over 7 days)
-    3 Backlog trend, 4 Responsiveness (2 tiles), 5 Backlog composition. Response SLAs is omitted; Data notes says why.
+    3 Backlog trend, 4 Responsiveness, 5 Backlog composition. Response SLAs is omitted; Data notes says why.
+  In a strip every tile has one context or none has (4.5).
   Every tile value is the count of the rows its URL selects: the queue rows (pages/issues/rows.html) or data/waiting.html. */ -}}
 {{- $r := partial "data/repo.html" .Params.repo -}}
 {{- $m := dict }}{{ with $r.data.metrics }}{{ if reflect.IsMap . }}{{ $m = . }}{{ end }}{{ end -}}
@@ -23,7 +24,7 @@
 {{- /* page head */ -}}
 {{- $use := slice "metrics" }}{{ if $classified }}{{ $use = $use | append "issues" }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
-{{- $defWait := "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 or more days ago." -}}
+{{- $defWait := "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago." -}}
 {{- $defNet := "Issues opened minus issues closed in the window." -}}
 {{- $defs := slice (dict "term" "Waiting for a reply" "text" $defWait) -}}
 {{- $notes := slice -}}
@@ -35,7 +36,8 @@
     (dict "term" "Ready" "text" "Triaged issues that someone can pick up or is working on, and the backlog.")
     (dict "term" "Waiting on reporter" "text" "A maintainer asked the reporter for a repro or a confirmation and is waiting.")
     (dict "term" "Close candidates" "text" "Issues that are likely resolved, stale or out of scope.")
-    (dict "term" "Detail" "text" "Reporter waiting gives the calendar days since the reporter answered; the tooltip gives the business days.")
+    (dict "term" "Waiting for a reply, any age" "text" "The same issues at any age, from the repository's waiting list: the whole under the Waiting for a reply tile.")
+    (dict "term" "Detail" "text" "Reporter waiting gives the calendar days since the reporter answered; the tooltip gives the business days. It is left out where the Overdue column already shows the Follow-up rule.")
     (dict "term" "Age" "text" "Calendar days since the issue opened.") -}}
   {{- range partial "data/issue-status.html" "*" }}{{ $defs = $defs | append (dict "term" .label "text" .tip) }}{{ end -}}
   {{- range partial "data/sla-rules.html" "issue" }}{{ $defs = $defs | append (dict "term" (printf "%s rule" .name) "text" (printf "%s. Source: %s." .deadline .source)) }}{{ end -}}
@@ -50,7 +52,9 @@
 {{- $defs = $defs | append
   (dict "term" "Net change" "text" $defNet)
   (dict "term" "Median first reply" "text" "Median time to the first maintainer comment, over the issues that got one. Issues never answered are left out.")
+  (dict "term" "90% answered within" "text" "Nine in ten of the answered issues got their first maintainer comment within this time.")
   (dict "term" "Median time to close" "text" "Median time from open to close, over issues closed in the last 90 days.")
+  (dict "term" "90% closed within" "text" "Nine in ten of the issues closed in the last 90 days were closed within this time.")
   (dict "term" "Open issues by last activity" "text" "Open issues by the time since their last comment, label or edit.")
   (dict "term" "Labels on open issues" "text" "The most used labels, leaving out type, priority and status labels. The card is omitted when fewer than four are left.") -}}
 {{- $head := dict "scope" (dict "kind" "issues" "repo" $r.key)
@@ -84,10 +88,11 @@
         "value" (dict "kind" "count" "v" $q.overdue) "context" (dict "kind" "whole" "n" $q.all "of" "open")
         "href" "?view=all&overdue=1#queue" "drill" true)
       (dict "name" "Needs a maintainer" "title" "Open issues whose next step is a maintainer's."
-        "value" (dict "kind" "count" "v" (index $q.views "needs"))
+        "value" (dict "kind" "count" "v" (index $q.views "needs")) "context" (dict "kind" "whole" "n" $q.all "of" "open")
         "href" (cond (eq $q.def "needs") "#queue" "?view=needs#queue") "drill" true)
       (dict "name" "Waiting for a reply" "qual" $over7 "title" $defWait
-        "value" (dict "kind" "count" "v" $q.waiting) "href" "?view=all&waiting=1#queue" "drill" true)
+        "value" (dict "kind" "count" "v" $q.waiting) "context" (dict "kind" "whole" "n" (int $w.any) "of" "waiting, any age")
+        "href" "?view=all&waiting=1#queue" "drill" true)
       (dict "name" "Open issues" "title" "Issues open now, as classified."
         "value" (dict "kind" "count" "v" $q.all) "context" $netCtx "href" "?view=all#queue" "drill" true))) }}
   </div>
@@ -98,22 +103,26 @@
 {{- $rows := slice -}}
 {{- range $w.rows }}{{ $rows = $rows | append (dict "w" (float (.daysWaiting | default 0)) "it" . "name" "" "slug" "") }}{{ end -}}
 {{- $s7 := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.without_response_7d" "days" 91) -}}
+{{- /* every tile has one context (4.5): the dated change when a snapshot about 30 days older exists, else the longest wait; the whole
+     the any-age pile is part of; the fixed pair of Open issues. The any-age count has no stored history, so the strip has no
+     sparklines (one visual per strip, all tiles or none). */ -}}
+{{- $longest := dict "kind" "dur" "unit" "d" "reason" "no-data" -}}
+{{- if ne $w.longest nil }}{{ $longest = dict "kind" "dur" "d" (float $w.longest) "unit" "d" }}{{ end -}}
 {{- $t1 := dict "name" "Waiting for a reply" "qual" $over7 "title" $defWait "value" (dict "kind" "count" "v" $w.over7)
-    "points" (partial "data/week-bins.html" (dict "points" $s7.points "agg" "last" "weeks" 12)).points
+    "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)
     "href" "?over7=1#queue" "drill" true -}}
 {{- if ne $s7.cur nil }}{{ with $s7.cmp30 -}}
   {{- $t1 = merge $t1 (dict "delta" (dict "cur" (float $s7.cur) "prev" (float .value) "metric" "waiting") "context" (dict "kind" "base" "date" .date)) -}}
-{{- end }}{{ end -}}
-{{- $s91 := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open" "days" 91) }}
+{{- end }}{{ end }}
 <section class="v-section v-summary" aria-label="Summary">
   <div class="v-grid">
-    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" (slice
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice
       $t1
       (dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual
         "title" "The same issues at any age: every row of the list on this page."
-        "value" (dict "kind" "count" "v" $w.any) "reason" "no-history" "href" "#queue" "drill" true)
-      (dict "name" "Open issues" "title" "Issues open now." "value" (dict "kind" "count" "v" $iss.open_count) "context" $netCtx
-        "points" (partial "data/week-bins.html" (dict "points" $s91.points "agg" "last" "weeks" 12)).points))) }}
+        "value" (dict "kind" "count" "v" $w.any) "context" (dict "kind" "whole" "n" $iss.open_count "of" "open")
+        "href" "#queue" "drill" true)
+      (dict "name" "Open issues" "title" "Issues open now." "value" (dict "kind" "count" "v" $iss.open_count) "context" $netCtx))) }}
   </div>
 </section>
 <section class="v-section" aria-labelledby="queue">
@@ -125,6 +134,6 @@
 </section>
 {{- end }}
 {{ partial "pages/issues/trend.html" (dict "r" $r) }}
-{{ partial "pages/issues/responsiveness.html" (dict "r" $r "w" $w "any" $classified) }}
+{{ partial "pages/issues/responsiveness.html" (dict "r" $r) }}
 {{ partial "pages/issues/composition.html" (dict "r" $r) }}
 {{- end }}

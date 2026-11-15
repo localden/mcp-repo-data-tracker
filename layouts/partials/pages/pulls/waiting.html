@@ -25,7 +25,7 @@
 {{- if eq (add $nReview $nDrafts) 0 }}
 {{ partial "ui/empty.html" (dict "title" "No PRs waiting for first review" "body" "Every open PR from a contributor has a maintainer review.") }}
 {{- else }}
-{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer review for 7 days or more." "count" $n7) -}}
+{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer review for more than 7 days." "count" $n7) -}}
 {{- if $org -}}
   {{- $facets = $facets | append (dict "key" "repo" "label" "Repository" "title" "The repository the PR belongs to." "kind" "select" "options" ($c.repos | default slice)) -}}
 {{- end }}

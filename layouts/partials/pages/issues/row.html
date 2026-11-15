@@ -13,13 +13,11 @@
   <td class="v-c-detail">
     {{- with $r.detail -}}
       {{- if eq .kind "reporter-waiting" -}}
-        <span class="v-detail">Reporter waiting
-          {{- if ne .days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" .days "unit" "d" "compact" true "title" (partial "fmt/count.html" (dict "v" .bd "noun" "business day")).text) }}{{ end -}}
-        </span>
+        {{- partial "ui/detail.html" (dict "text" "Reporter waiting" "days" .days "title" (partial "fmt/count.html" (dict "v" .bd "noun" "business day")).text) -}}
       {{- else if eq .kind "fix" -}}
-        <span class="v-detail">Fix in {{ partial "ui/value.html" (dict "kind" "id" "v" (printf "#%d" .pr)) }}</span>
+        {{- partial "ui/detail.html" (dict "text" "Fix in" "ref" (printf "#%d" .pr)) -}}
       {{- else if eq .kind "reporter" -}}
-        <span class="v-detail">Waiting on reporter</span>
+        {{- partial "ui/detail.html" (dict "text" "Waiting on reporter") -}}
       {{- end -}}
     {{- end -}}
   </td>

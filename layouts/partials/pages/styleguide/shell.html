@@ -1,18 +1,17 @@
 {{- /* Styleguide sections 6 to 8: header and footer, page head, section and card (design system v4 6). */ -}}
 {{- $asof := .asof -}}
+{{- $y := substr (string $asof) 0 4 -}}
 {{- $repos := slice (dict "text" "All repositories" "href" ("repos/" | relURL) "sep" true) -}}
 {{- range site.Data.repos.repositories }}{{ $repos = $repos | append (dict "text" (.name | default .repo) "href" (printf "repos/%s/" .repo | relURL) "current" (eq .repo "typescript-sdk")) }}{{ end -}}
 <section class="v-section" aria-labelledby="header">
   {{ partial "ui/section-head.html" (dict "id" "header" "title" "Header and footer" "desc" "The header and footer of this page are the specimens at rest. The parts below show the other states.") }}
   <div class="v-grid">
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Brand") }}<div class="v-card-body"><div class="v-sg-stack">
-      <div class="v-sg-frame"><span class="v-brand">{{ if fileExists "static/brand/visr-mark-64.png" }}<img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}" width="24" height="24" alt="">{{ end }}<span class="v-brand-word">{{ site.Title }}</span></span></div>
-      <div class="v-sg-frame is-bg"><span class="v-brand"><span class="v-brand-word">{{ site.Title }}</span></span></div>
-    </div><p class="v-sg-cap">header.html brand slot: the mark image is rendered only when the file exists; the wordmark alone is correct</p></div></article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Nav items") }}<div class="v-card-body">
-      <div class="v-sg-row"><a class="v-nav-item" href="#header">Overview</a><a class="v-nav-item" href="#header" aria-current="page">Issues</a><span data-specimen-state="hover"><a class="v-nav-item" href="#header">PRs</a></span><span data-specimen-state="focus"><a class="v-nav-item" href="#header">SEPs</a></span></div>
-      <p class="v-sg-cap">a.v-nav-item: rest, current, hover, focus</p>
-    </div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Brand and nav items") }}<div class="v-card-body"><div class="v-sg-specs">
+      <div class="v-sg-spec"><div class="v-sg-frame"><span class="v-brand">{{ partial "ui/brand-mark.html" (dict "size" 24 "standin" true) }}<span class="v-brand-word">{{ site.Title }}</span></span></div><p class="v-sg-cap">ui/brand-mark.html and the wordmark, on the header surface (this theme). Until the mark files exist the favicon stands in here</p></div>
+      <div class="v-sg-spec"><div class="v-sg-frame"><span class="v-brand"><span class="v-brand-word">{{ site.Title }}</span></span></div><p class="v-sg-cap">the wordmark alone: correct with no image</p></div>
+      <div class="v-sg-spec"><div class="v-sg-frame"><span class="v-footer-brand">{{ partial "ui/brand-mark.html" (dict "size" 20 "standin" true) }}<span>{{ site.Title }}</span></span></div><p class="v-sg-cap">the footer brand, 20px</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row"><a class="v-nav-item" href="#header">Overview</a><a class="v-nav-item" href="#header" aria-current="page">Issues</a><span data-specimen-state="hover"><a class="v-nav-item" href="#header">PRs</a></span><span data-specimen-state="focus"><a class="v-nav-item" href="#header">SEPs</a></span></div><p class="v-sg-cap">a.v-nav-item: rest, current, hover, focus</p></div>
+    </div></div></article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Repositories menu, open and current") }}<div class="v-card-body"><div class="v-sg-pop">
       {{ partial "ui/menu.html" (dict "id" "sg-nav-repos" "variant" "nav" "label" "Repositories" "current" true "open" true "items" $repos) }}
     </div><p class="v-sg-cap">ui/menu.html variant nav: the open state is neutral, never accent; the current row has the check</p></div></article>
@@ -35,17 +34,17 @@
           "meta" (slice (dict "icon" "github" "text" "modelcontextprotocol/typescript-sdk" "href" "https://github.com/modelcontextprotocol/typescript-sdk" "site" "GitHub")
                         (dict "icon" "package" "text" "npm @modelcontextprotocol/sdk" "href" "https://www.npmjs.com/package/@modelcontextprotocol/sdk" "site" "npm"))
           "updated" (printf "%sT08:29:00Z" $asof) "note" (dict "since" $asof)) }}
-      <p class="v-sg-cap">a repository page: scope switcher closed, description, three meta items and the tracking note</p>
+      <p class="v-sg-cap">a repository page: scope switcher closed, description, three meta items and the tracking entry, a meta item like its neighbours</p>
     </div></article>
     <article class="v-card v-span-12"><div class="v-card-body">
       {{ partial "ui/page-head.html" (dict "id" "sg-ph-dl" "eyebrow" "Downloads" "title" "SDK packages" "updated" (printf "%sT08:29:00Z" $asof)
           "meta" (slice (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $asof)))
           "callout" (dict "title" "Data gap" "items" (slice
-            (dict "text" "No GitHub data from {range} (collection outage). Charts show the gap." "from" "2024-10-08" "to" "2024-11-09")
-            (dict "text" "PyPI data is complete through {date}." "date" "2024-11-09")))
-          "defs" (slice (dict "term" "Waiting for a reply" "text" "Open issues by a non-maintainer with no maintainer comment, older than seven days.")
+            (dict "text" "No GitHub data from {range} (collection outage). Charts show the gap." "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y))
+            (dict "text" "PyPI data is complete through {date}." "date" (printf "%s-11-09" $y))))
+          "defs" (slice (dict "term" "Waiting for a reply" "text" "Open issues by a non-maintainer with no maintainer comment, opened more than 7 days ago.")
                         (dict "term" "Complete through" "text" "The last complete day of registry data."))
-          "facts" (slice (dict "label" "Tracking since" "value" (dict "kind" "date" "d" "2024-01-15")) (dict "label" "Stars" "value" (dict "kind" "count" "v" 13765)))
+          "facts" (slice (dict "label" "Tracking since" "value" (dict "kind" "date" "d" (printf "%s-01-15" $y))) (dict "label" "Stars" "value" (dict "kind" "count" "v" 13765)))
           "notes_open" true) }}
       <p class="v-sg-cap">Downloads meta with Complete through, a callout of two items, and Data notes open with Definitions and Sources</p>
     </div></article>

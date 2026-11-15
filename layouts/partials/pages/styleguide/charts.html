@@ -1,5 +1,6 @@
 {{- /* Styleguide sections 20 to 23: charts, sparkline and bars and distribution, text primitives, the redirect stub (design system v4 6). */ -}}
 {{- $asof := .asof -}}
+{{- $y := substr (string $asof) 0 4 -}}
 {{- $day := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 240 "slope" 0.3 "gapFrom" 118 "gapTo" 150) -}}
 {{- $dayB := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 320 "slope" 0.2) -}}
 {{- $wait := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 150 "slope" 0.25 "gapFrom" 60 "gapTo" 75) -}}
@@ -26,12 +27,22 @@
         "from" $day.from "to" $day.to "series" (slice (dict "label" "Open PRs" "role" "accent" "points" $dayB.points))) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-two" "title" "Issues" "metric" "issues" "metric_one" "issue" "scope" "Fixture" "class" "v-span-12" "pin" 68
         "series" (slice (dict "label" "Waiting over 7 days" "role" "accent" "points" $wait.points) (dict "label" "Open" "role" "context" "points" $dayB.points))) }}
+    {{- /* 8 + 4: a flow chart whose readout is the plotted series (latest column, change, range, base), pinned to show the tooltip
+         with its change; every other fact about the metric is the stat list beside it */}}
+    {{- $wkLast := index $wk.points (sub (len $wk.points) 1) }}{{ $wkPrev := index $wk.points (sub (len $wk.points) 2) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-dl" "title" "Weekly downloads" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 26))).cadence
-        "metric" "downloads" "metric_one" "download" "scope" "Fixture" "unit" "downloads" "gran" "week" "kind" "column" "class" "v-span-12"
+        "metric" "downloads" "metric_one" "download" "scope" "Fixture" "unit" "downloads" "gran" "week" "kind" "column" "class" "v-span-8" "pin" 18
         "series" (slice (dict "label" "Downloads" "role" "accent" "points" $wk.points))
         "readout" (slice
-          (dict "label" "Last 7 days" "key" "accent" "value" (dict "kind" "volume" "v" 88208812) "delta" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") "range" (dict "from" "2024-11-03" "to" "2024-11-09") "base" "prior7")
-          (dict "label" "Week to date" "value" (dict "kind" "volume" "v" 58700000) "note" (dict "part" 4 "whole" 7 "noun" "day")))) }}
+          (dict "label" (partial "fmt/label.html" (dict "window" "latest-week")).window "key" "accent" "value" (dict "kind" "volume" "v" $wkLast.value)
+                "delta" (dict "cur" $wkLast.value "prev" $wkPrev.value "unit" "percent" "metric" "downloads")
+                "range" (dict "from" $wkLast.date "to" (((time.AsTime $wkLast.date).AddDate 0 0 6).Format "2006-01-02")) "base" "prior7"))) }}
+    {{ partial "ui/stat-list.html" (dict "title" "Download totals" "rows" (slice
+      (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window "value" (dict "kind" "volume" "v" 88208812))
+      (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window "value" (dict "kind" "volume" "v" 371000000))
+      (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "detail" (dict "note" (dict "part" 4 "whole" 7 "noun" "day")) "value" (dict "kind" "volume" "v" 58700000))
+      (dict "label" "Lifetime" "detail" (dict "note" (dict "from" (printf "%s-01-15" $y))) "value" (dict "kind" "volume" "v" 2010000000))
+      (dict "label" "Complete through" "value" (dict "kind" "date" "d" $asof)))) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-commits" "title" "Commits per week" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 12))).cadence
         "metric" "commits" "metric_one" "commit" "scope" "Fixture" "gran" "week" "kind" "column" "class" "v-span-12" "avg" 6.4
         "series" (slice (dict "label" "Commits" "role" "accent" "points" $commits.points))) }}
@@ -50,17 +61,22 @@
 <section class="v-section" aria-labelledby="sparkline">
   {{ partial "ui/section-head.html" (dict "id" "sparkline" "title" "Sparkline, bars, distribution" "desc" "One height and one colour for sparklines. A bar always sits beside its number.") }}
   <div class="v-grid">
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Sparkline, tile size") }}<div class="v-card-body"><div class="v-sg-row">
-      {{- range slice (dict "p" $w12 "k" "level") (dict "p" $w12gap "k" "level") (dict "p" $w12 "k" "flow") (dict "p" $w12gap "k" "flow") (dict "p" $w12short "k" "level") }}
-      <div class="v-sg-cell">{{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "tile") }}</div>
-      {{- end }}
-      <div class="v-sg-cell">{{ partial "ui/spark.html" (dict "points" slice "size" "tile" "reason" "no-history") }}</div>
-    </div><p class="v-sg-cap">ui/spark.html: level, level with a gap, flow, flow with missing weeks, empty for short history, empty for no history</p></div></article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Sparkline, cell size") }}<div class="v-card-body"><div class="v-sg-row">
-      {{- range slice (dict "p" $w12 "k" "level") (dict "p" $w12lead "k" "level") (dict "p" $w12flat "k" "level") (dict "p" $w12 "k" "flow") (dict "p" $w12lead "k" "flow") (dict "p" $w12short "k" "flow") }}
-      {{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "cell") }}
-      {{- end }}
-    </div><p class="v-sg-cap">level, a leading gap, flat data, flow, flow with a leading gap, empty</p></div></article>
+    {{- /* one card for both sizes, each state captioned. A gap is a strip on the baseline, never a full-height block */}}
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Sparkline") }}<div class="v-card-body">
+      <div class="v-sg-spec"><div class="v-sg-specs">
+        {{- range slice (dict "p" $w12 "k" "level" "c" "tile, level") (dict "p" $w12gap "k" "level" "c" "tile, level with a gap") (dict "p" $w12 "k" "flow" "c" "tile, flow") (dict "p" $w12gap "k" "flow" "c" "tile, flow with missing weeks") }}
+        <div class="v-sg-spec">{{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "tile") }}<p class="v-sg-cap">{{ .c }}</p></div>
+        {{- end }}
+      </div></div>
+      <div class="v-sg-spec"><div class="v-sg-specs">
+        {{- range slice (dict "p" $w12 "k" "level" "c" "cell, level") (dict "p" $w12gap "k" "level" "c" "cell, a gap") (dict "p" $w12lead "k" "level" "c" "cell, a leading gap") (dict "p" $w12flat "k" "level" "c" "cell, flat data")
+            (dict "p" $w12 "k" "flow" "c" "cell, flow") (dict "p" $w12lead "k" "flow" "c" "cell, flow with a leading gap") (dict "p" $w12short "k" "level" "c" "cell, empty: short history") }}
+        <div class="v-sg-spec">{{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "cell") }}<p class="v-sg-cap">{{ .c }}</p></div>
+        {{- end }}
+        <div class="v-sg-spec">{{ partial "ui/spark.html" (dict "points" slice "size" "cell" "reason" "no-history") }}<p class="v-sg-cap">cell, empty: no history</p></div>
+      </div></div>
+      <p class="v-sg-cap">ui/spark.html. The empty baseline appears in table cells only: a metric strip draws sparklines in every tile or in none.</p>
+    </div></article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Bars") }}
       <table class="v-dt is-rank" aria-label="Bars, fixture">
         <colgroup><col><col class="v-col-bar"><col class="v-col-bar"></colgroup>
@@ -114,7 +130,7 @@
           <tr><th scope="row">Path, directory</th><td>{{ partial "ui/value.html" (dict "kind" "path" "v" "src/server/auth" "dir" true) }}</td></tr>
           <tr><th scope="row">Path, root</th><td>{{ partial "ui/value.html" (dict "kind" "path" "v" "") }}</td></tr>
           <tr><th scope="row">Version</th><td>{{ partial "ui/value.html" (dict "kind" "ver" "v" "1.30.0") }} {{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}</td></tr>
-          <tr><th scope="row">Date, range, timestamp</th><td>{{ partial "ui/value.html" (dict "kind" "date" "d" $asof) }} {{ partial "ui/value.html" (dict "kind" "range" "from" "2024-10-08" "to" "2024-11-09") }} {{ partial "ui/value.html" (dict "kind" "ts" "t" (printf "%sT08:29:00Z" $asof)) }}</td></tr>
+          <tr><th scope="row">Date, range, timestamp</th><td>{{ partial "ui/value.html" (dict "kind" "date" "d" $asof) }} {{ partial "ui/value.html" (dict "kind" "range" "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y)) }} {{ partial "ui/value.html" (dict "kind" "ts" "t" (printf "%sT08:29:00Z" $asof)) }}</td></tr>
           <tr><th scope="row">Cell link and quiet link</th><td><a class="v-cell-link" href="#text">{{ partial "ui/value.html" (dict "kind" "count" "v" 209) }}</a> <a class="v-link-quiet" href="#text">SEP-1913</a></td></tr>
           <tr><th scope="row">Author and repository</th><td><span class="v-who">LucaButBoring</span> <span class="v-repo">TypeScript SDK</span> <span class="v-label">Label</span> <span class="v-caption">Caption</span></td></tr>
         </tbody>

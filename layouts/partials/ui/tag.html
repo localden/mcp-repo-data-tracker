@@ -1,11 +1,14 @@
-{{- /* Tag (design system v4 4.8): a GitHub label or a derived attribute. A 20px outlined pill; never a link, no states.
+{{- /* Tag (design system v4 4.8): a GitHub label or a derived attribute. A 20px pill; never a link, no states.
+  Two families, so a reader can tell labelling from classification:
+    outlined  what a person applied on GitHub: label, prio, and the "+N" that folds labels
+    filled    what VISR derived: role, attr, flag
   Call with a string, or a dict {text, kind, title}. kind:
-    label (default)  a GitHub label, verbatim (at most 8rem wide, the full text in title)
-    role             Maintainer, Bot, Contributor
+    label (default)  a GitHub label, verbatim (at most 8rem wide below 64rem, 16rem from 64rem; the full text in title)
     prio             P0 to P3; P0 and P1 take the strong edge
-    flag             a 12px circle-alert before the text ("Type conflict", the conflicting labels in title)
-    attr             a derived attribute ("Touches auth", "SEP draft", "Latest", "Duplicate of #1813", "SEP-1730", "Team target")
     more             "+2", the folded tags named in title
+    role             Maintainer, Bot (ui/row-item.html draws no tag for the default role, Contributor)
+    attr             a derived attribute ("Touches auth", "SEP draft", "Latest", "Duplicate of #1813", "SEP-1730", "Team target")
+    flag             a 12px circle-alert before the text ("Type conflict", the conflicting labels in title)
   A slice of either renders each tag inside one span.v-tags. Empty text renders nothing. */ -}}
 {{- $c := . -}}
 {{- if reflect.IsSlice $c -}}

@@ -48,14 +48,14 @@
     --shell-max: 76rem;
     /* fixed sizes */
     --header-h: 56px; --sticky-top: 0px;
-    --ctl-h: 44px; --ctl-h-sm: 36px; --ctl-h-xs: 36px; --menu-row: 48px;
+    --ctl-h: 44px; --ctl-h-sm: 36px; --ctl-h-xs: 24px; --menu-row: 48px;
     --views-h: 44px; --bar-h: 52px; --facets-h: 44px; --band-h: 32px; --th-h: 40px;
     --row-work: 64px; --row: 48px; --row-sub: 56px; --row-compact: 36px; --row-group: 36px; --stat-row-max: 72px;
     --foot-h: 48px; --card-head-h: 56px; --card-head-h-2: 72px;
     --plot-h: 184px; --panel-h: 96px; --spark-h: 24px; --spark-w: 80px; --meter-h: 6px; --meter-w: 96px; --footer-h: 64px;
     /* column widths */
-    --col-repo: 10rem; --col-status: 10.5rem; --col-detail: 12rem; --col-who: 9rem; --col-sla: 12rem; --col-source: 8rem;
-    --col-deadline: 14rem; --col-date: 6.5rem; --col-spark: 6.5rem; --col-bar: 13rem;
+    --col-name: 16rem; --col-repo: 10rem; --col-status: 10.5rem; --col-detail: 14rem; --col-who: 9rem; --col-sla: 11.5rem; --col-source: 8rem;
+    --col-deadline: 15.5rem; --col-date: 6.5rem; --col-spark: 7rem; --col-bar: 13rem; --col-period: 12rem;
     --col-num-xs: 4.5rem; --col-num-sm: 6rem; --col-num: 7.5rem; --col-num-lg: 9rem; --col-num-xl: 11rem;
     /* radii */
     --r-card: 12px; --r-pop: 10px; --r-ctl: 8px; --r-in: 6px; --r-pill: 999px; --r-bar: 3px;
@@ -96,7 +96,7 @@
     --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
     --series-context: #8a8a94;
     --series-neutral: #a1a1aa;
-    --ord-1: #4f93e3; --ord-2: #2a78d6; --ord-3: #1c5cab; --ord-4: #0f3a73;
+    --ord-1: #4f93e3; --ord-2: #2470cf; --ord-3: #1a549c; --ord-4: #0f3a73;
     --gap: rgba(24, 24, 27, 0.05);
     --chart-grid: var(--border-subtle);
     --chart-axis: var(--border);
@@ -111,7 +111,7 @@
   @media (width >= 64rem) { :root { --gutter: 32px; --stack-section: 56px; --grid-gap: 24px; --stack-footer: 72px; } }
   /* compact controls only on a wide screen with a fine pointer */
   @media (width >= 40rem) and (pointer: fine) {
-    :root { --ctl-h: 32px; --ctl-h-sm: 28px; --ctl-h-xs: 24px; --menu-row: 32px; --fs-input: var(--fs-14); }
+    :root { --ctl-h: 32px; --ctl-h-sm: 28px; --menu-row: 32px; --fs-input: var(--fs-14); }
   }
 
   /* dark tokens: system preference unless a light choice is stored, or an explicit dark choice. The two blocks are identical. */
@@ -159,7 +159,7 @@
   body {
     font-family: var(--font-sans);
     font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 400; letter-spacing: 0;
-    font-variant-numeric: tabular-nums lining-nums;   /* the only place numerals are set */
+    font-variant-numeric: lining-nums;                /* proportional text; numeric value components opt in to tabular figures (.v-val) */
     font-variant-ligatures: no-contextual;            /* titles are verbatim GitHub text */
     font-kerning: normal;
     font-synthesis: none;
@@ -205,6 +205,8 @@
   .v-id { @apply type-label; color: var(--text-2); white-space: nowrap; }
   .v-who { @apply type-caption; display: inline-block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     vertical-align: bottom; color: var(--text-2); }
+  /* a handle that is a cell's value (the Sponsor column) is body text, not row meta */
+  .v-c-who > .v-who { @apply type-body; max-width: 100%; vertical-align: middle; color: var(--text); }
   .v-repo { @apply type-caption; color: var(--text-2); white-space: nowrap; }
   .v-ver { @apply type-medium; color: var(--text); white-space: nowrap; }
   .v-lines { @apply type-caption; color: var(--text-2); white-space: nowrap; }
@@ -226,8 +228,12 @@
 
   /* values (v4 3.3, 3.4) */
   .v-val { white-space: nowrap; }
-  .v-val.is-na::before { content: ""; display: inline-block; width: 8px; height: 1.5px; vertical-align: middle; border-radius: 1px;
-    background: var(--text-3); }
+  /* tabular figures on numeric value components only: Inter's tnum also widens hyphens, commas and periods, so running text,
+     ids, handles, tags, paths, dates and ranges stay proportional (v4 2.2) */
+  .v-val:not([data-kind="date"], [data-kind="range"], [data-kind="ts"]), .v-delta, .v-count, .v-tip-value, .v-filter-n, .v-list-n, .v-menu-count {
+    font-variant-numeric: tabular-nums lining-nums; }
+  /* the empty mark: whole pixels, so it has one weight in every row */
+  .v-val.is-na::before { content: ""; display: inline-block; width: 8px; height: 2px; vertical-align: 4px; background: var(--text-3); }
   td .v-val.is-zero { color: var(--text-3); }
   .v-unit { color: var(--text-2); }
   .v-over .v-unit { color: inherit; }
@@ -263,26 +269,36 @@
   .v-tag { @apply type-label; display: inline-block; max-width: 14rem; padding: var(--s-05) var(--s-2); overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap; vertical-align: middle; border-radius: var(--r-pill); color: var(--text-2);
     box-shadow: inset 0 0 0 1px var(--border-strong); }
+  /* two families: what a person applied on GitHub is outlined (label, prio, +N); what VISR derived is filled (role, attr, flag) */
   .v-tag.is-label { max-width: 8rem; }
+  @media (width >= 64rem) { .v-tag.is-label { max-width: 16rem; } }
   .v-tag.is-strong { color: var(--text); box-shadow: inset 0 0 0 1px var(--text-3); }
   .v-tag.is-more { color: var(--text-3); }
+  .v-tag:is(.is-role, .is-attr, .is-flag) { color: var(--text); background: var(--fill-neutral); box-shadow: none; }
   .v-tag.is-flag > .v-icon { margin-right: var(--s-1); color: var(--warning); }
 
   .v-count { @apply type-label; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px;
     padding: 0 calc(var(--s-1) + var(--s-05)); border-radius: var(--r-pill); white-space: nowrap; color: var(--text-2); background: var(--fill-neutral); }
   .v-count.is-danger { color: var(--danger); background: var(--danger-soft); }
 
-  .v-note { @apply type-caption; display: inline-flex; align-items: center; gap: var(--s-1); white-space: nowrap; color: var(--text-2); }
-  .v-note > .v-icon { color: var(--text-3); }
+  /* the text gives the baseline, the icon is centred on it, so a note lines up with the label or value beside it */
+  .v-note { @apply type-caption; display: inline-flex; align-items: baseline; gap: var(--s-1); white-space: nowrap; color: var(--text-2); }
+  .v-note > .v-icon { align-self: center; color: var(--text-3); }
   .v-note.is-info > .v-icon { color: var(--text-3); }
   .v-note.is-warning > .v-icon { color: var(--warning); }
 
+  /* callout: a quiet notice. Card surface, a 3px warning lead edge and the warning icon; one item per line */
   .v-callout { display: flex; align-items: flex-start; gap: var(--s-3); min-height: 40px; padding: var(--s-2) var(--s-4);
-    border: 1px solid var(--warning-border); border-radius: var(--r-ctl); background: var(--warning-soft); }
+    border: 1px solid var(--border); border-radius: var(--r-ctl); background: var(--surface); box-shadow: inset 3px 0 0 var(--warning); }
   .v-callout > .v-icon { margin-top: var(--s-05); color: var(--warning); }
-  .v-callout-body { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s-3); row-gap: var(--s-1); min-width: 0; padding: var(--s-05) 0; }
+  .v-callout-body { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--s-3); row-gap: var(--s-1); min-width: 0; padding: var(--s-05) 0; }
   .v-callout-title { @apply type-strong; color: var(--text); }
-  .v-callout-item { @apply type-body; color: var(--text); text-wrap: pretty; }
+  .v-callout-item { @apply type-body; color: var(--text-2); text-wrap: pretty; }
+  @media (width >= 40rem) {
+    .v-callout-body:has(> .v-callout-title) { grid-template-columns: auto minmax(0, 1fr); }
+    .v-callout-title { grid-column: 1; grid-row: 1; }
+    .v-callout-title ~ .v-callout-item { grid-column: 2; }
+  }
 
   /* ------------------------------------------------------------ button, link-action (v4 4.9) */
   .v-btn { @apply type-medium; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); flex: none; height: var(--ctl-h);
@@ -296,7 +312,10 @@
   .v-btn[aria-expanded="true"] { background-image: linear-gradient(var(--hover), var(--hover)); border-color: var(--text-3); }
   .v-btn[aria-pressed="true"] { background-color: var(--accent-soft); border-color: var(--accent-border); }
   .v-btn-sm { height: var(--ctl-h-sm); }
-  .v-btn-xs { height: var(--ctl-h-xs); padding: 0 var(--s-2); gap: var(--s-1); border-radius: var(--r-in); }
+  /* in a row or band: label role and 24px at every width, so it never outweighs the 12px text beside it; touch gets a 44px hit area */
+  .v-btn-xs { @apply type-label; position: relative; height: var(--ctl-h-xs); padding: 0 var(--s-2); gap: var(--s-1); border-radius: var(--r-in); }
+  .v-tags > .v-btn-xs { height: 20px; padding: 0 var(--s-1); }
+  @media (width < 40rem), (pointer: coarse) { .v-btn-xs::after { content: ""; position: absolute; inset: -10px 0; } }
   .v-btn.is-ghost { color: var(--text-2); background-color: transparent; border-color: transparent; }
   .v-btn.is-ghost[aria-expanded="true"] { border-color: transparent; }
   .v-btn.is-icon { width: var(--ctl-h); padding: 0; }
@@ -340,6 +359,8 @@
   /* phone: the Repositories menu is a bordered 44px button in row 1 */
   .v-nav-repos .v-nav-item { height: 44px; padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); background-color: var(--surface); }
   .v-nav-repos .v-nav-item[aria-expanded="true"] { background-image: linear-gradient(var(--hover), var(--hover)); border-color: var(--text-3); }
+  /* phone: the current Repositories button takes the selected-control look; an underline would run into its rounded corners */
+  @media (width < 40rem) { .v-nav-repos .v-nav-item[aria-current] { box-shadow: none; background-color: var(--accent-soft); border-color: var(--accent-border); } }
   @media (width >= 40rem) {
     .v-header { position: sticky; top: 0; z-index: 50; }
     .v-header-row { display: flex; align-items: center; height: var(--header-h); column-gap: 0; }
@@ -359,7 +380,7 @@
   /* ------------------------------------------------------------ menu (v4 4.9) */
   .v-menu-wrap { position: relative; }
   .v-menu { position: absolute; top: calc(100% + var(--s-1)); left: 0; z-index: 60; min-width: 13rem; width: max-content;
-    max-width: min(20rem, calc(100vw - 32px)); max-height: min(70vh, 22rem); overflow-y: auto; padding: var(--s-1); text-align: left;
+    max-width: min(20rem, calc(100vw - 32px)); max-height: min(30rem, calc(100dvh - 8rem)); overflow-y: auto; padding: var(--s-1); text-align: left;
     background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: var(--r-pop); box-shadow: var(--shadow-lg);
     animation: v-fade 100ms ease-out; }
   .v-menu.is-end { left: auto; right: 0; }
@@ -379,7 +400,7 @@
   /* phone: a menu spans its positioned container (header row, page head, list card) and keeps its place under the trigger */
   @media (width < 40rem) {
     .v-menu-wrap { position: static; }
-    .v-menu, .v-menu.is-end { top: auto; left: var(--gutter); right: var(--gutter); width: auto; max-width: none; margin-top: var(--s-1); }
+    .v-menu, .v-menu.is-end { top: auto; left: var(--gutter); right: var(--gutter); width: auto; max-width: none; max-height: calc(100dvh - 8rem); margin-top: var(--s-1); }
     .v-page-head .v-menu, .v-page-head .v-menu.is-end { left: 0; right: 0; }
     .v-card .v-menu, .v-card .v-menu.is-end { left: var(--card-pad); right: var(--card-pad); }
   }
@@ -428,14 +449,24 @@
   }
 
   /* Data notes: a full-width card under the head, 8 + 4 */
-  .v-notes { grid-area: notes; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-5) var(--grid-gap); margin-top: var(--s-4); padding: var(--card-pad); }
+  /* (.v-card.v-notes, so the grid wins over the card's flex column) */
+  .v-card.v-notes { grid-area: notes; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-5) var(--grid-gap); margin-top: var(--s-4); padding: var(--card-pad); }
   .v-notes-col { grid-column: span 12; min-width: 0; }
-  @media (width >= 64rem) { .v-notes-col.is-defs { grid-column: span 8; } .v-notes-col.is-sources { grid-column: span 4; } }
   .v-notes-h { @apply type-label; margin-bottom: var(--s-3); color: var(--text-2); }
-  .v-defs > div + div { margin-top: var(--s-3); }
+  .v-defs { margin-bottom: calc(-1 * var(--s-3)); }
+  .v-defs > div { padding-bottom: var(--s-3); break-inside: avoid; }
+  .v-defs + .v-prose { margin-top: var(--s-3); }
   .v-defs dt { @apply type-medium; color: var(--text); }
   .v-defs dd { @apply type-body; max-width: var(--measure); color: var(--text-2); text-wrap: pretty; }
-  .v-kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-4); row-gap: var(--s-2); }
+  @media (width >= 64rem) {
+    /* definitions fill the 8-column cell in two columns; sources sit beside them behind a rule */
+    .v-notes-col.is-defs { grid-column: span 8; }
+    .v-notes-col.is-defs:only-child { grid-column: span 12; }
+    .v-notes-col.is-sources { grid-column: span 4; align-self: start; }
+    .v-notes-col.is-defs + .v-notes-col.is-sources { align-self: stretch; padding-left: var(--grid-gap); border-left: 1px solid var(--border-subtle); }
+    .v-defs { columns: 2; column-gap: var(--grid-gap); }
+  }
+  .v-kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-4); row-gap: var(--s-2); max-width: 28rem; }
   .v-kv > div { display: contents; }
   .v-kv dt { @apply type-body; color: var(--text-2); }
   .v-kv dd { @apply type-body; text-align: right; color: var(--text); }
@@ -484,26 +515,34 @@
   .v-card-pending { @apply type-body; display: flex; align-items: center; gap: var(--s-2); height: 48px; padding: 0 var(--card-pad); color: var(--text-2);
     background: var(--surface-2); border-top: 1px solid var(--border); }
   .v-card-pending > .v-icon { color: var(--text-3); }
+  .v-card.is-pending > .v-card-pending { margin-top: auto; }   /* the bar always closes the card, whatever height a pair gives it */
 
   /* ------------------------------------------------------------ metric strip (v4 4.5) */
   .v-card.v-metrics { padding: 0; }
   .v-card.is-statlist, .v-trellis { min-width: 0; }
   .v-metrics-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .v-metric { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label value" "context value";
-    align-content: center; column-gap: var(--s-4); row-gap: var(--s-1); min-height: 64px; padding: var(--s-3) var(--s-4); }
+  /* phone: a row. Label over delta and context on the left, the value on the right, the link arrow in a fixed column after it */
+  .v-metric { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label label value" "delta context value";
+    align-content: center; column-gap: 0; row-gap: 0; min-height: 64px; padding: var(--s-3) var(--s-4); }
+  .v-metrics-grid[data-go] > .v-metric { padding-right: var(--s-10); }
   .v-metric + .v-metric { border-top: 1px solid var(--border-subtle); }
-  .v-metric-label { @apply type-label; grid-area: label; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s-1); min-width: 0; color: var(--text-2); text-wrap: balance; }
+  .v-metric-label { @apply type-body; grid-area: label; min-width: 0; padding-right: var(--s-4); color: var(--text-2); text-wrap: balance; }
   .v-metric-name { color: var(--text-2); }
   .v-metric-qual { color: var(--text-3); white-space: nowrap; }
-  .v-metric-go { margin-left: auto; align-self: center; color: var(--text-3); }
-  .v-metric-value { grid-area: value; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: var(--s-1); color: var(--text); }
-  .v-metric-value > .v-val { @apply type-display; }
+  .v-metric-go { position: absolute; top: 50%; right: var(--s-4); transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+  .v-metric-value { display: contents; color: var(--text); }
+  .v-metric-value > .v-val { @apply type-display; grid-area: value; align-self: center; justify-self: end; }
+  .v-metric-value > .v-delta { grid-area: delta; align-self: center; margin-top: var(--s-1); margin-right: var(--s-2); }
   [data-size="md"] > .v-metric > .v-metric-value > .v-val { @apply type-heading; }
+  .v-metric-value > .v-val.is-na::before { width: 20px; vertical-align: 8px; }
+  [data-size="md"] > .v-metric > .v-metric-value > .v-val.is-na::before { width: 14px; vertical-align: 5px; }
   .v-metric-value > .v-val > .v-unit, .v-metric-value > .v-val > span > .v-unit { font-size: var(--fs-16); line-height: var(--lh-16); letter-spacing: var(--ls-16); margin-left: var(--s-05); }
   [data-size="md"] > .v-metric > .v-metric-value .v-unit, .v-readout-value .v-unit { font-size: var(--fs-14); line-height: var(--lh-14); letter-spacing: 0; margin-left: 0; }
   .v-metric.is-breach > .v-metric-value > .v-val:not(.is-zero) { color: var(--danger); }
   .v-metric.is-breach > .v-metric-value > .v-val:not(.is-zero) .v-unit { color: inherit; }
-  .v-metric-context { @apply type-caption; grid-area: context; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s-2); row-gap: var(--s-05); min-height: 16px; color: var(--text-3); }
+  .v-metric-context { @apply type-caption; grid-area: context; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s-2); row-gap: var(--s-05); min-height: 20px;
+    margin-top: var(--s-1); padding-right: var(--s-4); color: var(--text-3); }
+  .v-metric-context:empty { display: none; }
   .v-metric-visual { display: none; }
   .v-metric-link { color: inherit; text-decoration: none; }
   .v-metric-link::after { content: ""; position: absolute; inset: 0; }
@@ -515,18 +554,24 @@
     .v-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
     .v-metrics-grid:is([data-n="2"], [data-n="4"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .v-metrics-grid[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .v-metric { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; grid-row: span 4; grid-template-rows: subgrid; align-content: start; row-gap: 0; column-gap: 0;
+    .v-metric, .v-metrics-grid[data-go] > .v-metric { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; grid-row: span 4; grid-template-rows: subgrid; align-content: start;
       min-height: 0; padding: var(--s-5); }
-    [data-size="md"] > .v-metric { padding: var(--s-4) var(--s-5); }
+    [data-size="md"] > .v-metric, .v-metrics-grid[data-go][data-size="md"] > .v-metric { padding: var(--s-4) var(--s-5); }
     .v-metric + .v-metric { border-top: 0; border-left: 1px solid var(--border-subtle); }
     .v-metrics-grid[data-n="4"] > .v-metric:nth-child(odd) { border-left: 0; }
     .v-metrics-grid[data-n="4"] > .v-metric:nth-child(n + 3) { border-top: 1px solid var(--border-subtle); }
-    .v-metric-label, .v-metric-value, .v-metric-context { grid-area: auto; }
-    .v-metric-label { flex-wrap: nowrap; }
-    .v-metric-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
-    .v-metric-value { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: var(--s-2); margin-top: var(--s-2); }
+    .v-metric-label, .v-metric-context, .v-metric-value > .v-val, .v-metric-value > .v-delta { grid-area: auto; }
+    /* the label clamps as one block, so the qualifier follows the last word of the name; the arrow keeps the tile's top right corner */
+    .v-metric-label { @apply type-label; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; padding-right: 0; }
+    .v-metric:has(> .v-metric-go) > .v-metric-label { padding-right: var(--s-6); }
+    .v-metric-go { top: calc(var(--s-5) + 1px); right: var(--s-5); transform: none; }
+    [data-size="md"] > .v-metric > .v-metric-go { top: calc(var(--s-4) + 1px); }
+    .v-metric-value { display: flex; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: var(--s-2); margin-top: var(--s-2); }
+    .v-metric-value > .v-val { align-self: auto; justify-self: auto; }
+    .v-metric-value > .v-delta { align-self: auto; margin: 0; }
     [data-size="md"] > .v-metric > .v-metric-value { margin-top: var(--s-1); }
-    .v-metric-context { margin-top: var(--s-1); }
+    .v-metric-context { min-height: 16px; padding-right: 0; }
+    .v-metric-context:empty { display: flex; }
     .v-metric-visual { display: block; margin-top: var(--s-4); }
     [data-size="md"] > .v-metric > .v-metric-visual { margin-top: var(--s-3); }
   }
@@ -543,7 +588,7 @@
     border-top: 1px solid var(--border-subtle); }
   .v-statlist dt { @apply type-body; min-width: 0; color: var(--text-2); text-wrap: balance; }
   .v-statlist dd { @apply type-strong; display: flex; align-items: center; gap: var(--s-2); flex: none; white-space: nowrap; color: var(--text); }
-  .v-statlist dd > .v-link-quiet, .v-statlist dd > time { @apply type-body; }
+  .v-statlist dd > .v-link-quiet { @apply type-body; }   /* only the detail link is body; a date that is the row's value is strong */
   @media (width >= 40rem) and (width < 64rem) {
     .v-statlist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .v-statlist > div:nth-child(even) { border-left: 1px solid var(--border-subtle); }
@@ -555,22 +600,26 @@
 
   /* ------------------------------------------------------------ bars and distribution (v4 4.21) */
   .v-meter { display: block; height: var(--meter-h); overflow: hidden; border-radius: var(--r-bar); }
-  .v-meter > i { display: block; width: var(--v); min-width: 2px; height: 100%; border-radius: var(--r-bar); background: var(--chart-1); }
+  .v-meter > i { display: block; width: var(--v); min-width: var(--meter-h); height: 100%; border-radius: var(--r-bar); background: var(--chart-1); }
   .v-meter.is-share { background: var(--meter-track); }
   .v-meter.is-split { background: var(--series-neutral); }
-  .v-meter.is-split > i { border-radius: 0; box-shadow: 2px 0 0 var(--surface); }
-  .v-barnum { display: grid; grid-template-columns: var(--meter-w) minmax(0, 1fr); align-items: center; column-gap: var(--s-3); }
-  .v-barnum > :not(.v-meter) { grid-column: 2; justify-self: end; }
+  .v-meter.is-split > i { min-width: 2px; border-radius: 0; box-shadow: 2px 0 0 var(--surface); }
+  /* bar and number in one cell: the bar fills the cell and ends 12px before its own number, which keeps a fixed slot on the cell's
+     right edge. Bars share one origin, numbers one right edge, and the cell's 24px left padding parts the pair from the column before */
+  .v-barnum { display: grid; grid-template-columns: minmax(0, 1fr) 6ch; align-items: center; column-gap: var(--s-3); }
+  .v-barnum > .v-meter { grid-column: 1; grid-row: 1; min-width: 0; }
+  .v-barnum > :not(.v-meter) { grid-column: 2; grid-row: 1; justify-self: end; }
+  .v-dt td.v-c-bar { padding-left: var(--s-6); }
   .v-dist-zone { padding: var(--s-5) var(--card-pad); }
   .v-dist-bar { display: flex; gap: var(--s-05); height: 12px; overflow: hidden; border-radius: var(--s-1); }
   .v-dist-seg { flex: var(--n) 1 0; min-width: 2px; }
   .is-ord-1 { background: var(--ord-1); } .is-ord-2 { background: var(--ord-2); } .is-ord-3 { background: var(--ord-3); } .is-ord-4 { background: var(--ord-4); }
   .v-dist-legend { flex: 1 1 auto; display: grid; grid-auto-rows: minmax(var(--row-compact), 1fr); }
-  .v-dist-legend > li { display: grid; grid-template-columns: minmax(0, 1fr) auto 3rem; align-items: center; column-gap: var(--s-3); padding: var(--s-1) var(--card-pad);
+  .v-dist-legend > li { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; align-items: center; column-gap: var(--s-3); padding: var(--s-1) var(--card-pad);
     border-top: 1px solid var(--border-subtle); }
   .v-dist-name { @apply type-body; display: flex; align-items: center; gap: var(--s-2); min-width: 0; color: var(--text-2); }
   .v-dist-legend .v-val[data-kind="count"] { @apply type-strong; text-align: right; color: var(--text); }
-  .v-dist-legend .v-val[data-kind="share"] { @apply type-caption; text-align: right; color: var(--text-3); }
+  .v-dist-legend .v-val[data-kind="share"] { @apply type-body; text-align: right; color: var(--text-2); }   /* a share is body in every card */
   @media (width >= 64rem) {
     .v-dist.v-span-12 > .v-dist-legend, .v-dist.is-wide > .v-dist-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .v-dist.v-span-12 > .v-dist-legend > li:nth-child(even), .v-dist.is-wide > .v-dist-legend > li:nth-child(even) { border-left: 1px solid var(--border-subtle); }
@@ -582,29 +631,34 @@
   .v-key.is-context { color: var(--series-context); }
   .v-key.is-line { width: 12px; height: 2px; border-radius: 1px; background: currentColor; }
   .v-key.is-bar { width: 8px; height: 8px; border-radius: var(--s-05); background: currentColor; }
-  .v-key.is-box { width: 8px; height: 8px; border-radius: var(--s-05); }
+  .v-key.is-box { width: 10px; height: 10px; border-radius: var(--s-05); }
   .v-key.is-gap { width: 12px; height: 12px; border-radius: var(--s-05); background: var(--gap); box-shadow: inset 0 0 0 1px var(--border); }
-  .v-key.is-mark { width: 1px; height: 12px; background: var(--border-strong); }
+  .v-key.is-mark { width: 0; height: 12px; margin-inline: var(--s-1); border-left: 1px dashed var(--border-strong); }   /* dashed, like the marker it keys: never an axis line */
 
   /* ------------------------------------------------------------ sparkline (v4 4.20) */
   .v-spark { display: block; min-width: 0; }
-  .v-spark.is-cell { width: var(--spark-w); }
-  .v-spark-plot { display: block; position: relative; height: var(--spark-h); }
+  .v-spark.is-cell { display: inline-block; width: var(--spark-w); max-width: 100%; vertical-align: middle; }
+  /* the plot is inset 4px each side, so the end dot and its ring stay inside the box and inside the card inset */
+  .v-spark-plot { display: block; position: relative; height: var(--spark-h); padding-inline: var(--s-1); }
   .v-spark-plot > svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .v-spark-line { fill: none; stroke: var(--chart-1); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-  .v-spark-ring { fill: none; stroke: var(--surface); stroke-width: 10; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .v-spark-ring { fill: none; stroke: var(--surface); stroke-width: 8; stroke-linecap: round; vector-effect: non-scaling-stroke; }
   .v-spark-dot { fill: none; stroke: var(--chart-1); stroke-width: 6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-  .v-spark-gap { fill: var(--gap); stroke: none; }
-  .v-spark.is-cols > .v-spark-plot { display: flex; align-items: flex-end; gap: var(--s-05); }
-  .v-spark.is-cols > .v-spark-plot > i { flex: 1 1 0; min-height: 1px; height: var(--v); border-radius: 1px 1px 0 0; background: var(--chart-1); }
-  .v-spark.is-cols > .v-spark-plot > i.is-gap { height: 100%; border-radius: 0; background: var(--gap); }
-  .v-spark.is-empty > .v-spark-plot { border-bottom: 1px solid var(--border-strong); }
-  .v-spark-range { @apply type-caption; display: flex; justify-content: space-between; height: 16px; color: var(--text-3); }
+  /* a gap at sparkline size is a 2px strip on the baseline: a full-height band reads as a broken image at 24px */
+  .v-spark-gap { fill: var(--border-strong); stroke: none; }
+  /* flow: one column per week, at most 8px wide and at least 2px apart, so a tile-wide sparkline stays as light as a line */
+  .v-spark.is-cols > .v-spark-plot { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-05); }
+  .v-spark.is-cols > .v-spark-plot > i { flex: 1 1 0; max-width: 8px; min-height: 1px; height: var(--v); border-radius: 1px 1px 0 0; background: var(--chart-1); }
+  .v-spark.is-cols > .v-spark-plot > i.is-gap { height: 2px; min-height: 2px; border-radius: 0; background: var(--border-strong); }
+  .v-spark.is-empty > .v-spark-plot { background: linear-gradient(var(--border-strong), var(--border-strong)) bottom / 100% 1px no-repeat content-box; }
+  .v-spark-range { @apply type-caption; display: flex; justify-content: space-between; height: 16px; margin-top: var(--s-1); color: var(--text-3); }
+  .v-dt :is(th, td).v-c-spark { text-align: right; }
 
   /* ------------------------------------------------------------ tabs: view tabs and the segmented control (v4 4.10) */
   .v-views { display: none; }
   .v-viewbar { display: flex; align-items: center; padding: var(--s-3) var(--card-pad) 0; }
   .v-viewbar .v-btn { justify-content: space-between; min-width: 13rem; }
+  @media (width < 40rem) { .v-viewbar .v-menu-wrap, .v-viewbar .v-btn { width: 100%; } }   /* same right edge as the search field under it */
   .v-view-cur { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; }
   .v-tab { @apply type-medium; display: inline-flex; align-items: center; gap: var(--s-2); padding: 0 var(--s-2); white-space: nowrap; color: var(--text-2); cursor: pointer; }
   .v-tab:hover { color: var(--text); }
@@ -629,7 +683,13 @@
   .v-filterbar { display: contents; }
   .v-filter-row { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: var(--s-2); height: 60px; padding: 0 var(--card-pad);
     background: var(--surface); border-bottom: 1px solid var(--border); }
-  .v-card.is-list > :first-child, .v-card.is-list > [role="tabpanel"]:first-child > :first-child { border-top-left-radius: calc(var(--r-card) - 1px); border-top-right-radius: calc(var(--r-card) - 1px); }
+  /* a list card does not clip (menus open over it), so whatever paints its first band carries the card's top corners itself:
+     the search row when the filter bar comes first, the header cells when the table does */
+  .v-card.is-list > :first-child, .v-card.is-list > [role="tabpanel"]:first-child > :first-child,
+  .v-card.is-list > .v-filterbar:first-child > .v-filter-row, .v-card.is-list > [role="tabpanel"]:first-child > .v-filterbar:first-child > .v-filter-row {
+    border-top-left-radius: calc(var(--r-card) - 1px); border-top-right-radius: calc(var(--r-card) - 1px); }
+  .v-card.is-list > .v-dt:first-child > thead > tr:first-child > th:first-child { border-top-left-radius: calc(var(--r-card) - 1px); }
+  .v-card.is-list > .v-dt:first-child > thead > tr:first-child > th:last-child { border-top-right-radius: calc(var(--r-card) - 1px); }
   .v-field { position: relative; display: flex; align-items: center; gap: var(--s-2); flex: 1 1 auto; min-width: 0; height: var(--ctl-h); padding: 0 var(--s-2);
     background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); }
   .v-field:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -680,7 +740,7 @@
   /* ------------------------------------------------------------ list card bands (v4 4.13) */
   .v-list-band { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); height: var(--band-h); padding: 0 var(--card-pad);
     background: var(--surface-2); border-bottom: 1px solid var(--border); }
-  .v-list-band .v-btn-xs { margin-right: calc(-1 * var(--s-2)); }
+  .v-list-band .v-btn-xs { margin-right: calc(-1 * var(--s-2)); color: var(--text); }
   @media (width >= 64rem) { .v-list-band { display: none; } }
   .v-list-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); height: var(--foot-h); padding: 0 var(--card-pad); border-top: 1px solid var(--border); }
   .v-list-range { @apply type-caption; white-space: nowrap; color: var(--text-2); }
@@ -697,20 +757,29 @@
   .v-dt col.v-col-deadline { width: var(--col-deadline); } .v-dt col.v-col-date { width: var(--col-date); } .v-dt col.v-col-spark { width: var(--col-spark); }
   .v-dt col.v-col-bar { width: var(--col-bar); } .v-dt col.v-col-num-xs { width: var(--col-num-xs); } .v-dt col.v-col-num-sm { width: var(--col-num-sm); }
   .v-dt col.v-col-num { width: var(--col-num); } .v-dt col.v-col-num-lg { width: var(--col-num-lg); } .v-dt col.v-col-num-xl { width: var(--col-num-xl); }
+  .v-dt col.v-col-name { width: var(--col-name); } .v-dt col.v-col-period { width: var(--col-period); }
+  /* a matrix or rank table alone at 12 columns: from 80rem the name column is 16rem and the spare width is shared by every column,
+     so values spread across the card and no name sits half a card away from its first number. Below 80rem the name column stays
+     auto (each plan leaves it at least 9rem at 1024). */
+  @media (width >= 80rem) {
+    .v-card:not(.v-span-8, .v-span-6, .v-span-4) > .v-dt:is(.is-matrix, .is-rank, .is-keep) > colgroup > col:first-child:not([class]) { width: var(--col-name); }
+  }
   .v-dt thead th { @apply type-label; height: var(--th-h); padding: 0 var(--cell-gap); white-space: nowrap; vertical-align: middle; color: var(--text-2);
     background: var(--surface); border-bottom: 1px solid var(--border); }
-  .v-dt:has(.v-th-sub) thead tr:last-child th { height: 52px; padding-bottom: var(--s-2); vertical-align: bottom; }
+  /* with a sub line anywhere, every label sits on the first line and the sub lines on the second: one baseline for the labels */
+  .v-dt:has(.v-th-sub) thead tr:last-child th { height: 52px; padding-top: var(--s-2); padding-bottom: var(--s-2); vertical-align: top; }
   .v-dt tbody :is(td, th) { @apply type-body; height: var(--row); padding: 0 var(--cell-gap); vertical-align: middle; color: var(--text); border-top: 1px solid var(--border-subtle);
     white-space: nowrap; }
-  .v-dt thead + tbody > tr:first-child > * { border-top: 0; }
+  .v-dt thead + tbody > tr:first-child > * { border-top-color: transparent; }   /* transparent, not 0: every row keeps the same box */
   .v-dt tr > :first-child { padding-left: var(--card-pad); }
   .v-dt tr > :last-child { padding-right: var(--card-pad); }
   .v-dt .num { text-align: right; }
   .v-dt.is-work tbody td { height: var(--row-work); }
-  .v-dt.is-matrix.has-sub tbody :is(td, th) { height: var(--row-sub); }
+  .v-dt:is(.is-matrix, .is-keep).has-sub tbody :is(td, th) { height: var(--row-sub); }
   .v-dt.is-compact tbody :is(td, th) { height: var(--row-compact); }
   .v-dt tbody th[scope="row"] { @apply type-medium; }
-  .v-th-btn { display: inline-flex; align-items: center; gap: var(--s-1); max-width: 100%; color: inherit; cursor: pointer; border-radius: var(--s-05); }
+  /* a 16px box aligned to the line's top, so a header with a sort icon shares its baseline with a plain one */
+  .v-th-btn { display: inline-flex; align-items: center; gap: var(--s-1); max-width: 100%; height: 16px; vertical-align: top; color: inherit; cursor: pointer; border-radius: var(--s-05); }
   .num > .v-th-btn { flex-direction: row-reverse; }
   .v-th-btn:focus-visible { outline-offset: -2px; }
   .v-th-btn > .v-icon { color: var(--text-3); }
@@ -723,11 +792,11 @@
   .v-dt-span th { height: 32px; padding-bottom: 0; vertical-align: bottom; border-bottom: 0; }
   .v-dt-span th.v-span { text-align: center; }
   .v-dt-span th.v-span > span { display: block; padding-bottom: var(--s-1); border-bottom: 1px solid var(--border); }
-  .v-group > th { @apply type-strong; height: var(--row-group); padding: 0 var(--card-pad); color: var(--text); background: var(--surface-2);
+  .v-dt tbody tr.v-group > th { @apply type-strong; height: var(--row-group); padding: 0 var(--card-pad); color: var(--text); background: var(--surface-2);
     border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .v-group > th > .v-count { margin-left: var(--s-2); vertical-align: 1px; }
-  .v-dt tr.v-group + tr > * { border-top: 0; }
-  .v-dt tbody tr.v-group:first-child > th { border-top: 0; }
+  .v-dt tbody tr.v-group > th > .v-count { margin-left: var(--s-2); vertical-align: 1px; }
+  .v-dt tbody tr.v-group + tr > * { border-top-color: transparent; }
+  .v-dt tbody:first-of-type > tr.v-group:first-child > th, .v-dt thead + tbody > tr.v-group:first-child > th { border-top-color: transparent; }
   .v-row-link { @apply type-medium; color: var(--text); text-decoration: none; text-underline-offset: 3px; border-radius: var(--s-05); }
   .v-row-link:hover { text-decoration: underline; }
   tr[data-row-link] { cursor: pointer; }
@@ -737,8 +806,13 @@
   .v-row-chev { display: none; color: var(--text-3); }
   .v-cell-sub { @apply type-caption; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-3); }
   .v-cell-note { display: block; }
+  .v-dt td.num > .v-cell-note { display: flex; justify-content: flex-end; }   /* a long note grows left, never past the cell's right edge */
   .v-name { overflow: hidden; }
   .v-name > .v-row-link { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .v-name-line { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; max-width: 100%; }   /* a name with a tag beside it: one element */
+  .v-deadline { color: var(--text-2); white-space: nowrap; }
+  /* header short forms, used only by a kept table below 64rem */
+  .v-th-short { display: none; }
 
   /* work rows: the item cell and its meta line (v4 4.16) */
   .v-item { overflow: hidden; }
@@ -749,12 +823,19 @@
   .v-tags { display: flex; align-items: center; gap: var(--s-1); flex: 1 1 auto; min-width: 0; overflow: hidden; }
   .v-tags > * { flex: none; }
   tr[data-child-of] > .v-item { padding-left: calc(var(--card-pad) + var(--s-6)); }
-  .v-detail { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+  /* Detail: only the phrase may shorten; the value or reference that closes it never does */
+  .v-detail { display: flex; align-items: baseline; gap: var(--s-1); min-width: 0; white-space: nowrap; color: var(--text-2); }
+  .v-detail-text { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .v-detail > :is(.v-val, .v-id) { flex: none; }
   .v-detail .v-val { color: var(--text); }
+  .v-detail .v-id { font: inherit; font-weight: 500; color: var(--text); }   /* a reference inside the phrase keeps the phrase's size */
+  /* Overdue object: rule name, days. The +N tag is drawn before the rule so the days keep the column's right edge */
   .v-sla { display: inline-flex; align-items: baseline; gap: var(--s-2); white-space: nowrap; }
   .v-sla-label { display: none; }
   .v-sla-rule, .v-sla-label { @apply type-caption; color: var(--text-2); }
-  .v-sla > .v-tag { align-self: center; }
+  .v-sla > .v-tag { order: -1; align-self: center; }
+  /* a view in which nothing can be overdue drops the Overdue column (ui.js marks the table and the column) */
+  .v-dt[data-no-sla] :is([data-sla-col], td.v-sla-cell) { display: none; }
 
   /* below 64rem: work lists and rank tables in list form, matrix tables as records (v4 4.14, 4.16) */
   @media (width < 64rem) {
@@ -765,85 +846,139 @@
     .v-dt:is(.is-list, .is-matrix) > tbody > tr:not(.v-group) > * { display: block; height: auto; min-width: 0; padding: 0; border: 0; white-space: normal; text-align: left; }
     .v-dt:is(.is-list, .is-matrix) > tbody > tr:not(.v-group) > td:empty { display: none; }
     .v-dt:is(.is-list, .is-matrix) > tbody > tr.v-group, .v-dt:is(.is-list, .is-matrix) > tbody > tr.v-group > th { display: flex; align-items: center; width: 100%; }
+    /* one rule, never two: under a group band, and above the first row left visible by a view or filter (ui.js marks it) */
+    .v-dt:is(.is-list, .is-matrix) > tbody > tr.v-group + tr, .v-dt:is(.is-list, .is-matrix) > tbody > tr[data-first] { border-top: 0; }
     .v-row-chev { display: inline-block; }
 
-    /* work list: at most five lines, fixed order */
+    /* work list: fixed line order. 1 title and the primary time, 2 identity, 3 status and the Overdue object, 4 tags, 5 detail,
+       then every secondary value as a label-left, value-right line (the record grammar) */
     .v-dt.is-work.is-list > tbody > tr[data-row] { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--s-3); padding: var(--s-3) var(--card-pad); }
     .v-dt.is-work.is-list > tbody > tr > td.v-item { display: contents; }
     .v-dt.is-work.is-list .v-item > .v-row-link { grid-column: 1 / 3; grid-row: 1; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
-    .v-dt.is-work.is-list > tbody > tr > td:last-child { @apply type-medium; grid-column: 3; grid-row: 1; text-align: right; white-space: nowrap; }
+    /* the primary time, top right, with its column name under it so the number is never unlabeled */
+    .v-dt.is-work.is-list > tbody > tr > td:last-child { @apply type-medium; grid-column: 3; grid-row: 1 / 3; align-self: start; text-align: right; white-space: nowrap; }
+    .v-dt.is-work.is-list > tbody > tr > td:last-child[data-label]::after { @apply type-caption; content: attr(data-label); display: block; color: var(--text-3); }
     .v-dt.is-work.is-list .v-meta { display: contents; }
-    .v-dt.is-work.is-list .v-meta-id { grid-column: 1 / -1; grid-row: 2; margin-top: var(--s-1); min-width: 0; overflow: hidden; }
+    .v-dt.is-work.is-list .v-meta-id { grid-column: 1 / 3; grid-row: 2; margin-top: var(--s-1); min-width: 0; overflow: hidden; }
     .v-dt.is-work.is-list .v-meta-id > .v-who { flex: 0 1 auto; min-width: 0; }
     .v-dt.is-work.is-list .v-meta-id > .v-repo { display: inline; }
+    /* line 3: the badge on the left edge, the Overdue object ending on the right edge, so the red days form a column */
     .v-dt.is-work.is-list > tbody > tr > .v-c-status { grid-column: 1; grid-row: 3; margin-top: var(--s-2); }
-    .v-dt.is-work.is-list > tbody > tr > :is(.v-sla-cell, .v-c-who) { grid-column: 2 / -1; grid-row: 3; margin-top: var(--s-2); align-self: center; }
-    .v-dt.is-work.is-list > tbody > tr > .v-c-who:first-of-type { grid-column: 1 / -1; }
-    .v-dt.is-work.is-list .v-sla-label { display: inline; }
+    .v-dt.is-work.is-list > tbody > tr > .v-sla-cell { grid-column: 2 / -1; grid-row: 3; justify-self: end; align-self: center; min-width: 0; margin-top: var(--s-2); text-align: right; }
+    .v-dt.is-work.is-list .v-sla { flex-wrap: wrap; justify-content: flex-end; row-gap: var(--s-05); }
+    .v-dt.is-work.is-list .v-sla-label { display: inline; margin-left: calc(-1 * var(--s-1)); }
+    .v-dt.is-work.is-list .v-sla:has(> .v-badge) > .v-sla-label { display: none; }
     .v-dt.is-work.is-list .v-tags { grid-column: 1 / -1; grid-row: 4; flex-wrap: wrap; row-gap: var(--s-1); margin-top: var(--s-2); overflow: visible; }
     .v-dt.is-work.is-list .v-tags:empty { display: none; }
     .v-dt.is-work.is-list > tbody > tr > .v-c-detail { @apply type-caption; grid-column: 1 / -1; grid-row: 5; margin-top: var(--s-2); color: var(--text-2); }
-    .v-dt.is-work.is-list > tbody > tr > .v-c-num { @apply type-caption; grid-column: 1 / -1; margin-top: var(--s-1); color: var(--text-2); }
+    .v-dt.is-work.is-list .v-c-detail .v-id { @apply type-label; }
+    .v-dt.is-work.is-list > tbody > tr > :is(.v-c-who, .v-c-num) { display: flex; align-items: center; justify-content: space-between; column-gap: var(--s-4); grid-column: 1 / -1; min-height: 20px;
+      margin-top: var(--s-2); text-align: right; }
+    .v-dt.is-work.is-list > tbody > tr > .v-c-who { grid-row: 6; }
+    .v-dt.is-work.is-list > tbody > tr > .v-c-num { grid-row: 7; }
+    .v-dt.is-work.is-list > tbody > tr > .v-c-num ~ .v-c-num { grid-row: 8; }
+    .v-dt.is-work.is-list > tbody > tr > :is(.v-c-who, .v-c-num)[data-label]::before { content: attr(data-label); color: var(--text-2); }
     .v-dt.is-work.is-list > tbody > tr > .v-c-repo { display: none; }
-    .v-dt.is-list td[data-label]:not(:last-child)::before { content: attr(data-label); margin-right: var(--s-2); color: var(--text-3); }
     .v-dt.is-work.is-list tr[data-child-of] > .v-item { padding-left: 0; }
     .v-dt.is-work.is-list > tbody > tr[data-child-of] { padding-left: calc(var(--card-pad) + var(--s-6)); }
 
-    /* rank list: name and value on one line, the bar beneath, other values as caption lines */
+    /* rank list: name and value on one line (a chevron after the value when the row links), the bar beneath, every other value
+       as a label-left, value-right line */
     .v-dt.is-rank.is-list > tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: var(--s-2); align-items: center; padding: var(--s-3) var(--card-pad); }
     .v-dt.is-rank.is-list > tbody > tr > :first-child { display: contents; }
-    .v-dt.is-rank.is-list > tbody > tr > :first-child > :is(.v-row-link, .v-path, .v-tag, .v-ver, span) { grid-column: 1; grid-row: 1; justify-self: start; max-width: 100%; }
+    .v-dt.is-rank.is-list > tbody > tr > :first-child > :is(.v-row-link, .v-path, .v-tag, .v-ver, .v-name-line, span) { grid-column: 1; grid-row: 1; justify-self: start; max-width: 100%; }
     .v-dt.is-rank.is-list > tbody > tr > :first-child > .v-row-chev { grid-column: 3; grid-row: 1; }
     .v-dt.is-rank.is-list > tbody > tr > :first-child > :is(.v-cell-sub, .v-cell-note) { grid-column: 1 / -1; grid-row: auto; }
     .v-dt.is-rank.is-list > tbody > tr > .v-c-bar, .v-dt.is-rank.is-list .v-c-bar > .v-barnum { display: contents; }
-    .v-dt.is-rank.is-list .v-barnum > :not(.v-meter) { grid-column: 2; grid-row: 1; }
+    .v-dt.is-rank.is-list .v-barnum > :not(.v-meter), .v-dt.is-rank.is-list > tbody > tr > .v-c-bar > :is(.v-val, .v-cell-link) { grid-column: 2; grid-row: 1; justify-self: end; }
+    /* no chevron: the number takes the chevron's column too, so it ends on the card inset like its bar */
+    .v-dt.is-rank.is-list > tbody > tr:not(:has(.v-row-chev)) .v-barnum > :not(.v-meter),
+    .v-dt.is-rank.is-list > tbody > tr:not(:has(.v-row-chev)) > .v-c-bar > :is(.v-val, .v-cell-link) { grid-column: 2 / -1; }
     .v-dt.is-rank.is-list .v-barnum > .v-meter { grid-column: 1 / -1; grid-row: 2; width: 100%; margin-top: var(--s-2); }
-    .v-dt.is-rank.is-list > tbody > tr > td:not(.v-c-bar):not(:first-child) { @apply type-caption; grid-column: 1 / -1; margin-top: var(--s-1); color: var(--text-2); }
+    .v-dt.is-rank.is-list > tbody > tr > td:not(.v-c-bar):not(:first-child) { display: flex; align-items: center; justify-content: space-between; column-gap: var(--s-4); grid-column: 1 / -1;
+      min-height: 20px; margin-top: var(--s-2); text-align: right; }
     .v-dt.is-rank.is-list > tbody > tr > td.v-c-spark { display: none; }
-    .v-dt.is-rank.is-list td[data-label]::before { content: attr(data-label); margin-right: var(--s-2); color: var(--text-3); }
+    .v-dt.is-rank.is-list > tbody > tr > td[data-label]:not(.v-c-bar)::before { content: attr(data-label); color: var(--text-2); }
     .v-path { flex-wrap: wrap; white-space: normal; }
     .v-path-dir { overflow: visible; direction: ltr; overflow-wrap: anywhere; }
 
-    /* records: one block per matrix row */
+    /* records: one block per matrix row. Name (and chevron), then one label-left, value-right line per column. A value sits flush
+       right on its label's line; a data-quality note always takes the next line, right-aligned; bars are not drawn (the number is
+       the fact); a missing value prints its reason, so a record is never silently short. */
     .v-dt.is-matrix > tbody > tr { display: block; padding: var(--s-3) var(--card-pad); }
     .v-dt.is-matrix > tbody > tr > :first-child { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-2); margin-bottom: var(--s-2); }
     .v-dt.is-matrix > tbody > tr > :first-child > :is(.v-cell-sub, .v-note, .v-cell-note) { grid-column: 1 / -1; }
     .v-dt.is-matrix > tbody > tr > :first-child > .v-row-chev { grid-column: 2; grid-row: 1; }
-    .v-dt.is-matrix > tbody > tr > td:not(:first-child) { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; column-gap: var(--s-2); min-height: 28px; }
-    .v-dt.is-matrix > tbody > tr > td[data-label]::before { content: attr(data-label); margin-right: auto; padding-right: var(--s-4); color: var(--text-2); }
-    .v-dt.is-matrix > tbody > tr > td:is(.v-c-spark, :has(> .v-val.is-na:only-child)) { display: none; }
-    .v-dt.is-matrix .v-barnum { grid-template-columns: var(--meter-w) auto; }
+    .v-dt.is-matrix > tbody > tr > td:not(:first-child) { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; column-gap: var(--s-4); min-height: 28px; text-align: right; }
+    .v-dt.is-matrix > tbody > tr > td[data-label]::before { content: attr(data-label); flex: 1 1 0; min-width: 0; text-align: left; color: var(--text-2); }
+    .v-dt.is-matrix > tbody > tr > td:not(:first-child) > :is(.v-note, .v-cell-note) { flex: 0 0 100%; display: flex; justify-content: flex-end; }
+    .v-dt.is-matrix > tbody > tr > td.v-c-spark { display: none; }
+    .v-dt.is-matrix > tbody > tr > td > .v-val.is-na:only-child::before { display: none; }
+    .v-dt.is-matrix > tbody > tr > td > .v-val.is-na:only-child::after { @apply type-caption; content: attr(title); color: var(--text-3); }
+    .v-dt.is-matrix .v-barnum { display: inline; }
+    .v-dt.is-matrix .v-barnum > .v-meter { display: none; }
+    .v-dt.is-matrix td.v-c-bar { padding-left: 0; }
+
+    /* kept table: a matrix of a few short numeric columns stays a table on a phone, so rows can still be compared. Headers take
+       their short form, bars and sparklines are not drawn, and the name may wrap to two lines. */
+    .v-dt.is-keep > colgroup > col:not(:first-child) { width: 3.75rem; }
+    .v-dt.is-keep > colgroup > col.v-col-spark, .v-dt.is-keep :is(th, td).v-c-spark { display: none; }
+    .v-dt.is-keep :is(thead, tbody) :is(th, td) { padding-inline: var(--s-2); }
+    .v-dt.is-keep tr > :first-child { padding-left: var(--card-pad); }
+    .v-dt.is-keep tr > :last-child { padding-right: var(--card-pad); }
+    .v-dt.is-keep .v-th-full, .v-dt.is-keep .v-th-btn > .v-icon { display: none; }
+    .v-dt.is-keep .v-th-short { display: inline; }
+    .v-dt.is-keep .v-barnum { display: inline; }
+    .v-dt.is-keep .v-barnum > .v-meter { display: none; }
+    .v-dt.is-keep td.v-c-bar { padding-left: var(--s-2); }
+    .v-dt.is-keep .v-name > .v-row-link { white-space: normal; }
+    .v-dt.is-keep tbody :is(td, th) { height: var(--row); padding-block: var(--s-2); }
   }
 
   /* ------------------------------------------------------------ chart card and trellis (v4 4.19) */
   .v-card.is-chart, .v-card.is-trellis { padding-bottom: var(--s-4); }
   .v-card.is-chart.is-pending { padding-bottom: 0; }
+  /* readout: every text of an item (label, value, delta, detail, note) shares one baseline; the key is centred on the label.
+     Phone: one row per item. Label over a meta line (delta, detail, note) on the left, the value on the right edge. */
   .v-readout { display: flex; flex-direction: column; margin-bottom: var(--s-3); padding: 0 var(--card-pad); }
-  .v-readout-item { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); min-height: 28px; min-width: 0; white-space: nowrap; }
-  .v-readout-item > dt { @apply type-caption; display: inline-flex; align-items: center; gap: var(--s-2); color: var(--text-2); }
-  .v-readout-item > dd { display: inline-flex; align-items: baseline; gap: var(--s-2); min-width: 0; }
-  .v-readout-value { @apply type-heading; color: var(--text); }
-  .v-readout-detail { @apply type-caption; display: none; align-items: baseline; gap: var(--s-2); color: var(--text-2); }
-  .v-readout-item > dd > .v-note { align-self: center; }
+  .v-readout-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label value" "meta value"; align-content: center; column-gap: var(--s-3);
+    min-height: 36px; min-width: 0; padding: var(--s-1) 0; }
+  .v-readout-item > dt { @apply type-caption; grid-area: label; display: inline-flex; align-items: baseline; gap: var(--s-2); min-width: 0; color: var(--text-2); }
+  .v-readout-item > dt > .v-key { align-self: center; }
+  .v-readout-item > dd { display: contents; }
+  .v-readout-value { @apply type-heading; grid-area: value; align-self: center; white-space: nowrap; color: var(--text); }
+  .v-readout-value > .v-val.is-na::before { width: 14px; vertical-align: 5px; }
+  .v-readout-meta { grid-area: meta; display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s-2); row-gap: var(--s-05); min-width: 0; }
+  .v-readout-detail { @apply type-caption; display: inline-flex; align-items: baseline; gap: var(--s-2); white-space: nowrap; color: var(--text-2); }
   @media (width >= 40rem) {
     .v-readout { flex-direction: row; align-items: baseline; gap: var(--s-6); height: 28px; }
-    .v-readout-item { justify-content: flex-start; gap: var(--s-2); }
-    .v-readout-detail { display: inline-flex; }
+    .v-readout-item { display: flex; align-items: baseline; justify-content: flex-start; gap: var(--s-2); min-height: 28px; padding: 0; white-space: nowrap; }
+    .v-readout-item > dd { display: inline-flex; align-items: baseline; gap: var(--s-2); min-width: 0; }
+    .v-readout-value { align-self: auto; }
+    .v-readout-meta { flex-wrap: nowrap; }
   }
   .v-plot { position: relative; height: var(--plot-h); margin: 0 var(--card-pad); }
   .v-plot > canvas { display: block; width: 100%; height: 100%; border-radius: var(--s-05); }
-  .v-chart-table { position: relative; height: var(--plot-h); overflow-y: auto; border-top: 1px solid var(--border-subtle); }
+  /* table view: the full card width. The period column is fixed and the value columns share the rest, right-aligned, so the last
+     value ends on the card inset like every other table */
+  .v-chart-table { position: relative; height: var(--plot-h); overflow-y: auto; scrollbar-gutter: stable; border-top: 1px solid var(--border-subtle); }
   .v-chart-table:focus-visible { outline-offset: -2px; }
-  .v-chart-table thead th { position: sticky; top: 0; z-index: 1; }
-  /* columns hug the date; a filler column takes the rest */
-  .v-chart-table > .v-dt { table-layout: auto; }
-  .v-chart-table .v-fill { width: 100%; }
+  .v-chart-table thead th { position: sticky; top: 0; z-index: 1; white-space: normal; }
+  .v-chart-table > .v-dt { table-layout: fixed; width: 100%; }
+  .v-chart-table > .v-dt thead th:first-child { width: 9rem; }
+  @media (width >= 40rem) { .v-chart-table > .v-dt thead th:first-child { width: var(--col-period); } }
   .v-plot > canvas, .v-trellis-panel > canvas { touch-action: pan-y; }
   .v-chart-table.is-clipped::after { content: ""; position: sticky; bottom: 0; display: block; height: 24px; margin-top: -24px; pointer-events: none;
     background: linear-gradient(transparent, var(--surface)); }
   .v-chart-notes { @apply type-caption; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s-5); row-gap: var(--s-1); min-height: 16px; margin-top: var(--s-4);
     padding: 0 var(--card-pad); color: var(--text-2); }
-  .v-chart-notes > li { display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; }
+  /* in table view the keys have nothing to key: a chart card keeps the row's height (its pair partner may still show notes),
+     the trellis drops it. A reserved, empty notes row only matters beside a pair partner, so it goes below 64rem. */
+  .v-card[data-view="table"] > .v-chart-notes { visibility: hidden; }
+  .v-card.is-trellis[data-view="table"] > .v-chart-notes { display: none; }
+  @media (width < 64rem) { .v-chart-notes:empty { display: none; } }
+  .v-chart-notes > li { display: inline-flex; align-items: baseline; gap: var(--s-2); white-space: nowrap; }
+  .v-chart-notes > li > .v-key { align-self: center; }
   .v-chart-note-label { color: var(--text-2); }
   .v-chart-notes .v-val { color: var(--text); }
   .v-tip { @apply type-caption; position: absolute; z-index: 40; min-width: 9rem; max-width: 18rem; padding: var(--s-2) var(--s-3); pointer-events: none; white-space: nowrap; color: var(--text-2);
@@ -854,13 +989,14 @@
   .v-tip-value { @apply type-label; text-align: right; color: var(--text); }
   .v-tip-name { overflow: hidden; text-overflow: ellipsis; }
   .v-tip-note { margin-top: var(--s-1); }
+  .v-tip-change { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }   /* a change is the delta badge and its base, here too */
+  .v-trellis { position: relative; }   /* the one tooltip of a trellis is anchored here, not to the hovered panel */
   .v-trellis-row { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--border-subtle); }
   .v-trellis-label { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: var(--s-1); min-width: 0; padding: var(--s-3) var(--card-pad); }
   .v-trellis-name { @apply type-strong; color: var(--text); text-decoration: none; text-underline-offset: 3px; }
   a.v-trellis-name:hover { text-decoration: underline; }
   .v-trellis-fact { @apply type-caption; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s-2); color: var(--text-2); }
   .v-trellis-fact > .v-val { @apply type-label; color: var(--text); }
-  .v-trellis-fact > .v-note { align-self: center; }
   .v-trellis-panel { position: relative; height: var(--panel-h); margin: 0 var(--card-pad); }
   .v-trellis-panel:has(> canvas[data-xaxis="on"]) { height: 120px; }
   .v-trellis-panel > canvas { display: block; width: 100%; height: 100%; }
@@ -890,8 +1026,16 @@
   .v-sg-name { @apply type-label; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .v-sg-value { @apply type-caption; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .v-sg-bar { display: block; width: var(--v); height: 8px; border-radius: var(--s-05); background: var(--chart-1); }
-  .v-sg-pop { position: relative; min-height: 27rem; }
-  .v-sg-pop.is-short { min-height: 17rem; }
+  /* a menu specimen is laid out in the card, not popped over it */
+  .v-sg-pop { position: relative; }
+  .v-sg-pop .v-menu, .v-sg-pop .v-menu.is-end { position: static; max-height: none; margin-top: var(--s-1); animation: none; }
+  .v-sg-pop .v-menu-wrap { position: static; }
+  .v-sg-specs { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--s-5) var(--grid-gap); align-items: start; }
+  .v-sg-specs > .v-sg-spec { margin-bottom: 0; }
+  .v-sg-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6) var(--grid-gap); }
+  @media (width >= 64rem) { .v-sg-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (width < 64rem) { .v-dt.is-matrix > tbody > tr > td.v-sg-wide { display: none; } }   /* the fixture's raw input stays in the record title */
+  .v-sg-td { display: inline-flex; align-items: center; height: var(--row); padding: 0 var(--cell-gap); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
   .v-sg-cell { width: 15rem; max-width: 100%; }
   .v-sg-overlay { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--grid-gap); height: 24px; margin-bottom: var(--s-2); }
   .v-sg-overlay > i { background: var(--accent-soft); border-radius: var(--s-05); }

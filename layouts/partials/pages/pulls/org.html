@@ -1,6 +1,6 @@
 {{- /* /pulls/ (design system v4 5.4): all repositories. Context: the section page (content/pulls/_index.md).
      0 page head: the H1 is the scope switcher on "All repositories"; meta: Updated.
-     1 Summary: metric strip lg, trend, 3 tiles: Waiting for first review over 7 days (drill ?over7=1#waiting), any age (drill
+     1 Summary: metric strip lg, no visual, 3 tiles, one context each: Waiting for first review over 7 days (drill ?over7=1#waiting), any age (drill
        #waiting), Open PRs with the reference pair "Merged, last 30 days" (no link).
      2 By repository: ui/repo-table.html, kind pulls. It replaces the loose row of repository links with counts.
      3 Waiting for first review, any age (id waiting): the list card "pw" (pages/pulls/waiting.html) with the facets Over 7 days and
@@ -26,7 +26,7 @@
 {{- end -}}
 {{- if $rows }}{{ $rows = sort $rows "w" "desc" }}{{ end -}}
 
-{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a maintainer of their repository, opened 7 or more days ago." -}}
+{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a maintainer of their repository, opened more than 7 days ago." -}}
 {{- $defAny := "The same PRs at any age: every row of the list on this page." -}}
 {{- $defOpen := "PRs open now, drafts included, summed over all tracked repositories." -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
@@ -35,29 +35,33 @@
       (dict "term" "Waiting for first review" "text" $defWait)
       (dict "term" "Waiting for first review, any age" "text" $defAny)
       (dict "term" "Waiting" "text" "Calendar days since the PR opened.")
-      (dict "term" "Longest wait" "text" "The longest wait among a repository's PRs that have waited 7 or more days.")
+      (dict "term" "Longest wait" "text" "The longest wait among a repository's PRs that have waited more than 7 days.")
       (dict "term" "Open PRs" "text" $defOpen)
       (dict "term" "Change on the waiting tile" "text" "Compares the repositories that have a snapshot about 30 days older; the note under the value says how many that is."))) }}
 
-{{- /* 1 Summary */ -}}
+{{- /* 1 Summary. Every tile has one context (4.5): the dated change when a snapshot about 30 days older exists, else the longest
+     wait; the whole the any-age pile is part of; the fixed reference pair. The any-age count has no stored history, so the strip
+     has no sparklines (one visual per strip, all tiles or none); the By repository table carries the 12-week trends. */ -}}
+{{- $longest := dict "kind" "dur" "unit" "d" "reason" "no-data" -}}
+{{- with $rows }}{{ $longest = dict "kind" "dur" "d" (float (index . 0).w) "unit" "d" }}{{ end -}}
 {{- $ch := partial "pages/issues/org-change.html" "pulls.without_review_7d" -}}
 {{- $t1 := dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
     "value" (dict "kind" "count" "v" $n7)
-    "points" (partial "data/org-weekly.html" (dict "path" "pulls.without_review_7d" "weeks" 12)).points
+    "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)
     "href" "?over7=1#waiting" "drill" true -}}
 {{- if $ch.has -}}
   {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting") "context" (dict "kind" "base" "date" $ch.date)) -}}
   {{- if lt $ch.k $ch.n }}{{ $t1 = merge $t1 (dict "note" (dict "part" $ch.k "whole" $ch.n "noun" "repository")) }}{{ end -}}
 {{- end -}}
 {{- $t2 := dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual "title" $defAny
-    "value" (dict "kind" "count" "v" $nAny) "reason" "no-history" "href" "#waiting" "drill" true -}}
+    "value" (dict "kind" "count" "v" $nAny) "context" (dict "kind" "whole" "n" (cond $hasOpen $open nil) "of" "open")
+    "href" "#waiting" "drill" true -}}
 {{- $t3 := dict "name" "Open PRs" "title" $defOpen "value" (dict "kind" "count" "v" (cond $hasOpen $open nil))
     "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" (dict "n" 30 "unit" "day"))).text
-      "value" (dict "kind" "count" "v" (cond $hasMerged $merged nil)))
-    "points" (partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 12)).points }}
+      "value" (dict "kind" "count" "v" (cond $hasMerged $merged nil))) }}
 <section class="v-section v-summary" aria-label="Summary">
   <div class="v-grid">
-    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" (slice $t1 $t2 $t3)) }}
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice $t1 $t2 $t3)) }}
   </div>
 </section>
 

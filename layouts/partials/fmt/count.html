@@ -1,18 +1,24 @@
-{{- /* Count (design system v4 3.2). A number, or a dict {v, noun, stat}. Returns {text, long, state, kind, v}; never emits.
+{{- /* Count (design system v4 3.2). A number, or a dict {v, noun, stat, col}. Returns {text, long, state, kind, v}; never emits.
   Exact integer with separators, never compact: "0", "863", "13,765". noun: a fmt/noun.html key, joined with a non-breaking space
   ("539 PRs", "1 PR"). stat: true is a statistic of counts (a mean or median): at most one decimal below 100, none when whole
-  ("6.4", "5"). A negative value uses U+2212. nil is the missing state (text ""). */ -}}
+  ("6.4", "5"), for a single value such as a readout item or a tile context. col: true with stat is the same statistic in a table
+  column: a whole number, so every figure of the column has the same precision and the digits line up ("6", "5", "2"); the title
+  keeps the one-decimal figure. A negative value uses U+2212. nil is the missing state (text ""). */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "v" . }}{{ end -}}
 {{- $out := dict "text" "" "long" "No data" "state" "na" "kind" "count" -}}
 {{- if ne $c.v nil -}}
   {{- $v := float $c.v -}}{{- $a := math.Abs $v -}}
   {{- $text := lang.FormatNumber 0 (math.Round $a) -}}
+  {{- $long := "" -}}
   {{- if $c.stat -}}
     {{- $r := div (math.Round (mul $a 10.0)) 10.0 -}}
-    {{- if and (lt $r 100.0) (ne $r (math.Floor $r)) }}{{ $text = lang.FormatNumber 1 $r }}{{ end -}}
+    {{- if and (lt $r 100.0) (ne $r (math.Floor $r)) -}}
+      {{- if $c.col }}{{ $long = lang.FormatNumber 1 $r }}{{ else }}{{ $text = lang.FormatNumber 1 $r }}{{ end -}}
+    {{- end -}}
   {{- end -}}
   {{- if and (lt $v 0.0) (ne $text "0") }}{{ $text = printf "−%s" $text }}{{ end -}}
-  {{- with $c.noun }}{{ $text = printf "%s %s" $text (partial "fmt/noun.html" (dict "key" . "n" $v)).text }}{{ end -}}
-  {{- $out = dict "text" $text "long" $text "state" (cond (eq $v 0.0) "zero" "value") "kind" "count" "v" $v -}}
+  {{- if and $long (lt $v 0.0) }}{{ $long = printf "−%s" $long }}{{ end -}}
+  {{- with $c.noun }}{{ $text = printf "%s %s" $text (partial "fmt/noun.html" (dict "key" . "n" $v)).text }}{{ end -}}
+  {{- $out = dict "text" $text "long" ($long | default $text) "state" (cond (eq $v 0.0) "zero" "value") "kind" "count" "v" $v -}}
 {{- end -}}
 {{- return $out -}}

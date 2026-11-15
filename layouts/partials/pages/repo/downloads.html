@@ -1,46 +1,65 @@
-{{- /* 5. Downloads (design system v4 5.8 module 5; repositories with a registry package only): one chart card at 12, "Weekly
-  downloads", complete weeks over the last 26 weeks, as columns. The section head carries the link-action "All downloads".
-  Readout, at most three items:
-    Last 7 days    the plotted measure's latest window: volume, change, the range of the window and the base "vs prior 7 days".
-                   With fewer than 7 complete days: the sum of the days it has, the coverage note and no change.
-    Week to date   the unfinished week, never plotted: volume with its coverage note.
-    Lifetime       the registry's running total; "From {date}" when the total was first recorded after the package began.
-  With fewer than 4 complete weeks ui/chart.html renders the pending card (a week counts only when the registry reported all 7 days).
+{{- /* 5. Downloads (design system v4 5.8 module 5; repositories with a registry package only): an 8 + 4 row. The section head
+  carries the link-action "All downloads".
+  8   Chart card "Weekly downloads": complete weeks over the last 26 weeks, as columns. Its readout is the plotted series only
+      (ui/chart.html default: "Latest week", the value of the last column and that week's range), so the readout equals a column.
+  4   Stat list "Download totals": every figure that is not a column of the chart (ruling 21), one label and one value per row:
+        Last 7 days       the rolling window ending on the last complete day (the summary tile's figure); with fewer than 7 complete
+                          days, the sum of the days it has and the coverage note
+        Last 30 days      the same for 30 days (omitted until 30 complete days exist)
+        Week to date      the unfinished week, never plotted, with its coverage note
+        Lifetime          the registry's running total; the note "From {date}" when the total was first recorded after the package began
+        Complete through  the last complete day of registry data
+  With fewer than 4 complete weeks the chart is the pending card (a week counts only when the registry reported all 7 days); the
+  stat list then goes under it, wide (4.22).
   Context: the dict from pages/repo.html (dl = data/downloads.html for this package, on the window shared with the other pages). */ -}}
 {{- $r := .r }}{{ $d := .dl -}}
 {{- $w := partial "data/week-bins.html" (dict "points" ($d.points | default slice) "agg" "sum" "weeks" 26 "end" ($d.complete_through | default "")) -}}
-{{- $readout := slice -}}
+{{- $rows := slice -}}
 {{- $l7 := (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window -}}
 {{- if ne $d.dl7 nil -}}
-  {{- $it := dict "label" $l7 "key" "accent" "value" (dict "kind" "volume" "v" $d.dl7) "range" (dict "from" $d.from "to" $d.end) -}}
-  {{- if ne $d.prev7 nil }}{{ $it = merge $it (dict "delta" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "metric" "downloads") "base" "prior7") }}{{ end -}}
-  {{- $readout = $readout | append $it -}}
+  {{- $rows = $rows | append (dict "label" $l7 "title" "Downloads over the 7 complete days that end on the Complete through day." "value" (dict "kind" "volume" "v" $d.dl7)) -}}
 {{- else if gt (int ($d.days_covered | default 0)) 0 -}}
-  {{- $readout = $readout | append (dict "label" $l7 "key" "accent" "value" (dict "kind" "volume" "v" $d.sum7) "range" (dict "from" $d.from "to" $d.end)
-      "note" (dict "part" (int $d.days_covered) "whole" 7 "noun" "day")) -}}
+  {{- $rows = $rows | append (dict "label" $l7 "value" (dict "kind" "volume" "v" $d.sum7)
+      "detail" (dict "note" (dict "part" (int $d.days_covered) "whole" 7 "noun" "day" "days" (dict "from" $d.from "to" $d.end)))) -}}
+{{- end -}}
+{{- if ne $d.dl30 nil -}}
+  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window "value" (dict "kind" "volume" "v" $d.dl30)) -}}
 {{- end -}}
 {{- with $w.wtd }}{{ if ne .value nil -}}
-  {{- $readout = $readout | append (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "key" "none"
-      "value" (dict "kind" "volume" "v" .value) "note" (dict "part" (int .days) "whole" 7 "noun" "day" "days" (dict "from" .start "to" .end))) -}}
+  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "title" "The unfinished week. It is never plotted."
+      "value" (dict "kind" "volume" "v" .value) "detail" (dict "note" (dict "part" (int .days) "whole" 7 "noun" "day" "days" (dict "from" .start "to" .end)))) -}}
 {{- end }}{{ end -}}
 {{- if ne $d.lifetime nil -}}
-  {{- $it := dict "label" "Lifetime" "key" "none" "value" (dict "kind" "volume" "v" $d.lifetime) -}}
+  {{- $it := dict "label" "Lifetime" "value" (dict "kind" "volume" "v" $d.lifetime) -}}
   {{- /* the npm total is a running sum the collector started itself, so it has a first day; the other registries report their own */ -}}
   {{- if eq $d.registry "npm" -}}
     {{- $seed := "" }}{{ with index $r.data "downloads-daily" }}{{ $seed = .seeded_from | default "" }}{{ end -}}
-    {{- if or (eq $seed "") (gt $seed "2024-11-01") }}{{ with $d.lifetime_since }}{{ $it = merge $it (dict "note" (dict "from" .)) }}{{ end }}{{ end -}}
+    {{- if or (eq $seed "") (gt $seed "2024-11-01") }}{{ with $d.lifetime_since }}{{ $it = merge $it (dict "detail" (dict "note" (dict "from" .))) }}{{ end }}{{ end -}}
   {{- end -}}
-  {{- $readout = $readout | append $it -}}
+  {{- $rows = $rows | append $it -}}
 {{- end -}}
+{{- with $d.complete_through }}{{ $rows = $rows | append (dict "label" "Complete through" "title" "The last complete day of registry data." "value" (dict "kind" "date" "d" .)) }}{{ end -}}
 {{- /* no complete week yet, though days exist: say so instead of "No data collected yet" */ -}}
-{{- $pending := "" }}{{ if and (eq (int $w.n) 0) (gt (int ($d.days_total | default 0)) 0) }}{{ $pending = "Too few complete weeks to draw a trend" }}{{ end }}
+{{- $pending := "" }}{{ if and (eq (int $w.n) 0) (gt (int ($d.days_total | default 0)) 0) }}{{ $pending = "Too few complete weeks to draw a trend" }}{{ end -}}
+{{- $drawn := ge (int $w.n) 4 -}}
+{{- /* one "since" date per page: registry data that starts within a week of the repository's first snapshot is dated by that
+     snapshot, the date the page head and the Activity cards print. A package whose data starts at another time keeps its own. */ -}}
+{{- $since := $d.first | default "" -}}
+{{- if and $since .first -}}
+  {{- $gap := div (float (sub (time.AsTime .first).Unix (time.AsTime $since).Unix)) 86400.0 -}}
+  {{- if and (ge $gap -7.0) (le $gap 7.0) }}{{ $since = .first }}{{ end -}}
+{{- end -}}
+{{- $pair := and $drawn (ge (len $rows) 3) }}
 <section class="v-section" aria-labelledby="downloads">
   {{ partial "ui/section-head.html" (dict "id" "downloads" "title" "Downloads" "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
   <div class="v-grid">
-    {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Weekly downloads" "class" "v-span-12"
+    {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Weekly downloads" "class" (cond $pair "v-span-8" "v-span-12")
         "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 26))).cadence
         "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column"
         "series" (slice (dict "label" "Downloads" "role" "accent" "points" $w.points))
-        "since" ($d.first | default "") "pending" $pending "readout" $readout) }}
+        "since" $since "pending" $pending) }}
+    {{- if ge (len $rows) 3 }}
+    {{ partial "ui/stat-list.html" (dict "id" "repo-download-totals" "title" "Download totals" "rows" $rows "wide" (not $pair)) }}
+    {{- end }}
   </div>
 </section>

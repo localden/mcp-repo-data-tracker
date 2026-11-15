@@ -1,7 +1,11 @@
-{{- /* Styleguide sections 1 to 5: colour, type, formats, space and grid, icons (design system v4 6). */ -}}
+{{- /* Styleguide sections 1 to 5: colour, type, formats, space and grid, icons (design system v4 6).
+  Specimens of unequal height share one 12-column card (two columns inside) instead of sitting in a pair of cards: a pair of cards
+  is equal height only when both hold the same number of rows. */ -}}
+{{- $asof := .asof | default (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- $y := substr (string $asof) 0 4 -}}
 {{- $tokens := slice "--bg" "--surface" "--surface-2" "--surface-raised" "--track" "--segment" "--meter-track" "--border-subtle" "--border" "--border-strong"
   "--text" "--text-2" "--text-3" "--hover" "--pressed" "--fill-neutral" "--accent" "--accent-text" "--accent-soft" "--accent-border"
-  "--danger" "--danger-soft" "--success" "--success-soft" "--warning" "--warning-soft" "--warning-border" "--chart-1" "--series-context"
+  "--danger" "--danger-soft" "--success" "--success-soft" "--warning" "--warning-soft" "--chart-1" "--series-context"
   "--series-neutral" "--ord-1" "--ord-2" "--ord-3" "--ord-4" "--gap" -}}
 <section class="v-section" aria-labelledby="colour">
   {{ partial "ui/section-head.html" (dict "id" "colour" "title" "Colour" "desc" "Every token with its computed value in the active theme. The dark capture of this page is the dark swatch sheet.") }}
@@ -13,61 +17,78 @@
         {{- end }}
       </div>
     </div></article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Surface levels") }}<div class="v-card-body">
-      <div class="v-sg-frame is-bg"><p class="v-caption">Page</p>
-        <div class="v-sg-frame"><p class="v-caption">Card</p>
-          <div class="v-sg-frame is-surface-2"><p class="v-caption">Inset band</p></div>
-          <div class="v-sg-frame is-raised"><p class="v-caption">Raised</p></div>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Surfaces, text tiers and state layers") }}<div class="v-card-body"><div class="v-sg-cols">
+      <div>
+        <div class="v-sg-frame is-bg"><p class="v-caption">Page</p>
+          <div class="v-sg-frame"><p class="v-caption">Card</p>
+            <div class="v-sg-frame is-surface-2"><p class="v-caption">Inset band</p></div>
+            <div class="v-sg-frame is-raised"><p class="v-caption">Raised</p></div>
+          </div>
         </div>
-      </div>
-      <p class="v-sg-cap">Four levels. In dark, higher is lighter.</p>
-    </div></article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Text tiers and state layers") }}<div class="v-card-body">
-      <div class="v-sg-stack">
-        {{- range slice "" "is-surface-2" "is-bg" }}
-        <div class="v-sg-frame {{ . }}"><p class="v-t-body">Primary text, values and titles</p><p class="v-t-label">Secondary text, labels and row meta</p><p class="v-t-caption">Tertiary text, captions and axis ticks</p></div>
-        {{- end }}
+        <p class="v-sg-cap">Four surface levels. In dark, higher is lighter.</p>
         <div class="v-sg-row"><div class="v-sg-frame is-layer-1"><p class="v-caption">Hover layer</p></div><div class="v-sg-frame is-layer-2"><p class="v-caption">Pressed layer</p></div></div>
+        <p class="v-sg-cap">A state is a layer over the element's own surface, never a swap.</p>
+      </div>
+      <div>
+        <div class="v-sg-stack">
+          {{- range slice "" "is-surface-2" "is-bg" }}
+          <div class="v-sg-frame {{ . }}"><p class="v-t-body">Primary text, values and titles</p><p class="v-t-label">Secondary text, labels and row meta</p><p class="v-t-caption">Tertiary text, captions and axis ticks</p></div>
+          {{- end }}
+        </div>
+        <p class="v-sg-cap">Three text tiers on the card, the inset band and the page.</p>
         <div class="v-sg-row">{{ range seq 4 }}<span class="v-key is-box is-ord-{{ . }}" aria-hidden="true"></span>{{ end }}<span class="v-caption">The ordered ramp, most recent activity first</span></div>
       </div>
-    </div></article>
+    </div></div></article>
   </div>
 </section>
 
 <section class="v-section" aria-labelledby="type">
-  {{ partial "ui/section-head.html" (dict "id" "type" "title" "Type" "desc" "One typeface shipped with the site, nine roles, tabular figures on everything.") }}
+  {{ partial "ui/section-head.html" (dict "id" "type" "title" "Type" "desc" "One typeface shipped with the site and nine roles. Figures are tabular in every numeric value and proportional in running text.") }}
   <div class="v-grid">
-    <article class="v-card v-span-8">{{ partial "ui/card-head.html" (dict "title" "Roles") }}<div class="v-card-body"><div class="v-sg-stack">
-      <p class="v-t-display">{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}</p>
-      <p class="v-t-title">All repositories</p>
-      <p class="v-t-heading">Needs attention</p>
-      <p class="v-t-subhead">Waiting by repository</p>
-      <p class="v-t-strong">Proposal</p>
-      <p class="v-t-medium">fix(client): retry the stream after receiving a session id</p>
-      <p class="v-t-body">Open issues with no maintainer reply, longest wait first.</p>
-      <p class="v-t-label">Waiting for a reply</p>
-      <p class="v-t-caption">Daily, last 26 weeks</p>
-    </div><p class="v-sg-cap">display, title, heading, subhead, strong, medium, body, label, caption</p></div></article>
-    <article class="v-card v-span-4">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-stack">
-      <table class="v-dt is-compact" aria-label="Tabular figures"><tbody>
-        {{- range slice 1111 8888 13765 }}
-        <tr><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</td></tr>
-        {{- end }}
-      </tbody></table>
-      <div class="v-sg-cell"><p class="v-prose v-clamp">A sentence clamps to two lines from the tablet width up and to three on a phone, and only sentences and the page description may clamp at all.</p></div>
-      <div class="v-sg-cell">{{ partial "ui/value.html" (dict "kind" "path" "v" "packages/server/src/transport/streamable/upgrade-to-v2.md") }}</div>
-      <div class="v-sg-row"><span class="v-t-display">{{ partial "ui/value.html" (dict "kind" "dur" "d" 471) }}</span><span class="v-t-heading">{{ partial "ui/value.html" (dict "kind" "dur" "h" 36) }}</span><span class="v-t-body">{{ partial "ui/value.html" (dict "kind" "dur" "d" 3) }}</span></div>
-    </div><p class="v-sg-cap">A tabular column, a clamped sentence, a path in a narrow cell, units beside display, heading and body values</p></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Roles") }}<div class="v-card-body"><div class="v-sg-specs">
+      <div class="v-sg-spec"><p class="v-t-display">{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}</p><p class="v-sg-cap">display, the summary value</p></div>
+      <div class="v-sg-spec"><p class="v-t-title">All repositories</p><p class="v-sg-cap">title, the page heading</p></div>
+      <div class="v-sg-spec"><p class="v-t-heading">Needs attention</p><p class="v-sg-cap">heading, a section title</p></div>
+      <div class="v-sg-spec"><p class="v-t-subhead">Waiting by repository</p><p class="v-sg-cap">subhead, a card title</p></div>
+      <div class="v-sg-spec"><p class="v-t-strong">Proposal</p><p class="v-sg-cap">strong, a group row or a stat value</p></div>
+      <div class="v-sg-spec"><p class="v-t-medium">fix(client): retry the stream</p><p class="v-sg-cap">medium, a row title or a control</p></div>
+      <div class="v-sg-spec"><p class="v-t-body">Open issues with no maintainer reply.</p><p class="v-sg-cap">body, cells and sentences</p></div>
+      <div class="v-sg-spec"><p class="v-t-label">Waiting for a reply</p><p class="v-sg-cap">label, headers, tags and badges</p></div>
+      <div class="v-sg-spec"><p class="v-t-caption">Daily, last 26 weeks</p><p class="v-sg-cap">caption, context and notes</p></div>
+    </div></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-specs">
+      <div class="v-sg-spec">
+        <table class="v-dt is-compact" aria-label="Tabular figures"><tbody>
+          {{- range slice 1111 8888 13765 }}
+          <tr><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</td></tr>
+          {{- end }}
+          <tr><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 276 "unit" "d" "compact" true) }}</td></tr>
+        </tbody></table>
+        <p class="v-sg-cap">Numeric values are tabular: digits line up in a column, and a unit keeps the cell's size</p>
+      </div>
+      <div class="v-sg-spec"><p class="v-t-medium">feat(server-push): re-entry for long-running, event-driven tools (v2.1)</p><p class="v-sg-cap">Running text is proportional: hyphens, commas and parentheses take their own width</p></div>
+      <div class="v-sg-spec"><div class="v-sg-cell"><p class="v-prose v-clamp">A sentence clamps to two lines from the tablet width up and to three on a phone, and only sentences and the page description may clamp at all.</p></div><p class="v-sg-cap">A clamped sentence</p></div>
+      <div class="v-sg-spec"><div class="v-sg-cell">{{ partial "ui/value.html" (dict "kind" "path" "v" "packages/server/src/transport/streamable/upgrade-to-v2.md") }}</div><p class="v-sg-cap">A path in a narrow cell: the directory gives way, the file name never does</p></div>
+    </div></div></article>
+    {{- /* the unit beside a value, in the real slots: 16px beside a display value, 14px beside a heading value */}}
+    {{ partial "ui/metrics.html" (dict "label" "Units beside display values" "size" "lg" "tiles" (slice
+        (dict "name" "Longest wait" "value" (dict "kind" "dur" "d" 471 "unit" "d"))
+        (dict "name" "Estimated review effort" "value" (dict "kind" "dur" "h" 113 "unit" "h"))
+        (dict "name" "Median time to merge" "value" (dict "kind" "dur" "h" 36)))) }}
+    {{ partial "ui/metrics.html" (dict "label" "Units beside heading values" "size" "md" "tiles" (slice
+        (dict "name" "Median time to close" "value" (dict "kind" "dur" "d" 76 "unit" "d"))
+        (dict "name" "Median first reply" "qual" "answered only" "value" (dict "kind" "dur" "h" 3)))) }}
   </div>
 </section>
 
 {{- $fx := slice
   (dict "fmt" "count" "args" (dict "v" 0) "expect" "0")
   (dict "fmt" "count" "args" (dict "v" 13765) "expect" "13,765")
-  (dict "fmt" "count" "args" (dict "v" 539 "noun" "pr") "expect" "539 PRs")
-  (dict "fmt" "count" "args" (dict "v" 1 "noun" "pr") "expect" "1 PR")
+  (dict "fmt" "count" "args" (dict "v" 539 "noun" "pr") "expect" "539 PRs")
+  (dict "fmt" "count" "args" (dict "v" 1 "noun" "pr") "expect" "1 PR")
   (dict "fmt" "count" "args" (dict "v" 6.4 "stat" true) "expect" "6.4")
   (dict "fmt" "count" "args" (dict "v" 5.0 "stat" true) "expect" "5")
+  (dict "fmt" "count" "args" (dict "v" 6.4 "stat" true "col" true) "expect" "6")
   (dict "fmt" "volume" "args" (dict "v" 882) "expect" "882")
   (dict "fmt" "volume" "args" (dict "v" 228400) "expect" "228K")
   (dict "fmt" "volume" "args" (dict "v" 2590000) "expect" "2.59M")
@@ -89,30 +110,34 @@
   (dict "fmt" "dur" "args" (dict "d" 1024 "unit" "d") "expect" "1,024d")
   (dict "fmt" "dur" "args" (dict "h" 5 "unit" "d") "expect" "<1d")
   (dict "fmt" "dur" "args" (dict "h" 113.6 "unit" "h") "expect" "113h")
+  (dict "fmt" "date" "args" (dict "d" (printf "%s-11-14" $y)) "expect" "Nov 14")
   (dict "fmt" "date" "args" (dict "d" "2024-10-09") "expect" "Oct 9, 2024")
   (dict "fmt" "date" "args" (dict "d" "2024-09-10" "weekday" true) "expect" "Tue, Sep 10, 2024")
+  (dict "fmt" "range" "args" (dict "from" (printf "%s-11-03" $y) "to" (printf "%s-11-09" $y)) "expect" "Nov 3–9")
+  (dict "fmt" "range" "args" (dict "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y)) "expect" "Oct 8 to Nov 9")
   (dict "fmt" "range" "args" (dict "from" "2024-11-03" "to" "2024-11-09") "expect" "Nov 3–9, 2024")
   (dict "fmt" "range" "args" (dict "from" "2024-10-08" "to" "2024-11-09") "expect" "Oct 8 to Nov 9, 2024")
   (dict "fmt" "range" "args" (dict "from" "2023-12-30" "to" "2024-01-04") "expect" "Dec 30, 2023 to Jan 4, 2024")
   (dict "fmt" "ts" "args" (dict "t" "2024-11-14T08:29:00Z") "expect" "Nov 14, 2024, 08:29 UTC")
   (dict "fmt" "ratio" "args" (dict "part" 155 "whole" 259) "expect" "155 of 259")
-  (dict "fmt" "ratio" "args" (dict "part" 5 "whole" 7 "noun" "day") "expect" "5 of 7 days")
+  (dict "fmt" "ratio" "args" (dict "part" 5 "whole" 7 "noun" "day") "expect" "5 of 7 days")
   (dict "fmt" "lines" "args" (dict "adds" 417 "dels" 0) "expect" "+417 −0") -}}
 <section class="v-section" aria-labelledby="formats">
   {{ partial "ui/section-head.html" (dict "id" "formats" "title" "Formats" "desc" "One format per kind of value. The fixture table runs every kind through the Hugo formatters and their JavaScript mirror.") }}
   <div class="v-grid">
+    {{- /* a matrix, so below 64rem each fixture is a record: the kind as its title, then Expected, Hugo and JavaScript lines */}}
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Fixture table") }}
-      <table class="v-dt is-compact" id="formats-table" aria-label="Formatter fixtures">
+      <table class="v-dt is-matrix is-compact" id="formats-table" aria-label="Formatter fixtures">
         <colgroup><col class="v-col-num-sm"><col><col class="v-col-deadline"><col class="v-col-deadline"><col class="v-col-deadline"></colgroup>
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Input") }}{{ partial "ui/th.html" (dict "label" "Expected") }}{{ partial "ui/th.html" (dict "label" "Hugo") }}{{ partial "ui/th.html" (dict "label" "JavaScript") }}</tr></thead>
         <tbody>
           {{- range $fx }}
-          <tr data-fixture><th scope="row">{{ .fmt }}</th><td><span class="v-val v-truncate">{{ jsonify .args }}</span></td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
+          <tr data-fixture><th scope="row" title="{{ jsonify .args }}">{{ .fmt }}</th><td class="v-sg-wide"><span class="v-truncate">{{ jsonify .args }}</span></td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
           {{- end }}
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Value states") }}
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Value states") }}
       <table class="v-dt is-matrix" aria-label="Value states">
         <colgroup><col><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Value" "num" true) }}{{ partial "ui/th.html" (dict "label" "Zero" "num" true) }}{{ partial "ui/th.html" (dict "label" "Missing" "num" true) }}</tr></thead>
@@ -121,33 +146,32 @@
           <tr><th scope="row">Volume</th><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" 88208812) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "reason" "not-sdk") }}</td></tr>
           <tr><th scope="row">Duration</th><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 744 "unit" "d") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "h" 0 "unit" "d") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "reason" "no-data") }}</td></tr>
           <tr><th scope="row">Share</th><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "v" 43) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "reason" "not-classified") }}</td></tr>
+          <tr><th scope="row">Statistic in a column</th><td class="num">{{ partial "ui/value.html" (dict "kind" "stat" "v" 6.4 "col" true) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "stat" "v" 0 "col" true) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "stat" "reason" "no-data") }}</td></tr>
           <tr><th scope="row">Net change</th><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 38) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "reason" "tracked-90") }}</td></tr>
           <tr><th scope="row">Change</th><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 741 "prev" 602 "metric" "waiting") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 5 "prev" 5) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 5) }}</td></tr>
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Reasons for a missing value") }}
-      <table class="v-dt is-matrix" aria-label="Reasons">
-        <colgroup><col><col class="v-col-num-sm"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Reason") }}{{ partial "ui/th.html" (dict "label" "Mark" "num" true) }}</tr></thead>
-        <tbody>
-          {{- range slice "not-sdk" "not-classified" "tracked-90" "no-complete-days" "no-baseline" "no-history" "no-priority-labels" "not-computed" "no-data" }}
-          <tr><th scope="row">{{ (partial "fmt/na.html" .).long }}</th><td class="num">{{ partial "ui/value.html" (dict "kind" "na" "reason" .) }}</td></tr>
-          {{- end }}
-        </tbody>
-      </table>
-    </article>
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Labels, windows and bases") }}<div class="v-card-body"><div class="v-sg-row">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Reasons for a missing value") }}<div class="v-card-body"><div class="v-sg-specs">
+      {{- range slice "not-sdk" "not-classified" "tracked-90" "no-complete-days" "no-baseline" "no-history" "no-priority-labels" "not-computed" "no-data" }}
+      <div class="v-sg-spec"><span class="v-sg-td">{{ partial "ui/value.html" (dict "kind" "na" "reason" .) }}</span><p class="v-sg-cap">{{ (partial "fmt/na.html" .).long }}</p></div>
+      {{- end }}
+    </div><p class="v-sg-cap">One mark, drawn by CSS, with its reason in the title. In a record below 64rem the reason is printed in the mark's place.</p></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Labels, windows and bases") }}<div class="v-card-body"><div class="v-sg-specs">
       {{- $l := partial "fmt/label.html" (dict "metric" "Merged" "scope" "PRs" "window" (dict "n" 7 "unit" "day")) }}
-      <span class="v-label">{{ $l.text }}</span><span class="v-caption">{{ $l.sub }}</span><span class="v-caption">{{ $l.record }}</span>
+      <div class="v-sg-spec"><span class="v-label">{{ $l.text }}</span><p class="v-sg-cap">A tile or stat-list label: a window follows a comma</p></div>
+      <div class="v-sg-spec"><span class="v-caption">{{ $l.sub }}</span><p class="v-sg-cap">The same window as a header sub line</p></div>
+      <div class="v-sg-spec"><span class="v-t-body">{{ $l.record }}</span><p class="v-sg-cap">The record label below 64rem carries the scope</p></div>
       {{- $l = partial "fmt/label.html" (dict "metric" "Waiting for a reply" "scope" "Issues" "threshold" "over7") }}
-      <span class="v-label">{{ $l.text }}</span><span class="v-caption">{{ $l.record }}</span>
-      {{- range slice "prior7" "4w" }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end }}
-      <span class="v-base">{{ (partial "fmt/label.html" (dict "base" (dict "date" "2024-10-07"))).base }}</span>
-      {{- range slice "active30" "idle30" "idle60" "idle90" }}<span class="v-caption">{{ (partial "fmt/label.html" (dict "bucket" .)).bucket }}</span>{{ end }}
-      <span class="v-caption">{{ (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence }}</span>
-      <span class="v-caption">{{ (partial "fmt/label.html" (dict "window" "wtd")).window }}</span>
-    </div><p class="v-sg-cap">fmt/label.html: tile label, header sub line, record label, bases, last-activity buckets, a chart cadence, a window</p></div></article>
+      <div class="v-sg-spec"><span class="v-label">{{ $l.text }}</span><p class="v-sg-cap">A threshold that starts with "over" joins without a comma</p></div>
+      <div class="v-sg-spec"><span class="v-t-body">{{ $l.record }}</span><p class="v-sg-cap">Its record label</p></div>
+      {{- $l = partial "fmt/label.html" (dict "metric" "Net change" "scope" "Issues" "window" (dict "n" 30 "unit" "day")) }}
+      <div class="v-sg-spec"><span class="v-t-body">{{ $l.record }}</span><p class="v-sg-cap">A noun metric takes its scope with "in": one comma, never two</p></div>
+      <div class="v-sg-spec"><span class="v-sg-row">{{ range slice "prior7" "4w" }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" (dict "date" (printf "%s-10-07" $y)))).base }}</span></span><p class="v-sg-cap">Bases: a flow against a window, a level against a date</p></div>
+      <div class="v-sg-spec"><span class="v-sg-stack">{{ range slice "active30" "idle30" "idle60" "idle90" }}<span class="v-caption">{{ (partial "fmt/label.html" (dict "bucket" .)).bucket }}</span>{{ end }}</span><p class="v-sg-cap">Last-activity buckets</p></div>
+      <div class="v-sg-spec"><span class="v-caption">{{ (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence }}</span><p class="v-sg-cap">A chart cadence</p></div>
+      <div class="v-sg-spec"><span class="v-caption">{{ (partial "fmt/label.html" (dict "window" "wtd")).window }}</span><p class="v-sg-cap">A window</p></div>
+    </div></div></article>
   </div>
 </section>
 
@@ -185,7 +209,7 @@
             (slice "chevron-right" "This row navigates") (slice "chevron-down" "Opens below") (slice "check" "Selected") (slice "x" "Clear")
             (slice "sliders" "Filters") (slice "search" "Search") (slice "github" "Repository link") (slice "package" "Registry link")
             (slice "sun" "Switch to light theme") (slice "moon" "Switch to dark theme") }}
-          <tr><th scope="row">{{ index . 0 }}</th><td><span class="v-sg-row">{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 12) }}{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 14) }}{{ partial "ui/icon.html" (index . 0) }}</span></td><td><span class="v-detail">{{ index . 1 }}</span></td></tr>
+          <tr><th scope="row">{{ index . 0 }}</th><td><span class="v-sg-row">{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 12) }}{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 14) }}{{ partial "ui/icon.html" (index . 0) }}</span></td><td>{{ index . 1 }}</td></tr>
           {{- end }}
         </tbody>
       </table>

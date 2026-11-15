@@ -1,54 +1,59 @@
-{{- /* Responsiveness (design system v4 5.3 module 5 classified, module 4 unclassified; 4.5): one metric strip, size md, visual trend
-  (ui/metrics.html renders it without visuals when no tile has four weekly points).
-  Ctx: dict {r (data/repo.html), w (data/waiting.html result for issues), any (bool: add the any-age tile; classified repositories,
-  where the summary strip does not already carry it)}.
-    Median first reply, qualifier "answered only": metrics.json issues.response_time.median_hours.
-    Median time to close: issues.close_time.median_days, with the reference pair "90% closed within" (p90_days); the empty mark when
-      nothing closed in the last 90 days.
-    Waiting for a reply, any age: the length of the waiting list; no stored history (empty sparkline); links to that list on /issues/. */ -}}
+{{- /* Responsiveness (design system v4 5.3, 4.5): one metric strip, size md, visual trend, 4 tiles, the same on every repository; the
+  twin of Pull requests "Review speed" (four tiles, no context on any, one sparkline each). Ctx: dict {r (data/repo.html)}.
+    Median first reply, qualifier "answered only"   metrics.json issues.response_time.median_hours
+    90% answered within                             issues.response_time.p90_hours
+    Median time to close                            issues.close_time.median_days
+    90% closed within                               issues.close_time.p90_days (its own tile: a second statistic never sits in a
+                                                    context line)
+  The two close tiles show the empty mark when nothing closed in the last 90 days.
+  Sparklines: the weekly level of the same snapshot fields over 12 weeks, in hours (the unit the tile value is formatted from).
+  ui/metrics.html draws them only when every tile has four weekly points; a short history gets the same four tiles without them.
+  The any-age waiting count is not here: it is the whole under the "Waiting for a reply" tile of the summary strip. */ -}}
 {{- $r := .r -}}
 {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ if reflect.IsMap . }}{{ $iss = . }}{{ end }}{{ end }}{{ end -}}
 {{- $rt := dict }}{{ with $iss.response_time }}{{ if reflect.IsMap . }}{{ $rt = . }}{{ end }}{{ end -}}
 {{- $ct := dict }}{{ with $iss.close_time }}{{ if reflect.IsMap . }}{{ $ct = . }}{{ end }}{{ end -}}
 
-{{- /* weekly bins for the sparklines, in hours (the unit the tile value is formatted from) */ -}}
-{{- $sReply := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.response_time.median_hours" "days" 91) -}}
-{{- $bReply := (partial "data/week-bins.html" (dict "points" $sReply.points "agg" "last" "weeks" 12)).points -}}
-{{- $sClose := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.close_time.median_days" "days" 91) -}}
-{{- $bClose := slice -}}
-{{- range (partial "data/week-bins.html" (dict "points" $sClose.points "agg" "last" "weeks" 12)).points -}}
-  {{- if ne .value nil }}{{ $bClose = $bClose | append (dict "date" .date "value" (mul (float .value) 24.0)) -}}
-  {{- else }}{{ $bClose = $bClose | append (dict "date" .date "value" nil) }}{{ end -}}
+{{- /* weekly bins per snapshot field; the close times are stored in days and drawn in hours */ -}}
+{{- $bins := dict -}}
+{{- range slice "response_time.median_hours" "response_time.p90_hours" "close_time.median_days" "close_time.p90_days" -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" (printf "issues.%s" .) "days" 91) -}}
+  {{- $pts := (partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12)).points -}}
+  {{- if hasSuffix . "_days" -}}
+    {{- $h := slice -}}
+    {{- range $pts -}}
+      {{- if ne .value nil }}{{ $h = $h | append (dict "date" .date "value" (mul (float .value) 24.0)) -}}
+      {{- else }}{{ $h = $h | append (dict "date" .date "value" nil) }}{{ end -}}
+    {{- end -}}
+    {{- $pts = $h -}}
+  {{- end -}}
+  {{- $bins = merge $bins (dict . $pts) -}}
 {{- end -}}
-
-{{- $reply := dict "name" (partial "fmt/label.html" (dict "stat" "Median" "metric" "first reply")).main
-    "qual" (partial "fmt/label.html" (dict "threshold" "answered")).qual
-    "title" "Median time to the first maintainer comment, over the issues that got one."
-    "value" (dict "kind" "dur" "h" $rt.median_hours) "points" $bReply -}}
 
 {{- /* nothing closed in the last 90 days is a missing value, never 0 */ -}}
-{{- $med := $ct.median_days -}}
-{{- $hasMed := ne $med nil -}}
-{{- if $hasMed }}{{ if and (eq (float $med) 0.0) (eq (float ($iss.closed_90d | default 0)) 0.0) }}{{ $hasMed = false }}{{ end }}{{ end -}}
-{{- $close := dict "name" (partial "fmt/label.html" (dict "stat" "Median" "metric" "time to close")).main
-    "title" "Median time from open to close, over issues closed in the last 90 days." "points" $bClose -}}
+{{- $hasMed := ne $ct.median_days nil -}}
+{{- if $hasMed }}{{ if and (eq (float $ct.median_days) 0.0) (eq (float ($iss.closed_90d | default 0)) 0.0) }}{{ $hasMed = false }}{{ end }}{{ end -}}
+{{- $med := dict "kind" "dur" "reason" "no-data" }}{{ $p90 := dict "kind" "dur" "reason" "no-data" -}}
 {{- if $hasMed -}}
-  {{- $close = merge $close (dict "value" (dict "kind" "dur" "d" $med)) -}}
-  {{- if ne $ct.p90_days nil }}{{ $close = merge $close (dict "context" (dict "kind" "ref" "label" "90% closed within" "value" (dict "kind" "dur" "d" $ct.p90_days))) }}{{ end -}}
-{{- else -}}
-  {{- $close = merge $close (dict "value" (dict "kind" "dur" "reason" "no-data") "context" (dict "kind" "reason" "reason" "no-data")) -}}
-{{- end -}}
-
-{{- $tiles := slice $reply $close -}}
-{{- if .any -}}
-  {{- $n := 0 }}{{ with .w }}{{ $n = int .any }}{{ end -}}
-  {{- $tiles = $tiles | append (dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual
-      "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, at any age."
-      "value" (dict "kind" "count" "v" $n) "reason" "no-history" "href" (printf "issues/?repo=%s#waiting" $r.repo | relURL)) -}}
+  {{- $med = dict "kind" "dur" "d" $ct.median_days -}}
+  {{- if ne $ct.p90_days nil }}{{ $p90 = dict "kind" "dur" "d" $ct.p90_days }}{{ end -}}
 {{- end }}
 <section class="v-section" aria-labelledby="responsiveness">
   {{ partial "ui/section-head.html" (dict "id" "responsiveness" "title" "Responsiveness") }}
   <div class="v-grid">
-    {{ partial "ui/metrics.html" (dict "label" "Responsiveness" "size" "md" "visual" "trend" "tiles" $tiles) }}
+    {{ partial "ui/metrics.html" (dict "label" "Responsiveness" "size" "md" "visual" "trend" "tiles" (slice
+      (dict "name" (partial "fmt/label.html" (dict "stat" "Median" "metric" "first reply")).main
+        "qual" (partial "fmt/label.html" (dict "threshold" "answered")).qual
+        "title" "Median time to the first maintainer comment, over the issues that got one."
+        "value" (dict "kind" "dur" "h" $rt.median_hours) "points" (index $bins "response_time.median_hours"))
+      (dict "name" "90% answered within"
+        "title" "Nine in ten of the answered issues got their first maintainer comment within this time."
+        "value" (dict "kind" "dur" "h" $rt.p90_hours) "points" (index $bins "response_time.p90_hours"))
+      (dict "name" (partial "fmt/label.html" (dict "stat" "Median" "metric" "time to close")).main
+        "title" "Median time from open to close, over issues closed in the last 90 days."
+        "value" $med "points" (index $bins "close_time.median_days"))
+      (dict "name" "90% closed within"
+        "title" "Nine in ten of the issues closed in the last 90 days were closed within this time."
+        "value" $p90 "points" (index $bins "close_time.p90_days")))) }}
   </div>
 </section>

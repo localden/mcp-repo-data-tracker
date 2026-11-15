@@ -2,7 +2,8 @@
   on a page comes from here. Dict {kind, ...the formatter's arguments, title, class, compact, reason, since}.
   kind (default "count"):
     count    {v, noun}                 fmt/count.html     "1,143", "539 PRs"
-    stat     {v}                       fmt/count.html     a mean or median of counts: "6.4", "5"
+    stat     {v, col}                  fmt/count.html     a mean or median of counts: "6.4", "5"; col: true in a table column
+                                                          prints a whole number, so the column's digits line up
     volume   {v}                       fmt/volume.html    "88.0M" with the exact figure in title
     share    {v} | {part, whole}       fmt/share.html     "43%", "<1%"
     net      {v} | {cur, prev}         fmt/change.html    a signed count as plain text: "+38", "−4", "0"
@@ -25,7 +26,7 @@
 {{- $kind := $c.kind | default "count" -}}
 {{- $cls := "" }}{{ with $c.class }}{{ $cls = printf " %s" . }}{{ end -}}
 {{- $f := dict "state" "na" -}}
-{{- if or (eq $kind "count") (eq $kind "stat") }}{{ $f = partial "fmt/count.html" (dict "v" $c.v "noun" $c.noun "stat" (or $c.stat (eq $kind "stat"))) -}}
+{{- if or (eq $kind "count") (eq $kind "stat") }}{{ $f = partial "fmt/count.html" (dict "v" $c.v "noun" $c.noun "stat" (or $c.stat (eq $kind "stat")) "col" $c.col) -}}
 {{- else if eq $kind "volume" }}{{ $f = partial "fmt/volume.html" (dict "v" $c.v "noun" $c.noun) -}}
 {{- else if eq $kind "share" }}{{ $f = partial "fmt/share.html" (dict "v" $c.v "part" $c.part "whole" $c.whole) -}}
 {{- else if eq $kind "net" }}{{ $f = partial "fmt/change.html" (dict "d" $c.v "cur" $c.cur "prev" $c.prev "unit" ($c.unit | default "count") "metric" "net") -}}
@@ -76,5 +77,6 @@
 {{- else -}}
   {{- $title := $c.title | default "" -}}
   {{- if and (not $title) (eq $kind "volume") (ne $f.text $f.exact) }}{{ $title = $f.long }}{{ end -}}
+  {{- if and (not $title) (eq $kind "stat") (ne $f.text $f.long) }}{{ $title = $f.long }}{{ end -}}
   <span class="v-val{{ if eq $f.state "zero" }} is-zero{{ end }}{{ $cls }}" data-kind="{{ $kind }}"{{ with $title }} title="{{ . }}"{{ end }}>{{ $f.text }}</span>
 {{- end -}}

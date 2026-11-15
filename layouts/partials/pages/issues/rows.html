@@ -11,7 +11,10 @@
   than 2 business days), follow-up (the reporter answered and has waited more than 2 business days), p1 (older than 90 days), repro
   (needs repro or confirmation, reporter silent, older than 14 days). Business-day overages are shown in calendar days at the row's
   own calendar to business-day ratio.
-  Detail (the one fact the badge cannot say): {kind "reporter-waiting", days, bd} | {kind "fix", pr} | {kind "reporter"}.
+  Detail (the one fact the badge cannot say): {kind "reporter-waiting", days, bd} | {kind "fix", pr} | {kind "reporter"}. Days are
+  floored and never larger than the Age of the row. A row whose Overdue cell shows the Follow-up rule has no "Reporter waiting"
+  detail: the cell beside it already says how long the reporter has waited.
+  elig: the open issues each rule applies to {triage, p0, question, follow-up, p1, repro}, for the Open column of Response SLAs.
   Sort: days overdue descending, then age descending, as one numeric key k.
   Returns {rows, views {needs, ready, reporter, close}, def (the default view: the first that is not empty), all, overdue (rows past any
   rule), needsOver (those in the needs view), waiting (rows with the waiting token), rules (rule key -> rows), prio (the repository uses
@@ -77,12 +80,19 @@
       {{- $tok := slice (printf "status:%s" $st.key) -}}
       {{- if in (slice "bug" "enhancement" "question") $type }}{{ $tok = $tok | append (printf "type:%s" $type) }}{{ end -}}
       {{- $tok = $tok | append (printf "priority:%s" (cond (eq $p "") "none" (lower $p))) -}}
-      {{- $top := -1.0 -}}
+      {{- $top := -1.0 }}{{ $topKey := "" -}}
       {{- range $rules -}}
         {{- $tok = $tok | append (printf "rule:%s" .key) -}}
         {{- $sc.Add (printf "rule-%s" .key) 1 -}}
-        {{- if gt (math.Floor .days) $top }}{{ $top = math.Floor .days }}{{ end -}}
+        {{- if gt (math.Floor .days) $top }}{{ $top = math.Floor .days }}{{ $topKey = .key }}{{ end -}}
       {{- end -}}
+      {{- /* the open issues each rule applies to (the Open column of Response SLAs) */ -}}
+      {{- if not $i.type }}{{ $sc.Add "elig-triage" 1 }}{{ end -}}
+      {{- if eq $p "P0" }}{{ $sc.Add "elig-p0" 1 }}{{ end -}}
+      {{- if eq $p "P1" }}{{ $sc.Add "elig-p1" 1 }}{{ end -}}
+      {{- if eq $type "question" }}{{ $sc.Add "elig-question" 1 }}{{ end -}}
+      {{- if $replied }}{{ $sc.Add "elig-follow-up" 1 }}{{ end -}}
+      {{- if $waitRep }}{{ $sc.Add "elig-repro" 1 }}{{ end -}}
       {{- if $rules -}}
         {{- $tok = $tok | append "overdue" }}{{ $sc.Add "overdue" 1 -}}
         {{- if eq $view "needs" }}{{ $sc.Add "needs-over" 1 }}{{ end -}}
@@ -92,11 +102,7 @@
 
       {{- /* item meta: role, flags, labels (the priority label is the priority slot) */ -}}
       {{- $author := string ($i.author | default "") -}}
-      {{- $role := "" -}}
-      {{- if $author -}}
-        {{- $role = "Contributor" -}}
-        {{- if $i.is_maintainer }}{{ $role = "Maintainer" }}{{ else if or (hasSuffix $author "[bot]") (hasPrefix $author "app/") }}{{ $role = "Bot" }}{{ end -}}
-      {{- end -}}
+      {{- $role := partial "data/role.html" (dict "author" $author "maintainer" (eq $i.is_maintainer true)) -}}
       {{- $conflict := slice -}}
       {{- if reflect.IsSlice $i.type_conflict }}{{ range $i.type_conflict }}{{ $conflict = $conflict | append (string .) }}{{ end -}}
       {{- else }}{{ range $types }}{{ if in $labels . }}{{ $conflict = $conflict | append . }}{{ end }}{{ end }}{{ end -}}
@@ -107,9 +113,11 @@
 
       {{- /* Detail */ -}}
       {{- $detail := dict -}}
-      {{- if $replied -}}
+      {{- if and $replied (ne $topKey "follow-up") -}}
         {{- $detail = dict "kind" "reporter-waiting" -}}
-        {{- if ne $i.reply_wait_days nil }}{{ $detail = dict "kind" "reporter-waiting" "days" (mul $rwd $ratio) "bd" (math.Floor $rwd) }}{{ end -}}
+        {{- if ne $i.reply_wait_days nil -}}
+          {{- $detail = dict "kind" "reporter-waiting" "days" (math.Min (math.Floor (mul $rwd $ratio)) (math.Floor $age)) "bd" (math.Floor $rwd) -}}
+        {{- end -}}
       {{- else if $i.linked_prs -}}
         {{- $detail = dict "kind" "fix" "pr" (int (index $i.linked_prs 0)) -}}
       {{- else if and $waitRep (ne $st.key "waiting-on-reporter") -}}
@@ -135,6 +143,8 @@
 {{- if eq $def "" }}{{ $def = "all" }}{{ end -}}
 {{- $ruleN := dict -}}
 {{- range partial "data/sla-rules.html" "issue" }}{{ $ruleN = merge $ruleN (dict .key (int ($sc.Get (printf "rule-%s" .key) | default 0))) }}{{ end -}}
-{{- return dict "rows" $rows "views" $views "def" $def "all" (len $rows)
+{{- $elig := dict -}}
+{{- range slice "triage" "p0" "question" "follow-up" "p1" "repro" }}{{ $elig = merge $elig (dict . (int ($sc.Get (printf "elig-%s" .) | default 0))) }}{{ end -}}
+{{- return dict "rows" $rows "views" $views "def" $def "all" (len $rows) "elig" $elig
   "overdue" (int ($sc.Get "overdue" | default 0)) "needsOver" (int ($sc.Get "needs-over" | default 0))
   "waiting" (int ($sc.Get "waiting" | default 0)) "rules" $ruleN "prio" $prio -}}

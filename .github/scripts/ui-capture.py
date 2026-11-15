@@ -33,19 +33,27 @@ LEGACY = [('health/', 'repos/modelcontextprotocol/'), ('contributors/', 'repos/m
           ('issues/?repo=modelcontextprotocol/typescript-sdk', 'issues/typescript-sdk/'),
           ('pulls/?repo=modelcontextprotocol/typescript-sdk', 'pulls/typescript-sdk/'),
           ('health/?repo=modelcontextprotocol/typescript-sdk', 'repos/typescript-sdk/')]
-VIEWPORTS = {'desktop': (1440, 900, 1), 'mobile': (390, 844, 2)}
+VIEWPORTS = {'desktop': (1440, 900, 1), 'mobile': (390, 844, 2), 'laptop': (1024, 768, 1), 'tablet': (768, 1024, 1)}
 # Capture matrix: all 13 pages in all four viewport/theme combinations (52 captures). The probe, the text
 # file, axe and the page checks always cover the whole page; tiles and states are capped per combination:
 #   desktop light  up to 40 tiles  every state, plus the keyboard walk and the legacy redirects
-#   mobile light   up to 12 tiles  menu, switcher, notes, focus            (R12 targets are 6-8 screens)
+#   mobile light   up to 16 tiles  menu, switcher, notes, focus, and the phone forms of the list controls: the facet panel
+#                                  with one chip pressed, the sort menu, the view menu, the stuck search row, the empty result
 #   desktop dark   first 4 tiles   menu, switcher, notes, table, hover     (overlays and charts on dark tokens)
-#   mobile dark    first 3 tiles   menu
-# which keeps the run to about 270 tiles at today's page lengths (767 if every page hit its cap).
-ALL_STATES = ('menu', 'switcher', 'notes', 'table', 'hover', 'tabs', 'filter', 'focus')
+#   mobile dark    first 6 tiles   menu
+#   laptop light   up to 12 tiles  no states: 1024px, where every table plan must still fit (component test 7)
+#   tablet light   up to 12 tiles  no states: 768px, list form and records with tablet gutters
+# The styleguide is the inventory, so it is captured to its footer in every combination (TILE_CAPS). The laptop and tablet rows
+# cover the four pages that hold every component family (ONLY).
+ALL_STATES = ('menu', 'switcher', 'notes', 'table', 'hover', 'tabs', 'filter', 'select', 'empty', 'expander', 'focus')
 MATRIX = [('desktop', 'light', 40, ALL_STATES),
-          ('mobile', 'light', 12, ('menu', 'switcher', 'notes', 'focus')),
+          ('mobile', 'light', 16, ('menu', 'switcher', 'notes', 'focus', 'facets', 'sort', 'views', 'stuck', 'empty', 'expander')),
           ('desktop', 'dark', 4, ('menu', 'switcher', 'notes', 'table', 'hover')),
-          ('mobile', 'dark', 3, ('menu',))]
+          ('mobile', 'dark', 6, ('menu',)),
+          ('laptop', 'light', 12, ()),
+          ('tablet', 'light', 12, ())]
+TILE_CAPS = {'styleguide': 60}
+ONLY = {'laptop': ('overview', 'pulls-ts', 'seps', 'styleguide'), 'tablet': ('overview', 'pulls-ts', 'seps', 'styleguide')}
 AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 SERIOUS = ('serious', 'critical')
 # design system v4 2.2: nine roles (display 32/600, title 24/600, heading 20/600, subhead 16/600, strong 14/600, medium 14/500,
@@ -97,6 +105,13 @@ RULES = {
                  'decimals in a duration, wk, avg, repo, "No change", "Week of", "Untriaged", "Data through" and the rest) on the '
                  'text of <main> with titles, labels, paths, package names and Data notes stripped',
     'cell-overflow': 'no table cell content runs past its cell (a fixed column narrower than its header or value)',
+    'cell-inset': 'no child of a table cell ends past the cell\'s content box (a sparkline, note or bar that breaks the card inset)',
+    'value-truncated': 'no value, id or deadline phrase sits in a box that cuts it (design system v4 4.14 rule 2: a value never truncates)',
+    'font-loaded': 'the shipped face rendered: document.fonts.check(\'500 14px "Inter Variable"\') after fonts.ready (design system v4 2.2)',
+    'numerals': 'tabular figures on numeric values in table cells, proportional figures on titles, tags, handles, ids and sentences '
+                '(design system v4 2.2)',
+    'notes-layout': 'Data notes open at 64rem and up: Sources sits to the right of Definitions (the 8 + 4 grid applies)',
+    'th-baseline': 'in a column header row every label sits on one line: equal top edges for plain labels and sort buttons',
     'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
     'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical (chart-2 is declared for the validator only), ord-1..4 ordinal',
@@ -129,7 +144,37 @@ PROBE = r"""() => {
     colors[cs.color] = (colors[cs.color] || 0) + 1;
     if (!el.closest('main')) return;   // header/footer chrome (brand, nav, build hash) is outside the page's type budget
     const f = cs.fontSize + ' ' + cs.fontWeight; fonts[f] = (fonts[f] || 0) + 1;
-    if (!fontSamples[f]) fontSamples[f] = path(el) + ' "' + (el.textContent || '').trim().slice(0, 40) + '"'; });
+    if (!fontSamples[f]) fontSamples[f] = path(el) + ' "' + (el.textContent || '').trim().slice(0, 40) + '" [' + cs.fontFamily.split(',')[0].trim() + '; ' + cs.fontVariantNumeric + ']'; });
+  // the shipped face, and where figures are tabular: numeric values in table cells are, running text is not (v4 2.2)
+  const fontLoaded = !!(document.fonts && document.fonts.check && document.fonts.check('500 14px "Inter Variable"'));
+  const tab = el => /tabular-nums/.test(getComputedStyle(el).fontVariantNumeric);
+  const numerals = [];
+  [...document.querySelectorAll('.v-dt td.num .v-val:not([data-kind="date"]):not([data-kind="range"]):not([data-kind="ts"]):not(.is-na)')].filter(shown)
+    .filter(el => !tab(el)).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'tabular', text: el.textContent.trim().slice(0, 30) }));
+  [...document.querySelectorAll('main .v-row-link, main .v-tag, main .v-who, main .v-id, main .v-prose')].filter(shown)
+    .filter(tab).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'proportional', text: el.textContent.trim().slice(0, 30) }));
+  // a value, an id or a deadline phrase inside any box that cuts it (4.14 rule 2)
+  const cut = el => { for (let e = el; e && !e.matches('table, article, main'); e = e.parentElement) {
+    if (getComputedStyle(e).overflowX !== 'visible' && e.scrollWidth > e.clientWidth + 1) return e; if (e.matches('td, th')) break; } return null; };
+  const valueTruncated = [...document.querySelectorAll('.v-dt .v-val, .v-dt .v-id, .v-deadline, .v-metric .v-val, .v-readout .v-val, .v-statlist .v-val')]
+    .filter(shown).filter(el => !el.closest('.v-item > .v-meta')).map(el => [el, cut(el)]).filter(x => x[1]).slice(0, 10)
+    .map(x => ({ el: path(x[0]), text: x[0].textContent.trim().slice(0, 40), box: name(x[1]) }));
+  // a child of a body cell that ends past the cell's content box: a sparkline, note or bar that breaks the card inset
+  const cellInset = [];
+  for (const c of document.querySelectorAll('.v-dt tbody td, .v-dt tbody th')) {
+    if (cellInset.length >= 10 || !shown(c) || getComputedStyle(c).display !== 'table-cell') continue;
+    const cr = c.getBoundingClientRect(), edge = cr.right - parseFloat(getComputedStyle(c).paddingRight || 0);
+    const bad = [...c.querySelectorAll('*')].find(k => shown(k) && !tiny(k) && k.getBoundingClientRect().right > edge + 1.5);
+    if (bad) cellInset.push({ el: path(bad), over: Math.round(bad.getBoundingClientRect().right - edge) });
+  }
+  // column header labels on one line: the first visible text of every header in a row starts at the same y
+  const thBaseline = [];
+  document.querySelectorAll('.v-dt thead tr:last-child').forEach(tr => { if (!shown(tr)) return;
+    const tops = [...tr.cells].filter(shown).map(th => { const w = document.createTreeWalker(th, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) { const p = n.parentElement; if (!n.textContent.trim() || !p || p.closest('.sr-only, .v-th-sub, .v-th-short')) continue;
+        const r = document.createRange(); r.selectNodeContents(n); const b = r.getClientRects(); if (b.length) return Math.round(b[0].top * 2) / 2; }
+      return null; }).filter(v => v !== null);
+    if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 1 && thBaseline.length < 10) thBaseline.push({ el: path(tr), tops: tops.join(', ') }); });
   // table cells whose content runs past the cell (fixed columns narrower than a header or value)
   const cellOverflow = [...document.querySelectorAll('.v-dt th, .v-dt td')].filter(shown).filter(c => c.scrollWidth > c.clientWidth + 1)
     .slice(0, 25).map(c => ({ el: path(c), text: (c.innerText || '').trim().slice(0, 60), over: c.scrollWidth - c.clientWidth }));
@@ -151,6 +196,7 @@ PROBE = r"""() => {
   return { title: document.title, theme: document.documentElement.dataset.theme,
     scrollWidth: document.documentElement.scrollWidth, clientWidth: vw, height: document.documentElement.scrollHeight,
     overflow, clipped, innerScroll, fontSizes: fonts, fontSamples, textColors: colors, lineStartDots: dots, cellOverflow,
+    fontLoaded, numerals, valueTruncated, cellInset, thBaseline,
     charts: { total: canvases.length, shown: canvases.filter(shown).length, mounted: canvases.filter(mounted).length,
               shownNotMounted: canvases.filter(c => shown(c) && !mounted(c)).map(c => c.id || path(c)) },
     canvases: [...document.querySelectorAll('canvas')].map(c => ({ el: c.id || path(c), metric: c.dataset.metric || null, label: c.getAttribute('aria-label') })),
@@ -191,7 +237,9 @@ TAG = r"""() => {
 }"""
 
 MENU_STATE = r"""b => { const list = document.getElementById(b.getAttribute('aria-controls')), a = document.activeElement;
-  const txt = el => el ? (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+  // a menu row's name is its label span: the count beside it is a separate column, not part of the name
+  const txt = el => { if (!el) return ''; const lab = el.querySelector && el.querySelector('.v-menu-text');
+    return ((lab || el).innerText || (lab || el).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60); };
   return { expanded: b.getAttribute('aria-expanded'), onButton: a === b, inList: !!(list && a && a !== list && list.contains(a)),
     onCurrent: !!(a && a.hasAttribute('aria-current')), hasCurrent: !!(list && list.querySelector('[aria-current]')),
     isLink: !!(a && a.matches('a[href]')), allItem: /^all repositories$/i.test(txt(a)), active: txt(a) || (a ? a.tagName.toLowerCase() : '') }; }"""
@@ -352,6 +400,12 @@ def states(page, out, cid, url, wanted, axe_src, rep):
             made.append(f)
         if btn.get_attribute('aria-expanded', timeout=1000) != 'true':
             rep['stateNotes'].append(f'{kind}: aria-expanded is not "true" after a click')
+        if kind == 'notes' and page.viewport_size['width'] >= 1024:   # the 8 + 4 grid: Sources beside Definitions, not under them
+            r = page.evaluate("""() => { const d = document.querySelector('.v-notes:not([hidden]) .is-defs'), s = document.querySelector('.v-notes:not([hidden]) .is-sources');
+              if (!d || !s) return null; const a = d.getBoundingClientRect(), b = s.getBoundingClientRect();
+              return { defsRight: Math.round(a.right), sourcesLeft: Math.round(b.left), sameRow: Math.abs(a.top - b.top) < 4 }; }""")
+            record('notes-layout', cid, 'skip' if r is None else bool(r['sameRow'] and r['sourcesLeft'] >= r['defsRight']),
+                   'one column only' if r is None else f"Definitions end at {r['defsRight']}px, Sources start at {r['sourcesLeft']}px, same row: {r['sameRow']}")
         axe_state(kind, panel if panel.count() else None, found[kind][0])
         page.keyboard.press('Escape')
         page.wait_for_timeout(150)
@@ -450,6 +504,128 @@ def states(page, out, cid, url, wanted, axe_src, rep):
                 found = reload(page, url)
             except Exception as e:
                 print(f'  reload failed after filter: {short(e)}')
+
+    # The list controls in every form (design system v4 4.12, 4.13): an open select chip and its applied state, the empty result,
+    # an expanded duplicate cluster, and below 64rem the facet panel, the sort menu, the view menu and the stuck search row.
+    # Each one changes the list, so each is followed by a reload.
+    def first_visible(sel):
+        for el in page.locator(sel).all()[:12]:
+            try:
+                if el.is_visible():
+                    return el
+            except Exception:
+                pass
+        return None
+
+    def menu_of(btn):
+        return page.locator(f'[id="{btn.get_attribute("aria-controls", timeout=1000)}"]')
+
+    def after(name, fn):
+        nonlocal found
+        step(name, fn)
+        try:
+            found = reload(page, url)
+        except Exception as e:
+            print(f'  reload failed after {name}: {short(e)}')
+
+    def viewport_shot(name, anchor=None):
+        if anchor is not None:
+            anchor.scroll_into_view_if_needed(timeout=2000)
+        f = d / f'{cid}--{name}.png'
+        page.screenshot(path=str(f))
+        made.append(f)
+
+    if 'select' in wanted:
+        def select():
+            chip = first_visible('main [data-list] .v-chip.is-select')
+            if chip is None:
+                return
+            chip.scroll_into_view_if_needed(timeout=2000)
+            chip.click(timeout=2000)
+            page.wait_for_timeout(250)
+            menu = menu_of(chip)
+            f = d / f'{cid}--select-open.png'
+            if region(page, f, [chip, menu]):
+                made.append(f)
+            axe_state('select', menu if menu.count() else None, 'select chip open')
+            opt = menu.locator('.v-menu-opt:not([aria-disabled="true"])').first
+            if opt.count():
+                opt.click(timeout=2000)
+                page.keyboard.press('Escape')
+                page.wait_for_timeout(300)
+                viewport_shot('select-applied', chip)
+        after('select', select)
+
+    if 'empty' in wanted:
+        def empty():
+            box = first_visible('main [data-list] [data-filter-input]')
+            if box is None:
+                return
+            box.scroll_into_view_if_needed(timeout=2000)
+            box.fill('zzzz', timeout=2000)
+            page.wait_for_timeout(300)
+            viewport_shot('empty-result', box)
+            axe_state('empty', box.locator(CARD), 'empty result')
+        after('empty', empty)
+
+    if 'expander' in wanted:
+        def expander():
+            btn = first_visible('main [data-expander]')
+            if btn is None:
+                return
+            btn.scroll_into_view_if_needed(timeout=2000)
+            btn.click(timeout=2000)
+            page.wait_for_timeout(250)
+            row = btn.locator('xpath=ancestor::tr[1]')
+            f = d / f'{cid}--expander-open.png'
+            if region(page, f, [row, row.locator('xpath=following-sibling::tr[1]'), row.locator('xpath=following-sibling::tr[2]')]):
+                made.append(f)
+        after('expander', expander)
+
+    if 'facets' in wanted:
+        def facets():
+            btn = first_visible('main [data-facets-toggle]')
+            if btn is None:
+                return
+            btn.scroll_into_view_if_needed(timeout=2000)
+            btn.click(timeout=2000)
+            page.wait_for_timeout(250)
+            chip = first_visible('main [data-list] button.v-chip[data-facet]:not([disabled])')
+            if chip is not None:
+                chip.click(timeout=2000)
+                page.wait_for_timeout(300)
+            viewport_shot('facets-open', btn)
+            axe_state('facets', btn.locator(CARD), 'facet panel open, one chip pressed')
+        after('facets', facets)
+
+    for name, sel in (('sort', 'main [data-sort-menu] > button'), ('views', 'main .v-viewbar .v-btn')):
+        if name in wanted:
+            def menu_state(name=name, sel=sel):
+                btn = first_visible(sel)
+                if btn is None:
+                    return
+                btn.scroll_into_view_if_needed(timeout=2000)
+                btn.click(timeout=2000)
+                page.wait_for_timeout(250)
+                f = d / f'{cid}--{name}-menu.png'
+                if region(page, f, [btn, menu_of(btn)]):
+                    made.append(f)
+                page.keyboard.press('Escape')
+            step(name, menu_state)
+
+    if 'stuck' in wanted:
+        def stuck():
+            row = first_visible('main [data-list] .v-filter-row')
+            if row is None:
+                return
+            top = row.evaluate('el => el.closest("[data-list]").getBoundingClientRect().top + window.scrollY')
+            page.evaluate(f'window.scrollTo(0, {int(top) + 420})')
+            page.wait_for_timeout(200)
+            f = d / f'{cid}--stuck.png'
+            page.screenshot(path=str(f), clip={'x': 0, 'y': 0, 'width': page.viewport_size['width'], 'height': min(360, page.viewport_size['height'])})
+            made.append(f)
+            page.evaluate('window.scrollTo(0, 0)')
+        step('stuck', stuck)
 
     if 'focus' in wanted:
         def focus():
@@ -582,6 +758,16 @@ def page_checks(cid, vp, rep, page_text, ban_text=''):
     record('font-combos', cid, len(fonts) <= MAX_FONT_COMBOS, detail)
     co = rep.get('cellOverflow', [])
     record('cell-overflow', cid, not co, '; '.join(f"{c['el']} {c['text']!r} +{c['over']}px" for c in co[:5]) or 'none')
+    ci = rep.get('cellInset', [])
+    record('cell-inset', cid, not ci, '; '.join(f"{c['el']} +{c['over']}px" for c in ci[:5]) or 'none')
+    vt = rep.get('valueTruncated', [])
+    record('value-truncated', cid, not vt, '; '.join(f"{c['el']} {c['text']!r} cut by {c['box']}" for c in vt[:5]) or 'none')
+    record('font-loaded', cid, bool(rep.get('fontLoaded')), 'Inter Variable ' + ('rendered' if rep.get('fontLoaded') else 'did not load'))
+    nu = rep.get('numerals', [])
+    record('numerals', cid, not nu, '; '.join(f"{c['el']} {c['text']!r} should be {c['want']}" for c in nu[:6]) or 'none')
+    if vp in ('desktop', 'laptop'):
+        tb = rep.get('thBaseline', [])
+        record('th-baseline', cid, not tb, '; '.join(f"{c['el']} label tops {c['tops']}" for c in tb[:5]) or 'none')
     hits = (text_bans(page_text) + text_bans_v4(ban_text)
             + [f"a middot starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']])
     record('text-bans', cid, not hits, '; '.join(hits[:8]) + (f' (+{len(hits) - 8} more)' if len(hits) > 8 else '') or 'none')
@@ -729,11 +915,13 @@ def main():
             for vp, theme, cap, wanted in MATRIX:
                 ctx = None
                 for pid, path in PAGES:
+                    if vp in ONLY and pid not in ONLY[vp]:
+                        continue
                     if not browser.is_connected():   # a crashed browser costs one page, not the rest of the run
                         browser, ctx = pw.chromium.launch(), None
                     if ctx is None:
                         ctx = new_context(browser, vp, theme)
-                    index.append(capture(ctx, a.base, out, pid, path, vp, theme, cap, wanted, axe_src, validator))
+                    index.append(capture(ctx, a.base, out, pid, path, vp, theme, max(cap, TILE_CAPS.get(pid, 0)), wanted, axe_src, validator))
                     flush(out, index)
                 if (vp, theme) == ('desktop', 'light'):
                     redirects(ctx, a.base)

@@ -1,17 +1,19 @@
 {{- /* Response SLAs (design system v4 4.17, 5.3 module 3): the SLA rule table, one card at 12, seven rows in registry order.
   Ctx: dict {r (data/repo.html), q (pages/issues/rows.html result)}. Rendered for classified repositories only; on the others the
   section is omitted and Data notes says why.
-    Overdue: the rows of the queue that breach the rule (q.rules), so a rule row's count equals the list its link opens
-      (?view=all&overdue=1&rule=<key>#queue). A build warning fires when issues.json's own summary count disagrees.
-    Open: the open issues the rule applies to, where issues.json has it (P0 bugs, questions); else the empty mark "Not computed".
+    Overdue: the rows of the queue that breach the rule (q.rules), so the count of a rule row equals the list its link opens
+      (?view=all&overdue=1&rule=<key>#queue). A build warning fires when the summary count of issues.json disagrees.
+    Open: the open issues the rule applies to (q.elig, counted from the same rows), for every rule that has a population, so this
+      table and Review SLAs share one grid and the Overdue bar is a share of Open. Left out for a rule whose overdue count exceeds it
+      (the classifier exported its own rule list), which then shows the empty mark "Not computed".
     First reply has no breach field yet: empty marks, until summary.sla.first_reply_2bd_breach exists.
     A repository without priority labels: the P0 and P1 rows show empty marks with the reason "No priority labels".
     No rule has a stored weekly series, so the 12 weeks column is omitted (4.14 rule 8). */ -}}
 {{- $r := .r }}{{ $q := .q -}}
 {{- $sum := dict }}{{ with $r.data.issues }}{{ if reflect.IsMap . }}{{ with .summary }}{{ if reflect.IsMap . }}{{ $sum = . }}{{ end }}{{ end }}{{ end }}{{ end -}}
 {{- $sla := dict }}{{ with $sum.sla }}{{ if reflect.IsMap . }}{{ $sla = . }}{{ end }}{{ end -}}
-{{- $byType := dict }}{{ with $sum.by_type }}{{ if reflect.IsMap . }}{{ $byType = . }}{{ end }}{{ end -}}
-{{- /* the summary's own count per rule, for the consistency warning */ -}}
+{{- $elig := $q.elig | default dict -}}
+{{- /* the summary count per rule, for the consistency warning */ -}}
 {{- $check := dict "triage" $sla.triage_2bd_breach "p0" $sla.p0_7d_breach "question" $sum.questions_stale_2d "follow-up" $sla.reply_2bd_breach
     "p1" $sla.p1_90d_breach "repro" $sum.needs_repro_14d -}}
 {{- $rules := slice -}}
@@ -24,12 +26,10 @@
     {{- if ne $sla.first_reply_2bd_breach nil }}{{ $rules = $rules | append (dict "key" $key "overdue" $n) }}{{ end -}}
   {{- else if and (in (slice "p0" "p1") $key) (not $q.prio) -}}
     {{- $rules = $rules | append (dict "key" $key "reason" "no-priority-labels") -}}
-  {{- else if eq $key "p0" -}}
-    {{- $rules = $rules | append (dict "key" $key "open" $sum.p0_open "overdue" $n) -}}
-  {{- else if eq $key "question" -}}
-    {{- $rules = $rules | append (dict "key" $key "open" $byType.question "overdue" $n) -}}
   {{- else -}}
-    {{- $rules = $rules | append (dict "key" $key "overdue" $n) -}}
+    {{- $open := int (index $elig $key | default 0) -}}
+    {{- if ge $open $n }}{{ $rules = $rules | append (dict "key" $key "open" $open "overdue" $n) -}}
+    {{- else }}{{ $rules = $rules | append (dict "key" $key "overdue" $n) }}{{ end -}}
   {{- end -}}
 {{- end }}
 <section class="v-section" aria-labelledby="sla">

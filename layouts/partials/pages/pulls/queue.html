@@ -5,8 +5,9 @@
        Facets, the same six on every repository: Overdue, Author waiting, Touches auth (checks); Status, Author, SLA rule (selects).
          First-paint counts are the rows of the default view; ui.js keeps them live.
        Columns: PR, Status, Detail, Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
-       One tr per PR. The other PRs of a duplicate cluster are child rows behind their primary's expander. Rows outside the default
-       view carry data-off; inside it, rows past the first step carry data-over. */ -}}
+       One tr per PR, the other PRs of a duplicate cluster included (they carry the tag "Duplicate of #N" and follow their primary
+       in the default sort), so every count is a count of open PRs. Rows outside the default view carry data-off; inside it, rows
+       past the first step carry data-over. No count on a tab is red: red is for the Overdue filter and the Overdue cells. */ -}}
 {{- $q := .q -}}
 {{- $id := "pq" -}}
 {{- $n := int $q.all -}}
@@ -20,8 +21,7 @@
     {{- $tabs := slice -}}
     {{- range slice (slice "needs" "Needs a maintainer") (slice "housekeeping" "Housekeeping") (slice "close" "Close candidates") (slice "author" "Waiting on author") -}}
       {{- $key := index . 0 -}}
-      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))
-          "danger" (and (eq $key "needs") (gt (int $q.over) 0))) -}}
+      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))) -}}
     {{- end -}}
     {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $n) -}}
     {{- /* first-paint facet counts: the tokens of the rows in the default view */ -}}
@@ -36,7 +36,7 @@
     {{- $rule := slice -}}
     {{- range partial "data/sla-rules.html" "pr" }}{{ if .filter }}{{ $rule = $rule | append (dict "value" .key "label" .name "count" (int ($sc.Get (printf "rule:%s" .key) | default 0))) }}{{ end }}{{ end -}}
     {{- $facets := slice
-      (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline in Review SLAs." "count" (int ($sc.Get "overdue" | default 0)))
+      (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline in Review SLAs." "tone" "danger" "count" (int ($sc.Get "overdue" | default 0)))
       (dict "key" "author-waiting" "label" "Author waiting" "title" "The author did what was asked and is waiting for a maintainer." "count" (int ($sc.Get "author-waiting" | default 0)))
       (dict "key" "auth" "label" "Touches auth" "title" "The PR changes authentication or authorization code." "count" (int ($sc.Get "auth" | default 0)))
       (dict "key" "status" "label" "Status" "title" "The next step, from PR classification." "kind" "select" "options" $status)
@@ -64,12 +64,6 @@
             {{- $in := or (eq $def "all") (eq $row.view $def) }}
             {{ partial "pages/pulls/row.html" (dict "r" $row "off" (not $in) "k" $k) }}
             {{- if $in }}{{ $k = add $k 1 }}{{ end }}
-            {{- with $row.kids }}
-            {{- $parent := dict "id" $row.id "n" (int ($row.pr.number | default 0)) }}
-            {{- range . }}
-            {{ partial "pages/pulls/row.html" (dict "r" . "parent" $parent) }}
-            {{- end }}
-            {{- end }}
             {{- end }}
           </tbody>
         </table>

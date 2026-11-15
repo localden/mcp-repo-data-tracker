@@ -1,0 +1,18 @@
+{{- /* Brand mark (design system v4 4.1): the logo image of the header and footer brand. Emits one <img class="v-brand-mark">, or
+  nothing while the mark files do not exist; the wordmark beside it is always live text, so the brand is correct with no image.
+  Dict {size, standin}.
+    size     the rendered size in px: 24 in the header (default), 20 in the footer.
+    standin  true (styleguide only): with no mark file, show static/favicon.svg in the slot so the with-mark layout can be reviewed.
+  Files: static/brand/visr-mark-{32,64,128,256,512}.png, one transparent PNG that reads on both header surfaces. The 64 file is the
+  src; the srcset offers 32 at 1x, 64 at 2x and 128 at 3x, each only when its file exists. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict }}{{ end -}}
+{{- $size := int ($c.size | default 24) -}}
+{{- if fileExists "static/brand/visr-mark-64.png" -}}
+  {{- $set := slice -}}
+  {{- range $d, $f := dict "1x" "32" "2x" "64" "3x" "128" -}}
+    {{- if fileExists (printf "static/brand/visr-mark-%s.png" $f) }}{{ $set = $set | append (printf "%s %s" (printf "brand/visr-mark-%s.png" $f | relURL) $d) }}{{ end -}}
+  {{- end -}}
+  <img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}"{{ with $set }} srcset="{{ delimit . ", " }}"{{ end }} width="{{ $size }}" height="{{ $size }}" alt="">
+{{- else if and $c.standin (fileExists "static/favicon.svg") -}}
+  <img class="v-brand-mark" src="{{ "favicon.svg" | relURL }}" width="{{ $size }}" height="{{ $size }}" alt="">
+{{- end -}}

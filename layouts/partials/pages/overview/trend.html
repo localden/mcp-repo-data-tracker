@@ -49,7 +49,8 @@
 {{- end -}}
 {{- if or $i.n $p.n }}
 <section class="v-section" aria-labelledby="backlog-trend">
-  {{ partial "ui/section-head.html" (dict "id" "backlog-trend" "title" "Backlog trend") }}
+  {{ partial "ui/section-head.html" (dict "id" "backlog-trend" "title" "Backlog trend"
+      "desc" "Open issues and PRs across all repositories, week by week.") }}
   <div class="v-grid">
     {{- range $cards }}
     {{ partial "ui/chart.html" . }}

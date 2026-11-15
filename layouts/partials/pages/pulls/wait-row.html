@@ -10,14 +10,10 @@
 {{- $row := .row }}{{ $it := $row.it }}{{ $org := eq .org true }}{{ $k := int (.k | default 0) -}}
 {{- $num := int ($it.number | default 0) -}}
 {{- $author := string ($it.author | default "") -}}
-{{- $role := "" -}}
-{{- if or (eq $it.isBot true) (hasSuffix $author "[bot]") (hasPrefix $author "app/") }}{{ $role = "Bot" }}{{ end -}}
-{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "accepted" "final" "deferred" "dormant" -}}
-{{- $attrs := slice }}{{ $tags := slice -}}
-{{- with $row.stage }}{{ $attrs = $attrs | append (printf "SEP %s" (lower .)) }}{{ end -}}
-{{- range $it.labels | default slice -}}
-  {{- if not (and $row.stage (in $stageLabels (lower (string .)))) }}{{ $tags = $tags | append (string .) }}{{ end -}}
-{{- end -}}
+{{- /* role and SEP stage come from the shared data partials, so this row matches the same PR on every other page */ -}}
+{{- $role := partial "data/role.html" (dict "author" $author "bot" $it.isBot) -}}
+{{- $sep := partial "data/sep-stage.html" (dict "stage" $row.stage "repo" $row.slug "number" $it.number "labels" $it.labels) -}}
+{{- $attrs := $sep.attrs }}{{ $tags := $sep.tags -}}
 {{- $tok := slice -}}
 {{- if ge $row.w 7.0 }}{{ $tok = $tok | append "over7" }}{{ end -}}
 {{- if $org }}{{ $tok = $tok | append (printf "repo:%s" $row.slug) }}{{ end -}}

@@ -55,7 +55,8 @@
       <div class="v-trellis-panel"><canvas id="{{ $rid }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $row.name }}" data-size="panel" data-xaxis="{{ if eq $i $lastDrawn }}on{{ else }}off{{ end }}" data-series="{{ $d.json }}"></canvas></div>
       {{- else }}
       {{- $at := "" }}{{ if and (not $row.pending) $d.first }}{{ $at = ((time.AsTime $d.first).AddDate 0 0 (cond (eq $gran "week") 28 13)).Format "2006-01-02" }}{{ end }}
-      <div class="v-card-pending">{{ partial "ui/icon.html" "clock" }}<span>
+      {{- /* a row that cannot draw still has its column in the table view: charts.js reads the name and the series from here */}}
+      <div class="v-card-pending" data-pending-col="{{ $row.name }}" data-unit="{{ $unit }}" data-series="{{ $d.json }}">{{ partial "ui/icon.html" "clock" }}<span>
         {{- if $row.pending }}{{ $row.pending -}}
         {{- else if and $at (gt $at $d.to) }}Trend available from {{ partial "ui/value.html" (dict "kind" "date" "d" $at) -}}
         {{- else if $d.any }}Too few complete weeks to draw a trend

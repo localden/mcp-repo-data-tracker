@@ -6,6 +6,7 @@
     facets  slice of ui/chip.html dicts {key, label, title, kind, count, options}, at most six, in the fixed order of 4.12. Omit for a
             list with search only; "Clear filters" then sits in row 1 after the search field.
     total   rows in the default view, for the first paint of the result count.
+    matched the narrowed count, for a static specimen of the active state: prints "12 of 288 PRs" and shows "Clear filters".
   Row 1: search on the left, the Filters button (below 64rem, when the list has facets), the result count on the right.
   Row 2 (only with facets): checkbox chips, select chips, then "Clear filters". Below 64rem row 2 is the panel the Filters button opens,
   and the result count moves to the result band (ui/list-band.html).
@@ -26,10 +27,10 @@
     {{- if $facets }}
     <button type="button" class="v-btn is-icon v-filter-toggle" data-facets-toggle aria-expanded="false" aria-controls="{{ $id }}-facets" aria-label="Filters">{{ partial "ui/icon.html" "sliders" }}<span class="v-count" data-facets-n hidden></span></button>
     {{- else }}
-    <button type="button" class="v-btn is-ghost" data-filter-reset hidden>Clear filters</button>
+    <button type="button" class="v-btn is-ghost" data-filter-reset{{ if eq $c.matched nil }} hidden{{ end }}>Clear filters</button>
     {{- end }}
     <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $other }}" data-noun-one="{{ $one }}">
-      {{- if ne $c.total nil }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $one }}{{ else }}{{ $other }}{{ end }}{{ end -}}
+      {{- if ne $c.total nil }}{{ if ne $c.matched nil }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.matched)).text }}</span> of {{ end }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $one }}{{ else }}{{ $other }}{{ end }}{{ end -}}
     </p>
   </div>
   {{- if $facets }}
@@ -37,7 +38,7 @@
     {{- range $facets }}
     {{ partial "ui/chip.html" (merge . (dict "id" $id)) }}
     {{- end }}
-    <button type="button" class="v-btn is-ghost" data-filter-reset hidden>Clear filters</button>
+    <button type="button" class="v-btn is-ghost" data-filter-reset{{ if eq $c.matched nil }} hidden{{ end }}>Clear filters</button>
   </div>
   {{- end }}
 </div>

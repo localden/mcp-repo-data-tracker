@@ -12,7 +12,7 @@
   scope: "Issues" or "PRs", the spanner a record line has to carry below 64rem.
   Outputs: main and sub are a column header and its sub line (the sub line is the window, else the base); text is a tile or stat-list
     label ("Merged, last 7 days", "Waiting for a reply, any age"); qual is a tile qualifier ("last 7 days", "over 7 days"); record is
-    the record-line label ("PRs merged, last 7 days", "Issues waiting over 7 days", "Issues, net change", "Change vs prior 7 days");
+    the record-line label ("PRs merged, last 7 days", "Issues waiting over 7 days", "Net change in issues", "Change vs prior 7 days");
     pass record to override it. */ -}}
 {{- $c := . -}}
 {{- $metric := string ($c.metric | default "") -}}
@@ -53,17 +53,24 @@
   {{- if not $bucket }}{{ errorf "fmt/label: unknown bucket %q (design system v4 3.2)" . }}{{ end -}}
 {{- end -}}
 {{- $lowWindow := "" }}{{ with $window }}{{ $lowWindow = printf "%s%s" (lower (substr . 0 1)) (substr . 1) }}{{ end -}}
+{{- /* one comma grammar everywhere (3.6): a window, "any age" and "answered only" follow a comma; "over 7 days" joins directly */ -}}
 {{- $text := $main -}}
-{{- with $threshold }}{{ $text = printf "%s, %s" $text . }}{{ end -}}
+{{- with $threshold }}{{ if hasPrefix . "over" }}{{ $text = printf "%s %s" $text . }}{{ else }}{{ $text = printf "%s, %s" $text . }}{{ end }}{{ end -}}
 {{- with $lowWindow }}{{ $text = printf "%s, %s" $text . }}{{ end -}}
 {{- $qual := $threshold | default $lowWindow -}}
 {{- $sub := $window | default $base -}}
-{{- /* record: verbs join the scope directly ("PRs merged"), nouns after a comma ("Issues, net change") */ -}}
+{{- /* record: one phrase, never two stacked commas. Verbs join the scope directly ("PRs merged"); "Open" leads it ("Open issues");
+     "Typical week" names what it is a typical week of ("PRs merged, typical week"); any other noun takes "in" ("Net change in
+     issues"). */ -}}
 {{- $record := $main -}}
 {{- if and $c.scope $main }}{{ with $c.scope -}}
   {{- $low := printf "%s%s" (lower (substr $main 0 1)) (substr $main 1) -}}
   {{- $first := index (split $low " ") 0 -}}
-  {{- if or (hasSuffix $first "ed") (hasSuffix $first "ing") }}{{ $record = printf "%s %s" . $low }}{{ else }}{{ $record = printf "%s, %s" . $low }}{{ end -}}
+  {{- $sc := cond (eq (string .) "PRs") "PRs" (lower (string .)) -}}
+  {{- if or (hasSuffix $first "ed") (hasSuffix $first "ing") }}{{ $record = printf "%s %s" . $low -}}
+  {{- else if eq $main "Open" }}{{ $record = printf "Open %s" $sc -}}
+  {{- else if eq $main "Typical week" }}{{ $record = printf "%s merged, typical week" . -}}
+  {{- else }}{{ $record = printf "%s in %s" $main $sc }}{{ end -}}
 {{- end }}{{ end -}}
 {{- with $threshold }}{{ if ne . "any age" }}{{ $record = printf "%s %s" (replaceRE ` for a reply$| for first review$` "" $record) . }}{{ else }}{{ $record = printf "%s, %s" $record . }}{{ end }}{{ end -}}
 {{- with $lowWindow }}{{ $record = printf "%s, %s" $record . }}{{ end -}}

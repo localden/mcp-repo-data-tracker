@@ -38,7 +38,7 @@
     {{- $sorted := sort $vals }}{{ $n := len $sorted }}{{ $mid := div $n 2 }}{{ $med := 0.0 -}}
     {{- if modBool $n 2 }}{{ $med = div (add (float (index $sorted (sub $mid 1))) (float (index $sorted $mid))) 2.0 -}}
     {{- else }}{{ $med = float (index $sorted $mid) }}{{ end -}}
-    {{- $typ = dict "kind" "stat" "v" $med }}{{ $typK = printf "%.1f" $med -}}
+    {{- $typ = dict "kind" "stat" "v" $med "col" true }}{{ $typK = printf "%.1f" $med -}}
   {{- else if $ms.first -}}
     {{- $typ = dict "kind" "stat" "reason" "tracking-since" "since" $ms.first -}}
   {{- end -}}

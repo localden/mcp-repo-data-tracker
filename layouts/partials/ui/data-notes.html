@@ -40,8 +40,10 @@
       <div><dt>{{ .label }}, updated</dt><dd>{{ partial "ui/value.html" (dict "kind" "ts" "t" .at) }}</dd></div>
       {{- end }}
       {{- end }}
+      {{- /* one date rule inside the list: a date drops the year like its neighbours; only the timestamp prints it */ -}}
       {{- range $c.facts }}
-      <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" .value }}</dd></div>
+      {{- $v := .value }}{{ if reflect.IsMap $v }}{{ if eq $v.kind "date" }}{{ $v = merge $v (dict "year" false) }}{{ end }}{{ end }}
+      <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" $v }}</dd></div>
       {{- end }}
       {{- range $g.runs }}
       <div><dt>No data{{ if .outage }}, collection outage{{ end }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>

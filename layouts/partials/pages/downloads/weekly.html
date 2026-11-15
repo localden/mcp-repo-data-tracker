@@ -2,21 +2,37 @@
   Monday to Sunday weeks on one shared 52-week domain, each row on its own scale.
   Call: partial "pages/downloads/weekly.html" $x          ($x: pages/downloads/packages.html)
   The label cell holds the name (the row link), then the one figure the table above does not show: "Week to date" with its coverage
-  note. ui/trellis.html adds the coverage note of a row with missing weeks and the pending line of a row that cannot draw yet. */ -}}
+  note. A week to date is partial by definition, so that note is an info note (clock, text-3): the warning tone is kept for what is
+  unexpectedly incomplete (missing weeks, an incomplete 7-day or 30-day window). ui/trellis.html adds the coverage note of a row
+  with missing weeks.
+  The card sub line is the cadence and the window; "every row on its own scale" is the section description above the card, which
+  never truncates on a phone.
+  A package that has days but no complete week yet cannot draw: its pending line is "Too few complete weeks to draw a trend", the
+  same text its repository page shows (pages/repo/downloads.html), never "No data collected yet" beside a week-to-date figure. */ -}}
 {{- $x := . -}}
 {{- $wtd := (partial "fmt/label.html" (dict "window" "wtd")).window -}}
 {{- $rows := slice -}}
 {{- range $x.pkgs -}}
-  {{- $row := dict "id" (printf "dl-%s" .r.repo) "name" .r.name "href" (printf "repos/%s/" .r.repo | relURL) "points" .d.weekly.points -}}
+  {{- $row := dict "id" (printf "dl-%s" .r.repo) "name" .r.name "href" (printf "repos/%s/" .r.repo | relURL) "points" (.d.weekly.points | default slice) -}}
+  {{- $hasWtd := false -}}
   {{- with .d.wtd }}{{ if reflect.IsMap . }}{{ if ne .value nil -}}
+    {{- $hasWtd = true -}}
     {{- $of := int (.of | default 7) -}}
     {{- $ro := dict "label" $wtd "value" (dict "kind" "volume" "v" .value) -}}
-    {{- if lt (int .days) $of }}{{ $ro = dict "label" $wtd "value" (dict "kind" "volume" "v" .value) "note" (dict "part" (int .days) "whole" $of "noun" "day" "days" (dict "from" .start "to" .end)) }}{{ end -}}
+    {{- if lt (int (.days | default 0)) $of -}}
+      {{- $ro = merge $ro (dict "note" (dict "part" (int (.days | default 0)) "whole" $of "noun" "day" "tone" "info" "days" (dict "from" .start "to" .end))) -}}
+    {{- end -}}
     {{- $row = merge $row (dict "readout" $ro) -}}
   {{- end }}{{ end }}{{ end -}}
+  {{- /* days exist, but no week is complete yet */ -}}
+  {{- $weeks := 0 -}}
+  {{- range .d.weekly.points | default slice }}{{ if ne .value nil }}{{ $weeks = add $weeks 1 }}{{ end }}{{ end -}}
+  {{- if and (eq $weeks 0) (or $hasWtd (gt (int (.d.days_total | default 0)) 0)) -}}
+    {{- $row = merge $row (dict "pending" "Too few complete weeks to draw a trend") -}}
+  {{- end -}}
   {{- $rows = $rows | append $row -}}
 {{- end -}}
 {{ partial "ui/trellis.html" (dict "id" "weekly-downloads" "title" "Weekly downloads"
-    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence
+    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52))).cadence
     "metric" "downloads" "metric_one" "download" "unit" "downloads" "gran" "week" "kind" "column"
     "from" $x.wFrom "to" $x.wTo "rows" $rows) }}

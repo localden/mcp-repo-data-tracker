@@ -78,14 +78,14 @@
       <div class="v-card-body"><p class="v-sg-cap">six facets at rest: three checkbox chips (one disabled at zero), three select chips</p></div>
     </article>
     <article class="v-card v-span-12">
-      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-active" "noun" "pr" "total" 288 "facets" (slice
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-active" "noun" "pr" "total" 288 "matched" 12 "facets" (slice
         (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249 "pressed" true)
         (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 41 "pressed" true)
         (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 0 "pressed" true)
         (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts "value" "2 selected")
         (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts "value" "Maintainer")
         (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts "value" "Maintainer PR"))) }}
-      <div class="v-card-body"><p class="v-sg-cap">every facet active at once (the wrap case): pressed chips, a pressed chip at zero, select chips with one value and with several</p></div>
+      <div class="v-card-body"><p class="v-sg-cap">every facet active at once (the wrap case): pressed chips, a pressed chip at zero, select chips with one value and with several, the narrowed result count and Clear filters</p></div>
     </article>
   </div>
 </section>
@@ -96,7 +96,7 @@
   (dict "n" 1760 "title" "feat(server): add resumable streams, with a title long enough to run well past the width of any item column so that it has to end in an ellipsis" "state" "needs-re-review" "author" "travisbreaks" "role" "Contributor" "add" 1204 "del" 88 "waiting" true "rules" (slice (dict "key" "re-review" "days" 44)) "age" 120 "view" "needs" "detail" "Reviewed by" "who" "felixweinberger")
   (dict "n" 1990 "title" "Decide whether the client should cache discovery documents" "state" "needs-decision" "author" "mcp-user" "role" "Contributor" "add" 12 "del" 3 "rules" (slice (dict "key" "first-review")) "age" 30 "view" "needs")
   (dict "n" 1813 "title" "Add OAuth token refresh" "state" "duplicate-cluster" "author" "app/dependabot" "role" "Bot" "add" 96 "del" 14 "auth" true "age" 64 "view" "needs" "kids" 2)
-  (dict "n" 2051 "title" "docs: correct the transport example" "state" "needs-merge" "author" "ihrpr" "role" "Maintainer" "add" 8 "del" 8 "age" 3 "view" "needs")
+  (dict "n" 2051 "title" "docs: correct the transport example" "state" "backport-follows-primary" "author" "ihrpr" "role" "Maintainer" "add" 8 "del" 8 "age" 3 "view" "needs" "detail" "Backport of" "ref" "#1521")
   (dict "n" 1650 "title" "Rework the session store" "state" "approved-rotted" "author" "someone-else" "role" "Contributor" "add" 640 "del" 512 "age" 240 "view" "author" "detail" "Changes requested" "days" 228)
   (dict "n" 1402 "title" "Support custom fetch implementations" "state" "awaiting-author" "author" "another-user" "role" "Contributor" "add" 54 "del" 9 "age" 198 "view" "author")
   (dict "n" 1333 "title" "Fix flaky stdio test" "state" "ci-red-silent" "author" "third-user" "role" "Contributor" "add" 21 "del" 4 "age" 330 "view" "author" "detail" "Failing" "days" 325)
@@ -148,7 +148,7 @@
               {{ partial "ui/row-item.html" (dict "title" $r.title "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" $r.n) "id" (printf "#%d" $r.n)
                   "author" $r.author "role" $r.role "diff" (dict "add" $r.add "del" $r.del) "attrs" $attrs "kids" (cond (ne $r.kids nil) (dict "n" $r.kids "id" $rid) nil)) }}
               <td class="v-c-status" data-v="{{ $st.order }}">{{ partial "ui/badge.html" $st }}</td>
-              <td class="v-c-detail">{{ with $r.detail }}<span class="v-detail">{{ . }}{{ with $r.who }} {{ . }}{{ end }}{{ if ne $r.days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" $r.days "unit" "d" "compact" true) }}{{ end }}</span>{{ end }}</td>
+              <td class="v-c-detail">{{ partial "ui/detail.html" (dict "text" $r.detail "who" $r.who "ref" $r.ref "days" $r.days) }}</td>
               {{ partial "ui/sla.html" (dict "rules" ($r.rules | default slice)) }}
               <td class="num" data-v="{{ $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" ((time.AsTime $asof).AddDate 0 0 (int (sub 0 $r.age)))) }}</td>
             </tr>

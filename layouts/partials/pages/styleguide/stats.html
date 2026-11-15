@@ -1,32 +1,40 @@
 {{- /* Styleguide sections 9 to 11: metric strip, stat list, and the five small objects (design system v4 6). */ -}}
 {{- $asof := .asof -}}
+{{- $y := substr (string $asof) 0 4 -}}
 {{- $w := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 600 "slope" 12)).points -}}
 {{- $wg := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 400 "slope" 9 "gapFrom" 4 "gapTo" 6)).points -}}
-{{- $short := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 20 "slope" 1 "lead" 10)).points -}}
+{{- $flat := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 20 "slope" 1)).points -}}
 {{- $dl := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 80000000 "slope" 700000)).points -}}
 {{- $base := dict "kind" "base" "date" ((time.AsTime $asof).AddDate 0 0 -38) -}}
 <section class="v-section" aria-labelledby="metrics">
-  {{ partial "ui/section-head.html" (dict "id" "metrics" "title" "Metric strip" "desc" "Two to four headline facts in one card. Slots sit on shared rows, so labels, values, contexts and visuals line up.") }}
+  {{ partial "ui/section-head.html" (dict "id" "metrics" "title" "Metric strip" "desc" "Two to four headline facts in one card. Every tile of a strip has the same slots: label, value, one context and, in a trend or share strip, its visual.") }}
   <div class="v-grid">
+    {{- /* trend: every tile has stored history. A gap in the series, a flow, a name of two lines, a link tile */}}
     {{ partial "ui/metrics.html" (dict "label" "Summary, trend" "size" "lg" "visual" "trend" "id" "sg-metrics-trend" "tiles" (slice
-      (dict "name" "Issues waiting for a reply" "qual" "over 7 days" "title" "Open issues with no maintainer reply for seven days or more." "value" (dict "kind" "count" "v" 741)
-            "delta" (dict "cur" 741 "prev" 602 "metric" "waiting") "context" $base "note" (dict "part" 7 "whole" 9 "noun" "repository") "points" $w)
+      (dict "name" "Issues waiting for a reply" "qual" "over 7 days" "title" "Open issues with no maintainer reply, opened more than 7 days ago." "value" (dict "kind" "count" "v" 741)
+            "delta" (dict "cur" 741 "prev" 602 "metric" "waiting") "context" $base "note" (dict "part" 7 "whole" 9 "noun" "repository") "points" $wg "href" "#metrics")
       (dict "name" "Downloads" "qual" "last 7 days" "value" (dict "kind" "volume" "v" 88208812)
-            "delta" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") "context" (dict "kind" "base" "window" "prior7") "points" $dl "flow" true)
-      (dict "name" "Merged, with a name long enough to take two lines" "qual" "last 7 days" "value" (dict "kind" "count" "v" 12) "delta" (dict "cur" 12 "prev" 12 "metric" "merged") "context" (dict "kind" "base" "window" "prior7") "points" $short)
-      (dict "name" "Waiting for first review" "qual" "any age" "value" (dict "kind" "count") "context" (dict "kind" "reason" "reason" "not-classified") "points" slice "reason" "no-history"))) }}
+            "delta" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") "context" (dict "kind" "base" "window" "prior7") "points" $dl "flow" true "href" "#metrics")
+      (dict "name" "Merged, with a name long enough to take two lines" "qual" "last 7 days" "value" (dict "kind" "count" "v" 12) "delta" (dict "cur" 12 "prev" 12 "metric" "merged") "context" (dict "kind" "base" "window" "prior7") "points" $flat)
+      (dict "name" "Open issues" "value" (dict "kind" "count" "v" 1143) "context" (dict "kind" "ref" "label" "Net change, last 30 days" "value" (dict "kind" "net" "v" 38)) "points" $w "href" "#metrics"))) }}
+    {{- /* none: pile sizes. Breach, breach at zero, a whole, a reference pair */}}
     {{ partial "ui/metrics.html" (dict "label" "Summary, decision first" "size" "lg" "visual" "none" "id" "sg-metrics-none" "tiles" (slice
       (dict "name" "Overdue" "tone" "breach" "value" (dict "kind" "count" "v" 249) "context" (dict "kind" "whole" "n" 288 "of" "in Needs a maintainer") "href" "#metrics")
       (dict "name" "Overdue" "qual" "P0 bug" "tone" "breach" "value" (dict "kind" "count" "v" 0) "context" (dict "kind" "whole" "n" 4 "of" "open") "href" "#metrics")
-      (dict "name" "Estimated review effort" "title" "The classifier's estimate of the review time the queue needs." "value" (dict "kind" "dur" "h" 113 "unit" "h"))
+      (dict "name" "Estimated review effort" "title" "The classifier's estimate of the review time the queue needs." "value" (dict "kind" "dur" "h" 113 "unit" "h") "context" (dict "kind" "ref" "label" "PRs counted" "value" (dict "kind" "count" "v" 262)))
       (dict "name" "Open PRs" "value" (dict "kind" "count" "v" 375) "context" (dict "kind" "ref" "label" "Merged, last 30 days" "value" (dict "kind" "count" "v" 275)) "href" "#metrics"))) }}
+    {{- /* none, three tiles: an "any age" tile with its whole, a missing value with its reason, a value with a data-quality note */}}
+    {{ partial "ui/metrics.html" (dict "label" "Summary, three tiles" "size" "lg" "visual" "none" "id" "sg-metrics-three" "tiles" (slice
+      (dict "name" "Waiting for first review" "qual" "any age" "value" (dict "kind" "count" "v" 863) "context" (dict "kind" "whole" "n" 1143 "of" "open"))
+      (dict "name" "Needs a maintainer" "value" (dict "kind" "count") "context" (dict "kind" "reason" "reason" "not-classified"))
+      (dict "name" "Downloads" "qual" "last 7 days" "value" (dict "kind" "volume" "v" 2590000) "note" (dict "part" 5 "whole" 7 "noun" "day")))) }}
+    {{- /* md, four tiles: every other strip on a page */}}
     {{ partial "ui/metrics.html" (dict "label" "Review speed" "size" "md" "visual" "none" "id" "sg-metrics-md" "tiles" (slice
-      (dict "name" "Median time to merge" "value" (dict "kind" "dur" "h" 3))
-      (dict "name" "Merged" "qual" "last 7 days" "value" (dict "kind" "count" "v" 1) "context" (dict "kind" "ref" "label" "Typical week" "value" (dict "kind" "stat" "v" 5))))) }}
-    {{ partial "ui/metrics.html" (dict "label" "Responsiveness" "size" "md" "visual" "trend" "id" "sg-metrics-md-trend" "tiles" (slice
-      (dict "name" "Median first reply" "qual" "answered only" "value" (dict "kind" "dur" "h" 1824) "points" $wg)
-      (dict "name" "Median time to close" "value" (dict "kind" "dur" "h" 2304) "context" (dict "kind" "ref" "label" "90% closed within" "value" (dict "kind" "dur" "d" 471)) "points" $w)
-      (dict "name" "Waiting for a reply" "qual" "any age" "value" (dict "kind" "count" "v" 219) "note" (dict "part" 5 "whole" 7 "noun" "day") "points" slice "reason" "no-history"))) }}
+      (dict "name" "Median time to merge" "value" (dict "kind" "dur" "h" 3) "context" (dict "kind" "ref" "label" "Merged, last 30 days" "value" (dict "kind" "count" "v" 275)))
+      (dict "name" "Merged" "qual" "last 7 days" "value" (dict "kind" "count" "v" 12) "context" (dict "kind" "ref" "label" "Typical week" "value" (dict "kind" "stat" "v" 5.5)))
+      (dict "name" "Closed without merging" "qual" "last 90 days" "value" (dict "kind" "count" "v" 31) "context" (dict "kind" "whole" "n" 306 "of" "closed"))
+      (dict "name" "Median first reply" "qual" "answered only" "value" (dict "kind" "dur" "h" 1824) "context" (dict "kind" "ref" "label" "Answered" "value" (dict "kind" "count" "v" 64))))) }}
+    {{- /* share: one full-width bar per tile, a split bar for a two-part named split */}}
     {{ partial "ui/metrics.html" (dict "label" "Community" "size" "md" "visual" "share" "id" "sg-metrics-share" "tiles" (slice
       (dict "name" "Active contributors" "qual" "last 30 days" "value" (dict "kind" "count" "v" 113) "context" (dict "kind" "ref" "label" "Maintainers" "value" (dict "kind" "count" "v" 3)) "share" (dict "value" 3 "max" 113 "split" true))
       (dict "name" "New contributors" "qual" "last 30 days" "value" (dict "kind" "count" "v" 99) "context" (dict "kind" "whole" "n" 113 "of" "active") "share" (dict "value" 99 "max" 113))
@@ -49,12 +57,12 @@
       (dict "label" "Opened, last 90 days" "value" (dict "kind" "count" "v" 6))
       (dict "label" "Median time to final" "value" (dict "kind" "dur" "d" 88 "unit" "d"))
       (dict "label" "Oldest open" "detail" (dict "link" (dict "text" "SEP-1913" "href" "#stat-list")) "value" (dict "kind" "dur" "d" 351 "unit" "d"))
-      (dict "label" "TypeScript SDK version data" "detail" (dict "badge" (dict "text" "Stopped" "tone" "warning")) "value" (dict "kind" "date" "d" "2024-03-27")))) }}
+      (dict "label" "TypeScript SDK version data" "detail" (dict "badge" (dict "text" "Stopped" "tone" "warning")) "value" (dict "kind" "date" "d" (printf "%s-03-27" $y))))) }}
     {{ partial "ui/stat-list.html" (dict "title" "Version data" "class" "v-span-6" "rows" (slice
       (dict "label" "Python SDK" "detail" (dict "badge" (dict "text" "Current" "tone" "success")) "value" (dict "kind" "date" "d" $asof))
-      (dict "label" "C# SDK" "detail" (dict "badge" (dict "text" "Starts" "tone" "neutral")) "value" (dict "kind" "date" "d" "2024-12-10"))
+      (dict "label" "C# SDK" "detail" (dict "badge" (dict "text" "Starts" "tone" "neutral")) "value" (dict "kind" "date" "d" "2027-12-10"))
       (dict "label" "Rust SDK" "detail" (dict "badge" (dict "text" "No version data" "tone" "neutral")) "value" (dict "kind" "na" "reason" "no-data"))
-      (dict "label" "Change in open issues against the earlier snapshot" "detail" (dict "delta" (dict "cur" 12 "prev" 9 "metric" "open-issues")) "value" (dict "kind" "count" "v" 12)))) }}
+      (dict "label" "Week to date" "detail" (dict "note" (dict "part" 4 "whole" 7 "noun" "day")) "value" (dict "kind" "volume" "v" 58700000)))) }}
     {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "wide" true "rows" (slice
       (dict "label" "Opened, last 30 days" "value" (dict "kind" "count" "v" 4))
       (dict "label" "Closed, last 30 days" "value" (dict "kind" "count" "v" 1))
@@ -88,27 +96,31 @@
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Rule") }}{{ partial "ui/th.html" (dict "label" "Source") }}{{ partial "ui/th.html" (dict "label" "Deadline") }}{{ partial "ui/th.html" (dict "label" "Applies to") }}</tr></thead>
         <tbody>
           {{- range partial "data/sla-rules.html" "*" }}
-          <tr><th scope="row">{{ .name }}</th><td>{{ partial "ui/tag.html" (dict "text" .source "kind" "attr") }}</td><td><span class="v-detail">{{ .deadline }}</span></td><td>{{ if eq .entity "pr" }}PRs{{ else }}Issues{{ end }}</td></tr>
+          <tr><th scope="row">{{ .name }}</th><td>{{ partial "ui/tag.html" (dict "text" .source "kind" "attr") }}</td><td><span class="v-deadline">{{ .deadline }}</span></td><td>{{ if eq .entity "pr" }}PRs{{ else }}Issues{{ end }}</td></tr>
           {{- end }}
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Tags") }}<div class="v-card-body"><div class="v-sg-row">
-      {{ partial "ui/tag.html" "enhancement" }}{{ partial "ui/tag.html" (dict "text" "a very long label that has to shorten" "kind" "label") }}
-      {{ partial "ui/tag.html" (dict "text" "Maintainer" "kind" "role") }}{{ partial "ui/tag.html" (dict "text" "Bot" "kind" "role") }}{{ partial "ui/tag.html" (dict "text" "Contributor" "kind" "role") }}
-      {{ partial "ui/tag.html" (dict "text" "P0" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P1" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P2" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P3" "kind" "prio") }}
-      {{ partial "ui/tag.html" (dict "text" "Type conflict" "kind" "flag" "title" "bug, enhancement") }}
-      {{ partial "ui/tag.html" (dict "text" "Touches auth" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "SEP in review" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Duplicate of #1813" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Team target" "kind" "attr") }}
-      {{ partial "ui/tag.html" (dict "text" "+2" "kind" "more" "title" "transport, auth") }}
-    </div><p class="v-sg-cap">ui/tag.html: label, role, prio, flag, attr, more</p></div></article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Count, note, delta") }}<div class="v-card-body"><div class="v-sg-stack">
-      <div class="v-sg-row"><span class="v-count">{{ (partial "fmt/count.html" 288).text }}</span><span class="v-count is-danger">{{ (partial "fmt/count.html" 249).text }}</span><span class="v-count">{{ (partial "fmt/count.html" 0).text }}</span></div>
-      <div class="v-sg-row">{{ partial "ui/note.html" (dict "part" 5 "whole" 7 "noun" "day" "days" (dict "from" "2024-11-04" "to" "2024-11-08")) }}{{ partial "ui/note.html" (dict "part" 7 "whole" 9 "noun" "repository") }}{{ partial "ui/note.html" (dict "since" $asof) }}{{ partial "ui/note.html" (dict "from" "2024-01-15") }}</div>
-      <div class="v-sg-row">{{ partial "ui/delta.html" (dict "cur" 741 "prev" 602 "metric" "waiting") }}{{ partial "ui/delta.html" (dict "cur" 275 "prev" 240 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 5 "prev" 5 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") }}{{ partial "ui/delta.html" (dict "d" 48 "unit" "hours" "metric" "median") }}{{ partial "ui/delta.html" (dict "cur" 12 "prev" 9 "metric" "opened") }}</div>
-    </div><p class="v-sg-cap">.v-count neutral and danger; ui/note.html warning and info; ui/delta.html bad, good, flat, percent, duration, neutral</p></div></article>
+    {{- /* tags, grouped by family: outlined for what a person applied on GitHub, filled for what VISR derived */}}
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Tags") }}<div class="v-card-body"><div class="v-sg-specs">
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" "enhancement" }}{{ partial "ui/tag.html" "ready for work" }}{{ partial "ui/tag.html" (dict "text" "a very long label that has to shorten at some point because it never ends" "kind" "label") }}</div><p class="v-sg-cap">label: a GitHub label, outlined</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" (dict "text" "P0" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P1" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P2" "kind" "prio") }}{{ partial "ui/tag.html" (dict "text" "P3" "kind" "prio") }}</div><p class="v-sg-cap">prio: a priority label, outlined; P0 and P1 take the strong edge</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" (dict "text" "+2" "kind" "more" "title" "transport, auth") }}</div><p class="v-sg-cap">more: the labels that did not fit, named in its title</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" (dict "text" "Maintainer" "kind" "role") }}{{ partial "ui/tag.html" (dict "text" "Bot" "kind" "role") }}</div><p class="v-sg-cap">role: derived, filled. The default role, Contributor, has no tag</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" (dict "text" "Touches auth" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "SEP in review" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Needs working group" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Duplicate of #1813" "kind" "attr") }}{{ partial "ui/tag.html" (dict "text" "Team target" "kind" "attr") }}</div><p class="v-sg-cap">attr: a derived attribute, filled</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/tag.html" (dict "text" "Type conflict" "kind" "flag" "title" "bug, enhancement") }}</div><p class="v-sg-cap">flag: derived, filled, with the incomplete-data icon</p></div>
+    </div></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Count, note, delta") }}<div class="v-card-body"><div class="v-sg-specs">
+      <div class="v-sg-spec"><div class="v-sg-row"><span class="v-count">{{ (partial "fmt/count.html" 288).text }}</span><span class="v-count is-danger">{{ (partial "fmt/count.html" 249).text }}</span><span class="v-count">{{ (partial "fmt/count.html" 0).text }}</span></div><p class="v-sg-cap">.v-count: neutral, danger, zero</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "part" 5 "whole" 7 "noun" "day" "days" (dict "from" (printf "%s-11-04" $y) "to" (printf "%s-11-08" $y))) }}{{ partial "ui/note.html" (dict "part" 7 "whole" 9 "noun" "repository") }}</div><p class="v-sg-cap">ui/note.html warning: a coverage ratio</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/note.html" (dict "since" $asof) }}{{ partial "ui/note.html" (dict "from" (printf "%s-01-15" $y)) }}</div><p class="v-sg-cap">ui/note.html info: the data is young or starts late</p></div>
+      <div class="v-sg-spec"><div class="v-sg-row">{{ partial "ui/delta.html" (dict "cur" 741 "prev" 602 "metric" "waiting") }}{{ partial "ui/delta.html" (dict "cur" 275 "prev" 240 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 5 "prev" 5 "metric" "merged") }}{{ partial "ui/delta.html" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") }}{{ partial "ui/delta.html" (dict "d" 48 "unit" "hours" "metric" "median") }}{{ partial "ui/delta.html" (dict "cur" 12 "prev" 9 "metric" "opened") }}</div><p class="v-sg-cap">ui/delta.html: bad, good, flat, percent, duration, neutral</p></div>
+    </div></div></article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Callout") }}<div class="v-card-body">
-      {{ partial "ui/callout.html" (dict "title" "Data gap" "items" (slice (dict "text" "No GitHub data from {range} (collection outage). Charts show the gap." "from" "2024-10-08" "to" "2024-11-09"))) }}
-      <p class="v-sg-cap">ui/callout.html: the one boxed notice, at most one per page, in the page head</p>
-    </div></article>
+      <div class="v-sg-spec">{{ partial "ui/callout.html" (dict "title" "Data gap" "items" (slice (dict "text" "No GitHub data from {range} (collection outage). Charts show the gap." "from" (printf "%s-10-08" $y) "to" (printf "%s-11-09" $y)))) }}</div>
+      <div class="v-sg-spec">{{ partial "ui/callout.html" (dict "title" "Stale data" "items" (slice
+          (dict "text" "PyPI data is complete through {date}." "date" (printf "%s-11-09" $y))
+          (dict "text" "NuGet data is complete through {date}." "date" (printf "%s-11-11" $y)))) }}</div>
+      <p class="v-sg-cap">ui/callout.html: the one boxed notice, at most one per page, in the page head. One item, and two items on their own lines</p></div></article>
   </div>
 </section>

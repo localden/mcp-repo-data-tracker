@@ -18,8 +18,7 @@
     {{- $tabs := slice -}}
     {{- range slice (slice "needs" "Needs a maintainer") (slice "ready" "Ready") (slice "reporter" "Waiting on reporter") (slice "close" "Close candidates") -}}
       {{- $key := index . 0 -}}
-      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))
-          "danger" (and (eq $key "needs") (gt (int $q.needsOver) 0))) -}}
+      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))) -}}
     {{- end -}}
     {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $n) -}}
     {{- /* first-paint facet counts: the tokens of the rows in the default view */ -}}
@@ -38,8 +37,8 @@
     {{- $rule := slice -}}
     {{- range partial "data/sla-rules.html" "issue" }}{{ if .filter }}{{ $rule = $rule | append (dict "value" .key "label" .name "count" (int ($sc.Get (printf "rule:%s" .key) | default 0))) }}{{ end }}{{ end -}}
     {{- $facets := slice
-      (dict "key" "overdue" "label" "Overdue" "title" "Past a deadline in Response SLAs." "count" (int ($sc.Get "overdue" | default 0)))
-      (dict "key" "waiting" "label" "Waiting for a reply" "title" "No maintainer reply for 7 days or more." "count" (int ($sc.Get "waiting" | default 0)))
+      (dict "key" "overdue" "label" "Overdue" "title" "Past a deadline in Response SLAs." "tone" "danger" "count" (int ($sc.Get "overdue" | default 0)))
+      (dict "key" "waiting" "label" "Waiting for a reply" "title" "No maintainer reply for more than 7 days." "count" (int ($sc.Get "waiting" | default 0)))
       (dict "key" "status" "label" "Status" "title" "The next step, from issue classification." "kind" "select" "options" $status)
       (dict "key" "type" "label" "Type" "title" "The type label on the issue." "kind" "select" "options" $type)
       (dict "key" "priority" "label" "Priority" "title" "The priority label on the issue." "kind" "select" "options" $priority)

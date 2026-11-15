@@ -14,8 +14,8 @@
        3 Backlog trend, 4 Review speed, 5 Where merged PRs land. Review SLAs is omitted; Data notes says why.
      Helpers: pulls/rows (actionability to rows, partialCached per repository), pulls/row, pulls/reason (the only reader of
      short_reason), pulls/wait-row, pulls/typical-week, pulls/sep-stages.
-     Every tile value is the count of the rows its URL selects. A list counts its top-level rows: the other PRs of a duplicate
-     cluster sit behind their primary's expander and are counted once, with it. */ -}}
+     Every tile value is the count of the rows its URL selects. Every open PR is one row (the PRs of a duplicate cluster included),
+     so the All view equals Open PRs. In a strip every tile has one context or none has (4.5). */ -}}
 {{- $key := .Params.repo | default "" -}}
 {{- if not $key }}
 {{ partial "pages/pulls/org.html" . }}
@@ -35,21 +35,21 @@
 {{- if $classified -}}
   {{- if not (partial "ui/page-gaps.html" $gap).runs }}{{ $gap = dict "repos" (slice $r.key) "days" 182 "key" "actionability" "noun" "PR classification history" }}{{ end -}}
 {{- end -}}
-{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago." -}}
-{{- $defEffort := "The PR classifier's estimate of the review time the Needs a maintainer view asks for." -}}
+{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago." -}}
+{{- $defEffort := "The PR classifier's estimate of the review time its actionable PRs ask for." -}}
 {{- $defs := slice -}}{{ $notes := slice -}}
 {{- if $classified -}}
   {{- $defs = $defs | append
     (dict "term" "Overdue" "text" "Past a deadline in the Review SLAs table. All three are team targets.")
     (dict "term" "Overdue column" "text" "Calendar days past the first-review deadline. The 24-hour rules carry no day count and show the Overdue badge.")
     (dict "term" "Needs a maintainer" "text" "Open PRs whose next step is a maintainer's, according to the PR classifier.")
-    (dict "term" "Housekeeping" "text" "Open PRs that need a nudge or a cleanup instead of a review.")
+    (dict "term" "Housekeeping" "text" "Release PRs and PRs opened by bots: they need a merge or a cleanup, not a review.")
     (dict "term" "Close candidates" "text" "Open PRs the classifier suggests closing, such as inactive PRs with failing checks.")
-    (dict "term" "Waiting on author" "text" "Open PRs whose next step is not a maintainer's, such as drafts, parked maintainer drafts and release PRs.")
+    (dict "term" "Waiting on author" "text" "Open PRs whose next step is the author's: drafts, requested changes, failing or missing checks and merge conflicts.")
     (dict "term" "Author waiting" "text" "The author did what was asked, or a maintainer's own PR awaits a review.")
-    (dict "term" "Duplicates" "text" "PRs that fix the same issue fold under one primary PR, behind its expander. Counts on views, tiles and filters count the primary only, so they can be lower than Open PRs.")
+    (dict "term" "Duplicates" "text" "PRs that fix the same issue. Each is its own row: the primary names the issue in Detail, and the others carry a tag that names the primary and sit in its view.")
     (dict "term" "Estimated review effort" "text" $defEffort)
-    (dict "term" "Actionable" "text" "The classifier's daily count of PRs a maintainer can act on. It is the plotted series, not the same set as the Needs a maintainer view.")
+    (dict "term" "Actionable" "text" "The classifier's daily count of PRs a maintainer can act on, with each group of duplicates counted once. It is the plotted series and the set the review estimate covers, not the same set as the Needs a maintainer view.")
     (dict "term" "Not draft" "text" "Open PRs minus drafts, from the daily snapshot.")
     (dict "term" "Age" "text" "Calendar days since the PR opened.") -}}
   {{- range partial "data/pr-status.html" "*" }}{{ $defs = $defs | append (dict "term" .label "text" .tip) }}{{ end -}}
@@ -65,8 +65,10 @@
 {{- $defs = $defs | append
   (dict "term" "Open PRs" "text" "PRs open now, drafts included.")
   (dict "term" "Net change" "text" "PRs opened minus PRs merged and PRs closed without merging in the window.")
-  (dict "term" "Typical week" "text" "Median of the weekly merged-PR counts over the prior 12 complete weeks, weeks without data skipped. Shown from 4 weeks of data.")
+  (dict "term" "Median first review" "text" "Median time from opening to the first review, over the PRs that got one.")
+  (dict "term" "90% reviewed within" "text" "Nine in ten of those PRs got their first review within this time.")
   (dict "term" "Median time to merge" "text" "Median time from opening to merge, over PRs merged in the last 90 days.")
+  (dict "term" "Merged, last 7 days" "text" "PRs merged in the last 7 days. The trend under it is one reading a week.")
   (dict "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that changed each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
 {{- $head := dict "scope" (dict "kind" "pulls" "repo" $r.key)
     "meta" (slice (dict "icon" "github" "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))
@@ -89,10 +91,16 @@
 {{- $q := partialCached "pages/pulls/rows.html" $a $r.key -}}
 {{- $needs := int (index $q.views "needs") -}}
 {{- $viewArg := "" }}{{ if ne $q.def "needs" }}{{ $viewArg = "view=needs" }}{{ end -}}
-{{- /* Open PRs links to the All view only when that view lists every open PR (no duplicates folded): count equality */ -}}
-{{- if ne $pl.open_count nil }}{{ if eq (int $pl.open_count) (int $q.all) }}{{ $openTile = merge $openTile (dict "href" "?view=all#queue" "drill" true) }}{{ end }}{{ end -}}
+{{- /* Open PRs links to the All view only when that view lists every open PR (the classification is as fresh as the count): count
+     equality. When the two differ a build warning names both, so the stale file is found. */ -}}
+{{- if ne $pl.open_count nil -}}
+  {{- if eq (int $pl.open_count) (int $q.all) }}{{ $openTile = merge $openTile (dict "href" "?view=all#queue" "drill" true) -}}
+  {{- else }}{{ warnf "VISR pulls %s: %d open PRs in metrics.json and %d classified rows; the Open PRs tile is not linked" $r.key (int $pl.open_count) (int $q.all) }}{{ end -}}
+{{- end -}}
+{{- $sum := dict }}{{ with $a.summary }}{{ if reflect.IsMap . }}{{ $sum = . }}{{ end }}{{ end -}}
 {{- $effort := dict "kind" "dur" "unit" "h" "reason" "not-computed" -}}
-{{- with $a.summary }}{{ if reflect.IsMap . }}{{ with .effort_hours }}{{ if gt (float .) 0.0 }}{{ $effort = dict "kind" "dur" "h" (math.Round (float .)) "unit" "h" }}{{ end }}{{ end }}{{ end }}{{ end }}
+{{- with $sum.effort_hours }}{{ if gt (float .) 0.0 }}{{ $effort = dict "kind" "dur" "h" (math.Round (float .)) "unit" "h" }}{{ end }}{{ end }}
+{{- /* every tile has one context (4.5): a whole for the two piles, the PRs the estimate covers, the fixed pair of Open PRs */ -}}
 <section class="v-section v-summary" aria-label="Summary">
   <div class="v-grid">
     {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice
@@ -100,9 +108,10 @@
         "value" (dict "kind" "count" "v" $q.over) "context" (dict "kind" "whole" "n" $needs "of" "in Needs a maintainer")
         "href" (printf "?%s%soverdue=1#queue" $viewArg (cond (eq $viewArg "") "" "&")) "drill" true)
       (dict "name" "Needs a maintainer" "title" "Open PRs whose next step is a maintainer's, according to the PR classifier."
-        "value" (dict "kind" "count" "v" $needs)
+        "value" (dict "kind" "count" "v" $needs) "context" (dict "kind" "whole" "n" (int $q.all) "of" "open")
         "href" (cond (eq $viewArg "") "#queue" "?view=needs#queue") "drill" true)
-      (dict "name" "Estimated review effort" "title" $defEffort "value" $effort)
+      (dict "name" "Estimated review effort" "title" $defEffort "value" $effort
+        "context" (dict "kind" "ref" "label" "Actionable PRs" "value" (dict "kind" "count" "v" $sum.actionable_count "reason" "not-computed")))
       $openTile)) }}
   </div>
 </section>
@@ -119,15 +128,18 @@
 {{- end -}}
 {{- if $drafts }}{{ $drafts = sort $drafts "w" "desc" }}{{ end -}}
 {{- $viewArg := "" }}{{ if and (eq (len $rows) 0) (gt (len $drafts) 0) }}{{ $viewArg = "view=review" }}{{ end }}
+{{- /* every tile has one context (4.5): the longest wait, the whole the any-age pile is part of, the fixed pair of Open PRs */ -}}
+{{- $longest := dict "kind" "dur" "unit" "d" "reason" "no-data" -}}
+{{- if ne $w.longest nil }}{{ $longest = dict "kind" "dur" "d" (float $w.longest) "unit" "d" }}{{ end }}
 <section class="v-section v-summary" aria-label="Summary">
   <div class="v-grid">
     {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice
       (dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
-        "value" (dict "kind" "count" "v" $w.over7)
+        "value" (dict "kind" "count" "v" $w.over7) "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)
         "href" (printf "?%s%sover7=1#queue" $viewArg (cond (eq $viewArg "") "" "&")) "drill" true)
       (dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual
         "title" "The same PRs at any age: the Waiting for first review view of the queue."
-        "value" (dict "kind" "count" "v" $w.any)
+        "value" (dict "kind" "count" "v" $w.any) "context" (dict "kind" "whole" "n" $pl.open_count "of" "open")
         "href" (cond (eq $viewArg "") "#queue" "?view=review#queue") "drill" true)
       $openTile)) }}
   </div>

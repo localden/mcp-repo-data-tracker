@@ -1,36 +1,43 @@
 {{- /* SLA rule table (design system v4 4.17): every published deadline, how many items are past it, and a way into the list. One card
-  at 12, a .v-dt.is-matrix with the same six columns on Issues ("Response SLAs") and PR pages ("Review SLAs"): Rule, Source, Deadline,
-  Open, Overdue, 12 weeks. Rows in registry order; no group rows, no sortable header.
+  at 12, a .v-dt.is-matrix with the same column order and widths on Issues ("Response SLAs") and PR pages ("Review SLAs"):
+  Rule, Source, Deadline, Overdue, Open, 12 weeks. Rows in registry order; no group rows, no sortable header.
   Dict {id, entity, rules, base, anchor, label, class}.
     id      the card id. label: aria-label of the table ("Response SLAs").
     entity  "issue" or "pr": which rules of data/sla-rules.html to list (every rule of the entity gets a row).
     rules   slice of {key, open, overdue, points, reason}: the data per rule; a rule left out shows empty marks ("Not computed").
               open     open items the rule applies to (nil: the empty mark).   overdue: items past the deadline.
-              points   12 weekly bins of the overdue count [{date, value}]; the column is omitted when no rule has any.
+              points   12 weekly bins of the overdue count [{date, value}]; a single rule without a series shows the empty baseline.
               reason   a fmt/na.html key for the empty marks of this rule ("no-priority-labels"; default "not-computed").
     base    the URL of the page that holds the queue ("" for this page). A rule with overdue items is a linked row: its name is
             a.v-row-link[data-drill] to "{base}?view=all&overdue=1&rule={key}#{anchor}" (anchor default "queue").
-  Names, deadlines and sources come from the registry. Open and Overdue are two columns, never a ratio. The overdue count is strong
-  danger beside a rank bar (the largest rule is the full 96px, no track); zero is "0" with no bar. Below 64rem: records. */ -}}
+  Names, deadlines and sources come from the registry. The Deadline phrase never truncates (the column fits the longest one).
+  Overdue comes straight after the Deadline, bar then number, so the bar reads as Overdue's and never as Open's. One kind of bar
+  per table: when any rule has an Open count the bar is a share (overdue of open, on a track: 11 of 11 is a full bar) and a rule
+  without Open shows its number alone; when no rule has Open the bar is a rank bar (the largest rule is full width, no track).
+  The overdue count is strong danger; zero is "0" with no bar. Open and Overdue are two columns, never a ratio.
+  Open and 12 weeks follow 4.14 rule 8: each is omitted when no rule of the page has it; the others never move. Below 64rem: records. */ -}}
 {{- $c := . -}}
 {{- $entity := $c.entity | default "issue" -}}
 {{- $reg := partial "data/sla-rules.html" $entity -}}
-{{- $data := dict }}{{ $max := 0.0 }}{{ $anyPts := false -}}
+{{- $data := dict }}{{ $max := 0.0 }}{{ $anyOpen := false }}{{ $anyPts := false -}}
 {{- range $c.rules }}{{ if reflect.IsMap . }}{{ if .key -}}
   {{- $data = merge $data (dict (string .key) .) -}}
   {{- if ne .overdue nil }}{{ if gt (float .overdue) $max }}{{ $max = float .overdue }}{{ end }}{{ end -}}
+  {{- if ne .open nil }}{{ $anyOpen = true }}{{ end -}}
   {{- if .points }}{{ $anyPts = true }}{{ end -}}
 {{- end }}{{ end }}{{ end -}}
 {{- $anchor := $c.anchor | default "queue" -}}
 <article class="v-card {{ $c.class | default "v-span-12" }}"{{ with $c.id }} id="{{ . }}"{{ end }}>
   <table class="v-dt is-matrix"{{ with $c.label }} aria-label="{{ . }}"{{ end }}>
-    <colgroup><col><col class="v-col-source"><col class="v-col-deadline"><col class="v-col-num-sm"><col class="v-col-bar">{{ if $anyPts }}<col class="v-col-spark">{{ end }}</colgroup>
+    <colgroup><col><col class="v-col-source"><col class="v-col-deadline"><col class="v-col-bar">{{ if $anyOpen }}<col class="v-col-num-sm">{{ end }}{{ if $anyPts }}<col class="v-col-spark">{{ end }}</colgroup>
     <thead><tr>
       {{ partial "ui/th.html" (dict "label" "Rule") }}
       {{ partial "ui/th.html" (dict "label" "Source") }}
       {{ partial "ui/th.html" (dict "label" "Deadline") }}
-      {{ partial "ui/th.html" (dict "label" "Open" "num" true "title" "Open items the rule applies to.") }}
       {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "title" "Open items past the rule's deadline.") }}
+      {{- if $anyOpen }}
+      {{ partial "ui/th.html" (dict "label" "Open" "num" true "title" "Open items the rule applies to.") }}
+      {{- end }}
       {{- if $anyPts }}
       {{ partial "ui/th.html" (dict "label" "12 weeks" "record" "Overdue, last 12 weeks" "class" "v-c-spark") }}
       {{- end }}
@@ -40,17 +47,22 @@
       {{- $r := . }}{{ $d := index $data $r.key | default dict }}
       {{- $reason := $d.reason | default "not-computed" }}
       {{- $over := 0.0 }}{{ $hasOver := ne $d.overdue nil }}{{ if $hasOver }}{{ $over = float $d.overdue }}{{ end }}
+      {{- $open := 0.0 }}{{ if ne $d.open nil }}{{ $open = float $d.open }}{{ end }}
       {{- $href := "" }}{{ if gt $over 0.0 }}{{ $href = printf "%s?view=all&overdue=1&rule=%s#%s" ($c.base | default "") $r.key $anchor }}{{ end }}
       <tr{{ if $href }} data-row-link{{ end }}>
         {{ partial "ui/name-cell.html" (dict "name" $r.name "href" $href "drill" true) }}
         <td>{{ partial "ui/tag.html" (dict "text" $r.source "kind" "attr") }}</td>
-        <td><span class="v-detail" title="{{ $r.title }}">{{ $r.deadline }}</span></td>
-        <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $d.open "reason" $reason) }}</td>
+        <td><span class="v-deadline" title="{{ $r.title }}">{{ $r.deadline }}</span></td>
         <td class="num v-c-bar">
           {{- if not $hasOver }}{{ partial "ui/value.html" (dict "kind" "na" "reason" $reason) -}}
           {{- else if eq $over 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
-          {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $over "max" $max "mode" "rank") }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $over) }}</span></span>{{ end -}}
+          {{- else if gt $open 0.0 }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $over "max" (math.Max $open $over) "mode" "share") }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $over) }}</span></span>
+          {{- else if not $anyOpen }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $over "max" $max "mode" "rank") }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $over) }}</span></span>
+          {{- else }}<span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $over) }}</span>{{ end -}}
         </td>
+        {{- if $anyOpen }}
+        <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $d.open "reason" $reason) }}</td>
+        {{- end }}
         {{- if $anyPts }}
         <td class="v-c-spark">{{ partial "ui/spark.html" (dict "points" ($d.points | default slice) "kind" "level" "size" "cell" "reason" (cond (eq $d.points nil) "no-history" "")) }}</td>
         {{- end }}

@@ -17,7 +17,7 @@
 {{- if eq $n 0 }}
 {{ partial "ui/empty.html" (dict "title" "No issues waiting for a reply" "body" "Every open issue from a contributor has a maintainer reply.") }}
 {{- else }}
-{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer reply for 7 days or more." "count" $n7) -}}
+{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer reply for more than 7 days." "count" $n7) -}}
 {{- if $org -}}
   {{- $facets = $facets | append (dict "key" "repo" "label" "Repository" "title" "The repository the issue belongs to." "kind" "select" "options" ($c.repos | default slice)) -}}
 {{- end }}

@@ -1,0 +1,24 @@
+{{- /* SEP stage of a PR row (design system v4 4.16): the ONE place a PR's open SEP stage becomes the attribute tag "SEP {stage}"
+  ("SEP proposal", "SEP draft", "SEP in review", "SEP accepted"). Every PR row template calls it, so the same PR never shows the
+  attribute on one page and the raw GitHub label "SEP" on another. Returns a dict, never emits.
+  Dict {repo, number, labels, stage}.
+    repo    the repository key ("owner/repo" or the repository name); with number, the stage is looked up here
+            (data/sep-stages.html, cached per repository). Only the specification repository has SEP data.
+    number  the PR number.
+    stage   optional: a stage the caller already has ("Draft"); it wins over the lookup.
+    labels  the PR's GitHub labels.
+  Returns {attrs, tags}: attrs is a slice with the one attribute tag text (empty without a stage); tags is labels without the stage
+  labels the attribute replaces (only removed when there is a stage). */ -}}
+{{- $stage := string (.stage | default "") -}}
+{{- if and (not $stage) .repo (ne .number nil) -}}
+  {{- $repo := string .repo -}}
+  {{- $stage = string (index (partialCached "data/sep-stages.html" $repo $repo) (string (int .number)) | default "") -}}
+{{- end -}}
+{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "accepted" "final" "deferred" "dormant" -}}
+{{- $attrs := slice }}{{ $tags := slice -}}
+{{- with $stage }}{{ $attrs = $attrs | append (printf "SEP %s" (lower .)) }}{{ end -}}
+{{- range .labels | default slice -}}
+  {{- $t := . }}{{ if reflect.IsMap . }}{{ $t = .text }}{{ end -}}
+  {{- if not (and $stage (in $stageLabels (lower (string $t)))) }}{{ $tags = $tags | append (string $t) }}{{ end -}}
+{{- end -}}
+{{- return dict "attrs" $attrs "tags" $tags -}}
