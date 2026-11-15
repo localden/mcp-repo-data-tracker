@@ -37,8 +37,8 @@ GRAPHITE = "#151518"
 WHITE = "#f4f4f5"
 SIGNAL = "#eb6834"
 
-FINAL = "i1"
-DEFAULT_SET = ["i1", "i2", "i3", "i4"]
+FINAL = "j1"
+DEFAULT_SET = ["j1", "j2", "js", "j4"]
 
 
 def _lin(c):
@@ -137,12 +137,12 @@ def setup_world(scene, strength=0.45, bottom=0.03, top=0.85):
     scene.world = world
 
 
-def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.0)):
+def area_light(name, loc, target, energy, size, size_y=None, color=(1.0, 1.0, 1.0), ellipse=False):
     light = bpy.data.lights.new(name, "AREA")
     light.energy = energy
     light.color = color
     if size_y:
-        light.shape = "RECTANGLE"
+        light.shape = "ELLIPSE" if ellipse else "RECTANGLE"
         light.size = size
         light.size_y = size_y
     else:
@@ -162,9 +162,9 @@ def studio(key=420.0, fill=110.0, rim=320.0, top=140.0, sheen=0.0):
     area_light("Rim", (3.0, 2.6, 3.8), (0.0, 0.0, 0.0), rim, 3.0)
     area_light("TopStrip", (0.0, -0.9, 4.6), (0.0, 0.0, 0.0), top, 5.0, 0.8)
     if sheen:
-        # Low, wide strip in front: the only light the shallow visor dome can
-        # mirror, so the glass gets one thin arc under its top edge.
-        area_light("VisorSheen", (0.0, -8.0, 3.1), (0.0, 0.0, 0.3), sheen, 6.0, 0.45)
+        # Small, low ellipse in front: the only light the shallow visor dome
+        # can mirror, so the glass gets one tapered glint and nothing else.
+        area_light("VisorGlint", (-0.15, -8.0, 2.55), (-0.15, 0.0, 0.3), sheen, 0.9, 0.26, ellipse=True)
 
 
 def camera(scene, loc=(0.0, -10.0, 0.0), target=(0.0, 0.0, 0.0), ortho_scale=2.28):
@@ -617,36 +617,47 @@ def mat_line():
 
 
 def mat_dot():
-    return mat_signal(emit=1.0)
+    return principled("Signal", SIGNAL, rough=0.55, emission=SIGNAL, emission_strength=1.0)
+
+
+def final_mark(**kw):
+    kw.setdefault("line", SPARK2)
+    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), **kw)
+
+
+def concept_j1(scene):
+    """The mark: blue helmet, dark visor with nose bridge, trend and signal."""
+    final_mark()
+    studio(sheen=6.0)
+    camera(scene)
+
+
+def concept_j2(scene):
+    """As j1 without the glint on the glass."""
+    final_mark()
+    studio()
+    camera(scene)
+
+
+def concept_js(scene):
+    """Optical small size: heavier line and signal point, no glint."""
+    final_mark(line_r=0.105, dot_r=0.16, recess=0.15)
+    studio()
+    camera(scene)
+
+
+def concept_j4(scene):
+    """The mark seen three-quarter (hero angle)."""
+    final_mark()
+    studio(sheen=6.0)
+    camera(scene, loc=(3.6, -8.8, 2.6), ortho_scale=2.7)
 
 
 def concept_i1(scene):
-    """Blue helmet, dark visor with nose bridge, sparkline and signal point."""
+    """Round 4: straight sparkline, full-width sheen band."""
     visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover())
-    studio(sheen=60.0)
+    studio(sheen=6.0)
     camera(scene)
-
-
-def concept_i2(scene):
-    """As i1 with a livelier line."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), line=SPARK2)
-    studio(sheen=60.0)
-    camera(scene)
-
-
-def concept_i3(scene):
-    """As i1 with a deep navy screen."""
-    navy = principled("Screen", "#0a1428", rough=0.35, coat=0.3)
-    visor_mark(mat_blue(), navy, mat_line(), mat_dot(), mat_cover())
-    studio(sheen=60.0)
-    camera(scene)
-
-
-def concept_i4(scene):
-    """i1 seen three-quarter (hero angle, checks the mark holds up in 3D)."""
-    visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover())
-    studio(sheen=60.0)
-    camera(scene, loc=(3.6, -8.8, 2.6), ortho_scale=2.7)
 
 
 def concept_h2(scene):
@@ -690,10 +701,11 @@ def concept_e2(scene):
 
 
 CONCEPTS = {
-    "i1": (concept_i1, "visor: refined"),
-    "i2": (concept_i2, "visor: livelier line"),
-    "i3": (concept_i3, "visor: navy screen"),
-    "i4": (concept_i4, "visor: three-quarter"),
+    "j1": (concept_j1, "visor: final candidate"),
+    "j2": (concept_j2, "visor: no glint"),
+    "js": (concept_js, "visor: small optical size"),
+    "j4": (concept_j4, "visor: three-quarter"),
+    "i1": (concept_i1, "visor: straight sparkline"),
     "h2": (concept_h2, "visor: nose bridge, check"),
     "h4": (concept_h4, "visor: sparkline over ghost bars"),
     "g1": (concept_g1, "visor: graphite helmet, lit blue visor"),
