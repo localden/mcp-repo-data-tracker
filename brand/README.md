@@ -18,6 +18,7 @@ The VISR logo is a 3D icon built entirely from code (`brand/logo.py`, Blender 4.
 | `brand/post.py` | Pillow step: tight crops, downscaled sizes, contact sheet, light/dark small-size strips, site deliverables. |
 | `brand/visr.blend` | The scene of the mark as saved by CI. Open it in Blender 4.2+ to look around; edit `logo.py`, not the file. |
 | `brand/concepts.png` | Contact sheet of everything explored, on `#ffffff` and `#151518`. |
+| `brand/small-sizes.png` | The delivered mark at 128, 64, 32, 24 and 16 px on `#ffffff` and `#151518`, with 4x zooms of the three smallest. |
 | `brand/visr-hero.png` | Three-quarter render for READMEs and social cards. |
 | `static/brand/visr-mark-{1024,512,256,128,64,32}.png` | The mark, transparent, square, about 6% padding. 32 px uses the small-size drawing. |
 | `static/favicon-32.png`, `static/apple-touch-icon.png` | Favicon and the 180 px touch icon (opaque `#151518`). |
@@ -29,7 +30,7 @@ Rendering happens in the `Render VISR logo` workflow (`.github/workflows/logo-re
 1. Create a branch named `logo/<anything>`, edit `brand/logo.py` (or `brand/post.py`) and push. A push that touches `brand/*.py` on a `logo/**` branch starts the workflow. Once the workflow file is on the default branch it can also be started by hand: `gh workflow run logo-render.yml --ref <branch> -f concepts=mark`.
 2. Four parallel jobs render the concepts with Cycles on CPU (about 12 minutes for the full set), then one job builds the sheets.
 3. Download the result: `gh run download <run-id> -n visr-logo -D out`.
-4. Look at `out/contact-sheet.png` and `out/final/small-sizes.png` (the mark at 128 to 16 px on white and on `#151518`, with 4x zooms). Judge it there, not only at 1024.
+4. Look at `out/contact-sheet.png` and `out/final/brand/small-sizes.png` (the mark at 128 to 16 px on white and on `#151518`, with 4x zooms). Judge it there, not only at 1024.
 5. `out/final/` mirrors the repository layout. Copy its `static/` and `brand/` folders over the checkout and commit.
 
 `logo.py` arguments (after `--`): `--concepts all|mark|id,id`, `--samples` (the mark, default 256), `--study-samples` (exploration, default 96), `--res` (default 1024), `--blend <path>`, `--shard i/n`.

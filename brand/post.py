@@ -143,7 +143,7 @@ def write_final(dest, big, small, hero):
     touch = Image.new("RGBA", (180, 180), DARK)
     touch.alpha_composite(scaled(big[1024], 152), (14, 14))
     touch.convert("RGB").save(os.path.join(dest, "static", "apple-touch-icon.png"), optimize=True)
-    strip(delivered).convert("RGB").save(os.path.join(dest, "small-sizes.png"), optimize=True)
+    strip(delivered).convert("RGB").save(os.path.join(dest, "brand", "small-sizes.png"), optimize=True)
     if hero is not None:
         hero.save(os.path.join(dest, "brand", "visr-hero.png"), optimize=True)
 
