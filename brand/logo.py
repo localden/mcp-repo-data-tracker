@@ -37,8 +37,8 @@ GRAPHITE = "#151518"
 WHITE = "#f4f4f5"
 SIGNAL = "#eb6834"
 
-FINAL = "j1"
-DEFAULT_SET = ["j1", "j2", "js", "j4"]
+FINAL = "k1"
+DEFAULT_SET = ["k1", "k2", "ks", "k4"]
 
 
 def _lin(c):
@@ -162,9 +162,9 @@ def studio(key=420.0, fill=110.0, rim=320.0, top=140.0, sheen=0.0):
     area_light("Rim", (3.0, 2.6, 3.8), (0.0, 0.0, 0.0), rim, 3.0)
     area_light("TopStrip", (0.0, -0.9, 4.6), (0.0, 0.0, 0.0), top, 5.0, 0.8)
     if sheen:
-        # Small, low ellipse in front: the only light the shallow visor dome
-        # can mirror, so the glass gets one tapered glint and nothing else.
-        area_light("VisorGlint", (-0.15, -8.0, 2.55), (-0.15, 0.0, 0.3), sheen, 0.9, 0.26, ellipse=True)
+        # Low ellipse in front: the only light the shallow visor dome can
+        # mirror. Kept dim so it reads as a faint window in the glass.
+        area_light("VisorWindow", (-0.42, -8.0, 2.3), (-0.42, 0.0, 0.3), sheen, 0.66, 1.7, ellipse=True)
 
 
 def camera(scene, loc=(0.0, -10.0, 0.0), target=(0.0, 0.0, 0.0), ortho_scale=2.28):
@@ -401,21 +401,38 @@ def tube(name, pts, radius, mat, y=0.0, flat=1.0, joints=True):
     return made
 
 
-def dome(name, pts, spine_half, cz, height, mat, y_base, rings=28):
+def dome(name, pts, spine_half, cz, height, mat, y_base, half=0.5, fillet=0.02, rings=28):
     """Convex lens over an (x, z) outline: every outline point slides toward
     the shape's horizontal spine while rising on a parabola, so the surface
-    has even curvature and catches the softboxes as a broad highlight."""
+    has even, shallow curvature. A small rounded edge (`fillet`) turns from
+    vertical into the dome's slope; it is what catches the key and top lights
+    as a hairline along the upper rim of the glass."""
+    profile = [(0.0, 0.0)]
+    s_e = h_f = 0.0
+    if fillet > 0.0:
+        phi0 = math.atan(2.0 * height / half)
+        steps = 10
+        for k in range(1, steps + 1):
+            phi = math.pi / 2 + (phi0 - math.pi / 2) * k / steps
+            profile.append((fillet * (1.0 - math.sin(phi)) / half, fillet * math.cos(phi)))
+        s_e, h_f = profile[-1]
+
+    def parab(s):
+        return 1.0 - (1.0 - s) ** 2
+
+    for k in range(1, rings + 1):
+        s = s_e + (0.985 - s_e) * k / rings
+        profile.append((s, h_f + height * (parab(s) - parab(s_e))))
+
     me = bpy.data.meshes.new(name)
     bm = bmesh.new()
     n = len(pts)
     prev = None
-    for k in range(rings + 1):
-        s = 0.985 * k / rings
-        y = y_base - height * (1.0 - (1.0 - s) ** 2)
+    for s, rise in profile:
         ring = []
         for x, z in pts:
             qx = max(-spine_half, min(spine_half, x))
-            ring.append(bm.verts.new((qx + (x - qx) * (1.0 - s), y, cz + (z - cz) * (1.0 - s))))
+            ring.append(bm.verts.new((qx + (x - qx) * (1.0 - s), y_base - rise, cz + (z - cz) * (1.0 - s))))
         if prev is not None:
             for i in range(n):
                 j = (i + 1) % n
@@ -576,7 +593,7 @@ CHECK = ((-0.42, 0.12), (-0.14, -0.12), (0.42, 0.20))
 
 def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
                w=1.68, h=0.96, r=0.38, z=0.02, notch=(0.64, 0.24), line=SPARK,
-               recess=0.12, bulge=0.05, line_r=0.085, dot_r=0.13, ghost_bars=False):
+               recess=0.12, bulge=0.05, line_r=0.085, dot_r=0.13, ghost_bars=False, fillet=0.02):
     """Helmet tile whose visor shows one thing: the trend, and where it ends.
 
     The tile is the helmet, the domed glass is the visor, and the stroke under
@@ -593,11 +610,11 @@ def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
             bottom = -0.75
             rplate(f"Ghost{i}", 0.18, top - bottom, 0.05, 0.012, 0.0, ghost, x, z + (top + bottom) / 2, recess - 0.012)
     pts = [(x, z + dz) for x, dz in line]
-    tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.55, flat=0.55)
-    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.45, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.45, 1.0))
+    tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.7, flat=0.7)
+    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.6, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.6, 1.0))
     gap = 0.012
     dome("VisorGlass", visor_pts(w - 2 * gap, h - 2 * gap, r - gap, 0.0, z, notch),
-         max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.03)
+         max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.005, half=h / 2.0, fillet=fillet)
 
 
 def mat_screen_dark():
@@ -613,11 +630,11 @@ def mat_cover(tint=(0.9, 0.94, 1.0, 1.0)):
 
 
 def mat_line():
-    return mat_white(emit=0.9)
+    return mat_white(emit=0.55)
 
 
 def mat_dot():
-    return principled("Signal", SIGNAL, rough=0.55, emission=SIGNAL, emission_strength=1.0)
+    return principled("Signal", SIGNAL, rough=0.45, emission=SIGNAL, emission_strength=0.5)
 
 
 def final_mark(**kw):
@@ -625,38 +642,38 @@ def final_mark(**kw):
     visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover(), **kw)
 
 
-def concept_j1(scene):
+def concept_k1(scene):
     """The mark: blue helmet, dark visor with nose bridge, trend and signal."""
-    final_mark()
-    studio(sheen=6.0)
-    camera(scene)
-
-
-def concept_j2(scene):
-    """As j1 without the glint on the glass."""
     final_mark()
     studio()
     camera(scene)
 
 
-def concept_js(scene):
-    """Optical small size: heavier line and signal point, no glint."""
+def concept_k2(scene):
+    """As k1 with a faint window reflection in the glass."""
+    final_mark()
+    studio(sheen=3.5)
+    camera(scene)
+
+
+def concept_ks(scene):
+    """Optical small size: heavier line and signal point."""
     final_mark(line_r=0.105, dot_r=0.16, recess=0.15)
     studio()
     camera(scene)
 
 
-def concept_j4(scene):
+def concept_k4(scene):
     """The mark seen three-quarter (hero angle)."""
     final_mark()
-    studio(sheen=6.0)
+    studio()
     camera(scene, loc=(3.6, -8.8, 2.6), ortho_scale=2.7)
 
 
 def concept_i1(scene):
-    """Round 4: straight sparkline, full-width sheen band."""
+    """Round 4: straight sparkline."""
     visor_mark(mat_blue(), mat_screen_dark(), mat_line(), mat_dot(), mat_cover())
-    studio(sheen=6.0)
+    studio()
     camera(scene)
 
 
@@ -701,10 +718,10 @@ def concept_e2(scene):
 
 
 CONCEPTS = {
-    "j1": (concept_j1, "visor: final candidate"),
-    "j2": (concept_j2, "visor: no glint"),
-    "js": (concept_js, "visor: small optical size"),
-    "j4": (concept_j4, "visor: three-quarter"),
+    "k1": (concept_k1, "visor: final candidate"),
+    "k2": (concept_k2, "visor: window reflection"),
+    "ks": (concept_ks, "visor: small optical size"),
+    "k4": (concept_k4, "visor: three-quarter"),
     "i1": (concept_i1, "visor: straight sparkline"),
     "h2": (concept_h2, "visor: nose bridge, check"),
     "h4": (concept_h4, "visor: sparkline over ghost bars"),
