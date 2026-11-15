@@ -55,8 +55,7 @@
   {{- range partial "data/sla-rules.html" "pr" }}{{ $defs = $defs | append (dict "group" $gR "term" .name "text" (printf "%s. Source: %s." .deadline .source)) }}{{ end -}}
   {{- $defs = $defs | append
     (dict "group" $gM "term" "Estimated review effort" "text" $defEffort)
-    (dict "group" $gM "term" "Actionable" "text" "The classifier's daily count of PRs a maintainer can act on, with each group of duplicates counted once. It is the plotted series and the set the review estimate covers, not the same set as the Needs a maintainer view.")
-    (dict "group" $gM "term" "Not draft" "text" "Open PRs minus drafts, from the daily snapshot.") -}}
+    (dict "group" $gM "term" "Actionable" "text" "The classifier's daily count of PRs a maintainer can act on, with each group of duplicates counted once. It is the accent series of the Open PRs chart and the set the review estimate covers, not the same set as the Needs a maintainer view.") -}}
 {{- else -}}
   {{- $defs = $defs | append
     (dict "group" $gQ "term" "Waiting for first review" "text" $defWait)
@@ -71,7 +70,7 @@
   (dict "group" $gM "term" "Median first review" "text" "Median time from opening to the first review, over the PRs that got one.")
   (dict "group" $gM "term" "90% reviewed within" "text" "Nine in ten of those PRs got their first review within this time.")
   (dict "group" $gM "term" "Median time to merge" "text" "Median time from opening to merge, over PRs merged in the last 90 days.")
-  (dict "group" $gM "term" "Merged, last 7 days" "text" "PRs merged in the last 7 days. The trend under it is one column a week.")
+  (dict "group" $gM "term" "Merged, last 7 days" "text" "PRs merged in the last 7 days. The trend under it is that 7-day count, read once a week.")
   (dict "group" $gM "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that changed each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
 {{- $head := dict "scope" (dict "kind" "pulls" "repo" $r.key)
     "meta" (slice (dict "icon" "github" "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))

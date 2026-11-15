@@ -1,0 +1,96 @@
+{{- /* Rank table (design system v4 4.14, 4.21): a name, one bar with its number, and at most two more figures. The one way to draw
+  table.v-dt.is-rank: pages and the styleguide call this partial, nobody writes the table by hand, so the specimen and the page
+  cannot drift. Emits the table (colgroup, header through ui/th.html, body) and, with list and limit, the list foot. The card and
+  its head belong to the caller.
+  Dict {id, labelledby, label, class, numw, head, rows, list, limit}.
+    id          the table id ("il-table": a list foot's button controls "{list}-table").
+    labelledby  the id of the card title; or label, an aria-label.
+    class       "has-barfill": a table of short names whose bar takes the spare width (2.3).
+    numw        the character count of the widest number of the bar column (data-numw; left out, ui.js counts it).
+    head        the columns. The first names the name column: {label, title}. Each other one is
+                  {label, col, bar, max, record, title, unit, sub}
+                col   the width token without its prefix: "num" (default), "num-sm", "num-lg", "num-xs".
+                bar   "rank" or "share": this is the bar column (width token bar; header and cells take v-c-bar). The number
+                      comes first, then its bar. One bar column per table. max: the bar's scale: for share the whole (required);
+                      for rank the largest row (default: the largest bar value of the rows).
+                The rest are ui/th.html arguments (record: the label of this value in a list row below 64rem).
+    rows        slice of {name, cells}.
+                name   a string; or {text, href, drill, sub} (ui/name-cell.html; a row with href is a linked row); or {tag} (a GitHub
+                       label, ui/tag.html); or {path, dir} (a path, ui/value.html kind path; "" is the repository root); or
+                       {ver, latest} (a version, with the tag Latest beside it).
+                cells  one ui/value.html dict per column after the first, in head order. The cell of the bar column also carries
+                       bar: the raw number the bar draws. A rank bar at zero (or with no bar key) is the number alone in its slot;
+                       a share bar at zero keeps its empty track.
+    list, limit a list card's id and its first step (the card carries data-list and data-limit): rows are marked data-row, rows
+                past the limit data-over, and ui/list-foot.html follows the table.
+  With exactly two value columns, one of them the bar (a count and its share), the table takes .has-pair: below 64rem a row is one
+  line, name then count then share, over one bar, the columns of the distribution legend. Otherwise a list row is name and bar
+  number on one line, the bar beneath, and each further figure a label-left, value-right line. */ -}}
+{{- $c := . -}}
+{{- $head := $c.head | default slice -}}
+{{- $rows := $c.rows | default slice -}}
+{{- $h0 := dict }}{{ range first 1 $head }}{{ $h0 = . }}{{ end -}}
+{{- $cols := after 1 $head -}}
+{{- $barIx := -1 }}{{ $barMode := "rank" }}{{ $max := 0.0 }}{{ $fixedMax := false -}}
+{{- range $i, $h := $cols -}}
+  {{- if $h.bar -}}
+    {{- if ge $barIx 0 }}{{ warnf "ui/rank-table %q: more than one bar column (design system v4 4.21)" ($c.id | default "") }}{{ end -}}
+    {{- $barIx = $i }}{{ $barMode = cond (eq $h.bar "share") "share" "rank" -}}
+    {{- if ne $h.max nil }}{{ $max = float $h.max }}{{ $fixedMax = true }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- if and (ge $barIx 0) (not $fixedMax) -}}
+  {{- range $rows -}}
+    {{- $cells := .cells | default slice -}}
+    {{- if gt (len $cells) $barIx }}{{ $cell := index $cells $barIx }}{{ if reflect.IsMap $cell }}{{ if ne $cell.bar nil }}{{ $max = math.Max $max (float $cell.bar) }}{{ end }}{{ end }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- if le $max 0.0 }}{{ $max = 1.0 }}{{ end -}}
+{{- $pair := and (ge $barIx 0) (eq (len $cols) 2) -}}
+{{- $limit := int ($c.limit | default 0) -}}
+<table class="v-dt is-rank is-list{{ if $pair }} has-pair{{ end }}{{ with $c.class }} {{ . }}{{ end }}"{{ with $c.id }} id="{{ . }}"{{ end }}{{ with $c.numw }} data-numw="{{ . }}"{{ end }}{{ if $c.labelledby }} aria-labelledby="{{ $c.labelledby }}"{{ else }}{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ end }}>
+  <colgroup><col>{{ range $cols }}<col class="v-col-{{ if .bar }}bar{{ else }}{{ .col | default "num" }}{{ end }}">{{ end }}</colgroup>
+  <thead><tr>
+    {{ partial "ui/th.html" (dict "label" $h0.label "title" $h0.title) }}
+    {{- range $cols }}
+    {{ partial "ui/th.html" (dict "label" .label "sub" .sub "record" .record "title" .title "unit" .unit "num" true "class" (cond (not .bar) "" "v-c-bar")) }}
+    {{- end }}
+  </tr></thead>
+  <tbody>
+    {{- range $i, $row := $rows }}
+    {{- $nm := $row.name }}
+    {{- $cells := $row.cells | default slice }}
+    {{- $href := "" }}{{ if reflect.IsMap $nm }}{{ with $nm.href }}{{ $href = . }}{{ end }}{{ end }}
+    <tr{{ if $c.list }} data-row{{ end }}{{ if $href }} data-row-link{{ end }}{{ if and $c.list (gt $limit 0) (ge $i $limit) }} data-over{{ end }}>
+      {{- if not (reflect.IsMap $nm) }}
+      {{ partial "ui/name-cell.html" (dict "name" $nm) }}
+      {{- else if $nm.tag }}
+      <th scope="row" class="v-name">{{ partial "ui/tag.html" (dict "text" $nm.tag) }}</th>
+      {{- else if isset $nm "path" }}
+      <th scope="row" class="v-name">{{ partial "ui/value.html" (dict "kind" "path" "v" (string $nm.path) "dir" $nm.dir) }}</th>
+      {{- else if $nm.ver }}
+      <th scope="row" class="v-name"><span class="v-name-line">{{ partial "ui/value.html" (dict "kind" "ver" "v" $nm.ver) }}{{ if $nm.latest }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ end }}</span></th>
+      {{- else }}
+      {{ partial "ui/name-cell.html" (dict "name" $nm.text "href" $nm.href "drill" $nm.drill "sub" $nm.sub) }}
+      {{- end }}
+      {{- range $j, $h := $cols }}
+      {{- $cell := dict "kind" "na" }}{{ if gt (len $cells) $j }}{{ $cell = index $cells $j }}{{ end }}
+      {{- if not (reflect.IsMap $cell) }}{{ $cell = dict "kind" "na" }}{{ end }}
+      {{- if $h.bar }}
+      {{- $bv := 0.0 }}{{ $has := ne $cell.bar nil }}{{ if $has }}{{ $bv = float $cell.bar }}{{ end }}
+      <td class="num v-c-bar">
+        {{- if and $has (or (gt $bv 0.0) (eq $barMode "share")) -}}
+        <span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $bv "max" $max "mode" $barMode) }}{{ partial "ui/value.html" $cell }}</span>
+        {{- else }}{{ partial "ui/value.html" $cell }}{{ end -}}
+      </td>
+      {{- else }}
+      <td class="num">{{ partial "ui/value.html" $cell }}</td>
+      {{- end }}
+      {{- end }}
+    </tr>
+    {{- end }}
+  </tbody>
+</table>
+{{- if and $c.list (gt $limit 0) }}
+{{ partial "ui/list-foot.html" (dict "list" $c.list "n" (len $rows) "limit" $limit) }}
+{{- end -}}

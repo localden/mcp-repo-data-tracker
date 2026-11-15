@@ -63,18 +63,28 @@
       (dict "label" "Lifetime" "detail" (dict "note" (dict "from" (printf "%s-01-15" $y))) "value" (dict "kind" "volume" "v" 2010000000))
       (dict "label" "Complete through" "value" (dict "kind" "date" "d" $asof)))) }}
 
-    {{- /* a pair of different measures (4.19): each has its own window; the card with a note keeps its notes row, and the card
-         with nothing to key gives that height to its plot (tall), so both end together with no empty band */}}
+    {{- /* a pair of different measures (4.19): each has its own window; the card with a note keeps its notes row, and the card with
+         nothing to key reserves the same row (reserve_notes), so both plots have one height and their axes share a line */}}
     {{- $contrib := partial "pages/styleguide/series.html" (dict "n" 52 "step" 7 "base" 90 "slope" 0.5 "gapFrom" 44 "gapTo" 47) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-contrib" "title" "Active contributors" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 52))).cadence
         "metric" "active contributors" "metric_one" "active contributor" "scope" "Fixture" "gran" "week" "class" "v-span-6"
         "series" (slice (dict "label" "Active contributors" "role" "accent" "points" $contrib.points))) }}
-    {{ partial "ui/chart.html" (dict "id" "sg-ch-commits" "title" "Commits per week" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 12))).cadence
-        "metric" "commits" "metric_one" "commit" "scope" "Fixture" "gran" "week" "kind" "column" "class" "v-span-6" "avg" 6.4 "tall" true
-        "series" (slice (dict "label" "Commits" "role" "accent" "points" $commits.points))) }}
+    {{- /* the arguments pages/repo/community.html passes: rolling 7-day buckets are never called weeks (cadence period7, the window
+         "Last 7 days" with its range, "12-period average") */}}
+    {{- $cmLast := index $commits.points (sub (len $commits.points) 1) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-commits" "title" "Commits" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "period7" "weeks" 12))).cadence
+        "metric" "commits" "metric_one" "commit" "scope" "Fixture" "gran" "week" "kind" "column" "class" "v-span-6" "avg" 6.4 "avg_label" "12-period average" "reserve_notes" true "polarity" ""
+        "series" (slice (dict "label" "Commits" "role" "accent" "points" $commits.points))
+        "readout" (slice
+          (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window "key" "accent" "value" (dict "kind" "count" "v" $cmLast.value)
+                "range" (dict "from" $cmLast.date "to" (((time.AsTime $cmLast.date).AddDate 0 0 6).Format "2006-01-02")))
+          (dict "label" "12-period average" "key" "context" "keyform" "line" "value" (dict "kind" "stat" "v" 6.4)))) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-pending" "title" "Issues" "metric" "issues" "scope" "Fixture" "class" "v-span-6" "from" $young.from "to" $young.to
         "series" (slice (dict "label" "Waiting over 7 days" "points" $young.points) (dict "label" "Open" "role" "context" "points" $young.points))) }}
     {{ partial "ui/chart.html" (dict "id" "sg-ch-nodata" "title" "PRs" "metric" "PRs" "scope" "Fixture" "class" "v-span-6" "from" $young.from "to" $young.to "series" (slice (dict "label" "Open" "points" slice))) }}
+    {{- /* the fourth pending text (4.22), on a card alone at 12 */}}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-nocommits" "title" "Commits" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "period7" "weeks" 12))).cadence
+        "metric" "commits" "scope" "Fixture" "gran" "week" "kind" "column" "class" "v-span-12" "pending" "No commits in the last 12 weeks" "series" (slice (dict "label" "Commits" "points" slice))) }}
     {{- /* the Downloads pending state (4.22): no chart to draw and no latest week to read out, so one card at 12, the stat list
          wide, closed by the pending bar */}}
     {{ partial "ui/stat-list.html" (dict "title" "Download totals" "wide" true "pending" "Too few complete weeks to draw a trend" "rows" (slice
@@ -102,7 +112,7 @@
       <div class="v-sg-spec"><div class="v-sg-specs">
         {{- range slice (dict "p" $w12 "k" "level" "c" "tile, level: the range row ends on the day of the latest reading") (dict "p" $w12gap "k" "level" "c" "tile, level with a gap: the bridge")
             (dict "p" $w12tail "k" "level" "c" "tile, level, a gap followed by one reading") (dict "p" $w12low "k" "level" "c" "tile, level, a gap then one low reading")
-            (dict "p" $w12 "k" "flow" "c" "tile, flow: the range row ends on the Sunday that closes the last week") (dict "p" $w12gap "k" "flow" "c" "tile, flow with missing weeks") }}
+            (dict "p" $w12 "k" "flow" "c" "tile, flow: the range row ends on the Sunday that closes the last week, or on the as-of day when that week is not over") (dict "p" $w12gap "k" "flow" "c" "tile, flow with missing weeks") }}
         <div class="v-sg-spec">{{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "tile" "asof" $asof) }}<p class="v-sg-cap">{{ .c }}</p></div>
         {{- end }}
       </div></div>
@@ -118,44 +128,54 @@
     </div></article>
     {{- /* bars: the page shape, a rank table with one bar column in list form below 64rem. The number comes first, in a fixed
          slot, then its bar. No table puts two bar cells in one row except "Waiting by repository" (Tables section) */}}
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Share bars") }}
-      <table class="v-dt is-rank is-list" data-numw="4" aria-label="Share bars, fixture">
-        <colgroup><col><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Part") }}{{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar") }}</tr></thead>
-        <tbody>
-          {{- range slice (slice "Zero" 0) (slice "2 of 100" 2) (slice "29 of 100" 29) (slice "Full" 100) }}
-          <tr><th scope="row" class="v-name"><span>{{ index . 0 }}</span></th>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 100 "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "v" (index . 1)) }}</span></td></tr>
-          {{- end }}
-          <tr><th scope="row" class="v-name"><span>Split, 3 of 113</span></th><td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" 3 "max" 113 "mode" "share" "split" true) }}{{ partial "ui/value.html" (dict "kind" "share" "part" 3 "whole" 113) }}</span></td></tr>
-        </tbody>
-      </table>
+    {{- /* every rank table on this page is ui/rank-table.html with the argument shapes the pages pass */}}
+    {{- $shareRows := slice }}
+    {{- range slice (slice "Zero" 0) (slice "2 of 100" 2) (slice "29 of 100" 29) (slice "50 of 100" 50) (slice "Full" 100) }}
+      {{- $shareRows = $shareRows | append (dict "name" (index . 0) "cells" (slice (dict "kind" "share" "v" (index . 1) "bar" (index . 1)))) }}
+    {{- end }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Share bars" "id" "sg-bars-share") }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-bars-share" "numw" 4 "rows" $shareRows "head" (slice (dict "label" "Part") (dict "label" "Share" "bar" "share" "max" 100))) }}
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank bars") }}
-      <table class="v-dt is-rank is-list" data-numw="3" aria-label="Rank bars, fixture">
-        <colgroup><col><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Stage") }}{{ partial "ui/th.html" (dict "label" "Open" "num" true "class" "v-c-bar") }}</tr></thead>
-        <tbody>
-          {{- range slice (slice "Proposal" 100) (slice "Draft" 29) (slice "In review" 2) (slice "Accepted" 2) (slice "Final" 0) }}
-          <tr><th scope="row" class="v-name"><span>{{ index . 0 }}</span></th>
-            <td class="num v-c-bar">{{ if eq (index . 1) 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) }}{{ else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 100 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 1)) }}</span>{{ end }}</td></tr>
-          {{- end }}
-        </tbody>
-      </table>
+    {{- $rankRows := slice }}
+    {{- range slice (slice "Proposal" 100) (slice "Draft" 29) (slice "In review" 2) (slice "Accepted" 2) (slice "Final" 0) }}
+      {{- $rankRows = $rankRows | append (dict "name" (index . 0) "cells" (slice (dict "kind" "count" "v" (index . 1) "bar" (index . 1)) (dict "kind" "dur" "unit" "d" "d" (mul 30 (index . 1))) (dict "kind" "count" "v" (index . 1)))) }}
+    {{- end }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank bars" "id" "sg-bars-rank") }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-bars-rank" "class" "has-barfill" "numw" 3 "rows" $rankRows "head" (slice
+          (dict "label" "Stage") (dict "label" "Open" "bar" "rank" "record" "Open SEPs") (dict "label" "Median age" "col" "num-sm" "unit" ", days") (dict "label" "No sponsor"))) }}
     </article>
     {{ partial "ui/dist.html" (dict "title" "Open issues by last activity" "id" "sg-dist-six" "parts" (slice
       (dict "name" (partial "fmt/label.html" (dict "bucket" "active30")).bucket "n" 127) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle30")).bucket "n" 0)
       (dict "name" (partial "fmt/label.html" (dict "bucket" "idle60")).bucket "n" 0) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle90")).bucket "n" 115))) }}
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Labels on open issues") }}
-      <table class="v-dt is-rank is-list" data-numw="2" aria-label="Labels, fixture">
-        <colgroup><col><col class="v-col-bar"><col class="v-col-num-sm"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Label") }}{{ partial "ui/th.html" (dict "label" "Open" "num" true "class" "v-c-bar") }}{{ partial "ui/th.html" (dict "label" "Share" "num" true) }}</tr></thead>
-        <tbody>
-          {{- range slice (slice "enhancement" 96) (slice "bug" 71) (slice "question" 22) (slice "auth" 9) }}
-          <tr><th scope="row" class="v-name">{{ partial "ui/tag.html" (index . 0) }}</th><td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 96 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 1)) }}</span></td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "part" (index . 1) "whole" 242) }}</td></tr>
-          {{- end }}
-        </tbody>
-      </table>
+    {{- /* "Labels on open issues" exactly as pages/issues/composition.html calls it: a list card with a foot, Open as the count with
+         its rank bar and Share as a number (5.3; has-pair below 64rem: name, count, share on one line over the bar) */}}
+    {{- $labRows := slice }}
+    {{- range slice (slice "enhancement" 96) (slice "auth" 71) (slice "transport" 22) (slice "docs" 9) (slice "good first issue" 6) (slice "oauth" 2) (slice "ci" 0) }}
+      {{- $labRows = $labRows | append (dict "name" (dict "tag" (index . 0)) "cells" (slice (dict "kind" "count" "v" (index . 1) "bar" (index . 1)) (dict "kind" "share" "part" (index . 1) "whole" 242))) }}
+    {{- end }}
+    <article class="v-card is-list v-span-6" data-list id="sg-il" data-limit="5" data-limit-phone="5" data-step="50" data-noun="labels" data-noun-one="label">
+      {{ partial "ui/card-head.html" (dict "title" "Labels on open issues" "id" "sg-il-title") }}
+      {{ partial "ui/rank-table.html" (dict "id" "sg-il-table" "labelledby" "sg-il-title" "numw" 2 "list" "sg-il" "limit" 5 "rows" $labRows "head" (slice
+          (dict "label" "Label")
+          (dict "label" "Open" "bar" "rank" "max" 96 "record" "Open issues" "title" "Open issues that carry the label. An issue can carry several labels.")
+          (dict "label" "Share" "col" "num-sm" "record" "Share of open issues" "title" "Share of all open issues."))) }}
+    </article>
+    {{- /* "Versions in use" as pages/downloads/versions.html calls it: the version with its Latest tag, a volume, the share bar */}}
+    {{- $verRows := slice }}
+    {{- range slice (slice "1.30.0" 25600000 true) (slice "1.29.2" 21000000 false) (slice "1.28.0" 14900000 false) (slice "1.27.1" 9800000 false) }}
+      {{- $verRows = $verRows | append (dict "name" (dict "ver" (index . 0) "latest" (index . 2)) "cells" (slice (dict "kind" "volume" "v" (index . 1)) (dict "kind" "share" "part" (index . 1) "whole" 88200000 "bar" (index . 1)))) }}
+    {{- end }}
+    {{- $verRows = $verRows | append (dict "name" "Other versions" "cells" (slice (dict "kind" "volume" "v" 16900000) (dict "kind" "share" "part" 16900000 "whole" 88200000 "bar" 16900000))) }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "TypeScript SDK" "id" "sg-ver-title" "sub" (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window) }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-ver-title" "rows" $verRows "head" (slice (dict "label" "Version") (dict "label" "Downloads") (dict "label" "Share" "bar" "share" "max" 88200000 "record" "Share of downloads"))) }}
+    </article>
+    {{- /* "Files" as pages/pulls/hotspots.html calls it: a path that gives way a whole segment at a time, and a rank bar */}}
+    {{- $fileRows := slice }}
+    {{- range slice (slice "src/client/streamableHttp.ts" 41) (slice "packages/server/src/transport/streamable/upgrade-to-v2.md" 28) (slice "src/server/auth/handlers/authorize.ts" 17) (slice "README.md" 9) (slice "docs/migration/upgrade-to-v2.md" 4) }}
+      {{- $fileRows = $fileRows | append (dict "name" (dict "path" (index . 0)) "cells" (slice (dict "kind" "count" "v" (index . 1) "bar" (index . 1)))) }}
+    {{- end }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Files" "id" "sg-files-title" "sub" (partial "fmt/label.html" (dict "window" (dict "n" 90 "unit" "day"))).window) }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-files-title" "numw" 2 "rows" $fileRows "head" (slice (dict "label" "File") (dict "label" "Merged PRs" "bar" "rank" "title" "Merged PRs from the last 90 days that changed the path."))) }}
     </article>
     {{ partial "ui/dist.html" (dict "title" "Open issues by last activity" "id" "sg-dist-twelve" "class" "v-span-12" "parts" (slice
       (dict "name" (partial "fmt/label.html" (dict "bucket" "active30")).bucket "n" 127) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle30")).bucket "n" 23)

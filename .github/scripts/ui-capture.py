@@ -53,7 +53,7 @@ MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('laptop', 'light', 12, ()),
           ('tablet', 'light', 12, ())]
 TILE_CAPS = {'styleguide': 60}
-ONLY = {'laptop': ('overview', 'pulls-ts', 'seps', 'styleguide'), 'tablet': ('overview', 'pulls-ts', 'seps', 'styleguide')}
+ONLY = {'laptop': ('overview', 'pulls-ts', 'seps', 'repo-ts', 'styleguide'), 'tablet': ('overview', 'pulls-ts', 'seps', 'styleguide')}
 AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 SERIOUS = ('serious', 'critical')
 # design system v4 2.2: nine roles (display 32/600, title 24/600, heading 20/600, subhead 16/600, strong 14/600, medium 14/500,
@@ -83,6 +83,9 @@ TEXT_BANS_V4 = [(re.compile(p, re.M), label) for p, label in [
     # "Week of" is the header of a column of weeks in a chart table view (each row is its Monday); the banned form is the phrase
     # with a date typed after it
     (r'Week of [A-Z][a-z]{2} \d', 'Week of Nov 9'), (r'No change', 'No change'),
+    # one term for a gap in the data, "Data gap": "No data" is only the reason of an empty mark, never a label before a date,
+    # and the old names of the same fact are gone
+    (r'No data [A-Z][a-z]{2} \d', 'No data Oct 8 (the term is Data gap)'), (r'Collection outage', 'Collection outage (the term is Data gap)'),
     (r'days old', 'days old'), (r'\bvs\.', 'vs.'), (r'Team SLA', 'Team SLA'), (r'WG ', 'WG'), (r'PR \d+\b', 'PR 123'),
     (r'OPEN PRS', 'OPEN PRS'), (r'OPEN ISSUES', 'OPEN ISSUES'), (r'Untriaged', 'Untriaged'), (r'Data through', 'Data through'),
     (r'Need a ', 'Need a')]]
@@ -118,6 +121,12 @@ RULES = {
     'td-baseline': 'in a table row every value, cell link and row link ends its first line at the same y (a row with a sub line or '
                    'a note aligns every cell to its first line)',
     'spark-attached': 'no level sparkline shows a loose point: the end dot is the end of the line or of a bridge (design system v4 4.20)',
+    'chart-fill': 'every mounted canvas is as wide and as tall as its plot box, within 2px (a chart that kept a transient size at mount)',
+    'spark-range': 'no date in a sparkline range row is later than the as-of day (html[data-asof])',
+    'tag-fold': 'below 64rem no tag line shows a +N beside fewer than six labels, or two +N tags',
+    'name-fit': 'from 64rem no row name link in a matrix, rank or kept table is truncated',
+    'controls': 'at 390 every button, tab, link-action, nav item and footer link is at least 44px tall or has a 44px ::after hit area',
+    'head-geometry': 'at 1440 the title text and the first section start at the same y on Overview, Issues, PRs and SEPs',
     'brand': 'the header brand mark has painted pixels at least 3 to 1 against the header surface in this theme (design system v4 4.1)',
     'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
@@ -186,9 +195,43 @@ PROBE = r"""() => {
   // (a row with a sub line or a note aligns every cell to its first line; design system v4 4.14)
   const tdBaseline = [];
   document.querySelectorAll('.v-dt tbody tr').forEach(tr => { if (tdBaseline.length >= 10 || !shown(tr) || getComputedStyle(tr).display !== 'table-row') return;
-    const ys = [...tr.querySelectorAll(':scope > * > .v-val:not(.is-na), :scope > * > .v-row-link, :scope > * > .v-cell-link .v-val, :scope > * > .v-barnum .v-val, :scope > * > .v-over .v-val')]
-      .filter(shown).map(e => { const b = e.getClientRects(); return b.length ? Math.round(b[0].bottom * 2) / 2 : null; }).filter(v => v !== null);
+    // measure text, not boxes: a block row link returns its 20px line box and an inline value its 17px content area, 2px apart on
+    // one baseline. The first non-empty text node outside .sr-only is measured on both sides (the technique of th-baseline).
+    const textBottom = e => { const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) { if (!n.textContent.trim() || !n.parentElement || n.parentElement.closest('.sr-only')) continue;
+        const r = document.createRange(); r.selectNodeContents(n); const b = r.getClientRects(); if (b.length) return Math.round(b[0].bottom * 2) / 2; }
+      return null; };
+    const ys = [...tr.querySelectorAll(':scope > * > .v-val:not(.is-na), :scope > * > .v-row-link, :scope > * > .v-cell-link .v-val, :scope > * > .v-barnum .v-val, :scope > * > .v-over .v-val, :scope > * > .v-who, :scope > * > .v-deadline')]
+      .filter(shown).map(textBottom).filter(v => v !== null);
     if (ys.length > 1 && Math.max(...ys) - Math.min(...ys) > 1.5) tdBaseline.push({ el: path(tr), ys: [...new Set(ys)].join(', ') }); });
+  // a mounted chart fills its plot: a canvas narrower or shorter than its box kept a transient size (design system v4 4.19)
+  const chartFill = canvases.filter(c => shown(c) && mounted(c)).map(c => { const r = c.getBoundingClientRect(), p = c.parentElement;
+    return { el: c.id || path(c), w: Math.round(r.width), h: Math.round(r.height), pw: p.clientWidth, ph: p.clientHeight }; })
+    .filter(x => Math.abs(x.w - x.pw) > 2 || Math.abs(x.h - x.ph) > 2).slice(0, 10);
+  // page head geometry: where the title's text and the first section start (compared across pages at 1440)
+  const headGeo = (() => { const t = document.querySelector('main .v-page-title'), s = document.querySelector('main .v-section'); if (!t || !s) return null;
+    const w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT); let n, top = null;
+    while ((n = w.nextNode())) { if (!n.textContent.trim() || n.parentElement.closest('.sr-only')) continue;
+      const r = document.createRange(); r.selectNodeContents(n); const b = r.getClientRects(); if (b.length) { top = Math.round(b[0].top * 2) / 2; break; } }
+    return { title: top, section: Math.round((s.getBoundingClientRect().top + window.scrollY) * 2) / 2, desc: !!document.querySelector('main .v-page-desc'),
+      callout: !!document.querySelector('main .v-page-head > .v-callout') }; })();
+  // a sparkline's range row never prints a date after the as-of day (design system v4 4.20)
+  const asof = document.documentElement.getAttribute('data-asof') || '';
+  const sparkLate = asof ? [...document.querySelectorAll('.v-spark-range time')].filter(t => (t.getAttribute('datetime') || '').slice(0, 10) > asof).slice(0, 10)
+    .map(t => ({ el: path(t), date: t.getAttribute('datetime') })) : [];
+  // below 64rem a row shows up to six labels and a +N only past six: a visible +N beside six or fewer labels is a false count
+  const tagFold = vw < 1024 ? [...document.querySelectorAll('.v-dt .v-tags')].filter(shown).filter(b => {
+    const more = [...b.querySelectorAll('.v-tag.is-more')].filter(shown), labels = [...b.querySelectorAll('.v-tag.is-label')].filter(shown);
+    return more.length > 1 || (more.length === 1 && labels.length < 6); }).slice(0, 10).map(b => ({ el: path(b), text: b.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) })) : [];
+  // from 64rem a row's name link is never truncated in a matrix, rank or kept table (2.3: each plan leaves the name its width)
+  const nameCut = vw >= 1024 ? [...document.querySelectorAll('.v-dt th.v-name > a.v-row-link')].filter(shown).filter(a => a.scrollWidth > a.clientWidth + 1).slice(0, 10)
+    .map(a => ({ el: path(a), text: a.textContent.trim().slice(0, 40) })) : [];
+  // phone: a control is at least 44px tall, or its ::after hit area is (design system v4 7.3 controls)
+  const hitH = el => { const r = el.getBoundingClientRect(); let h = r.height; const a = getComputedStyle(el, '::after');
+    if (a && a.content !== 'none' && a.position === 'absolute') h = Math.max(h, r.height - (parseFloat(a.top) || 0) - (parseFloat(a.bottom) || 0)); return h; };
+  const smallControls = vw < 640 ? [...document.querySelectorAll('main button, main [role="tab"], main a.v-link-action, header button, header a.v-nav-item, footer a')]
+    .filter(shown).filter(el => !el.closest('[data-fixture], .v-sg-row, .v-sg-pop') && !el.matches('.v-field-clear, .v-th-btn')).filter(el => hitH(el) < 43.5).slice(0, 12)
+    .map(el => ({ el: path(el), text: (el.textContent || '').trim().slice(0, 30), h: Math.round(hitH(el)) })) : [];
   // a level sparkline never shows a loose point: its end dot is the end of the line or of a bridge (design system v4 4.20)
   const sparkLoose = [];
   document.querySelectorAll('.v-spark svg').forEach(svg => { const dot = svg.querySelector('.v-spark-dot'), line = svg.querySelector('.v-spark-line'); if (!dot || !line) return;
@@ -227,6 +270,7 @@ PROBE = r"""() => {
     scrollWidth: document.documentElement.scrollWidth, clientWidth: vw, height: document.documentElement.scrollHeight,
     overflow, clipped, innerScroll, fontSizes: fonts, fontSamples, textColors: colors, lineStartDots: dots, cellOverflow,
     fontLoaded, numerals, valueTruncated, cellInset, thBaseline, tdBaseline, sparkLoose, brand,
+    chartFill, headGeo, sparkLate, tagFold, nameCut, smallControls,
     charts: { total: canvases.length, shown: canvases.filter(shown).length, mounted: canvases.filter(mounted).length,
               shownNotMounted: canvases.filter(c => shown(c) && !mounted(c)).map(c => c.id || path(c)) },
     canvases: [...document.querySelectorAll('canvas')].map(c => ({ el: c.id || path(c), metric: c.dataset.metric || null, label: c.getAttribute('aria-label') })),
@@ -285,6 +329,7 @@ AXE_RUN = r"""async (el) => { const r = await axe.run(el || document, { resultTy
 # Nearest card-like ancestor of a control: what a state screenshot and its axe run cover.
 CARD = 'xpath=ancestor::*[self::figure or self::section or contains(concat(" ", normalize-space(@class), " "), " v-card ")][1]'
 CHECKS = []
+HEAD_GEO = {}   # theme -> (page id, geometry) of the first page measured, the reference of head-geometry
 
 
 def record(rule, capture, result, detail=''):
@@ -594,7 +639,10 @@ def states(page, out, cid, url, wanted, axe_src, rep):
             box.scroll_into_view_if_needed(timeout=2000)
             box.fill('zzzz', timeout=2000)
             page.wait_for_timeout(300)
-            viewport_shot('empty-result', box)
+            # the list card's top to the viewport's top, so the empty state itself is in the shot on a phone too
+            box.evaluate("el => (el.closest('[data-list]') || el).scrollIntoView({ block: 'start' })")
+            page.wait_for_timeout(150)
+            viewport_shot('empty-result')
             axe_state('empty', box.locator(CARD), 'empty result')
         after('empty', empty)
 
@@ -802,6 +850,27 @@ def page_checks(cid, vp, rep, page_text, ban_text=''):
         record('td-baseline', cid, not td, '; '.join(f"{c['el']} first lines end at {c['ys']}" for c in td[:5]) or 'none')
     sl = rep.get('sparkLoose', [])
     record('spark-attached', cid, not sl, '; '.join(c['el'] for c in sl[:5]) or 'none')
+    cf = rep.get('chartFill', [])
+    record('chart-fill', cid, 'skip' if not rep.get('charts', {}).get('mounted') else not cf,
+           '; '.join(f"{c['el']} is {c['w']}x{c['h']} in a {c['pw']}x{c['ph']} plot" for c in cf[:5]) or 'every mounted canvas fills its plot')
+    late = rep.get('sparkLate', [])
+    record('spark-range', cid, not late, '; '.join(f"{c['el']} prints {c['date']}" for c in late[:5]) or 'none')
+    if vp in ('mobile', 'tablet'):
+        tf = rep.get('tagFold', [])
+        record('tag-fold', cid, not tf, '; '.join(f"{c['el']} {c['text']!r}" for c in tf[:5]) or 'none')
+    if vp in ('desktop', 'laptop'):
+        nc = rep.get('nameCut', [])
+        record('name-fit', cid, not nc, '; '.join(f"{c['el']} {c['text']!r}" for c in nc[:5]) or 'none')
+    if vp == 'mobile':
+        sc = rep.get('smallControls', [])
+        record('controls', cid, not sc, '; '.join(f"{c['el']} {c['text']!r} {c['h']}px" for c in sc[:6]) or 'none')
+    # head-geometry: at 1440 the title text and the first section start at the same y on every page whose head has no
+    # description and no callout (a scope switcher title and a plain title make the same row)
+    hg, pid, theme = rep.get('headGeo'), cid.split('--')[0], cid.rsplit('-', 1)[-1]
+    if vp == 'desktop' and hg and pid in ('overview', 'issues', 'pulls', 'seps') and not hg.get('desc') and not hg.get('callout'):
+        ref = HEAD_GEO.setdefault(theme, (pid, hg))
+        same = abs((hg['title'] or 0) - (ref[1]['title'] or 0)) <= 0.5 and abs(hg['section'] - ref[1]['section']) <= 0.5
+        record('head-geometry', cid, same, f"title text at {hg['title']}, first section at {hg['section']}; {ref[0]}: {ref[1]['title']}, {ref[1]['section']}")
     br = rep.get('brand')
     record('brand', cid, 'skip' if not br else (not br.get('error') and br.get('contrast', 0) >= 3),
            'no brand mark in the header' if not br else br.get('error') or f"{br.get('painted', 0)} painted pixels, best contrast {br.get('contrast')} to 1")

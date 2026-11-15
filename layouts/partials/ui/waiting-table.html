@@ -13,7 +13,7 @@
     Issues, PRs      auto, v-col-bar   under the spanner "Waiting over 7 days" (one label at every width): the count, then its
                                        rank bar; a cell link to the org waiting list filtered to the repository, so the count
                                        equals the list it opens
-    Overdue          v-col-num-sm      strong danger; zero is "0"
+    Overdue          v-col-num-lg      strong danger; zero is "0". The same width as Author waiting: sibling count columns share one token
     Author waiting   v-col-num-lg      a cell link to the repository's PR queue with the Author waiting filter
   It is a kept table (4.14): below 64rem it stays a table so repositories can be compared, with Repository, Issues, PRs and
   Overdue; bars are not drawn and "Author waiting" is dropped (three numeric columns at most). */ -}}
@@ -34,7 +34,7 @@
 <article class="v-card {{ $c.class | default "v-span-12" }}">
   {{ partial "ui/card-head.html" (dict "title" "Waiting by repository" "id" $id) }}
   <table class="v-dt is-keep has-barfill" data-numw="{{ $numw }}" aria-labelledby="{{ $id }}">
-    <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num-sm"><col class="v-col-num-lg v-keep-drop"></colgroup>
+    <colgroup><col><col class="v-col-bar"><col class="v-col-bar"><col class="v-col-num-lg"><col class="v-col-num-lg v-keep-drop"></colgroup>
     <thead>
       <tr class="v-dt-span"><th></th><th class="v-span" colspan="2" scope="colgroup"><span>{{ $waitSpan }}</span></th><th></th><th class="v-keep-drop"></th></tr>
       <tr>

@@ -1,6 +1,6 @@
 {{- /* /downloads/ (design system v4 5.7): the SDK packages, each compared with itself. Context: the page.
   Page head: eyebrow "Downloads", H1 "SDK packages"; meta "Updated" (the oldest GitHub collection time of the SDK repositories) and
-    "Complete through" (the earliest registry day). Each registry's own day is in Data notes under Sources.
+    "Complete through" (the earliest registry day; left out while the "Registry delay" callout states it). Each registry's own day is in Data notes under Sources.
   No summary strip: registries cannot be summed, so the comparison table opens the page.
     1 Package summary   matrix table at 12 (pages/downloads/table.html)
     2 Trend             trellis card at 12 (pages/downloads/weekly.html)
@@ -8,7 +8,7 @@
   Every figure comes from data/downloads.html (complete days only) and data/versions.html, through pages/downloads/packages.html. */ -}}
 {{- $x := partial "pages/downloads/packages.html" . -}}
 
-{{- /* freshness: one entry per registry. The earliest day is the page's "Complete through" meta item and the versions staleness
+{{- /* freshness: one entry per registry. The earliest day is the page's "Complete through" meta item (or its callout) and the versions staleness
      reference; every registry's own day is a "Complete through" row of Data notes (passed as registries, so the page head raises
      no callout of its own). The callout "Registry delay" is raised only for a registry more than 3 days behind the newest one:
      the usual lag of a registry is stated once, in the meta row, and on each row's coverage note. */ -}}
@@ -32,7 +32,9 @@
 {{- range partial "ui/sources.html" (dict "repo" $x.keys "use" (slice "metrics")) -}}
   {{- with .at }}{{ $meta = slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" .)) }}{{ end -}}
 {{- end -}}
-{{- with $thru }}{{ $meta = $meta | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" .)) }}{{ end -}}
+{{- /* the earliest registry day is a meta item only while no registry is late: the "Registry delay" callout names the late registry
+     and that same day, so the two never state one fact twice */ -}}
+{{- if not $late }}{{ with $thru }}{{ $meta = $meta | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" .)) }}{{ end }}{{ end -}}
 {{- $head := dict "title" (.Title | default "SDK packages") "eyebrow" "Downloads" "meta" $meta "registries" $src -}}
 {{- with $late }}{{ $head = merge $head (dict "callout" (dict "title" "Registry delay" "items" .)) }}{{ end -}}
 

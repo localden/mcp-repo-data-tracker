@@ -5,7 +5,7 @@
             stage on the specification repository, else "")}.
        org  true adds the Repository cell and the repository slot of the item cell (shown below 64rem).
        off  true when the row is outside the default view. k: the row's index inside the default view (first-paint marks).
-     Cells in the fixed order: Repository, PR, Waiting (headed "Age" on a list with views). Item meta slots: id, repository, author (with the role tag "Bot" where the data
+     Cells in the fixed order: Repository, PR, Age. Item meta slots: id, repository, author (with the role tag "Bot" where the data
      says so; these rows carry no other role), lines changed, "SEP {stage}", "Needs working group" (an open SEP with the
      wg-support-needed label), labels. Tokens: over7, repo:<slug>. */ -}}
 {{- $row := .row }}{{ $it := $row.it }}{{ $org := eq .org true }}{{ $k := int (.k | default 0) -}}

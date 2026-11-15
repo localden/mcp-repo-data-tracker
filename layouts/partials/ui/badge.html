@@ -2,6 +2,10 @@
   Dict {text, tone, title}, or a status dict from data/pr-status.html or data/issue-status.html ({label, tone, tip}), or a string.
   tone: action (a maintainer has the next move: accent dot), waiting (someone else has it: ring), neutral (default), success
     (healthy: green dot), warning (the data could not say, or stopped: circle-alert), danger (overdue, days unknown: alert-triangle).
+  Every badge opens with a lead. A status dict may name its own (icon: "eye", "message-square", "inbox", "circle-help",
+  "git-branch", "check"; 12px, accent-text on action, text-3 otherwise), so the statuses of one view are told apart at a glance;
+  without one the lead is the tone's: action dot (accent), waiting ring, neutral dot (text-3), success dot, the warning and danger
+  icons. Templates never pass icon themselves: it comes from the vocabulary.
   An unknown tone renders neutral. A badge has no states and is never a link. Empty text renders nothing. */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
 {{- $tone := $c.tone | default "neutral" -}}
@@ -9,7 +13,8 @@
 {{- $title := $c.title | default $c.tip -}}
 {{- with $c.text | default $c.label -}}
 <span class="v-badge is-{{ $tone }}"{{ with $title }} title="{{ . }}"{{ end }}>
-  {{- if in (slice "action" "waiting" "success") $tone }}<span class="v-badge-lead" aria-hidden="true"></span>
+  {{- if and $c.icon (in (slice "action" "waiting" "neutral" "success") $tone) }}{{ partial "ui/icon.html" (dict "name" $c.icon "size" 12) }}
+  {{- else if in (slice "action" "waiting" "neutral" "success") $tone }}<span class="v-badge-lead" aria-hidden="true"></span>
   {{- else if eq $tone "warning" }}{{ partial "ui/icon.html" (dict "name" "circle-alert" "size" 12) }}
   {{- else if eq $tone "danger" }}{{ partial "ui/icon.html" (dict "name" "alert-triangle" "size" 12) }}{{ end -}}
   {{ . }}</span>

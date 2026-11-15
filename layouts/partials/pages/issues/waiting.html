@@ -6,8 +6,8 @@
     org         true on /issues/: adds the Repository column and the Repository select facet.
     repos       the Repository options [{value (slug), label, count}] (org only).
     labelledby  the id of the section title.
-  Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, Issue, Comments, Waiting; default sort
-  Waiting, descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
+  Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, Issue, Comments, Age (days since opening, the one
+  header for that number on every list); default sort Age, descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default "iq" -}}
 {{- $rows := $c.rows | default slice -}}
@@ -32,8 +32,8 @@
       {{- end }}
       {{ partial "ui/th.html" (dict "label" "Issue") }}
       {{ partial "ui/th.html" (dict "label" "Comments" "num" true "sort" (dict "key" "comments" "type" "num" "desc" "Most comments first" "asc" "Fewest comments first")) }}
-      {{ partial "ui/th.html" (dict "label" "Waiting" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the issue opened."
-          "sort" (dict "key" "waiting" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
+      {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the issue opened."
+          "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
     </tr></thead>
     <tbody>
       {{- range $i, $row := $rows }}

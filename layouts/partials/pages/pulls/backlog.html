@@ -1,32 +1,29 @@
 {{- /* Backlog trend (design system v4 5.5 module 4 classified, module 3 unclassified; 4.19, 4.6, 4.22).
      Ctx: dict {r (data/repo.html), m (metrics.json), classified}.
      8 + 4: the chart card (daily, last 26 weeks) beside the stat list "Opened and closed". The card is titled "Open PRs" on every
-     repository, the same grammar as "Open issues" on the Issues page: the title names the measure and the readout names the series.
-       Classified: two series. The subject (accent) is "Actionable", snapshots actionability.actionable_count, the classifier's daily
-         count of PRs a maintainer can act on. The context series is "Not draft", snapshots pulls.open minus pulls.draft_count. Neither
-         is the set behind a tile or a view; Data notes defines both.
+     repository and always plots that measure: snapshots pulls.open, the number of the "Open PRs" tile and of the repository
+     page's PRs chart.
+       Classified: two series. The context series is "Open" (pulls.open), so the card plots its own title and its readout equals
+         the summary tile. The subject (accent) is "Actionable", snapshots actionability.actionable_count, the classifier's daily
+         count of PRs a maintainer can act on; Data notes defines it. There is no third near-equal set on the card.
        Unclassified: one series, snapshots pulls.open; the readout is "Latest" with its date.
-       Stat list, six rows: Opened and Merged over the last 30 days; Opened, Merged, Closed without merging and Net change over the
-         last 90 days (net change is opened minus merged minus closed without merging, a plain signed value).
-     Short history (fewer than 14 daily points): the pending chart card at 12, then the stat list wide at 12. */ -}}
+       Stat list, six rows in one order on every repository and at every width, measure by measure, the last 30 days before the
+         last 90: Opened, Merged, then Closed without merging and Net change, which exist for 90 days only (net change is opened
+         minus merged minus closed without merging, a plain signed value). The order is the source order and is never rearranged
+         for a layout: in two columns a row is one measure with 30 days on the left and 90 on the right.
+     Short history (fewer than 14 daily points): one card at 12, the stat list wide, closed by the pending bar with the text the chart
+     card would show (4.22). The pending chart card is not rendered. */ -}}
 {{- $r := .r -}}
 {{- $pl := dict }}{{ with .m }}{{ with .pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end }}{{ end -}}
 {{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.open") -}}
 {{- $series := slice -}}
 {{- $nMax := int $open.n -}}
 {{- if .classified -}}
-  {{- $draft := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.draft_count") -}}
   {{- $act := partial "data/series.html" (dict "repo" $r.cfg "path" "actionability.actionable_count") -}}
-  {{- $pts := slice }}{{ $nd := 0 -}}
-  {{- range $i, $p := $open.points -}}
-    {{- $d := index $draft.points $i -}}
-    {{- if and (ne $p.value nil) (ne $d.value nil) }}{{ $pts = $pts | append (dict "date" $p.date "value" (sub (float $p.value) (float $d.value))) }}{{ $nd = add $nd 1 -}}
-    {{- else }}{{ $pts = $pts | append (dict "date" $p.date "value" nil) }}{{ end -}}
-  {{- end -}}
-  {{- $nMax = $nd }}{{ if gt (int $act.n) $nMax }}{{ $nMax = int $act.n }}{{ end -}}
+  {{- if gt (int $act.n) $nMax }}{{ $nMax = int $act.n }}{{ end -}}
   {{- $series = slice
     (dict "label" "Actionable" "role" "accent" "points" $act.points)
-    (dict "label" "Not draft" "role" "context" "points" $pts "reconstructed" $open.reconstructed) -}}
+    (dict "label" "Open" "role" "context" "points" $open.points "reconstructed" $open.reconstructed) -}}
 {{- else -}}
   {{- $series = slice (dict "label" "Open PRs" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed) -}}
 {{- end -}}
@@ -39,19 +36,33 @@
 {{- end -}}
 {{- $rows := slice
   (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $d30)).text "value" (dict "kind" "count" "v" $pl.opened_30d))
-  (dict "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d30)).text "value" (dict "kind" "count" "v" $pl.merged_30d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.opened_90d))
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d30)).text "value" (dict "kind" "count" "v" $pl.merged_30d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.merged_90d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Closed without merging" "window" $d90)).text "value" (dict "kind" "count" "v" $pl.closed_not_merged_90d))
   (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $d90)).text
-    "title" "PRs opened minus PRs merged and PRs closed without merging." "value" $net) }}
+    "title" "PRs opened minus PRs merged and PRs closed without merging." "value" $net) -}}
+{{- /* the pending text, from the closed list of 4.22, by the rule ui/chart.html uses for a daily chart */ -}}
+{{- $pending := "" -}}
+{{- if not $drawn -}}
+  {{- $pending = "No data collected yet" -}}
+  {{- if and (gt $nMax 0) $open.first -}}
+    {{- $at := ((time.AsTime (string $open.first)).AddDate 0 0 13).Format "2006-01-02" -}}
+    {{- $pending = "Too few complete weeks to draw a trend" -}}
+    {{- if gt $at (string ($open.to | default "")) }}{{ $pending = printf "Trend available from %s" (partial "fmt/date.html" $at).text }}{{ end -}}
+  {{- end -}}
+{{- end }}
 <section class="v-section" aria-labelledby="backlog">
   {{ partial "ui/section-head.html" (dict "id" "backlog" "title" "Backlog trend") }}
   <div class="v-grid">
-    {{ partial "ui/chart.html" (dict "id" "pulls-open" "title" "Open PRs" "class" (cond $drawn "v-span-8" "v-span-12")
+    {{- if $drawn }}
+    {{ partial "ui/chart.html" (dict "id" "pulls-open" "title" "Open PRs" "class" "v-span-8"
         "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "day" "weeks" 26))).cadence
         "metric" "open PRs" "metric_one" "open PR" "scope" $r.name "unit" "count" "gran" "day" "kind" "line"
         "from" $open.from "to" $open.to "since" $open.first "series" $series) }}
-    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows "wide" (not $drawn)) }}
+    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows) }}
+    {{- else }}
+    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows "wide" true "pending" $pending) }}
+    {{- end }}
   </div>
 </section>

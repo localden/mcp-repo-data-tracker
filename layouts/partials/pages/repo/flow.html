@@ -49,25 +49,10 @@
     {{- range $cards }}
     <article class="v-card v-span-6">
       {{ partial "ui/card-head.html" (dict "title" .title "id" .id) }}
-      <table class="v-dt is-keep" aria-labelledby="{{ .id }}">
-        <colgroup><col><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th.html" (dict "label" "Measure") }}
-          {{- range $wins }}
-          {{ partial "ui/th.html" (dict "label" .label "short" .short "num" true) }}
-          {{- end }}
-        </tr></thead>
-        <tbody>
-          {{- range .rows }}
-          <tr>
-            {{ partial "ui/name-cell.html" (dict "name" .name) }}
-            {{- range .cells }}
-            <td class="num">{{ partial "ui/value.html" . }}</td>
-            {{- end }}
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
+      {{- /* the table comes from ui/keep-table.html, the same call the styleguide makes */}}
+      {{- $head := slice (dict "label" "Measure") }}
+      {{- range $wins }}{{ $head = $head | append (dict "label" .label "short" .short) }}{{ end }}
+      {{ partial "ui/keep-table.html" (dict "labelledby" .id "head" $head "rows" .rows) }}
     </article>
     {{- end }}
   </div>

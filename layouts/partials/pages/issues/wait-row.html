@@ -2,7 +2,7 @@
     row  {w (days waiting), it (the metrics.json item: number, title, url, createdAt, labels, commentCount), name, slug}.
     org  true adds the Repository cell and the repository slot of the item cell (shown below 64rem).
     i    the row's index in the default sort, for the first-paint marks (data-over past 25, data-over-phone past 10).
-  Cells in the fixed order: Repository, Issue, Comments, Waiting. Item meta slots: id, repository, priority, labels (these rows have no
+  Cells in the fixed order: Repository, Issue, Comments, Age. Item meta slots: id, repository, priority, labels (these rows have no
   author in the data). Tokens: over7, repo:<slug>. */ -}}
 {{- $row := .row }}{{ $it := $row.it }}{{ $org := eq .org true }}{{ $i := int (.i | default 0) -}}
 {{- $prios := slice "P0" "P1" "P2" "P3" -}}
@@ -19,7 +19,7 @@
   <td class="v-c-repo">{{ $row.name }}</td>
   {{- end }}
   {{ partial "ui/row-item.html" (dict "title" (string ($it.title | default "")) "href" $it.url "id" (printf "#%d" (int ($it.number | default 0)))
-      "repo" (cond $org ($row.name | default "") "") "prio" $prio "tags" $tags) }}
+      "repo" (cond $org ($row.name | default "") "") "prio" $prio "tags" $tags "comments" $cc) }}
   <td class="num v-c-num" data-v="{{ $cc }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $cc) }}</td>
   <td class="num" data-v="{{ printf "%.0f" $row.w }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $row.w "unit" "d" "compact" true "opened" $it.createdAt) }}</td>
 </tr>

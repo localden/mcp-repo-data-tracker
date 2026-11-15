@@ -49,31 +49,18 @@
     {{- $nAll := $n }}{{ if ne $v.other nil }}{{ $nAll = add $n 1 }}{{ end }}
     <article class="v-card is-list v-span-8" id="versions" data-list data-limit="5" data-limit-phone="5" data-step="50" data-noun="versions" data-noun-one="version">
       {{ partial "ui/card-head.html" (dict "title" $p.r.name "id" "versions-title" "sub" (partial "fmt/label.html" (dict "window" (dict "n" (int $v.window_days) "unit" "day"))).window) }}
-      <table class="v-dt is-rank is-list" id="versions-table" aria-labelledby="versions-title">
-        <colgroup><col><col class="v-col-num"><col class="v-col-bar"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th.html" (dict "label" "Version") }}
-          {{ partial "ui/th.html" (dict "label" "Downloads" "num" true) }}
-          {{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar" "record" "Share of downloads") }}
-        </tr></thead>
-        <tbody>
-          {{- range $i, $row := $v.rows }}
-          <tr data-row{{ if ge $i 5 }} data-over{{ end }}>
-            <th scope="row" class="v-name"><span class="v-name-line">{{ partial "ui/value.html" (dict "kind" "ver" "v" $row.version) }}{{ if $row.latest }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ end }}</span></th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" $row.n) }}</td>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $row.n "max" $total "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "part" $row.n "whole" $total) }}</span></td>
-          </tr>
-          {{- end }}
-          {{- if ne $v.other nil }}
-          <tr data-row{{ if ge $n 5 }} data-over{{ end }}>
-            <th scope="row" class="v-name"><span>Other versions</span></th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" $v.other) }}</td>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $v.other "max" $total "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "part" $v.other "whole" $total) }}</span></td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
-      {{ partial "ui/list-foot.html" (dict "list" "versions" "n" $nAll "limit" 5) }}
+      {{- /* the table comes from ui/rank-table.html, the same call the styleguide makes */}}
+      {{- $rows := slice }}
+      {{- range $v.rows }}
+        {{- $rows = $rows | append (dict "name" (dict "ver" .version "latest" .latest) "cells" (slice (dict "kind" "volume" "v" .n) (dict "kind" "share" "part" .n "whole" $total "bar" .n))) }}
+      {{- end }}
+      {{- if ne $v.other nil }}
+        {{- $rows = $rows | append (dict "name" "Other versions" "cells" (slice (dict "kind" "volume" "v" $v.other) (dict "kind" "share" "part" $v.other "whole" $total "bar" $v.other))) }}
+      {{- end }}
+      {{ partial "ui/rank-table.html" (dict "id" "versions-table" "labelledby" "versions-title" "list" "versions" "limit" 5 "rows" $rows "head" (slice
+          (dict "label" "Version")
+          (dict "label" "Downloads")
+          (dict "label" "Share" "bar" "share" "max" $total "record" "Share of downloads"))) }}
     </article>
     {{ partial "ui/stat-list.html" (dict "title" "Version data" "rows" $stats) }}
     {{- else }}

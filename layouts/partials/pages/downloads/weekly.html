@@ -2,8 +2,8 @@
   Monday to Sunday weeks on one shared 52-week domain, each row on its own scale.
   Call: partial "pages/downloads/weekly.html" $x          ($x: pages/downloads/packages.html)
   The label cell holds the name (the row link), then the one figure the table above does not show: "Week to date" with its coverage
-  note. A coverage ratio is always a warning note (4.8): the same icon the summary table and the repository page give this figure.
-  ui/trellis.html adds the coverage note of a row with missing weeks.
+  note. A week in progress is not a data fault, so that note takes the info tone (4.8), as on the repository page (pages/repo/downloads.html).
+  ui/trellis.html adds the coverage note of a row with missing weeks, which stays a warning.
   The card sub line is the cadence and the window; "every row on its own scale" is the section description above the card, which
   never truncates on a phone.
   A package that has days but no complete week yet cannot draw: its pending line is "Too few complete weeks to draw a trend", the
@@ -19,7 +19,7 @@
     {{- $of := int (.of | default 7) -}}
     {{- $ro := dict "label" $wtd "value" (dict "kind" "volume" "v" .value) -}}
     {{- if lt (int (.days | default 0)) $of -}}
-      {{- $ro = merge $ro (dict "note" (dict "part" (int (.days | default 0)) "whole" $of "noun" "day" "days" (dict "from" .start "to" .end))) -}}
+      {{- $ro = merge $ro (dict "note" (dict "part" (int (.days | default 0)) "whole" $of "noun" "day" "tone" "info" "days" (dict "from" .start "to" .end))) -}}
     {{- end -}}
     {{- $row = merge $row (dict "readout" $ro) -}}
   {{- end }}{{ end }}{{ end -}}

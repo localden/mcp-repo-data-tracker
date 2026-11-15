@@ -113,6 +113,8 @@
     }
   }
   @media (width >= 64rem) { :root { --gutter: 32px; --stack-section: 56px; --grid-gap: 24px; --stack-footer: 72px; } }
+  /* 1024 to 1279: inner cell padding is 8px a side, which returns the width a name column needs (2.3) */
+  @media (width >= 64rem) and (width < 80rem) { :root { --cell-gap: 8px; } }
   /* compact controls only on a wide screen with a fine pointer */
   @media (width >= 40rem) and (pointer: fine) {
     :root { --ctl-h: 32px; --ctl-h-sm: 28px; --menu-row: 32px; --fs-input: var(--fs-14); }
@@ -136,7 +138,7 @@
       --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
       --series-context: #74747e; --series-neutral: #6b6b75;
       --ord-1: #2866b8; --ord-2: #3987e5; --ord-3: #6da7ec; --ord-4: #9ec5f4;
-      --gap: rgba(0, 0, 0, 0.35); --gap-key: #0b0b0d; --gap-key-edge: var(--border-strong); --chart-1-strong: #8fbdf0;
+      --gap: rgba(255, 255, 255, 0.06); --gap-key: #2a2a30; --gap-key-edge: transparent; --chart-1-strong: #8fbdf0;
     }
   }
   :root[data-theme="dark"] {
@@ -155,7 +157,7 @@
     --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
     --series-context: #74747e; --series-neutral: #6b6b75;
     --ord-1: #2866b8; --ord-2: #3987e5; --ord-3: #6da7ec; --ord-4: #9ec5f4;
-    --gap: rgba(0, 0, 0, 0.35); --gap-key: #0b0b0d; --gap-key-edge: var(--border-strong); --chart-1-strong: #8fbdf0;
+    --gap: rgba(255, 255, 255, 0.06); --gap-key: #2a2a30; --gap-key-edge: transparent; --chart-1-strong: #8fbdf0;
   }
 
   /* ------------------------------------------------------------ base */
@@ -209,24 +211,22 @@
   .v-id { @apply type-label; color: var(--text); white-space: nowrap; }
   .v-who { @apply type-caption; display: inline-block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     vertical-align: bottom; color: var(--text-2); }
-  /* in a row's identity line the author and the lines changed are icon plus text, the anatomy of a page-head meta item */
-  .v-meta-id > :is(.v-who, .v-lines) { display: inline-flex; align-items: center; gap: var(--s-1); }
-  .v-meta-id > :is(.v-who, .v-lines) > .v-icon { color: var(--text-3); }
-  .v-meta-id > .v-who > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  /* a handle that is a cell's value (the Sponsor column) is body text, not row meta */
-  .v-c-who > .v-who { @apply type-body; max-width: 100%; vertical-align: middle; color: var(--text); }
-  .v-who-label { display: none; }   /* the words "Sponsored by": only where no column header names the cell (list form) */
+  /* in a row's identity line the author and the lines changed are icon plus text, the anatomy of a page-head meta item. A person
+     is drawn this one way wherever a row names one: the author in the identity line, the sponsor under the badge of a SEP row */
+  :is(.v-meta-id, .v-detail) > :is(.v-who, .v-lines) { display: inline-flex; align-items: center; gap: var(--s-1); }
+  :is(.v-meta-id, .v-detail) > :is(.v-who, .v-lines) > .v-icon { flex: none; color: var(--text-3); }
+  :is(.v-meta-id, .v-detail) > .v-who > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .v-detail > .v-who { flex: 0 1 auto; min-width: 0; max-width: 100%; }
   .v-repo { @apply type-caption; color: var(--text-2); white-space: nowrap; }
   .v-ver { @apply type-medium; color: var(--text); white-space: nowrap; }
   .v-lines { @apply type-caption; color: var(--text-2); white-space: nowrap; }
   .v-base { @apply type-caption; color: var(--text-3); white-space: nowrap; }
   .v-whole { @apply type-caption; color: var(--text-3); white-space: nowrap; }
-  /* pair: one label and one value. From 40rem the label is on the left and the value on the right edge of its box, like a
-     stat-list row and a record line; on a phone (the row form of a tile) the two sit together, 8px apart */
-  .v-pair { display: inline-flex; align-items: baseline; gap: var(--s-2); max-width: 100%; white-space: nowrap; }
+  /* pair: one label and one value; at every width the label is on the left and the value on the right edge of its box, like a
+     stat-list row and a record line */
+  .v-pair { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); width: 100%; white-space: nowrap; }
   .v-pair-label { @apply type-caption; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
   .v-pair > .v-val { @apply type-label; flex: none; color: var(--text); }
-  @media (width >= 40rem) { .v-pair { display: flex; justify-content: space-between; gap: var(--s-3); width: 100%; } }
   .v-over { @apply type-strong; color: var(--danger); white-space: nowrap; }
   .v-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
   @media (width >= 40rem) { .v-clamp { -webkit-line-clamp: 2; line-clamp: 2; } }
@@ -236,7 +236,12 @@
   .v-cell-link { color: var(--text); text-decoration: none; text-underline-offset: 3px; border-radius: var(--s-05); }
   .v-cell-link:hover { text-decoration: underline; }
   .v-path { display: flex; min-width: 0; white-space: nowrap; }
-  .v-path-dir { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; color: var(--text-2); }
+  /* the directory gives way first, a whole segment at a time: ui.js drops leading segments until the path fits and shows the
+     ellipsis segment in their place. Without it the directory is clipped at its start, never with an ellipsis on half a segment */
+  .v-path-dir { display: flex; justify-content: flex-end; flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--text-2); }
+  .v-path-dir > * { flex: none; }
+  .v-path-cut { display: none; }
+  .v-path.is-cut .v-path-cut { display: inline; }
   .v-path-base { @apply type-medium; flex: none; color: var(--text); }
 
   /* values (v4 3.3, 3.4) */
@@ -245,9 +250,15 @@
      ids, handles, tags, paths, dates and ranges stay proportional (v4 2.2) */
   .v-val:not([data-kind="date"], [data-kind="range"], [data-kind="ts"]), .v-delta, .v-count, .v-tip-value, .v-filter-n, .v-list-n, .v-menu-count {
     font-variant-numeric: tabular-nums lining-nums; }
+  /* a standalone headline number sits in no digit column, and Inter's tabular comma and period read as loose spacing at 20px and
+     32px: display and heading values are proportional. A phone strip is a right-aligned column of values, so it stays tabular */
+  @media (width >= 40rem) { .v-metric-value > .v-val { font-variant-numeric: lining-nums proportional-nums; } }
+  .v-readout-value > .v-val { font-variant-numeric: lining-nums proportional-nums; }
   /* the empty mark: whole pixels, so it has one weight in every row */
   .v-val.is-na::before { content: ""; display: inline-block; width: 8px; height: 2px; vertical-align: 4px; background: var(--text-3); }
-  td .v-val.is-zero { color: var(--text-3); }
+  td .v-val.is-zero, .v-dist-legend .v-val.is-zero, .v-statlist dd > .v-val.is-zero { color: var(--text-3); font-weight: 400; }
+  /* a share beside its count is the secondary figure, in every card */
+  .v-dt td .v-val[data-kind="share"] { color: var(--text-2); }
   .v-unit { color: var(--text-2); }
   .v-over .v-unit { color: inherit; }
   .v-ratio { white-space: nowrap; }
@@ -264,7 +275,13 @@
   .v-badge { @apply type-label; display: inline-flex; align-items: center; gap: var(--s-1); height: 20px; padding: 0 var(--s-2);
     border-radius: var(--r-in); white-space: nowrap; color: var(--text-2); background: var(--fill-neutral); }
   .v-badge-lead { width: 6px; height: 6px; flex: none; border-radius: var(--r-pill); }
+  /* every badge opens with a lead, so a state is told from a tag by more than its corner: the status icon where the vocabulary
+     gives one, else the tone's dot (neutral: text-3), ring (waiting) or icon (warning, danger) */
+  .v-badge > .v-icon { color: var(--text-3); }
+  .v-badge.is-action > .v-icon { color: var(--accent-text); }
+  .v-badge:is(.is-warning, .is-danger) > .v-icon { color: inherit; }
   .v-badge.is-neutral { color: var(--text-2); }
+  .v-badge.is-neutral > .v-badge-lead { background: var(--text-3); }
   .v-badge.is-action { color: var(--text); }
   .v-badge.is-action > .v-badge-lead { background: var(--accent); }
   .v-badge.is-waiting > .v-badge-lead { box-shadow: inset 0 0 0 1.5px var(--text-3); }
@@ -285,11 +302,12 @@
   /* two families: what a person applied on GitHub is outlined (label, prio, +N); what VISR derived is filled (role, attr, flag) */
   .v-tag.is-label { max-width: 100%; }
   /* from 64rem a row shows two labels and a +N that names the rest; below, the tag line wraps and shows up to six */
-  @media (width >= 64rem) { .v-tag.is-label { max-width: 16rem; } .v-tag:is([data-extra], [data-only="narrow"]) { display: none; } }
-  @media (width < 64rem) { .v-tag[data-only="wide"] { display: none; } }
+  @media (width >= 64rem) { .v-tag.is-label { max-width: 16rem; } .v-tag:is([data-extra], [data-fold="narrow"]) { display: none; } }
+  @media (width < 64rem) { .v-tag[data-fold="wide"] { display: none; } }
   .v-tag.is-strong { color: var(--text); box-shadow: inset 0 0 0 1px var(--text-3); }
   .v-tag.is-more { color: var(--text-3); }
-  .v-tag:is(.is-role, .is-attr, .is-flag) { color: var(--text); background: var(--fill-neutral); box-shadow: none; }
+  /* filled: lighter than a badge, with a quiet edge, so an attribute never reads as a state */
+  .v-tag:is(.is-role, .is-attr, .is-flag) { color: var(--text); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border-subtle); }
   .v-tag.is-flag > .v-icon { margin-right: var(--s-1); color: var(--warning); }
 
   .v-count { @apply type-label; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px;
@@ -304,8 +322,9 @@
 
   /* callout: a condition that is true now. A soft warning fill with its own edge and the warning icon; one item per line. No stripe */
   .v-callout { display: flex; align-items: flex-start; gap: var(--s-3); min-height: 40px; padding: var(--s-2) var(--s-4);
-    border: 1px solid var(--warning-border); border-radius: var(--r-ctl); background: var(--warning-soft); }
-  .v-callout > .v-icon { margin-top: var(--s-05); color: var(--warning); }
+    border: 1px solid var(--warning-border); border-radius: var(--r-ctl);
+    background: linear-gradient(var(--warning-soft), var(--warning-soft)), var(--surface); }   /* the tint sits on the card surface, not on the page ground */
+  .v-callout > .v-icon { margin-top: var(--s-1); color: var(--warning); }
   .v-callout-body { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--s-3); row-gap: var(--s-1); min-width: 0; padding: var(--s-05) 0; }
   .v-callout-title { @apply type-strong; color: var(--text); }
   .v-callout-item { @apply type-body; color: var(--text); text-wrap: pretty; }
@@ -341,6 +360,8 @@
   .v-link-action { @apply type-medium; display: inline-flex; align-items: center; gap: var(--s-1); white-space: nowrap; color: var(--accent-text);
     text-decoration: none; text-underline-offset: 3px; border-radius: var(--s-05); }
   .v-link-action:hover { text-decoration: underline; }
+  /* phone: a link-action is 20px tall; its hit area is 44 */
+  @media (width < 40rem) { .v-link-action { position: relative; } .v-link-action::after { content: ""; position: absolute; inset: calc(-1 * var(--s-3)) 0; } }
 
   /* ------------------------------------------------------------ shell */
   .v-page-body { min-height: 100vh; display: flex; flex-direction: column; }
@@ -444,19 +465,28 @@
   .v-footer-row a:hover { text-decoration: underline; }
   .v-footer-row .v-id { @apply type-caption; color: inherit; }
   @media (width >= 40rem) { .v-footer-row { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--s-5); padding-block: 0; } }
+  /* phone: every footer link is a 44px target, so the rows need no gap */
+  @media (width < 40rem) { .v-footer-group { row-gap: 0; } .v-footer-row a { display: inline-flex; align-items: center; min-height: 44px; } }
 
   /* ------------------------------------------------------------ page head (v4 4.2) */
-  .v-page-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "eyebrow" "title" "desc" "meta" "actions" "callout" "notes"; margin-bottom: var(--stack-head); }
-  .v-eyebrow { @apply type-label; grid-area: eyebrow; margin-bottom: var(--s-1); color: var(--text-2); }
+  /* phone: Data notes shares the eyebrow row (a 36px button with a 44px hit area), so the head spends no row of its own on it */
+  .v-page-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "eyebrow actions" "title title" "desc desc" "meta meta" "callout callout" "notes notes"; margin-bottom: var(--stack-head); }
+  .v-eyebrow { @apply type-label; grid-area: eyebrow; align-self: end; margin-bottom: var(--s-1); color: var(--text-2); }
   .v-page-titlewrap { grid-area: title; min-width: 0; }
   .v-page-title { @apply type-title; grid-area: title; min-width: 0; color: var(--text); text-wrap: balance; }
   .v-scope { display: inline-flex; align-items: center; gap: var(--s-2); max-width: calc(100% + var(--s-2)); margin-left: calc(-1 * var(--s-2)); padding: var(--s-05) var(--s-2);
-    border-radius: var(--r-ctl); text-align: left; cursor: pointer; }
+    /* the plate's 2px block padding is taken back by the margin, so a switcher title and a plain title make the same 32px row */
+    margin-block: calc(-1 * var(--s-05)); border-radius: var(--r-ctl); text-align: left; cursor: pointer; }
+  @media (width < 40rem) { .v-scope { position: relative; } .v-scope::after { content: ""; position: absolute; inset: calc(-1 * var(--s-2)) 0; } }
   .v-scope > .v-icon { color: var(--text-3); }
   .v-scope:hover, .v-scope[aria-expanded="true"] { background-image: linear-gradient(var(--hover), var(--hover)); }
   .v-scope:active { background-image: linear-gradient(var(--pressed), var(--pressed)); }
-  .v-page-actions { grid-area: actions; justify-self: start; margin-top: var(--s-3); }
+  .v-page-actions { grid-area: actions; justify-self: end; align-self: center; margin-bottom: var(--s-1); }
+  @media (width < 40rem) {
+    .v-page-actions > .v-btn { position: relative; height: var(--ctl-h-sm); }
+    .v-page-actions > .v-btn::after { content: ""; position: absolute; inset: calc(-1 * var(--s-1)) 0; }
+  }
   .v-page-desc { grid-area: desc; margin-top: var(--s-1); }
   .v-page-meta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s-5); row-gap: var(--s-2); margin-top: var(--s-3); }
   .v-meta-item { @apply type-caption; display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; color: var(--text-2); }
@@ -467,7 +497,7 @@
   .v-page-head > .v-callout { grid-area: callout; margin-top: var(--s-4); }
   @media (width >= 40rem) {
     .v-page-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "eyebrow eyebrow" "title actions" "desc desc" "meta meta" "callout callout" "notes notes"; }
-    .v-page-actions { justify-self: end; align-self: center; margin-top: 0; margin-left: var(--s-4); }
+    .v-page-actions { margin-bottom: 0; margin-left: var(--s-4); }
   }
 
   /* Data notes: a full-width card under the head, 8 + 4 */
@@ -479,6 +509,16 @@
   .v-notes-h + .v-notes-sub { margin-top: 0; }
   .v-defs + .v-notes-sub { margin-top: var(--s-5); }
   @media (width < 40rem) { .v-notes-col.is-sources { order: -1; } }   /* freshness first on a phone, before the long definition list */
+  /* phone: each named group of definitions is a 44px row that opens it (ui/data-notes.html); from 40rem the sub-head stands alone */
+  .v-notes-toggle { display: none; }
+  @media (width < 40rem) {
+    .v-notes-sub:has(+ .v-notes-toggle) { display: none; }
+    .v-btn.v-notes-toggle { @apply type-label; display: flex; justify-content: space-between; width: 100%; height: 44px; padding: 0; color: var(--text-2);
+      border-radius: 0; border-top: 1px solid var(--border-subtle); background-image: none; }
+    .v-notes-h + .v-notes-sub + .v-notes-toggle { border-top: 0; }
+    .v-notes-toggle[aria-expanded="false"] + .v-defs { display: none; }
+    .v-notes-toggle + .v-defs { margin-bottom: 0; }
+  }
   .v-defs { margin-bottom: calc(-1 * var(--s-3)); }
   .v-defs > div { padding-bottom: var(--s-3); break-inside: avoid; }
   .v-defs + .v-prose { margin-top: var(--s-3); }
@@ -537,8 +577,15 @@
   .v-card > .v-card-body:first-child { padding-top: var(--card-pad); }
   /* a list card holds menus that open over its table, so it does not clip; ui.js marks the last visible row for the corner radius */
   .v-card.is-list { position: relative; overflow: visible; }
-  .v-card.is-list tr[data-last] > :first-child { border-bottom-left-radius: calc(var(--r-card) - 1px); }
-  .v-card.is-list tr[data-last] > :last-child { border-bottom-right-radius: calc(var(--r-card) - 1px); }
+  /* the corner belongs to whatever box paints the last row: its outer cells from 64rem, the row itself in list form and records
+     (never a text cell: a radius on a clipped name cell cuts the first letter), the grid of a roster */
+  @media (width >= 64rem) {
+    .v-card.is-list .v-dt:not(.is-roster) tr[data-last] > :first-child { border-bottom-left-radius: calc(var(--r-card) - 1px); }
+    .v-card.is-list .v-dt:not(.is-roster) tr[data-last] > :last-child { border-bottom-right-radius: calc(var(--r-card) - 1px); }
+  }
+  @media (width < 64rem) {
+    .v-card.is-list .v-dt:is(.is-list, .is-matrix):not(.is-roster) > tbody > tr[data-last] { border-radius: 0 0 calc(var(--r-card) - 1px) calc(var(--r-card) - 1px); }
+  }
 
   /* empty and pending (v4 4.22) */
   .v-empty, .v-list-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-2); flex: 1 1 auto; min-height: 156px;
@@ -556,18 +603,22 @@
   .v-card.v-metrics { padding: 0; }
   .v-card.is-statlist, .v-trellis { min-width: 0; }
   .v-metrics-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
-  /* phone: a row. Label over delta and context on the left, the value on the right, the link arrow in a fixed column after it */
-  .v-metric { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label label value" "delta context value";
+  /* phone: a row. Label over delta and context on the left, the value on the right, the link arrow in a fixed column after it.
+     A reference pair is a third line under a hairline, its value on the same right edge as the tile's value */
+  .v-metric { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label label value" "delta context value" "ref ref ref";
     align-content: center; column-gap: 0; row-gap: 0; min-height: 64px; padding: var(--s-3) var(--s-4); }
   .v-metrics-grid[data-go] > .v-metric { padding-right: var(--s-10); }
   .v-metric + .v-metric { border-top: 1px solid var(--border-subtle); }
-  /* the name of a headline metric is medium (14/20) in a lg strip and the label role in a md strip, at every width */
-  .v-metric-label { @apply type-medium; grid-area: label; min-width: 0; padding-right: var(--s-4); color: var(--text-2); }
-  [data-size="md"] > .v-metric > .v-metric-label { @apply type-label; }
-  /* phone: a row with no delta and no context is one centred line */
-  .v-metric:not(:has(.v-metric-context > *, .v-metric-value > .v-delta)) > .v-metric-label { grid-area: 1 / 1 / -1 / 3; align-self: center; }
+  /* the name of a headline metric: on a phone, where a tile is a row, it is body text-2, the size of a stat-list and record label;
+     from 40rem it is medium (14/20) in a lg strip and the label role in a md strip */
+  .v-metric-label { @apply type-body; grid-area: label; min-width: 0; padding-right: var(--s-4); color: var(--text-2); }
+  /* phone: a row with no delta and no context on its second line is one centred line */
+  .v-metric:not(:has(.v-metric-context > :not(.v-pair), .v-metric-value > .v-delta)) > .v-metric-label { grid-area: 1 / 1 / 3 / 3; align-self: center; }
   .v-metric-name { color: var(--text-2); }
   .v-metric-qual { color: var(--text-3); white-space: nowrap; }
+  /* phone: in a strip whose labels join "over ..." without a comma, the qualifier is the second line in every row, so no row
+     wraps where its neighbour does not */
+  @media (width < 40rem) { .v-metrics-grid:has(.v-metric-qual.is-over) .v-metric-qual.is-over { display: block; } }
   .v-metric-go { position: absolute; top: 50%; right: var(--s-4); transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
   .v-metric-value { display: contents; color: var(--text); }
   .v-metric-value > .v-val { @apply type-display; grid-area: value; align-self: center; justify-self: end; }
@@ -582,6 +633,7 @@
   .v-metric-context { @apply type-caption; grid-area: context; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s-2); row-gap: var(--s-05); min-height: 20px;
     margin-top: var(--s-1); padding-right: var(--s-4); color: var(--text-3); }
   .v-metric-context:empty { display: none; }
+  .v-metric-context:has(> .v-pair) { grid-area: ref; margin-top: var(--s-2); padding-top: var(--s-2); padding-right: 0; border-top: 1px solid var(--border-subtle); }
   .v-metric-visual { display: none; }
   .v-metric-link { color: inherit; text-decoration: none; }
   .v-metric-link::after { content: ""; position: absolute; inset: 0; }
@@ -599,10 +651,13 @@
     .v-metric + .v-metric { border-top: 0; border-left: 1px solid var(--border-subtle); }
     .v-metrics-grid[data-n="4"] > .v-metric:nth-child(odd) { border-left: 0; }
     .v-metrics-grid[data-n="4"] > .v-metric:nth-child(n + 3) { border-top: 1px solid var(--border-subtle); }
-    .v-metric-label, .v-metric-context, .v-metric-value > .v-val, .v-metric-value > .v-delta,
-    .v-metric:not(:has(.v-metric-context > *, .v-metric-value > .v-delta)) > .v-metric-label { grid-area: auto; align-self: auto; }
-    /* the label clamps as one block, so the qualifier follows the last word of the name; the arrow keeps the tile's top right corner */
-    .v-metric-label { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; padding-right: 0; text-wrap: balance; }
+    .v-metric-label, .v-metric-context, .v-metric-context:has(> .v-pair), .v-metric-value > .v-val, .v-metric-value > .v-delta,
+    .v-metric:not(:has(.v-metric-context > :not(.v-pair), .v-metric-value > .v-delta)) > .v-metric-label { grid-area: auto; align-self: auto; }
+    .v-metric-label { @apply type-medium; }
+    [data-size="md"] > .v-metric > .v-metric-label { @apply type-label; }
+    /* the label clamps as one block and wraps greedily: the qualifier is nowrap, so it moves to the second line as a unit and the
+       name is never split mid-phrase; the arrow keeps the tile's top right corner */
+    .v-metric-label { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; padding-right: 0; }
     .v-metric:has(> .v-metric-go) > .v-metric-label { padding-right: var(--s-6); }
     .v-metric-go { top: calc(var(--s-5) + 1px); right: var(--s-5); transform: none; }
     [data-size="md"] > .v-metric > .v-metric-go { top: calc(var(--s-4) + 1px); }
@@ -610,11 +665,12 @@
     .v-metric-value > .v-val { align-self: auto; justify-self: auto; }
     .v-metric-value > .v-delta { align-self: auto; margin: 0; }
     [data-size="md"] > .v-metric > .v-metric-value { margin-top: var(--s-1); }
-    /* contexts share the bottom of their row, so a base, a whole and a pair sit on one baseline across the strip; a pair spans
-       the tile under a hairline, label left and value right */
-    .v-metric-context { align-self: end; min-height: 16px; padding-right: 0; }
+    /* contexts share the bottom of their row, so a base, a whole and a pair sit on one baseline across the strip. The hairline
+       above them is a property of the strip, not of a tile: when any tile holds a pair (label left, value right), every tile's
+       context sits under the same rule, so a strip never mixes ruled and unruled tiles */
+    .v-metric-context, .v-metric-context:has(> .v-pair) { align-self: end; min-height: 16px; margin-top: var(--s-1); padding-top: 0; padding-right: 0; border-top: 0; }
     .v-metric-context:empty { display: flex; }
-    .v-metric-context:has(> .v-pair) { padding-top: var(--s-2); border-top: 1px solid var(--border-subtle); }
+    .v-metrics-grid:has(.v-metric-context > .v-pair) > .v-metric > .v-metric-context { margin-top: var(--s-2); padding-top: var(--s-2); border-top: 1px solid var(--border-subtle); }
     .v-metric-visual { display: block; margin-top: var(--s-4); }
     [data-size="md"] > .v-metric > .v-metric-visual { margin-top: var(--s-3); }
   }
@@ -633,6 +689,11 @@
   @media (width >= 40rem) { .v-statlist dt { text-wrap: balance; } }
   .v-statlist dd { @apply type-strong; display: flex; align-items: center; gap: var(--s-2); flex: none; white-space: nowrap; color: var(--text); }
   .v-statlist dd > .v-link-quiet { @apply type-body; }   /* only the detail link is body; a date that is the row's value is strong */
+  /* phone: a coverage note sits under the value, right-aligned, as in a record; it never pushes between label and value */
+  @media (width < 40rem) {
+    .v-statlist dd { flex-wrap: wrap; justify-content: flex-end; row-gap: 0; }
+    .v-statlist dd > .v-note { order: 2; flex: 0 0 100%; justify-content: flex-end; }
+  }
   @media (width >= 40rem) and (width < 64rem) {
     .v-statlist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .v-statlist > div:nth-child(even) { border-left: 1px solid var(--border-subtle); }
@@ -645,9 +706,7 @@
   /* ------------------------------------------------------------ bars and distribution (v4 4.21) */
   .v-meter { display: block; height: var(--meter-h); overflow: hidden; border-radius: var(--r-bar); }
   .v-meter > i { display: block; width: var(--v); min-width: var(--meter-h); height: 100%; border-radius: var(--r-bar); background: var(--chart-1); }
-  .v-meter.is-share { background: var(--meter-track); }
-  .v-meter.is-split { background: var(--series-neutral); }
-  .v-meter.is-split > i { min-width: 2px; border-radius: 0; box-shadow: 2px 0 0 var(--surface); }
+  .v-meter.is-share { background: var(--meter-track); }   /* a split is drawn as the share bar it is: one bar design per strip */
   /* number and bar in one cell: the number first, right-aligned in a fixed slot (--num-slot, set per table by data-numw from the
      widest value), then 12px, then the bar filling the rest of the cell. A bar is always 12px from its own number and at least a
      cell's padding from any other; numbers share one right edge, bars one origin. The header sits over the number, left-aligned. */
@@ -667,7 +726,7 @@
   .v-dist-legend > li { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; align-items: center; column-gap: var(--s-3); padding: var(--s-1) var(--card-pad);
     border-top: 1px solid var(--border-subtle); }
   .v-dist-name { @apply type-body; display: flex; align-items: center; gap: var(--s-2); min-width: 0; color: var(--text-2); }
-  .v-dist-legend .v-val[data-kind="count"] { @apply type-strong; text-align: right; color: var(--text); }
+  .v-dist-legend .v-val[data-kind="count"] { @apply type-body; text-align: right; color: var(--text); }   /* a count and its share: body, text then text-2, as in a rank table */
   .v-dist-legend .v-val[data-kind="share"] { @apply type-body; text-align: right; color: var(--text-2); }   /* a share is body in every card */
   @media (width >= 64rem) {
     .v-dist.v-span-12 > .v-dist-legend, .v-dist.is-wide > .v-dist-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -685,7 +744,7 @@
      that is a checkbox); the event key is the diamond that caps the marker in the plot (never a stroke: that is a separator) */
   .v-key.is-gap { width: 12px; height: 10px; border-radius: var(--s-05); background: var(--gap-key); box-shadow: inset 0 0 0 1px var(--gap-key-edge); }
   .v-key.is-mark { width: 12px; height: 12px; background: var(--text-3); clip-path: polygon(50% 25%, 75% 50%, 50% 75%, 25% 50%); }
-  .v-key.is-line.is-bridge { height: 1px; background: var(--border-strong); }   /* a span one series was not recorded for */
+  .v-key.is-line.is-bridge { height: 1px; background: var(--series-context); }   /* a span one series was not recorded for */
 
   /* ------------------------------------------------------------ sparkline (v4 4.20) */
   .v-spark { display: block; min-width: 0; }
@@ -726,8 +785,8 @@
   }
   html:not(.js) .v-views { display: flex; align-items: stretch; flex-wrap: wrap; gap: var(--s-1); min-height: var(--views-h); padding: 0 calc(var(--card-pad) - var(--s-2)); border-bottom: 1px solid var(--border); }
   html:not(.js) .v-viewbar { display: none; }
-  .v-seg { display: inline-flex; align-items: center; height: 40px; padding: var(--s-05); border-radius: var(--r-ctl); background: var(--track); box-shadow: inset 0 0 0 1px var(--track-edge); }
-  .v-seg > .v-tab { height: 36px; border-radius: var(--r-in); }
+  .v-seg { display: inline-flex; align-items: center; height: 44px; padding: var(--s-05); border-radius: var(--r-ctl); background: var(--track); box-shadow: inset 0 0 0 1px var(--track-edge); }
+  .v-seg > .v-tab { height: 40px; border-radius: var(--r-in); }
   .v-seg > .v-tab:focus-visible { outline-offset: 0; }
   .v-seg > .v-tab[aria-selected="true"] { background: var(--segment); box-shadow: var(--shadow-xs); }
   @media (width >= 40rem) { .v-seg { height: 28px; } .v-seg > .v-tab { height: 24px; } }
@@ -772,6 +831,9 @@
   .v-chip:is([aria-pressed="true"], [data-active]) { color: var(--text); background-color: var(--accent-soft); border-color: var(--accent-border); }
   .v-chip[data-active] > .v-chip-label { color: var(--text-2); }
   .v-chip[aria-pressed="true"] > .v-count { color: var(--accent-text); background: var(--accent-soft); }
+  /* the count pill keeps the width of its rest-state number (--n digits, set by ui/chip.html), so the facet row does not shift
+     sideways when a filter or the search changes a count */
+  .v-chip > .v-count { min-width: calc(var(--n, 2) * 1ch + var(--s-3)); }
   .v-chip[aria-expanded="true"] { background-image: linear-gradient(var(--hover), var(--hover)); border-color: var(--text-3); }
   .v-chip:disabled { color: var(--text-3); border-color: var(--border); background-image: none; cursor: default; }
   .v-chip:disabled > .v-check { border-color: var(--border-strong); }
@@ -793,10 +855,22 @@
     .v-filter-toggle.v-btn { display: none; }
     .v-filter-row > [data-filter-reset], .v-filter-row:has(+ .v-facets) > [data-filter-reset] { display: inline-flex; margin-left: auto; }
     .v-filter-row > .v-filter-count { display: block; margin-left: auto; }
-    .v-filter-row > [data-filter-reset]:not([hidden]) + .v-filter-count { margin-left: var(--s-3); }
+    .v-filter-row > [data-filter-reset]:not([hidden]) + .v-filter-count { margin-left: var(--s-1); }
     .v-facets > [data-filter-reset] { display: none; }
     .v-facets, .v-filter-row:has([data-facets-toggle][aria-expanded="true"]) + .v-facets { display: flex; padding: 0 var(--card-pad) var(--s-3); }
+    /* one or two facets: the same order on one 52px row (search, facets, Clear filters, count), so a single checkbox never
+       takes a band of its own. Three or more facets keep the second row */
+    .v-filterbar.is-inline { display: flex; align-items: center; gap: var(--s-2); height: var(--bar-h); padding: 0 var(--card-pad); }
+    .v-filterbar.is-inline > :is(.v-filter-row, .v-facets),
+    .v-filterbar.is-inline > .v-filter-row:has([data-facets-toggle][aria-expanded="true"]) + .v-facets { display: contents; }
+    .v-filterbar.is-inline .v-field { order: 1; }
+    .v-filterbar.is-inline :is(.v-chip, .v-menu-wrap) { order: 2; }
+    .v-filterbar.is-inline .v-filter-row > [data-filter-reset] { order: 3; margin-left: auto; }
+    .v-filterbar.is-inline .v-filter-count { order: 4; margin-left: auto; }
+    .v-filterbar.is-inline .v-filter-row > [data-filter-reset]:not([hidden]) + .v-filter-count { margin-left: var(--s-1); }
   }
+  /* the empty result has its own Clear filters: the bar's is not shown twice */
+  .v-card.is-list:has(.v-list-empty:not([hidden])) .v-filter-row > [data-filter-reset] { display: none; }
   @media (width >= 64rem) and (pointer: fine) {
     .v-kbd { display: grid; }
     .v-field:focus-within > .v-kbd, .v-field > input:not(:placeholder-shown) ~ .v-kbd { display: none; }
@@ -896,7 +970,16 @@
   .v-cell-note { display: block; }
   .v-dt td.num > .v-cell-note { display: flex; justify-content: flex-end; }   /* a long note grows left, never past the cell's right edge */
   .v-name { overflow: hidden; }
-  .v-name > .v-row-link { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .v-name > :is(.v-row-link, span:not([class]):first-child) { display: block; overflow: hidden; text-overflow: ellipsis; }   /* a name is never hard-cut */
+  /* Repository on an org list is row meta: text-2, so the title is the only text-tier item on the row's first line */
+  .v-dt.is-work td.v-c-repo { color: var(--text-2); }
+  /* a kept table in a 6-column card at 1024 to 1279: its numeric columns narrow to 5rem and the headers take their short form, so
+     the measure name keeps its width ("Closed without merging") */
+  @media (width >= 64rem) and (width < 80rem) {
+    .v-span-6 > .v-dt.is-keep > colgroup > col:not(:first-child) { width: 5rem; }
+    .v-span-6 > .v-dt.is-keep .v-th-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .v-span-6 > .v-dt.is-keep .v-th-short { display: inline; }
+  }
   .v-name-line { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; max-width: 100%; }   /* a name with a tag beside it: one element */
   .v-deadline { color: var(--text-2); white-space: nowrap; }
   /* header short forms, used only by a kept table below 64rem */
@@ -909,6 +992,7 @@
   .v-meta-id { display: flex; align-items: center; gap: var(--s-3); flex: none; }
   .v-meta-id > * { flex: none; }
   .v-meta-id > .v-repo { display: none; }   /* from 64rem the Repository column carries it */
+  .v-meta-id > .v-meta-n { display: none; white-space: nowrap; }   /* the comment count as an identity item: list form only (the Comments column carries it from 64rem) */
   /* the tag line is one 20px line that wraps into a clipped second line: a pill that does not fit drops out whole and is never
      cut mid-shape. ui.js then folds the labels that dropped into the +N tag. */
   .v-tags { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: var(--s-1); flex: 1 1 0; min-width: 0; height: 20px; overflow: hidden; }
@@ -919,8 +1003,9 @@
   .v-meta.is-tight > .v-meta-id > .v-who { flex: 0 1 auto; min-width: 0; }
   .v-meta.is-tight > .v-tags { flex: none; max-width: 100%; }
   tr[data-child-of] > .v-item { padding-left: calc(var(--card-pad) + var(--s-6)); }
-  /* Status cell: the badge on the title's line and, when the row has one, the detail phrase on the meta line beneath it */
-  .v-c-status > .v-detail { @apply type-caption; height: 20px; margin-top: var(--s-1); align-items: center; }
+  /* Status cell: the badge on the title's line and, when the row has one, the detail phrase on the meta line beneath it. The
+     Sponsor cell of a SEP row has the same anatomy: its badge, then the sponsor as a person on the meta line */
+  :is(.v-c-status, .v-c-who) > .v-detail { @apply type-caption; height: 20px; margin-top: var(--s-1); align-items: center; }
   /* Detail: only the phrase may shorten; the value or reference that closes it never does */
   .v-detail { display: flex; align-items: baseline; gap: var(--s-1); min-width: 0; white-space: nowrap; color: var(--text-2); }
   .v-detail-text { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -951,32 +1036,36 @@
     .v-dt:is(.is-list, .is-matrix) > tbody > tr:target { background-color: var(--accent-soft); }
     .v-dt:is(.is-list, .is-matrix) > tbody > tr:target > * { background-color: transparent; box-shadow: none; }
 
-    /* work list: fixed line order. 1 title and the primary time, 2 identity, 3 status and the Overdue object, 4 tags, 5 detail,
-       then every secondary value as a label-left, value-right line (the record grammar) */
+    /* work list: fixed line order. 1 title and the primary time ("Age 276d": label, then value, like every other pair), 2 identity
+       (with the comment count as its last item), 3 status and the Overdue object, 4 the detail phrase, directly under the badge it
+       explains, 5 tags */
     .v-dt.is-work.is-list > tbody > tr[data-row] { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--s-3); padding: var(--s-3) var(--card-pad); }
     .v-dt.is-work.is-list > tbody > tr > td.v-item { display: contents; }
     .v-dt.is-work.is-list .v-item > .v-row-link { grid-column: 1 / 3; grid-row: 1; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
-    /* the primary time, top right, with its column name under it so the number is never unlabeled */
-    .v-dt.is-work.is-list > tbody > tr > td:last-child { @apply type-medium; grid-column: 3; grid-row: 1 / 3; align-self: start; text-align: right; white-space: nowrap; }
-    .v-dt.is-work.is-list > tbody > tr > td:last-child[data-label]::after { @apply type-caption; content: attr(data-label); display: block; color: var(--text-3); }
+    /* the primary time, top right: its column name in caption, then the value, on the title's first line */
+    .v-dt.is-work.is-list > tbody > tr > td:last-child { @apply type-medium; grid-column: 3; grid-row: 1; align-self: start; text-align: right; white-space: nowrap; }
+    .v-dt.is-work.is-list > tbody > tr > td:last-child[data-label]::before { @apply type-caption; content: attr(data-label); margin-right: var(--s-1); color: var(--text-2); }
     .v-dt.is-work.is-list .v-meta { display: contents; }
-    /* line 2, identity: it wraps to a second line when id, repository, author and lines changed do not fit; the author
-       truncates only when alone on a line */
-    .v-dt.is-work.is-list .v-meta-id { grid-column: 1 / 3; grid-row: 2; flex-wrap: wrap; row-gap: var(--s-05); margin-top: var(--s-1); min-width: 0; }
+    /* line 2, identity, on a fixed plan so adjacent rows break at the same item. One line: the author gives way with an ellipsis,
+       the id, the lines changed and the comment count never do. */
+    .v-dt.is-work.is-list .v-meta-id { grid-column: 1 / -1; grid-row: 2; flex-wrap: nowrap; row-gap: var(--s-05); margin-top: var(--s-1); min-width: 0; }
     .v-dt.is-work.is-list .v-meta-id > .v-who { flex: 0 1 auto; min-width: 0; max-width: 100%; }
     .v-dt.is-work.is-list .v-meta-id > .v-repo { display: inline; }
+    .v-dt.is-work.is-list .v-meta-id > .v-meta-n { display: inline; }
     /* line 3: the badge on the left edge, the Overdue object ending on the right edge, so the red days form a column. The
        status cell dissolves: its badge is line 3, its detail phrase line 5 */
     .v-dt.is-work.is-list > tbody > tr > .v-c-status { display: contents; }
     .v-dt.is-work.is-list .v-c-status > .v-badge { grid-column: 1; grid-row: 3; justify-self: start; align-self: center; margin-top: var(--s-2); }
-    .v-dt.is-work.is-list .v-c-status > .v-detail { grid-column: 1 / -1; grid-row: 5; height: auto; margin-top: var(--s-2); }
+    .v-dt.is-work.is-list .v-c-status > .v-detail { grid-column: 1 / -1; grid-row: 4; height: auto; margin-top: var(--s-1); }
     .v-dt.is-work.is-list > tbody > tr > .v-sla-cell { grid-column: 2 / -1; grid-row: 3; justify-self: end; align-self: center; min-width: 0; margin-top: var(--s-2); text-align: right; }
     .v-dt.is-work.is-list .v-sla { flex-wrap: wrap; justify-content: flex-end; row-gap: var(--s-05); }
     .v-dt.is-work.is-list .v-sla-label { display: inline; margin-left: calc(-1 * var(--s-1)); }
     .v-dt.is-work.is-list .v-sla:has(> .v-badge) > .v-sla-label { display: none; }
     .v-dt.is-work.is-list .v-sla > .v-tag.is-more { display: none; }   /* its names are in a title, which touch cannot open; the SLA rule filter has them */
-    .v-dt.is-work.is-list .v-tags { grid-column: 1 / -1; grid-row: 4; flex: none; height: auto; row-gap: var(--s-1); margin-top: var(--s-2); overflow: visible; }
+    .v-dt.is-work.is-list .v-tags { grid-column: 1 / -1; grid-row: 5; flex: none; height: auto; row-gap: var(--s-1); margin-top: var(--s-2); overflow: visible; }
     .v-dt.is-work.is-list .v-tags:empty { display: none; }
+    /* a comment count is an item of the identity line here ("3 comments"), not a full-width line of its own */
+    .v-dt.is-work.is-list > tbody > tr:has(.v-meta-n) > .v-c-num { display: none; }
     .v-dt.is-work.is-list > tbody > tr > :is(.v-c-who, .v-c-num) { display: flex; align-items: center; justify-content: space-between; column-gap: var(--s-4); grid-column: 1 / -1; min-height: 20px;
       margin-top: var(--s-2); text-align: right; }
     .v-dt.is-work.is-list > tbody > tr > .v-c-who { grid-row: 6; }
@@ -986,10 +1075,11 @@
     /* a SEP row (a row with a Sponsor cell): the sponsor state is the row's status, so it takes the state line, on the left
        edge like a status badge, and the secondary time closes that line on the right edge in the Overdue object's grammar: its
        column name in caption, then the value ("Last activity" 7d, "Time to final" 33d). The row is title, identity, state, tags,
-       with no label-left line under them. A handle reads "Sponsored by {handle}" here, where no header names the column. */
-    .v-dt.is-work.is-list > tbody > tr > .v-c-who { display: block; grid-column: 1; grid-row: 3; justify-self: start; align-self: center; min-width: 0; min-height: 0; text-align: left; }
+       with no label-left line under them. A named sponsor follows the badge "Sponsored" on the same line, as a person. */
+    .v-dt.is-work.is-list > tbody > tr > .v-c-who { display: flex; align-items: center; justify-content: flex-start; column-gap: var(--s-2); grid-column: 1; grid-row: 3; justify-self: start; align-self: center; min-width: 0; min-height: 0; text-align: left; }
     .v-dt.is-work.is-list > tbody > tr > .v-c-who[data-label]::before { content: none; }
-    .v-dt.is-work.is-list .v-c-who .v-who-label { display: inline; color: var(--text-2); }
+    .v-dt.is-work.is-list .v-c-who > .v-badge { flex: none; }
+    .v-dt.is-work.is-list .v-c-who > .v-detail { height: auto; margin-top: 0; min-width: 0; }
     .v-dt.is-work.is-list > tbody > tr:has(> .v-c-who) > .v-c-num { display: flex; align-items: baseline; justify-content: flex-end; column-gap: var(--s-2); grid-column: 2 / -1; grid-row: 3;
       justify-self: end; align-self: center; min-height: 0; }
     .v-dt.is-work.is-list > tbody > tr:has(> .v-c-who) > .v-c-num[data-label]::before { @apply type-caption; }
@@ -1014,8 +1104,15 @@
       min-height: 20px; margin-top: var(--s-2); text-align: right; }
     .v-dt.is-rank.is-list > tbody > tr > td.v-c-spark { display: none; }
     .v-dt.is-rank.is-list > tbody > tr > td[data-label]:not(.v-c-bar)::before { content: attr(data-label); color: var(--text-2); }
+    /* rank list with one further figure (has-pair, set by ui/rank-table.html: a count and its share): one line, name then count
+       then share, in the columns of the distribution legend, over one bar. The header words would only repeat on every row */
+    .v-dt.is-rank.is-list.has-pair > tbody > tr { grid-template-columns: minmax(0, 1fr) auto 3.5rem; column-gap: var(--s-3); }
+    .v-dt.is-rank.is-list.has-pair > tbody > tr > td.num:not(.v-c-bar):not(:first-child) { display: contents; }
+    .v-dt.is-rank.is-list.has-pair > tbody > tr > td.num[data-label]:not(.v-c-bar)::before { content: none; }
+    .v-dt.is-rank.is-list.has-pair > tbody > tr > td.num .v-val:not([data-kind="share"]) { grid-column: 2; grid-row: 1; justify-self: end; min-width: 0; }
+    .v-dt.is-rank.is-list.has-pair > tbody > tr > td.num .v-val[data-kind="share"] { grid-column: 3; grid-row: 1; justify-self: end; min-width: 0; color: var(--text-2); }
     .v-path { flex-wrap: wrap; white-space: normal; }
-    .v-path-dir { overflow: visible; direction: ltr; overflow-wrap: anywhere; }
+    .v-path-dir { flex-wrap: wrap; justify-content: flex-start; overflow: visible; }   /* list form: the path wraps after a slash, nothing is cut */
 
     /* records: one block per matrix row. Name (and chevron), then one label-left, value-right line per column. A value sits flush
        right on its label's line; a data-quality note always takes the next line, right-aligned; bars are not drawn (the number is
@@ -1052,9 +1149,14 @@
     /* the last visible column: its header and values share the card inset */
     .v-dt.is-keep tr > :not(:has(~ :not(.v-keep-drop, .v-c-spark))) { padding-right: var(--card-pad); }
     .v-dt.is-keep > colgroup > col:not(:first-child):not(:has(~ col:not(.v-keep-drop, .v-col-spark))) { width: calc(4.25rem + var(--s-3)); }
+    /* a kept table whose bar column header has a sub line ("Waiting" over "Over 7 days", By repository): that column is 5rem, so
+       the sub line and the sorted header with its arrow fit without touching the next header */
+    .v-dt.is-keep:has(thead .v-th-sub) > colgroup > col.v-col-bar { width: 5rem; }
     /* a kept table is still a table: no row chevron (the name is the link), no sort icon; a short header keeps its full label
        as the button's accessible name */
     .v-dt.is-keep .v-row-chev, .v-dt.is-keep .v-th-btn > .v-icon { display: none; }
+    /* the sorted column keeps its direction arrow, so its darker header has a visible reason */
+    .v-dt.is-keep th[aria-sort="ascending"] > .v-th-btn > .v-sort-up, .v-dt.is-keep th[aria-sort="descending"] > .v-th-btn > .v-sort-down { display: inline-block; }
     .v-dt.is-keep .v-th-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .v-dt.is-keep .v-th-short { display: inline; }
     .v-dt.is-keep .v-barnum { display: inline; }
@@ -1067,7 +1169,17 @@
   }
   /* tablet: a record's lines flow in two columns, which halves its height and the distance from each label to its value; a work
      row's secondary lines keep to a right-hand block for the same reason */
+  /* phone: on an org list the identity is two lines on a fixed plan: the id and the repository, then the author, role and lines */
+  @media (width < 40rem) {
+    .v-dt.is-work.is-list .v-meta-id:has(> .v-repo) { flex-wrap: wrap; }
+    .v-dt.is-work.is-list .v-meta-id:has(> .v-repo)::after { content: ""; flex-basis: 100%; order: 1; }
+    .v-dt.is-work.is-list .v-meta-id:has(> .v-repo) > :is(.v-who, .v-tag, .v-lines) { order: 2; }
+    .v-dt.is-work.is-list .v-meta-id:has(> .v-repo):not(:has(> :is(.v-who, .v-tag, .v-lines)))::after { content: none; }
+  }
   @media (width >= 40rem) and (width < 64rem) {
+    /* tablet: the row is 700px wide, so the tag line joins the identity line and the row is one line shorter */
+    .v-dt.is-work.is-list .v-meta-id { grid-column: 1; }
+    .v-dt.is-work.is-list .v-tags { grid-column: 2 / -1; grid-row: 2; align-self: center; margin-top: var(--s-1); }
     .v-dt.is-matrix > tbody > tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-10); }
     .v-dt.is-matrix > tbody > tr > :first-child { grid-column: 1 / -1; }
     .v-dt.is-work.is-list > tbody > tr:not(:has(> .v-c-who)) > .v-c-num { justify-self: end; width: min(100%, 20rem); }
@@ -1078,12 +1190,16 @@
      so a card of names never leaves most of its width blank and a phone row is one line. The rules are drawn by the cells (a 1px
      shadow above and to the left, clipped at the grid's edge), so there is one rule between any two cells whatever a view or a
      search has taken out. A role tag beside a name shows only in the All view: in its own view it would repeat on every row. */
-  .v-dt.is-roster { display: block; }
-  .v-dt.is-roster > tbody { display: grid; grid-template-columns: minmax(0, 1fr); overflow: clip; }
+  /* every cell draws its own right and bottom rule inside itself, and the grid clips its last pixel column and row, so no rule
+     is drawn on the card's right and bottom edges. A short last row therefore ends cleanly: the row above closes it with a
+     full-width rule, its last cell has its divider, and the remainder is one empty cell. */
+  .v-dt.is-roster { display: block; overflow: clip; }
+  .v-dt.is-roster:not(:has(~ .v-list-foot:not([hidden]))) { border-radius: 0 0 calc(var(--r-card) - 1px) calc(var(--r-card) - 1px); }
+  .v-dt.is-roster > tbody { display: grid; grid-template-columns: minmax(0, 1fr); clip-path: inset(0 1px 1px 0); }
   @media (width >= 40rem) { .v-dt.is-roster > tbody { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (width >= 64rem) { .v-dt.is-roster > tbody { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .v-dt.is-roster > tbody > tr { display: flex; align-items: center; gap: var(--s-3); min-width: 0; height: var(--row); padding: 0 var(--card-pad);
-    box-shadow: 0 -1px 0 var(--border-subtle), -1px 0 0 var(--border-subtle); }
+    border: 0; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); border-radius: 0; }
   .v-dt.is-roster > tbody > tr > :is(th, td) { display: flex; align-items: center; height: auto; padding: 0; border: 0; }
   .v-dt.is-roster > tbody > tr > .v-name { flex: 1 1 auto; min-width: 0; }
   .v-dt.is-roster > tbody > tr > td { flex: none; }
@@ -1111,6 +1227,10 @@
   .v-readout-value { @apply type-heading; grid-area: value; align-self: center; white-space: nowrap; color: var(--text); }
   .v-readout-value > .v-val.is-na::before { width: 14px; vertical-align: 5px; }
   .v-readout-meta { grid-area: meta; display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s-2); row-gap: var(--s-05); min-width: 0; }
+  /* phone: an item with nothing on its meta line is one row, label and value centred on one line */
+  @media (width < 40rem) { .v-readout-item:not(:has(.v-readout-meta > :not(.is-asof))) { grid-template-areas: "label value"; align-items: center; } }
+  /* from 40rem, a readout of several series states its date once, as a last item on the right ("As of" Nov 14) */
+  .v-readout-item.is-asof { display: none; }
   .v-readout-detail { @apply type-caption; display: inline-flex; align-items: baseline; gap: var(--s-2); white-space: nowrap; color: var(--text-2); }
   @media (width >= 40rem) {
     .v-readout { flex-direction: row; align-items: baseline; gap: var(--s-6); height: 28px; }
@@ -1118,6 +1238,9 @@
     .v-readout-item > dd { display: inline-flex; align-items: baseline; gap: var(--s-2); min-width: 0; }
     .v-readout-value { align-self: auto; }
     .v-readout-meta { flex-wrap: nowrap; }
+    .v-readout-item.is-asof { display: flex; margin-left: auto; }
+    .v-readout-item.is-asof > dt { color: var(--text-3); }
+    .v-readout-item.is-asof > dd { @apply type-caption; color: var(--text-2); }
   }
   .v-plot { position: relative; height: var(--plot-h); margin: 0 var(--card-pad); }
   .v-plot > canvas { display: block; width: 100%; height: 100%; border-radius: var(--s-05); }
@@ -1158,8 +1281,10 @@
   .v-tip { @apply type-caption; position: absolute; z-index: 40; min-width: 9rem; max-width: 18rem; padding: var(--s-2) var(--s-3); pointer-events: none; white-space: nowrap; color: var(--text-2);
     background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); box-shadow: var(--shadow-lg); }
   .v-tip-title { @apply type-label; margin-bottom: var(--s-1); color: var(--text); }
-  .v-tip-rows { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; column-gap: var(--s-2); row-gap: var(--s-05); }
-  .v-tip-rows.is-plain { grid-template-columns: auto minmax(0, 1fr); }   /* a trellis: every row is the same series, so no key column */
+  /* key, name, value: the order of the readout above the plot, of a pair and of a stat-list row; values share the right edge */
+  .v-tip-rows { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-2); row-gap: var(--s-05); }
+  .v-tip-rows.is-plain { grid-template-columns: minmax(0, 1fr) auto; }   /* a trellis: every row is the same series, so no key column */
+  .v-tip-rows > li > .v-tip-value { margin-left: var(--s-2); }
   .v-tip-note { color: var(--text-3); }
   .v-tip-rows > li { display: contents; }
   .v-tip-value { @apply type-label; text-align: right; color: var(--text); }
@@ -1175,7 +1300,21 @@
   .v-trellis-panel { position: relative; height: var(--panel-h); margin: 0 var(--card-pad); }
   .v-trellis-panel:has(> canvas[data-xaxis="on"]) { height: 120px; }
   .v-trellis-panel > canvas { display: block; width: 100%; height: 100%; }
-  .v-trellis-row > .v-card-pending { align-self: center; height: 48px; margin: 0 var(--card-pad) var(--s-3); border: 0; border-radius: var(--r-ctl); }
+  /* a row that cannot draw: the same full-width band as a chart card's pending bar, one shape for one message */
+  .v-trellis-row > .v-card-pending { align-self: center; height: 48px; margin: 0; border-radius: 0; border-top: 1px solid var(--border-subtle); }
+  /* scrub (from 64rem): while a slot is hovered or stepped to, every row's label cell shows that period and its value in place of
+     the row's resting fact, so nothing floats over the labels or the columns */
+  .v-pair.is-scrub { display: none; }
+  @media (width >= 64rem) {
+    .v-trellis.is-scrub .v-trellis-label > .v-pair.is-scrub { display: flex; }
+    .v-trellis.is-scrub .v-trellis-label > :is(.v-pair:not(.is-scrub), .v-note) { display: none; }
+    .v-trellis > .v-tip { display: none; }
+  }
+  /* below 64rem a panel sits under its own label block, so every panel carries its dates and ends clear of the next row's rule */
+  @media (width < 64rem) {
+    .v-trellis-panel { height: 120px; } .v-trellis-row { padding-bottom: var(--s-3); } .v-trellis-row:has(> .v-card-pending) { padding-bottom: 0; }
+    .v-trellis-label { align-items: stretch; } .v-trellis-label > .v-pair { max-width: none; }   /* the pair's value ends on the card inset */
+  }
   .v-trellis-table { height: auto; max-height: 30rem; }
   /* table view: a row that cannot draw has no column; it is named under the table with its pending line */
   .v-trellis-pendings { display: none; }
@@ -1185,8 +1324,12 @@
   @media (width >= 64rem) {
     .v-trellis-row { grid-template-columns: 15rem minmax(0, 1fr); }
     .v-trellis-panel { margin-left: 0; }
-    .v-trellis-row > .v-card-pending { margin: 0 var(--card-pad) 0 0; }
+    .v-trellis-row > .v-card-pending { align-self: stretch; height: auto; min-height: 48px; border-top: 0; border-left: 1px solid var(--border-subtle); }
   }
+  /* chart table view: a data gap is one band row (the group-row look), not a row of empty marks */
+  .v-dt.is-compact tbody tr.v-gap > th { @apply type-caption; height: var(--row-group); color: var(--text-2); background: var(--surface-2); }
+  .v-gap-row { display: inline-flex; align-items: center; gap: var(--s-2); }
+  .v-gap-row > .v-val { color: var(--text); }
 
   /* ------------------------------------------------------------ styleguide (/styleguide/ only) */
   .v-sg-spec { margin-bottom: var(--s-6); min-width: 0; }
@@ -1194,6 +1337,12 @@
   .v-sg-cap { @apply type-caption; margin-top: var(--s-2); color: var(--text-3); }
   .v-sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); }
   .v-sg-stack { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-3); }
+  /* a specimen that is itself page furniture (the page head, with its Data notes card) stands on the page ground between two
+     rules, not inside a card: a card never contains a bordered card */
+  .v-sg-bare { padding-block: var(--s-5); border-block: 1px solid var(--border); }
+  .v-sg-bare .v-page-head { margin-bottom: 0; }
+  .v-sg-bare + .v-sg-bare { border-top: 0; }
+  .v-grid > .v-sg-bare { margin-block: calc(-1 * var(--s-2)); }
   .v-sg-frame { padding: var(--s-4); border-radius: var(--r-ctl); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
   .v-sg-frame.is-bg { background: var(--bg); }
   .v-sg-frame.is-surface-2 { background: var(--surface-2); }

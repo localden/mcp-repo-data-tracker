@@ -71,8 +71,9 @@
   {{- else -}}
   {{- $parts := split $p "/" }}{{ $n := len $parts -}}
   {{- $base := index $parts (sub $n 1) }}{{ if $c.dir }}{{ $base = printf "%s/" $base }}{{ end -}}
-  {{- $dir := "" }}{{ if gt $n 1 }}{{ $dir = printf "%s/" (delimit (first (sub $n 1) $parts) "/") }}{{ end -}}
-  <span class="v-path{{ $cls }}" title="{{ $p }}{{ if $c.dir }}/{{ end }}">{{ with $dir }}<span class="v-path-dir"><bdi>{{ . }}</bdi></span>{{ end }}<span class="v-path-base">{{ $base }}</span></span>
+  {{- /* each directory segment is its own span, so the directory gives way a whole segment at a time (ui.js hides leading segments
+       until the path fits and shows the ellipsis segment in their place): never half a segment */ -}}
+  <span class="v-path{{ $cls }}" title="{{ $p }}{{ if $c.dir }}/{{ end }}">{{ if gt $n 1 }}<span class="v-path-dir"><span class="v-path-cut" aria-hidden="true">…/</span>{{ range first (sub $n 1) $parts }}<span>{{ . }}/</span>{{ end }}</span>{{ end }}<span class="v-path-base">{{ $base }}</span></span>
   {{- end -}}
 {{- else -}}
   {{- $title := $c.title | default "" -}}

@@ -10,6 +10,8 @@
     author    the handle ("app/" is stripped). role: from data/role.html. A role tag follows the handle only for "Maintainer" and
               "Bot"; "Contributor" is the default and prints nothing (the Author facet still has it, from data-facets).
     diff      {add, del}: lines changed (PRs).
+    comments  the comment count of a list that has a Comments column: below 64rem it is the last identity item ("3 comments") and
+              the Comments cell (td.v-c-num of the same row) is not drawn, so a minor fact never takes a full-width line.
     prio      "P0" to "P3". Left empty, the first label P0 to P3 in tags is taken out of the labels and drawn as the priority tag,
               so callers pass raw labels and never pre-sort.
     flags     slice of {text, title} (flag tags). attrs: slice of strings or {text, title} (attribute tags; a PR's SEP stage comes
@@ -43,13 +45,14 @@
   {{- else -}}
   <span class="v-row-link">{{ $c.title }}</span>
   {{- end -}}
-  {{- if or $c.id $c.repo $c.author $role $c.diff $hasTags -}}
+  {{- if or $c.id $c.repo $c.author $role $c.diff $hasTags (ne $c.comments nil) -}}
   <span class="v-meta"><span class="v-meta-id">
     {{- with $c.id }}<span class="v-id">{{ . }}</span>{{ end -}}
     {{- with $c.repo }}<span class="v-repo">{{ . }}</span>{{ end -}}
     {{- with $c.author }}<span class="v-who">{{ partial "ui/icon.html" (dict "name" "user" "size" 12) }}<span>{{ strings.TrimPrefix "app/" (string .) }}</span></span>{{ end -}}
     {{- with $role }}{{ partial "ui/tag.html" (dict "text" . "kind" "role") }}{{ end -}}
     {{- with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" .add "dels" .del "icon" true) }}{{ end }}{{ end -}}
+    {{- if ne $c.comments nil }}<span class="v-meta-n">{{ partial "ui/value.html" (dict "kind" "count" "v" $c.comments "noun" "comment") }}</span>{{ end -}}
   </span>
   {{- if $hasTags -}}
   <span class="v-tags">

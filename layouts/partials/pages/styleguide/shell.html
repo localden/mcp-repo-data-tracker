@@ -22,29 +22,30 @@
 <section class="v-section" aria-labelledby="page-head">
   {{ partial "ui/section-head.html" (dict "id" "page-head" "title" "Page head" "desc" "Where you are, the scope switcher, freshness, the one callout and Data notes.") }}
   <div class="v-grid">
-    <article class="v-card v-span-12"><div class="v-card-body">
+    <div class="v-sg-bare">
       {{ partial "ui/page-head.html" (dict "id" "sg-ph-org" "eyebrow" "Overview" "title" "All repositories" "updated" (printf "%sT08:29:00Z" $asof)) }}
       <p class="v-sg-cap">ui/page-head.html: an org page with plain title and the Updated item</p>
-    </div></article>
-    <article class="v-card v-span-12"><div class="v-card-body"><div class="v-sg-pop">
+    </div>
+    <div class="v-sg-bare"><div class="v-sg-pop">
       {{ partial "ui/page-head.html" (dict "id" "sg-ph-scope" "scope" (dict "kind" "pulls" "repo" "" "open" true) "updated" (printf "%sT08:29:00Z" $asof)) }}
-    </div><p class="v-sg-cap">scope switcher open, with the labelled count column (pulls)</p></div></article>
-    <article class="v-card v-span-12"><div class="v-card-body">
+    </div><p class="v-sg-cap">scope switcher open, with the labelled count column (pulls)</p></div>
+    <div class="v-sg-bare">
       {{ partial "ui/page-head.html" (dict "id" "sg-ph-repo" "scope" (dict "kind" "repo" "repo" "typescript-sdk")
           "desc" "The official TypeScript SDK for Model Context Protocol servers and clients"
           "meta" (slice (dict "icon" "github" "text" "modelcontextprotocol/typescript-sdk" "href" "https://github.com/modelcontextprotocol/typescript-sdk" "site" "GitHub")
                         (dict "icon" "package" "text" "npm @modelcontextprotocol/sdk" "href" "https://www.npmjs.com/package/@modelcontextprotocol/sdk" "site" "npm"))
           "updated" (printf "%sT08:29:00Z" $asof) "note" (dict "since" $asof)) }}
       <p class="v-sg-cap">a repository page: scope switcher closed, description, three meta items and the tracking entry, a meta item like its neighbours</p>
-    </div></article>
-    <article class="v-card v-span-12"><div class="v-card-body">
+    </div>
+    <div class="v-sg-bare">
       {{- $keys := slice }}{{ range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end }}
       {{ partial "ui/page-head.html" (dict "id" "sg-ph-dl" "eyebrow" "Downloads" "title" "SDK packages"
           "sources" (partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability")))
           "registries" (partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")))
-          "meta" (slice (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $asof)))
+          "meta" (slice (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" (printf "%sT08:29:00Z" $asof)))
+                        (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" (printf "%s-11-09" $y))))
           "gap" (dict "repos" $keys "days" 182)
-          "callout" (dict "title" "Stale data" "items" (slice
+          "callout" (dict "title" "Registry delay" "items" (slice
             (dict "text" "PyPI data is complete through {date}." "date" (printf "%s-11-09" $y))
             (dict "text" "NuGet data is complete through {date}." "date" (printf "%s-11-11" $y))))
           "defs" (slice (dict "group" "Queue and filters" "term" "Waiting for a reply" "text" "Open issues by a non-maintainer with no maintainer comment, opened more than 7 days ago.")
@@ -55,8 +56,8 @@
           "coverage" (slice (dict "label" "Issue classification" "part" 2 "whole" 9 "noun" "repository" "title" "TypeScript SDK, Python SDK")
                             (dict "label" "PR classification" "part" 3 "whole" 9 "noun" "repository" "title" "TypeScript SDK, Python SDK, MCP Specification"))
           "notes_open" true) }}
-      <p class="v-sg-cap">Downloads meta with Complete through; a past data gap as one warning item of the meta row (from the real snapshots); the callout, kept for what is true now, with two items; Data notes open: Definitions in groups, Sources (Updated, Complete through, Repository) and Coverage</p>
-    </div></article>
+      <p class="v-sg-cap">the Downloads head, in the order the page prints it: Updated, Complete through, then a past data gap as one warning item of the meta row (from the real snapshots); the callout "Registry delay", kept for what is true now, with two items; Data notes open: Definitions in groups (on a phone each group is a row that opens it), Sources (Updated, Complete through, Repository) and Coverage with the Data gap row</p>
+    </div>
   </div>
 </section>
 

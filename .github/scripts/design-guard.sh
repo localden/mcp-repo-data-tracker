@@ -67,6 +67,16 @@ check "superscript footnote: definitions go in a title, a qualifier or Data note
 check "metric strip outside a card (ui/metrics.html renders the card)" 'class="v-metrics"'
 check "rank table without its list form: every .v-dt.is-rank is also .is-list, the form it takes below 64rem (design system v4 4.14)" 'class="[^"]*is-rank[^"]*"' 'class="[^"]*(is-rank[^"]*is-list|is-list[^"]*is-rank)[^"]*"'
 check "digit in a section description: a window belongs in a card sub line, a header sub line or a label" 'class="v-section-desc[^>]*>[^<{]*[0-9]'
+# Go's html/template drops "data-" and treats an attribute whose name then starts with "on" as an event handler: its value is
+# escaped as a script string ("wide" comes out with literal quotes), so no CSS or JS selector ever matches it (data-only did this).
+check "data attribute whose name starts with \"on\" (data-only, data-once ...): Go templates escape its value as script; name it otherwise (data-fold)" \
+  'data-on[a-z-]*='
+# Tables come from partials, so a specimen and a page cannot drift: rank tables are ui/rank-table.html, plain kept tables
+# ui/keep-table.html, and the SLA, waiting and repository tables have their own partials in ui/. The allow-list is the work lists,
+# rosters and page matrices that are still written where they are used; it only ever shrinks.
+check "table markup outside ui/: draw a rank table with ui/rank-table.html and a kept table with ui/keep-table.html" \
+  '<table class="v-dt' \
+  '^layouts/partials/ui/|^layouts/partials/pages/(issues|pulls)/(queue|waiting)\.html|^layouts/partials/pages/seps\.html|^layouts/partials/pages/repo/(attention|people|table)\.html|^layouts/partials/pages/overview/attention\.html|^layouts/partials/pages/downloads/table\.html|^layouts/partials/pages/styleguide/(foundations|tables|controls|stats|charts)\.html'
 
 # ---------------------------------------------------------------- separators and values
 # No glyph separators anywhere: not in markup, strings, comments, front matter or scripts. Separate items with layout (flex gap,
@@ -147,8 +157,10 @@ for my $ch (split //, $css) {
         $bad = 1 if $p eq 'font-style' and $v eq 'italic';
         # numerals are set in three places only: body (proportional lining figures), form controls (inherit), and the one
         # rule that makes numeric value components tabular (it starts with .v-val:not([data-kind="date"] ...)
+        # and the one exception to it: a standalone display or heading value (a metric tile from 40rem, a chart readout) is
+        # proportional, because it sits in no digit column
         $bad = 1 if $p eq 'font-variant-numeric' and $sel !~ /(^|\s)body$/ and $sel !~ /button, input, select, textarea$/
-                    and $sel !~ /\.v-val:not\(\[data-kind="date"\]/;
+                    and $sel !~ /\.v-val:not\(\[data-kind="date"\]/ and $sel !~ /\.v-(metric|readout)-value > \.v-val$/;
         print "type\t$at\n" if $bad;
         if ($p =~ /^(margin|padding|gap|row-gap|column-gap)(-[a-z-]+)?$/) {
           my $off = 0;

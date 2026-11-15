@@ -8,10 +8,8 @@
        repos       the Repository options [{value (slug), label, count}] (org only).
        views       true adds the view tabs; drafts are decided by GitHub's draft state, never by a label.
        labelledby  the id of the section title.
-     Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, PR, then the time column: "Waiting"
-     on /pulls/ (every row waits for a first review), "Age" on a list with views (the same days since opening; a draft is not waiting).
-     Default sort: that column,
-     descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
+     Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, PR, Age (days since opening: the one
+     header for that number on every list, true in every view). Default sort: Age, descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default "pq" -}}
 {{- $org := eq $c.org true -}}
@@ -47,14 +45,9 @@
         {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
         {{- end }}
         {{ partial "ui/th.html" (dict "label" "PR") }}
-        {{- /* a list with views holds drafts too, and a draft is not waiting for a review: its time column is the PR's age */ -}}
-        {{- if $views }}
+        {{- /* one header for days since opening on every list: "Age" is true in every view (a draft is not waiting for a review) */}}
         {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the PR opened."
             "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
-        {{- else }}
-        {{ partial "ui/th.html" (dict "label" "Waiting" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the PR opened."
-            "sort" (dict "key" "waiting" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
-        {{- end }}
       </tr></thead>
       <tbody>
         {{- range $i, $row := $review }}

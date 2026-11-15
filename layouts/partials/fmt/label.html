@@ -12,6 +12,8 @@
     then the number of periods),
     "Complete weeks, last 52 weeks, each row on its own scale", "Daily, since Nov 10" (since replaces the window).
   bucket: "active30" | "idle30" | "idle60" | "idle90", the last-activity parts.
+  reading: "week-end" ("End of week": the header sub line of a value column in a chart's table view when a daily level is shown
+    as weeks; charts.js prints the same phrase). Output key: reading.
   scope: "Issues" or "PRs", the spanner a record line has to carry below 64rem.
   Outputs: main and sub are a column header and its sub line (the sub line is the window, else the base); text is a tile or stat-list
     label ("Merged, last 7 days", "Waiting for a reply, any age"); qual is a tile qualifier ("last 7 days", "over 7 days"); record is
@@ -58,6 +60,12 @@
   {{- $bucket = index (dict "active30" "Active in the last 30 days" "idle30" "Idle 30–59 days" "idle60" "Idle 60–89 days" "idle90" "Idle 90 days or more") . | default "" -}}
   {{- if not $bucket }}{{ errorf "fmt/label: unknown bucket %q (design system v4 3.2)" . }}{{ end -}}
 {{- end -}}
+{{- /* reading: which reading of a period a value is, the sub line of a value column when a daily level is shown as weeks */ -}}
+{{- $reading := "" -}}
+{{- with $c.reading -}}
+  {{- $reading = index (dict "week-end" "End of week") . | default "" -}}
+  {{- if not $reading }}{{ errorf "fmt/label: unknown reading %q (design system v4 3.2)" . }}{{ end -}}
+{{- end -}}
 {{- $lowWindow := "" }}{{ with $window }}{{ $lowWindow = printf "%s%s" (lower (substr . 0 1)) (substr . 1) }}{{ end -}}
 {{- /* one comma grammar everywhere (3.6): a window, "any age" and "answered only" follow a comma; "over 7 days" joins directly */ -}}
 {{- $text := $main -}}
@@ -84,4 +92,4 @@
 {{- with $c.record }}{{ $record = . }}{{ end -}}
 {{- if and (not $main) $bucket }}{{ $main = $bucket }}{{ $text = $bucket }}{{ $record = $bucket }}{{ end -}}
 {{- return dict "main" $main "sub" $sub "text" $text "record" $record "qual" $qual "window" $window "threshold" $threshold
-  "base" $base "cadence" $cadence "bucket" $bucket -}}
+  "base" $base "cadence" $cadence "bucket" $bucket "reading" $reading -}}

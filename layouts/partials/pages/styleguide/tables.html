@@ -75,13 +75,13 @@
           {{ partial "ui/group-row.html" (dict "label" "Proposal" "count" 2 "cols" 4 "id" "sg-sep-proposal") }}
           <tr data-row data-row-link data-facets="needs-sponsor wg">
             {{ partial "ui/row-item.html" (dict "title" "Namespaces for tools" "href" "https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1913" "id" "SEP-1913" "author" "proposal-author" "attrs" (slice "Needs working group") "tags" (slice "proposal")) }}
-            <td class="v-c-who" data-v="0">{{ partial "ui/badge.html" (dict "text" "Needs sponsor" "tone" "action") }}</td>
+            {{ partial "pages/seps/sponsor.html" (dict "r" (dict "needsSponsor" true "sponsorKind" "none")) }}
             <td class="num v-c-num" data-v="12">{{ partial "ui/value.html" (dict "kind" "dur" "d" 12 "unit" "d" "compact" true) }}</td>
             <td class="num" data-v="351">{{ partial "ui/value.html" (dict "kind" "dur" "d" 351 "unit" "d" "compact" true) }}</td>
           </tr>
           <tr data-row data-row-link>
             {{ partial "ui/row-item.html" (dict "title" "Server identity" "href" "https://github.com/modelcontextprotocol/modelcontextprotocol/issues/2028" "id" "SEP-2028" "author" "second-author") }}
-            <td class="v-c-who" data-v="2">{{ partial "ui/badge.html" (dict "text" "Self-sponsored" "tone" "neutral") }}</td>
+            {{ partial "pages/seps/sponsor.html" (dict "r" (dict "sponsorKind" "self")) }}
             <td class="num v-c-num" data-v="3">{{ partial "ui/value.html" (dict "kind" "dur" "d" 3 "unit" "d" "compact" true) }}</td>
             <td class="num" data-v="40">{{ partial "ui/value.html" (dict "kind" "dur" "d" 40 "unit" "d" "compact" true) }}</td>
           </tr>
@@ -90,13 +90,13 @@
           {{ partial "ui/group-row.html" (dict "label" "In review" "count" 2 "cols" 4 "id" "sg-sep-in-review") }}
           <tr data-row data-row-link>
             {{ partial "ui/row-item.html" (dict "title" "Structured tool output" "href" "https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1730" "id" "SEP-1730" "author" "third-author") }}
-            <td class="v-c-who" data-v="3"><span class="v-who">dsp-ant</span></td>
+            {{ partial "pages/seps/sponsor.html" (dict "r" (dict "sponsorKind" "handle" "sponsor" "dsp-ant")) }}
             <td class="num v-c-num" data-v="1">{{ partial "ui/value.html" (dict "kind" "dur" "d" 1 "unit" "d" "compact" true) }}</td>
             <td class="num" data-v="294">{{ partial "ui/value.html" (dict "kind" "dur" "d" 294 "unit" "d" "compact" true) }}</td>
           </tr>
           <tr data-row data-row-link>
             {{ partial "ui/row-item.html" (dict "title" "Elicitation defaults" "href" "https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1800" "id" "SEP-1800" "author" "fourth-author") }}
-            <td class="v-c-who" data-v="1">{{ partial "ui/badge.html" (dict "text" "No sponsor" "tone" "neutral") }}</td>
+            {{ partial "pages/seps/sponsor.html" (dict "r" (dict "sponsorKind" "none")) }}
             <td class="num v-c-num" data-v="0">{{ partial "ui/value.html" (dict "kind" "dur" "h" 5 "unit" "d" "compact" true) }}</td>
             <td class="num" data-v="171">{{ partial "ui/value.html" (dict "kind" "dur" "d" 171 "unit" "d" "compact" true) }}</td>
           </tr>
@@ -159,30 +159,22 @@
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, share mode" "sub" "Last 30 days") }}
-      <table class="v-dt is-rank is-list" data-numw="3" aria-label="Versions in use, fixture">
-        <colgroup><col><col class="v-col-num"><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Version") }}{{ partial "ui/th.html" (dict "label" "Downloads" "num" true) }}{{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar") }}</tr></thead>
-        <tbody>
-          {{- range slice (slice "1.30.0" 25600000 29 true) (slice "1.29.2" 14100000 16 false) (slice "1.28.0" 1700000 2 false) (slice "Other versions" 0 0 false) }}
-          <tr><th scope="row" class="v-name">{{ if eq (index . 0) "Other versions" }}<span>{{ index . 0 }}</span>{{ else }}<span class="v-name-line">{{ partial "ui/value.html" (dict "kind" "ver" "v" (index . 0)) }}{{ if index . 3 }}{{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}{{ end }}</span>{{ end }}</th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" (index . 1)) }}</td>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 2) "max" 100 "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "v" (index . 2)) }}</span></td></tr>
-          {{- end }}
-        </tbody>
-      </table>
+    {{- /* rank tables are ui/rank-table.html here as on the pages: share mode with a zero row (the empty track), rank mode with a
+         directory, the repository root and a zero row (the number alone in its slot) */}}
+    {{- $sgShare := slice }}
+    {{- range slice (slice "1.30.0" 25600000 true) (slice "1.29.2" 14100000 false) (slice "1.28.0" 1700000 false) }}
+      {{- $sgShare = $sgShare | append (dict "name" (dict "ver" (index . 0) "latest" (index . 2)) "cells" (slice (dict "kind" "volume" "v" (index . 1)) (dict "kind" "share" "part" (index . 1) "whole" 88200000 "bar" (index . 1)))) }}
+    {{- end }}
+    {{- $sgShare = $sgShare | append (dict "name" "Other versions" "cells" (slice (dict "kind" "volume" "v" 0) (dict "kind" "share" "v" 0 "bar" 0))) }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, share mode" "id" "sg-rank-share" "sub" (partial "fmt/label.html" (dict "window" (dict "n" 30 "unit" "day"))).window) }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-rank-share" "numw" 3 "rows" $sgShare "head" (slice (dict "label" "Version") (dict "label" "Downloads") (dict "label" "Share" "bar" "share" "max" 88200000 "record" "Share of downloads"))) }}
     </article>
-    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, rank mode" "sub" "Last 90 days") }}
-      <table class="v-dt is-rank is-list" data-numw="2" aria-label="Files, fixture">
-        <colgroup><col><col class="v-col-bar"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "File") }}{{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "class" "v-c-bar") }}</tr></thead>
-        <tbody>
-          {{- range slice (slice "src/client/streamableHttp.ts" 24 false) (slice "docs/migration/upgrade-to-v2.md" 12 false) (slice "src/server" 7 true) (slice "" 0 true) }}
-          <tr><th scope="row" class="v-name">{{ partial "ui/value.html" (dict "kind" "path" "v" (index . 0) "dir" (index . 2)) }}</th>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 24 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 1)) }}</span></td></tr>
-          {{- end }}
-        </tbody>
-      </table>
+    {{- $sgRank := slice }}
+    {{- range slice (slice "src/client/streamableHttp.ts" 24 false) (slice "docs/migration/upgrade-to-v2.md" 12 false) (slice "src/server" 7 true) (slice "" 0 true) }}
+      {{- $sgRank = $sgRank | append (dict "name" (dict "path" (index . 0) "dir" (index . 2)) "cells" (slice (dict "kind" "count" "v" (index . 1) "bar" (index . 1)))) }}
+    {{- end }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Rank table, rank mode" "id" "sg-rank-rank" "sub" (partial "fmt/label.html" (dict "window" (dict "n" 90 "unit" "day"))).window) }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" "sg-rank-rank" "numw" 2 "rows" $sgRank "head" (slice (dict "label" "File") (dict "label" "Merged PRs" "bar" "rank"))) }}
     </article>
     {{- /* a period table (4.14, 5.8 module 4): measures as rows and the windows as columns, a kept table, so it stays a table
          below 64rem; a 6 + 6 pair with three rows each */}}
@@ -197,15 +189,7 @@
         (dict "name" "Merged" "cells" (slice (dict "kind" "count" "v" 1) (dict "kind" "count" "v" 19) (dict "kind" "count" "v" 104)))
         (dict "name" "Closed without merging" "cells" (slice (dict "kind" "count" "reason" "tracked-90") (dict "kind" "count" "reason" "tracked-90") (dict "kind" "count" "v" 155))))) }}
     <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" .title "id" .id) }}
-      <table class="v-dt is-keep" aria-labelledby="{{ .id }}">
-        <colgroup><col><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
-        <thead><tr>{{ partial "ui/th.html" (dict "label" "Measure") }}{{ range $sgWins }}{{ partial "ui/th.html" (dict "label" .label "short" .short "num" true) }}{{ end }}</tr></thead>
-        <tbody>
-          {{- range .rows }}
-          <tr>{{ partial "ui/name-cell.html" (dict "name" .name) }}{{ range .cells }}<td class="num">{{ partial "ui/value.html" . }}</td>{{ end }}</tr>
-          {{- end }}
-        </tbody>
-      </table>
+      {{ partial "ui/keep-table.html" (dict "labelledby" .id "head" (slice (dict "label" "Measure") | append $sgWins) "rows" .rows) }}
     </article>
     {{- end }}
 

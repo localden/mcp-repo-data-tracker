@@ -10,7 +10,7 @@
     attr             a derived attribute ("Touches auth", "SEP draft", "Latest", "Duplicate of #1813", "SEP-1730", "Team target")
     flag             a 12px circle-alert before the text ("Type conflict", the conflicting labels in title)
   Row tags only (ui/row-item.html): extra: true marks a label past the second (data-extra: shown below 64rem, where the tag line
-  wraps); only: "wide" or "narrow" keeps a +N tag to one side of 64rem (data-only).
+  wraps); only: "wide" or "narrow" keeps a +N tag to one side of 64rem (data-fold; never an attribute whose name after "data-" starts with "on": Go templates escape those as script).
   A slice of either renders each tag inside one span.v-tags. Empty text renders nothing. */ -}}
 {{- $c := . -}}
 {{- if reflect.IsSlice $c -}}
@@ -22,7 +22,7 @@
   {{- with $c.text -}}
     {{- $t := string . -}}
     {{- $strong := or (and (eq $kind "prio") (in (slice "P0" "P1") $t)) (eq $c.strong true) -}}
-    <span class="v-tag is-{{ $kind }}{{ if $strong }} is-strong{{ end }}"{{ if $c.extra }} data-extra{{ end }}{{ with $c.only }} data-only="{{ . }}"{{ end }} title="{{ $c.title | default $t }}">
+    <span class="v-tag is-{{ $kind }}{{ if $strong }} is-strong{{ end }}"{{ if $c.extra }} data-extra{{ end }}{{ with $c.only }} data-fold="{{ . }}"{{ end }} title="{{ $c.title | default $t }}">
       {{- if eq $kind "flag" }}{{ partial "ui/icon.html" (dict "name" "circle-alert" "size" 12) }}{{ end -}}
       {{ $t }}</span>
   {{- end -}}

@@ -28,8 +28,12 @@
                            measure such as commits). Default: read from metric and unit.
     pin                    a slot index: opens the tooltip there on mount (styleguide only).
     class                  the grid span ("v-span-8", "v-span-6").
-  Too little history (fewer than 14 daily points or 4 weekly bins) renders the pending card: head without the switch, the readout
-  without keys, then the pending bar; 160px, and it never shares a row with a drawn chart or a stat list.
+  Too little history (fewer than 14 daily points or 4 weekly bins) renders the pending card: head without the switch, then the
+  pending bar; 120px, no readout (its figures are already in the strip above), and it never shares a row with a drawn chart or a
+  stat list.
+  The gap band is keyed "Data gap" in the notes row, the one term for it on every surface ("No data" is only the reason text of
+  an empty mark). A readout with several items states its date once: "As of" as a last item on the right from 40rem, a line
+  above the items on a phone.
   Sets the page's "charts" flag, so baseof.html loads Chart.js and charts.js only where a chart was rendered. */ -}}
 {{- $c := . -}}
 {{- range slice "band" "value" "caption" "foot" "cap_label" "reserve_sub" "size" "fill" "ticks" "current" "min_points" "level" -}}
@@ -98,6 +102,11 @@
 {{- $tall := and $d.canvas $c.tall (not $hasNotes) -}}
 {{- /* the as-of date of a level chart: on a phone it is stated once, above the items, so it reads as the date of all of them */ -}}
 {{- $asof := "" }}{{ range first 1 $items }}{{ if and .date (not .range) }}{{ $asof = .date }}{{ end }}{{ end -}}
+{{- /* several items: the date is no property of the first series. From 40rem it is one last item on the right ("As of" Nov 14);
+     a single item keeps its date after its value */ -}}
+{{- $asofItem := and $asof (gt (len $items) 1) $d.canvas -}}
+{{- /* a pending card is its head and the pending bar: the figures a readout would hold are already in the strip above it */ -}}
+{{- if not $d.canvas }}{{ $items = slice }}{{ end -}}
 {{- /* one outage, one range: a gap that overlaps the collection outage prints the outage's own dates at every cadence (the band
      still covers the missing bins). Registry data has its own gaps, so downloads charts keep theirs. */ -}}
 {{- $gap := dict }}{{ $gapTitle := "" -}}
@@ -107,7 +116,7 @@
     {{- $o := partial "data/outage.html" . -}}
     {{- if and (le (string $gap.from) $o.to) (ge (string $gap.to) $o.from) -}}
       {{- $gap = dict "from" $o.from "to" $o.to -}}
-      {{- $gapTitle = printf "No data, %s" (partial "fmt/range.html" (dict "from" $o.from "to" $o.to)).text -}}
+      {{- $gapTitle = "Collection outage" -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
@@ -129,13 +138,14 @@
     <div class="v-readout-item"><dt>
       {{- if and $d.canvas (ne $key "none") }}<span class="v-key {{ if or (eq $kind "line") (eq .keyform "line") }}is-line{{ else }}is-bar{{ end }} is-{{ $key }}" aria-hidden="true"></span>{{ end -}}
       {{ .label }}</dt><dd><span class="v-readout-value">{{ partial "ui/value.html" (.value | default (dict "kind" "na")) }}</span>
-      {{- if or .delta .range .date .base .note -}}
+      {{- $date := .date }}{{ if $asofItem }}{{ $date = "" }}{{ end -}}
+      {{- if or .delta .range $date .base .note -}}
       <span class="v-readout-meta">
         {{- with .delta }}{{ partial "ui/delta.html" . }}{{ end -}}
-        {{- if or .range .date .base -}}
-        <span class="v-readout-detail{{ if and .date (not .range) (not .base) }} is-asof{{ end }}">
+        {{- if or .range $date .base -}}
+        <span class="v-readout-detail{{ if and $date (not .range) (not .base) }} is-asof{{ end }}">
           {{- with .range }}{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}{{ end -}}
-          {{- with .date }}{{ partial "ui/value.html" (dict "kind" "date" "d" .) }}{{ end -}}
+          {{- with $date }}{{ partial "ui/value.html" (dict "kind" "date" "d" .) }}{{ end -}}
           {{- with .base }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end -}}
         </span>
         {{- end -}}
@@ -144,18 +154,21 @@
       {{- end -}}
     </dd></div>
     {{- end }}
+    {{- if $asofItem }}
+    <div class="v-readout-item is-asof"><dt>As of</dt><dd>{{ partial "ui/value.html" (dict "kind" "date" "d" $asof) }}</dd></div>
+    {{- end }}
   </dl>
   {{- end }}
   {{- if $d.canvas }}
   <div class="v-plot" id="{{ $id }}-plot" role="tabpanel" aria-labelledby="{{ $id }}-tab-chart">
-    <canvas id="{{ $id }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $c.scope | default "" }}" data-size="main" data-xaxis="on" data-polarity-key="{{ $d.polarity }}"{{ if ne $c.pin nil }} data-chart-pin="{{ $c.pin }}"{{ end }}{{ with $gapTitle }} data-gap-title="{{ . }}"{{ end }} data-series="{{ $d.json }}"></canvas>
+    <canvas id="{{ $id }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $c.scope | default "" }}" data-size="main" data-xaxis="on" data-polarity-key="{{ $d.polarity }}"{{ if ne $c.pin nil }} data-chart-pin="{{ $c.pin }}"{{ end }}{{ with $gapTitle }} data-gap-title="{{ . }}" data-gap-from="{{ $gap.from }}" data-gap-to="{{ $gap.to }}"{{ end }} data-series="{{ $d.json }}"></canvas>
   </div>
   <div class="v-chart-table" id="{{ $id }}-table" role="tabpanel" aria-labelledby="{{ $id }}-tab-table" tabindex="0" hidden></div>
   <p class="sr-only" aria-live="polite" data-chart-live></p>
   {{- if or $hasNotes (and $c.reserve_notes (not $tall)) }}
   <ul class="v-chart-notes">
     {{- if $d.gaps }}
-    <li><span class="v-key is-gap" aria-hidden="true"></span><span class="v-chart-note-label">No data</span>
+    <li><span class="v-key is-gap" aria-hidden="true"></span><span class="v-chart-note-label">Data gap</span>
       {{- if eq (len $d.gaps) 1 }}{{ partial "ui/value.html" (dict "kind" "range" "from" $gap.from "to" $gap.to) -}}
       {{- else }}{{ partial "ui/value.html" (dict "kind" "ratio" "part" $d.gapN "whole" (len $d.labels) "noun" (cond (eq $gran "week") "week" "day")) }}{{ end -}}
     </li>

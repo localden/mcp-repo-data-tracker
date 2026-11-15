@@ -1,17 +1,17 @@
 {{- /* PR status vocabulary (design system v4 4.11): the one source of PR status labels. Replaces pages/pulls/state-label.html.
-  Call with a classifier state ("needs-first-review") or a status key ("needs-review"): returns {key, label, tone, tip, order}.
+  Call with a classifier state ("needs-first-review") or a status key ("needs-review"): returns {key, label, tone, icon, tip, order} (icon: the lead ui/badge.html draws in place of the tone dot, so the statuses of one view are told apart: eye for a review, circle-help for a decision, git-branch for a duplicate or backport, check for ready to merge).
   An unknown state falls back to {the humanized slug, "neutral", "", 99}. Call with "*" for the whole vocabulary as an ordered slice
   (the styleguide, the Status filter options and the Status sort order use it; each entry also carries its classifier states).
   key is the status key of the URL facet (?status=needs-review) and of the row's data-facets token "status:needs-review".
   order is the workflow order: sort a Status column by it (data-v), never by the alphabet. tip is the definition (the badge title,
   also in Data notes), never a per-row sentence. Render with ui/badge.html. */ -}}
 {{- $rows := slice
-  (dict "key" "needs-review" "label" "Needs review" "tone" "action" "tip" "No maintainer has reviewed this PR yet." "states" (slice "needs-first-review" "maintainer-intake" "community-reviewed"))
-  (dict "key" "needs-re-review" "label" "Needs re-review" "tone" "action" "tip" "The author responded to a review and is waiting for a maintainer to look again." "states" (slice "needs-re-review" "author-pinged-after-procedural"))
-  (dict "key" "needs-decision" "label" "Needs decision" "tone" "action" "tip" "A maintainer has to decide whether this change is wanted." "states" (slice "needs-decision"))
-  (dict "key" "duplicate" "label" "Duplicate" "tone" "action" "tip" "Several open PRs make the same change and a maintainer has to pick one." "states" (slice "duplicate-cluster" "duplicate-cluster-member"))
-  (dict "key" "backport" "label" "Backport" "tone" "action" "tip" "A backport that follows its primary PR." "states" (slice "backport-follows-primary"))
-  (dict "key" "ready-to-merge" "label" "Ready to merge" "tone" "action" "tip" "Approved and passing: a maintainer can merge it." "states" (slice "needs-merge"))
+  (dict "key" "needs-review" "label" "Needs review" "tone" "action" "icon" "eye" "tip" "No maintainer has reviewed this PR yet." "states" (slice "needs-first-review" "maintainer-intake" "community-reviewed"))
+  (dict "key" "needs-re-review" "label" "Needs re-review" "tone" "action" "icon" "eye" "tip" "The author responded to a review and is waiting for a maintainer to look again." "states" (slice "needs-re-review" "author-pinged-after-procedural"))
+  (dict "key" "needs-decision" "label" "Needs decision" "tone" "action" "icon" "circle-help" "tip" "A maintainer has to decide whether this change is wanted." "states" (slice "needs-decision"))
+  (dict "key" "duplicate" "label" "Duplicate" "tone" "action" "icon" "git-branch" "tip" "Several open PRs make the same change and a maintainer has to pick one." "states" (slice "duplicate-cluster" "duplicate-cluster-member"))
+  (dict "key" "backport" "label" "Backport" "tone" "action" "icon" "git-branch" "tip" "A backport that follows its primary PR." "states" (slice "backport-follows-primary"))
+  (dict "key" "ready-to-merge" "label" "Ready to merge" "tone" "action" "icon" "check" "tip" "Approved and passing: a maintainer can merge it." "states" (slice "needs-merge"))
   (dict "key" "has-conflicts" "label" "Has conflicts" "tone" "waiting" "tip" "Approved, but it no longer merges cleanly: the author has to update it." "states" (slice "approved-rotted"))
   (dict "key" "waiting-on-author" "label" "Waiting on author" "tone" "waiting" "tip" "A maintainer asked for changes and the author has the next step." "states" (slice "awaiting-author" "stale-awaiting-author"))
   (dict "key" "ci-failing" "label" "CI failing" "tone" "waiting" "tip" "Checks fail and the author has the next step." "states" (slice "ci-red-silent" "stale-ci-abandoned" "bot-broke-ci"))

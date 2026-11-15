@@ -28,7 +28,7 @@
 
 {{- /* last 7 days, and its change */ -}}
 {{- $l7 := partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day")) -}}
-{{- $t7 := "Downloads over the 7 complete days every package shares." -}}
+{{- $t7 := "The 7 complete days ending on the newest day that every SDK package has reached. It can end before this registry's own Complete through day." -}}
 {{- if ne $d.dl7 nil -}}
   {{- $rows = $rows | append (dict "label" $l7.window "title" $t7 "value" (dict "kind" "volume" "v" $d.dl7) "detail" (dict "range" (dict "from" $d.from "to" $d.end))) -}}
   {{- if ne $d.prev7 nil -}}
@@ -80,7 +80,7 @@
   {{- end -}}
   {{- $rows = $rows | append $it -}}
 {{- end -}}
-{{- with $d.complete_through }}{{ $rows = $rows | append (dict "label" "Complete through" "title" "The last complete day this registry has reported." "value" (dict "kind" "date" "d" .)) }}{{ end -}}
+{{- with $d.complete_through }}{{ $rows = $rows | append (dict "label" "Complete through" "title" "The last complete day this registry has reported. The last 7 days end on the newest day every SDK package has reached, which can be earlier." "value" (dict "kind" "date" "d" .)) }}{{ end -}}
 
 {{- /* no complete week yet, though days exist: say so instead of "No data collected yet" */ -}}
 {{- $pending := "" }}{{ if and (eq (int $w.n) 0) (gt (int ($d.days_total | default 0)) 0) }}{{ $pending = "Too few complete weeks to draw a trend" }}{{ end -}}

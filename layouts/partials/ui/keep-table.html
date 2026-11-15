@@ -1,0 +1,38 @@
+{{- /* Kept table (design system v4 4.14): a matrix of a few short numeric columns that stays a table below 64rem, so its rows stay
+  comparable on a phone (a period table built with measures as rows: "Opened and closed" on a repository page). The one way to
+  draw a plain table.v-dt.is-keep; ui/waiting-table.html and ui/sla-table.html are its two specialised forms. Emits the table; the
+  card and its head belong to the caller.
+  Dict {id, labelledby, label, col, head, rows}.
+    id, labelledby, label   the table id; the id of the card title, or an aria-label.
+    col     the width token of every value column without its prefix (default "num").
+    head    the columns. The first names the name column: {label}. Each other one is {label, short, title, sub}: ui/th.html
+            arguments. short is the header shown below 64rem, and from 64rem to 80rem inside a 6-column card, where the value
+            columns narrow to 5rem so the name keeps its width ("7 days" for "Last 7 days"). At most three value columns.
+    rows    slice of {name, cells}: name is a string or a ui/name-cell.html dict; cells is one ui/value.html dict per value
+            column (a missing value is {kind, reason}: the empty mark with its reason).
+  Rows have a fixed order and no sort. Two kept tables in a 6 + 6 pair pass the same number of rows. */ -}}
+{{- $c := . -}}
+{{- $head := $c.head | default slice -}}
+{{- $h0 := dict }}{{ range first 1 $head }}{{ $h0 = . }}{{ end -}}
+{{- $cols := after 1 $head -}}
+{{- $col := $c.col | default "num" -}}
+{{- if gt (len $cols) 3 }}{{ warnf "ui/keep-table %q: %d value columns; a kept table shows at most three below 64rem (design system v4 4.14)" ($c.id | default "") (len $cols) }}{{ end -}}
+<table class="v-dt is-keep"{{ with $c.id }} id="{{ . }}"{{ end }}{{ if $c.labelledby }} aria-labelledby="{{ $c.labelledby }}"{{ else }}{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ end }}>
+  <colgroup><col>{{ range $cols }}<col class="v-col-{{ $col }}">{{ end }}</colgroup>
+  <thead><tr>
+    {{ partial "ui/th.html" (dict "label" $h0.label "title" $h0.title) }}
+    {{- range $cols }}
+    {{ partial "ui/th.html" (dict "label" .label "short" .short "title" .title "sub" .sub "num" true) }}
+    {{- end }}
+  </tr></thead>
+  <tbody>
+    {{- range $c.rows }}
+    <tr>
+      {{ partial "ui/name-cell.html" (cond (reflect.IsMap .name) .name (dict "name" .name)) }}
+      {{- range .cells }}
+      <td class="num">{{ partial "ui/value.html" . }}</td>
+      {{- end }}
+    </tr>
+    {{- end }}
+  </tbody>
+</table>

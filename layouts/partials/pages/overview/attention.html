@@ -2,11 +2,13 @@
   passed. Two table cards, each at 12. Context: the page.
   "Waiting by repository": ui/waiting-table.html (the kept table, also the styleguide's specimen), fed one row per repository:
     data/waiting.html .over7 for issues and PRs, the overdue sum and the author-waiting count of pages/overview/overdue.html.
-  "Overdue by rule": classified repositories only, in repos.json order, no sort. One column per rule under the spanners "Issues"
-    (Triage, P0 bug, P1 bug) and "PRs" (First review, Re-review, Maintainer PR); names and titles from data/sla-rules.html. Each cell
-    is the overdue count as a cell link to the rule's drill URL; zero is 0; a rule without a count is the empty mark with its reason.
-    A column whose every cell would be the empty mark is omitted (4.14 rule 8). Below 64rem its rows are records; on a phone five
-    show, then the list foot, like "Backlog and activity" under it.
+  "Overdue by rule": classified repositories only. One column per rule under the spanners "Issues" (Triage, P0 bug, P1 bug) and
+    "PRs" (First review, Re-review, Maintainer PR), every one the same width (v-col-num), so six counts of one kind are evenly
+    spaced; names and titles from data/sla-rules.html. Every column sorts, like the two repository tables around it; the default
+    sort is the first rule column, descending (a visible column). Each cell is the overdue count as a cell link to the rule's
+    drill URL; zero is 0; a rule without a count is the empty mark with its reason and sorts last. A column whose every cell
+    would be the empty mark is omitted (4.14 rule 8). Below 64rem its rows are records; on a phone five show, then the list
+    foot, like "Backlog and activity" under it.
   Which repositories are classified, and the deadlines, are in Data notes (layouts/index.html). */ -}}
 {{- $rows := slice }}{{ $wrows := slice -}}
 {{- range site.Data.repos.repositories -}}
@@ -28,12 +30,12 @@
 {{- $ruleRows := slice }}{{ range . }}{{ if or .o.iss .o.cls }}{{ $ruleRows = $ruleRows | append . }}{{ end }}{{ end -}}
 {{- $cols := slice }}{{ $nI := 0 }}{{ $nP := 0 -}}
 {{- range $def := slice
-    (dict "key" "triage" "col" "v-col-num-sm" "base" "issues")
-    (dict "key" "p0" "col" "v-col-num-sm" "base" "issues")
-    (dict "key" "p1" "col" "v-col-num-sm" "base" "issues")
-    (dict "key" "first-review" "col" "v-col-num-lg" "base" "pulls")
+    (dict "key" "triage" "col" "v-col-num" "base" "issues")
+    (dict "key" "p0" "col" "v-col-num" "base" "issues")
+    (dict "key" "p1" "col" "v-col-num" "base" "issues")
+    (dict "key" "first-review" "col" "v-col-num" "base" "pulls")
     (dict "key" "re-review" "col" "v-col-num" "base" "pulls")
-    (dict "key" "maintainer-pr" "col" "v-col-num-lg" "base" "pulls") -}}
+    (dict "key" "maintainer-pr" "col" "v-col-num" "base" "pulls") -}}
   {{- $any := false -}}
   {{- range $ruleRows }}{{ if ne (index .o.rules $def.key) nil }}{{ $any = true }}{{ end }}{{ end -}}
   {{- if $any -}}
@@ -41,6 +43,16 @@
     {{- $cols = $cols | append (merge $def (dict "rule" $rule "record" (delimit (slice $rule.name "overdue") " "))) -}}
     {{- if eq $def.base "issues" }}{{ $nI = add $nI 1 }}{{ else }}{{ $nP = add $nP 1 }}{{ end -}}
   {{- end -}}
+{{- end }}
+{{- /* default sort: the first rule column, descending; a repository without that count goes last */ -}}
+{{- $k0 := "" }}{{ range first 1 $cols }}{{ $k0 = .key }}{{ end -}}
+{{- if $k0 -}}
+  {{- $keyed := slice -}}
+  {{- range $ruleRows -}}
+    {{- $k := -1.0 }}{{ $v := index .o.rules $k0 }}{{ if ne $v nil }}{{ $k = float $v }}{{ end -}}
+    {{- $keyed = $keyed | append (dict "o" .o "r" .r "k" $k) -}}
+  {{- end -}}
+  {{- $ruleRows = sort $keyed "k" "desc" -}}
 {{- end }}
 <section class="v-section" aria-labelledby="needs-attention">
   {{ partial "ui/section-head.html" (dict "id" "needs-attention" "title" "Needs attention"
@@ -59,9 +71,12 @@
             {{- if gt $nP 0 }}<th class="v-span" colspan="{{ $nP }}" scope="colgroup"><span>PRs</span></th>{{ end }}
           </tr>
           <tr>
-            {{ partial "ui/th.html" (dict "label" "Repository") }}
-            {{- range $cols }}
-            {{ partial "ui/th.html" (dict "label" .rule.name "num" true "title" .rule.title "record" .record) }}
+            {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+            {{- range $ci, $col := $cols }}
+            {{- $th := dict "label" $col.rule.name "num" true "title" $col.rule.title "record" $col.record
+                "sort" (dict "key" $col.key "type" "num" "desc" (print (string $col.rule.name) ", most overdue first") "asc" (print (string $col.rule.name) ", fewest overdue first")) -}}
+            {{- if eq $ci 0 }}{{ $th = merge $th (dict "active" "descending") }}{{ end }}
+            {{ partial "ui/th.html" $th }}
             {{- end }}
           </tr>
         </thead>
@@ -73,7 +88,7 @@
             {{- range $col := $cols }}
             {{- $v := index $o.rules $col.key }}
             {{- $applies := cond (eq $col.base "issues") $o.iss $o.cls }}
-            <td class="num">
+            <td class="num" data-v="{{ if ne $v nil }}{{ printf "%.0f" (float $v) }}{{ end }}">
               {{- if eq $v nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" (cond $applies (index $o.reasons $col.key | default "not-computed") "not-classified")) -}}
               {{- else if eq $v 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
               {{- else }}<a class="v-cell-link" href="{{ printf "%s/%s/?view=all&overdue=1&rule=%s#queue" $col.base $r.repo $col.key | relURL }}"><span class="v-over">{{ partial "ui/value.html" (dict "kind" "count" "v" $v) }}</span><span class="sr-only"> {{ $col.record }}, {{ $r.name }}</span></a>{{ end -}}

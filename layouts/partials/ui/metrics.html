@@ -19,8 +19,11 @@
                  {kind "base", date}                 "vs Oct 7" (a level against a snapshot)
                  {kind "base", window "prior7"|"4w"} "vs prior 7 days" (a flow)
                  {kind "whole", n, of}               "of 239 open": a count that is part of a named whole
-                 {kind "ref", label, value {..}}     a pair (ui/pair.html), label left and value right under a hairline:
-                                                     "Oldest" 319d, "Typical week" 5, "Net change, last 30 days" +114
+                 {kind "ref", label, value {..}}     a pair (ui/pair.html), label left and value on the tile's right edge:
+                                                     "Oldest" 319d, "Typical week" 5, "Net change, last 30 days" +114.
+                                                     From 40rem every context of a strip that holds a pair sits under one
+                                                     hairline (a property of the strip, never of one tile); on a phone the
+                                                     pair is the tile's third line, under its own hairline
                  {kind "reason", reason, since}      a fmt/na.html reason, only with a missing value
       note     a ui/note.html dict, after the context or alone ({part 7, whole 9, noun "repository"}).
       points   weekly bins [{date, value, end}] for visual trend; flow: true draws columns (downloads). reason: "no-history" for a
@@ -32,9 +35,10 @@
                target (ui.js applies the view and filters in place). The value of a link tile equals the result count of the list it
                opens, computed from the same rows.
   Slots sit on shared rows (subgrid), so labels, values, contexts and visuals line up across the strip. A strip with fewer than two
-  tiles renders nothing. Below 40rem every strip is a column of rows: label over delta and context on the left, the value on the
-  right edge, and the link arrow in a fixed column after it (reserved on every row of a strip that has a link, so values share one
-  right edge). */ -}}
+  tiles renders nothing. Below 40rem every strip is a column of rows: label (body text-2 in both sizes, the size of a stat-list
+  label) over delta and context on the left, the value on the right edge, and the link arrow in a fixed column after it (reserved
+  on every row of a strip that has a link, so values share one right edge). A qualifier that joins without a comma ("over 7 days")
+  carries .is-over: on a phone it is the label's second line in every row of the strip. */ -}}
 {{- $c := . -}}
 {{- $tiles := $c.tiles | default slice -}}
 {{- $n := len $tiles -}}
@@ -78,7 +82,7 @@
         {{- else -}}
         <span class="v-metric-name">{{ $t.name }}</span>
         {{- end -}}
-        {{- with $qual }}<span class="v-metric-qual">{{ $sep }}{{ . }}</span>{{ end -}}
+        {{- with $qual }}<span class="v-metric-qual{{ if eq $sep " " }} is-over{{ end }}">{{ $sep }}{{ . }}</span>{{ end -}}
       </div>
       <div class="v-metric-value">
         {{- if $breach }}<span class="sr-only">Overdue </span>{{ end -}}

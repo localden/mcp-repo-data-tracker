@@ -42,6 +42,10 @@
   {{- if eq $kind "flow" }}{{ $to = ((time.AsTime $last).AddDate 0 0 6).Format "2006-01-02" -}}
   {{- else if $lastEnd }}{{ $to = $lastEnd -}}
   {{- else if and $asof (gt $asof $last) }}{{ $to = $asof }}{{ end -}}
+  {{- /* no date after the as-of day: a flow whose last week is not over ends on the as-of day (the caller's asof, else the site's
+       latest snapshot day), like the week of a chart tooltip */ -}}
+  {{- $cap := $asof | default (string (partialCached "ui/latest-date.html" "latest" "latest")) -}}
+  {{- if and $cap (gt $to $cap) (ge $cap $first) }}{{ $to = $cap }}{{ end -}}
 {{- end -}}
 {{- $title := "Trend available after 4 weeks of data" -}}
 {{- if eq .reason "no-history" }}{{ $title = "No history for this measure" -}}

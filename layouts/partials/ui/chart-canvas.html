@@ -84,9 +84,10 @@
   {{- $gapOut = $gapOut | append (dict "from" .from "to" $gt "n" .n) -}}
 {{- end -}}
 
-{{- /* holes: spans where one of two series has no value while the other has (3 or more days, or any week), closed by a later
-     value. charts.js joins the two readings with a 1px neutral connector, and the notes row keys it with the days it covers.
-     Shorter holes (one or two days) are bridged by the line itself. */ -}}
+{{- /* holes: spans where one of two series has no value while the other has (8 or more days, or any week), closed by a later
+     value. charts.js joins the two readings with a 1px connector in the context colour, and the notes row keys it with the days
+     it covers. Shorter holes (up to 7 days) are bridged by the line itself and need no key. */ -}}
+{{- $holeMin := cond (eq $gran "day") 8 1 -}}
 {{- $holes := slice -}}
 {{- if gt (len $series) 1 -}}
   {{- range $i, $s := $series -}}
@@ -94,7 +95,7 @@
     {{- $hn := 0 }}{{ $run := 0 }}{{ $seen := false -}}
     {{- range $j, $d := $labels -}}
       {{- if ne (index $m $d) nil -}}
-        {{- if and $seen (ge $run $minRun) }}{{ $hn = add $hn $run }}{{ end -}}
+        {{- if and $seen (ge $run $holeMin) }}{{ $hn = add $hn $run }}{{ end -}}
         {{- $run = 0 }}{{ $seen = true -}}
       {{- else if $seen -}}
         {{- $other := false -}}
@@ -148,7 +149,7 @@
     {{- $bits = $bits | append (printf "%s %s" .label $vt) -}}
   {{- end }}{{ end -}}
   {{- with $bits }}{{ $aria = printf "%s Latest: %s." $aria (delimit . ", ") }}{{ end -}}
-  {{- range $gapOut }}{{ $aria = printf "%s No data %s." $aria (partial "fmt/range.html" (dict "from" .from "to" .to)).text }}{{ end -}}
+  {{- range $gapOut }}{{ $aria = printf "%s Data gap %s." $aria (partial "fmt/range.html" (dict "from" .from "to" .to)).text }}{{ end -}}
 {{- end -}}
 {{- return dict "labels" $labels "from" $from "to" $to "rows" $rows "canvas" $canvas "any" (gt $nMax 0) "first" $first
   "gaps" $gapOut "gapN" $gapN "holes" $holes "polarity" $pol "marks" $marks "rec" $rec "json" $json "aria" $aria "kind" $kind "unit" $unit "gran" $gran "metric" $metric -}}

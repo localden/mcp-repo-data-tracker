@@ -6,7 +6,10 @@
     3. Stages and pace  pages/seps/stages.html (8 + 4), the same call the Overview makes.
     4. Reached final    list card, no views, no filter bar.
   Data: pages/seps/data.html (seps.json, read once). Definitions and the label-hygiene sentence live in Data notes.
-  The grouped list shows every row: a first step would hide the later groups, and the In review and Accepted tiles link to them. */ -}}
+  From 64rem the grouped list shows every row. On a phone it opens with 10 rows and the list foot, like every other list, so
+  "Stages and pace" is not five screens down. The In review and Accepted tiles therefore link to the oldest row of their group
+  (the row their "Oldest" figure names), not to the group row: ui.js reveals a target row past the first step, and the group
+  row stands directly above it. */ -}}
 {{- $d := partialCached "pages/seps/data.html" "seps" "seps" -}}
 {{- $key := $d.key -}}
 {{- $meta := slice (dict "icon" "github" "text" $key "href" (printf "https://github.com/%s" $key) "site" "GitHub") -}}
@@ -73,7 +76,9 @@
 {{- range slice (dict "g" $gReview "name" "In review" "title" $defReview) (dict "g" $gAccepted "name" "Accepted" "title" $defAccepted) -}}
   {{- $t := dict "name" .name "title" .title "value" (dict "kind" "count" "v" .g.n) -}}
   {{- if gt .g.n 0 -}}
-    {{- $t = merge $t (dict "href" (printf "#%s" (cond $d.grouped .g.id "sep-list")) "drill" true) -}}
+    {{- $to := "sep-list" -}}
+    {{- range first 1 (.g.rows | default slice) }}{{ $to = printf "sep-%d" (int .num) }}{{ end -}}
+    {{- $t = merge $t (dict "href" (printf "#%s" $to) "drill" true) -}}
     {{- if ge .g.old_h 0.0 }}{{ $t = merge $t (dict "context" (dict "kind" "ref" "label" "Oldest" "value" (dict "kind" "dur" "unit" "d" "h" .g.old_h))) }}{{ end -}}
   {{- end -}}
   {{- $tiles = $tiles | append $t -}}
@@ -89,15 +94,14 @@
   {{ partial "ui/section-head.html" (dict "id" "open-seps" "title" "Open SEPs" "desc" "Open proposals grouped by stage, oldest first in each stage.") }}
   <div class="v-grid">
     {{- if $d.open }}
-    <article class="v-card is-list v-span-12" data-list id="sep-list" data-url data-limit="0" data-limit-phone="0" data-step="50" data-noun="SEPs" data-noun-one="SEP">
+    <article class="v-card is-list v-span-12" data-list id="sep-list" data-url data-limit="0" data-limit-phone="10" data-step="50" data-noun="SEPs" data-noun-one="SEP">
       {{ partial "ui/filterbar.html" (dict "id" "sep-list" "noun" "sep" "total" (len $d.open) "facets" (slice
           (dict "key" "needs-sponsor" "label" "Needs sponsor" "title" $defNeeds "count" $d.nNeeds)
           (dict "key" "wg" "label" "Needs working group" "title" $defWg "count" $d.nWg))) }}
       {{ partial "ui/list-band.html" (dict "id" "sep-list" "noun" "sep" "total" (len $d.open)) }}
       <table class="v-dt is-work is-list" id="sep-list-table" aria-labelledby="open-seps">
-        {{- /* the same column plan as "Reached final" below (its last column holds a date), so Sponsor and the two time columns
-             sit at the same x in both lists */}}
-        <colgroup><col><col class="v-col-who"><col class="v-col-num-lg"><col class="v-col-date"></colgroup>
+        {{- /* the column plan of 4.16 and of the styleguide specimen: Sponsor (who), Last activity (num-lg), Age (num-sm) */}}
+        <colgroup><col><col class="v-col-who"><col class="v-col-num-lg"><col class="v-col-num-sm"></colgroup>
         <thead><tr>
           {{ partial "ui/th.html" (dict "label" "SEP") }}
           {{ partial "ui/th.html" (dict "label" "Sponsor" "sort" (dict "key" "sponsor" "type" "order" "asc" "Sponsor, in workflow order")) }}
@@ -118,6 +122,8 @@
         {{- end }}{{ end }}
       </table>
       {{ partial "ui/list-empty.html" (dict "noun" "sep") }}
+      {{- /* the foot is hidden at first paint (limit = every row); ui.js shows it on a phone, where the first step is 10 */}}
+      {{ partial "ui/list-foot.html" (dict "list" "sep-list" "n" (len $d.open) "limit" (len $d.open)) }}
     </article>
     {{- else }}
     {{ partial "ui/empty.html" (dict "title" "No open SEPs" "body" "Every tracked proposal has been merged or closed.") }}

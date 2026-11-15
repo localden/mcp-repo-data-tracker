@@ -6,7 +6,7 @@
            the open items the rule applies to, as the whole "of {n} in scope". A strip is all or none (4.5): when any rule of the
            strip has no population, no tile carries a context. Breach tone; a zero stays neutral and is not a link. A tile above
            zero links to the rule's drill URL on the repository's Issues or PR page. The priority rules need priority labels on
-           the repository. The strip is left out when fewer than two rules have a count. The other rules are on the Issues and
+           the repository. A rule with nothing in scope is not a tile. The strip is left out when fewer than two rules remain. The other rules are on the Issues and
            PR pages.
   6 + 6    Two preview list cards under the pair rule: the same number of rows (at most 5), the longest waits first.
            "Issues waiting for a reply" and "PRs waiting for first review", each with a link-action that carries the count of the
@@ -41,6 +41,11 @@
   {{- if ne $elig nil }}{{ if ge (int $elig) $n }}{{ $spec = merge $spec (dict "whole" (int $elig)) }}{{ end }}{{ end -}}
   {{- $specs = $specs | append $spec -}}
 {{- end -}}
+{{- /* a rule with nothing in scope ("0 of 0 in scope": no open P0 bug) is not a tile: a tile never holds space for a fact that
+     does not exist. The rule keeps its row in the SLA rule table of the Issues or PR page. */ -}}
+{{- $scoped := slice -}}
+{{- range $specs }}{{ if not (and (ne .whole nil) (eq (int .whole) 0) (eq (int .v) 0)) }}{{ $scoped = $scoped | append . }}{{ end }}{{ end -}}
+{{- $specs = $scoped -}}
 {{- $allWhole := true }}{{ range $specs }}{{ if eq .whole nil }}{{ $allWhole = false }}{{ end }}{{ end -}}
 {{- $tiles := slice -}}
 {{- range $specs -}}

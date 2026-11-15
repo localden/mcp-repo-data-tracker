@@ -1,8 +1,8 @@
 {{- /* Backlog composition (design system v4 5.3 module 6, 4.21, 4.14). Ctx: dict {r (data/repo.html)}.
     6 + 6: the distribution card "Open issues by last activity" (metrics.json issues.open_count split by stale_30d, stale_60d and
-    stale_90d into four parts, zeros included) beside the table card "Labels on open issues", the same three facts in the same form as
-    "Versions in use" on Downloads: Label (as a tag), Open (the count), Share (of open issues: the share bar on its track, then the
-    percent, so the bar always draws the number beside it); five rows at rest, then the list foot.
+    stale_90d into four parts, zeros included) beside the table card "Labels on open issues", a rank table (5.3): Label (as a tag), Open (the
+    count, then its rank bar: the most used label is full width), Share (of open issues, a number). Labels overlap, so they are not
+    parts of one whole and the bar is never a share on a track. Five rows at rest, then the list foot.
     Labels: issues.by_label without the labels the queue already carries (type, priority and status labels), most used first, at
     most 10. With fewer than four labels the card is omitted and the distribution takes the row at 12 (its legend in two columns).
     The section is omitted when the repository has no last-activity counts. */ -}}
@@ -33,24 +33,18 @@
     {{- if $pair }}
     <article class="v-card is-list v-span-6" data-list id="il" data-limit="5" data-limit-phone="5" data-step="50" data-noun="labels" data-noun-one="label">
       {{ partial "ui/card-head.html" (dict "title" "Labels on open issues" "id" "il-title") }}
-      <table class="v-dt is-rank is-list" id="il-table" data-numw="4" aria-labelledby="il-title">
-        <colgroup><col><col class="v-col-num-sm"><col class="v-col-bar"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th.html" (dict "label" "Label") }}
-          {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open issues" "title" "Open issues that carry the label. An issue can carry several labels.") }}
-          {{ partial "ui/th.html" (dict "label" "Share" "num" true "class" "v-c-bar" "record" "Share of open issues" "title" "Share of all open issues.") }}
-        </tr></thead>
-        <tbody>
-          {{- range $i, $l := $labels }}
-          <tr data-row{{ if ge $i 5 }} data-over{{ end }}>
-            <th scope="row" class="v-name">{{ partial "ui/tag.html" (dict "text" $l.label) }}</th>
-            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $l.n) }}</td>
-            <td class="num v-c-bar">{{ if gt $open 0.0 }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $l.n "max" $open "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "part" $l.n "whole" $open) }}</span>{{ else }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") }}{{ end }}</td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
-      {{ partial "ui/list-foot.html" (dict "list" "il" "n" $nl "limit" 5) }}
+      {{- /* the table comes from ui/rank-table.html, the same call the styleguide makes */}}
+      {{- $rows := slice }}{{ $top := 0.0 }}
+      {{- range $labels }}
+        {{- if gt .n $top }}{{ $top = .n }}{{ end }}
+        {{- $share := dict "kind" "na" "reason" "no-data" }}{{ if gt $open 0.0 }}{{ $share = dict "kind" "share" "part" .n "whole" $open }}{{ end }}
+        {{- $rows = $rows | append (dict "name" (dict "tag" .label) "cells" (slice (dict "kind" "count" "v" .n "bar" .n) $share)) }}
+      {{- end }}
+      {{ partial "ui/rank-table.html" (dict "id" "il-table" "labelledby" "il-title" "numw" (len (partial "fmt/count.html" (dict "v" $top)).text)
+          "list" "il" "limit" 5 "rows" $rows "head" (slice
+          (dict "label" "Label")
+          (dict "label" "Open" "bar" "rank" "max" $top "record" "Open issues" "title" "Open issues that carry the label. An issue can carry several labels.")
+          (dict "label" "Share" "col" "num-sm" "record" "Share of open issues" "title" "Share of all open issues."))) }}
     </article>
     {{- end }}
   </div>

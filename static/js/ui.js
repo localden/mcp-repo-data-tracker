@@ -48,7 +48,7 @@
     if (!e.target.closest) return;
     var b = e.target.closest('[data-disclosure]'); if (b) { setDisclosure(b, b.getAttribute('aria-expanded') !== 'true'); return; }
     /* the Filters button below 64rem: the panel's visibility follows aria-expanded in CSS, so the facets stay visible from 64rem */
-    var f = e.target.closest('[data-facets-toggle]'); if (f) { f.setAttribute('aria-expanded', String(f.getAttribute('aria-expanded') !== 'true')); return; }
+    var f = e.target.closest('[data-facets-toggle], [data-notes-group]'); if (f) { f.setAttribute('aria-expanded', String(f.getAttribute('aria-expanded') !== 'true')); return; }
     /* the row expander of a duplicate cluster */
     var x = e.target.closest('[data-expander]');
     if (x) { x.setAttribute('aria-expanded', String(x.getAttribute('aria-expanded') !== 'true')); var L = listOf(x); if (L) L.apply(); else syncChildren(document); }
@@ -285,6 +285,7 @@
       }
       if (colB) colB.hidden = !expanded;
     }
+    this.showSort();
     this.syncSortLabel();
     this.swapRules();
     if (this.table) foldTags(this.table);
@@ -311,7 +312,20 @@
     return true;
   };
   /* A view never changes the table's columns: tabs switch piles, not grids. A view in which no row is overdue keeps the Overdue
-     header over empty cells, and its rows keep the server order (Overdue, then the primary time). */
+     header over empty cells, and its rows keep the server order (Overdue, then the primary time). The active indicator sits on
+     the column that orders the visible rows: when no visible row has a value in the sorted column, the arrow, aria-sort and the
+     sort button's label move to the list's primary time column (the tie-break, descending) and return when a view with values is
+     chosen. The stored sort and the URL do not change. */
+  List.prototype.showSort = function () {
+    var t = this.table; if (!t || !this.sort) return;
+    var th = t.querySelector('th[data-sort="' + esc(this.sort.key) + '"]'); if (!th) return;
+    var idx = th.cellIndex, heads = all('th[data-sort]', t), time = heads[heads.length - 1];
+    var shown = this.rows.filter(function (r) { return !r.hidden; });
+    var any = !shown.length || shown.some(function (r) { return r.cells[idx] && r.cells[idx].hasAttribute('data-v'); });
+    var on = any || !time ? th : time, dir = on === th ? (this.sort.dir === 'asc' ? 'ascending' : 'descending') : 'descending';
+    all('th[aria-sort]', t).forEach(function (h) { if (h !== on) h.removeAttribute('aria-sort'); });
+    on.setAttribute('aria-sort', dir);
+  };
 
   /* ---- sort: rows sort inside each tbody by the cell's data-v (else its text); cluster members follow their primary row */
   List.prototype.sortBy = function (key, dir, quiet) {
@@ -426,7 +440,7 @@
       var box = tagBox(r); if (!box) { r._folded = true; return; }
       if (box.offsetParent === null || box.clientWidth === 0) return;   /* not laid out yet: fold when the row is shown */
       var labels = all('.v-tag.is-label', box).filter(function (t) { return t.offsetParent !== null; });
-      var more = box.querySelector('.v-tag.is-more:not([data-only="narrow"])');
+      var more = box.querySelector('.v-tag.is-more:not([data-fold="narrow"])');
       if (!box._more0) box._more0 = more ? { text: more.textContent, title: more.getAttribute('title') || '' } : { text: '', title: '' };
       var n = parseInt(box._more0.text.replace(/\D/g, ''), 10) || 0, names = box._more0.title ? [box._more0.title] : [];
       while (labels.length && spills(box)) {
@@ -446,12 +460,24 @@
       if (box.parentElement) box.parentElement.classList.remove('is-tight');
       if (!box._more0) return;
       all('.v-tag[data-folded]', box).forEach(function (t) { t.hidden = false; t.removeAttribute('data-folded'); });
-      var more = box.querySelector('.v-tag.is-more:not([data-only="narrow"])'); if (!more) return;
+      var more = box.querySelector('.v-tag.is-more:not([data-fold="narrow"])'); if (!more) return;
       if (more.hasAttribute('data-made')) more.remove();
       else { more.textContent = box._more0.text; more.setAttribute('title', box._more0.title); }
     });
   }
-  function refold() { all('table.v-dt.is-work').forEach(function (t) { unfoldTags(t); foldTags(t); }); }
+  /* ---- a path that does not fit its cell gives way a whole directory segment at a time, leading segments first; the ellipsis
+     segment takes their place ("…/streamable/upgrade-to-v2.md"). From 64rem only: in list form the path wraps after a slash. */
+  function foldPaths() {
+    all('.v-path').forEach(function (p) {
+      var dir = p.querySelector('.v-path-dir'); if (!dir) return;
+      var segs = Array.prototype.filter.call(dir.children, function (s) { return !s.classList.contains('v-path-cut'); });
+      segs.forEach(function (s) { s.hidden = false; }); p.classList.remove('is-cut');
+      if (!wide.matches || dir.offsetParent === null) return;
+      function need() { var w = 0; Array.prototype.forEach.call(dir.children, function (s) { w += s.offsetWidth; }); return w; }
+      for (var k = 0; k < segs.length && need() > dir.clientWidth + 1; k++) { segs[k].hidden = true; p.classList.add('is-cut'); }
+    });
+  }
+  function refold() { all('table.v-dt.is-work').forEach(function (t) { unfoldTags(t); foldTags(t); }); foldPaths(); }
 
   /* ---- URL state (4.15): the first [data-list][data-url] owns the query string */
   List.prototype.writeURL = function (push) {
@@ -645,6 +671,7 @@
       requestAnimationFrame(function () { pending = false; refold(); });
     });
     all('table.v-dt.is-work').forEach(function (t) { ro.observe(t); });
+    all('.v-path').forEach(function (p) { var t = p.closest('table'); if (t && !widths.has(t)) { widths.set(t, -1); ro.observe(t); } });
   }
 
   /* ---- styleguide: each swatch prints its token's computed value (the active theme only) */

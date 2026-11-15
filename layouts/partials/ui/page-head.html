@@ -65,7 +65,10 @@
   {{- if reflect.IsMap . }}{{ $items = $items | append . -}}
   {{- else if hasPrefix (string .) "Tracking since" }}{{ if not $noteArg }}{{ $noteArg = dict "text" (string .) "tone" "info" }}{{ end }}{{ end -}}
 {{- end -}}
-{{- if $c.updated }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $c.updated)) -}}
+{{- /* one "Updated" item: a caller that places it itself in meta (Downloads: Updated, then Complete through) is not given a second */ -}}
+{{- $hasUpd := false }}{{ range $items }}{{ if eq (.label | default "") "Updated" }}{{ $hasUpd = true }}{{ end }}{{ end -}}
+{{- if $hasUpd -}}
+{{- else if $c.updated }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $c.updated)) -}}
 {{- else if ne $ghU 0 }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $ghT)) -}}
 {{- else if and $allThru $thru }}{{ $items = $items | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $thru)) -}}
 {{- else if $oldT }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $oldT)) }}{{ end -}}
@@ -82,14 +85,18 @@
     {{- $gapItems = $gapItems | append (dict "from" .from "to" .to "title" $t) -}}
   {{- end -}}
 {{- end -}}
-{{- if and (not $callout.items) $stale }}{{ $callout = dict "title" "Stale data" "items" $stale }}{{ end -}}
+{{- /* the callout has two titles, one per condition: "Registry delay" (a registry's data is more than 3 days old) and "Collection
+     stopped" (no GitHub data is arriving; the caller passes it) */ -}}
+{{- if and (not $callout.items) $stale }}{{ $callout = dict "title" "Registry delay" "items" $stale }}{{ end -}}
 
 {{- $noteList := slice -}}
 {{- if reflect.IsSlice $c.notes }}{{ $noteList = $c.notes }}{{ else if $c.notes }}{{ if not (reflect.IsMap $c.notes) }}{{ $noteList = slice $c.notes }}{{ end }}{{ end -}}
 {{- $defs := $c.defs | default slice -}}
 {{- $facts := $c.facts | default slice -}}
 {{- if reflect.IsMap $c.notes }}{{ with $c.notes.defs }}{{ $defs = . }}{{ end }}{{ with $c.notes.facts }}{{ $facts = . }}{{ end }}{{ with $c.notes.sentences }}{{ $noteList = . }}{{ end }}{{ end -}}
-{{- $hasNotes := or $srcs $gaps.runs $gaps.reconstructed $noteList $defs $facts $c.registries $c.coverage -}}
+{{- /* Data notes exists only where the page has definitions: a panel that would hold a Sources list alone is a card with content in
+     a quarter of its width, so it is not offered (the page's freshness is already in the meta row) */ -}}
+{{- $hasNotes := or $noteList $defs -}}
 <header class="v-page-head">
   {{- with $eyebrow }}
   <p class="v-eyebrow">{{ . }}</p>

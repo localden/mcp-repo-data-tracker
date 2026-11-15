@@ -76,6 +76,15 @@
       {{ partial "ui/filterbar.html" (dict "id" "sg-fb-search" "noun" "person" "total" 123) }}
       <div class="v-card-body"><p class="v-sg-cap">ui/filterbar.html with search only (People): the hint at rest, the result count; Clear filters appears left of the count while a search is active</p></div>
     </article>
+    {{- /* one or two facets (the org waiting lists, open SEPs): the chips share the search row from 64rem, so one checkbox never
+         takes a band of its own. Narrowed here, so the bordered Clear filters button and the "of" count are shown */}}
+    <article class="v-card v-span-12">
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-two" "noun" "pr" "total" 539 "matched" 505 "facets" (slice
+          (dict "key" "over7" "label" "Over 7 days" "title" "Waiting more than 7 days." "count" 505 "pressed" true)
+          (dict "key" "repo" "label" "Repository" "title" "Show the PRs of the chosen repositories." "kind" "select" "options" (slice
+            (dict "value" "typescript-sdk" "label" "TypeScript SDK" "count" 263) (dict "value" "python-sdk" "label" "Python SDK" "count" 81))))) }}
+      <div class="v-card-body"><p class="v-sg-cap">one or two facets: search, the chips, Clear filters and the count on one 52px row from 64rem (is-inline); below 64rem the chips are the Filters panel, as with any facet set</p></div>
+    </article>
     <article class="v-card v-span-12">
       {{ partial "ui/filterbar.html" (dict "id" "sg-fb-rest" "noun" "pr" "total" 288 "open" true "facets" (slice
         (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249)
@@ -184,13 +193,13 @@
       (dict "h" "bhosmer-ant" "maint" true "active" false) (dict "h" "ochafik" "maint" true "active" false)
       (dict "h" "a-contributor-with-a-very-long-handle-39" "maint" false "active" true) (dict "h" "dagangtj" "maint" false "active" true)
       (dict "h" "LucaButBoring" "maint" false "active" true) (dict "h" "techtoboggan" "maint" false "active" true)
-      (dict "h" "vrv" "maint" false "active" true) }}
+      (dict "h" "vrv" "maint" false "active" true) (dict "h" "pcarleton" "maint" false "active" true) }}
     <article class="v-card is-list v-span-12" data-list id="sg-people" data-limit="30" data-limit-phone="10" data-step="50" data-noun="people" data-noun-one="person">
       {{ partial "ui/tabs.html" (dict "id" "sg-people" "label" "Views" "panel" "sg-people-panel" "noun" "People" "selected" "all" "tabs" (slice
-          (dict "key" "maintainers" "label" "Maintainers" "count" 4) (dict "key" "contributors" "label" "Contributors" "count" 5) (dict "key" "all" "label" "All" "count" 9))) }}
+          (dict "key" "maintainers" "label" "Maintainers" "count" 4) (dict "key" "contributors" "label" "Contributors" "count" 6) (dict "key" "all" "label" "All" "count" 10))) }}
       <div role="tabpanel" id="sg-people-panel">
-        {{ partial "ui/filterbar.html" (dict "id" "sg-people" "noun" "person" "total" 9) }}
-        {{ partial "ui/list-band.html" (dict "id" "sg-people" "noun" "person" "total" 9) }}
+        {{ partial "ui/filterbar.html" (dict "id" "sg-people" "noun" "person" "total" 10) }}
+        {{ partial "ui/list-band.html" (dict "id" "sg-people" "noun" "person" "total" 10) }}
         <table class="v-dt is-roster" id="sg-people-table" role="table" aria-label="People, fixture">
           <tbody role="rowgroup">
             {{- range $sgPeople }}
@@ -204,7 +213,7 @@
           </tbody>
         </table>
         {{ partial "ui/list-empty.html" (dict "noun" "person") }}
-        {{ partial "ui/list-foot.html" (dict "list" "sg-people" "n" 9 "limit" 30) }}
+        {{ partial "ui/list-foot.html" (dict "list" "sg-people" "n" 10 "limit" 30) }}
       </div>
     </article>
     {{ partial "ui/empty.html" (dict "title" "No SEPs reached final" "body" "Nothing reached the final stage in this window." "class" "v-span-12") }}

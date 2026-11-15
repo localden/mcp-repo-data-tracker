@@ -1,35 +1,52 @@
 {{- /* Backlog trend (design system v4 5.3 module 4, 4.19, 4.6, 4.22). Ctx: dict {r (data/repo.html)}.
     8 + 4: the chart card "Open issues" (snapshots issues.open, daily, last 26 weeks; readout "Latest" with its date; the gap key in
-    the notes row) beside the stat list "Opened and closed", six rows, the same pattern as the PR list: Opened, Closed and Net change
-    over the last 30 days, then over the last 90 days (net change is opened minus closed, a plain signed value).
-    Short history (fewer than 14 daily points): the pending chart card at 12, then the stat list wide at 12. Six rows fill its two
-    columns (the wide form takes an even number of rows). */ -}}
+    the notes row) beside the stat list "Opened and closed", six rows in one order on every repository and at every width, measure
+    by measure, each over the last 30 and then the last 90 days: Opened, Closed, Net change (opened minus closed, a plain signed
+    value). The order is the source order and is never rearranged for a layout: wherever the list flows in two columns (a tablet,
+    the wide form) a row is one measure with its 30-day figure on the left and its 90-day figure on the right, and on a phone the
+    two windows of a measure are adjacent lines.
+    Short history (fewer than 14 daily points): one card at 12, the stat list wide, closed by the pending bar with the text the chart
+    card would show (4.22). The pending chart card is not rendered: it has no readout and never stands in a row of its own. */ -}}
 {{- $r := .r -}}
 {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ if reflect.IsMap . }}{{ $iss = . }}{{ end }}{{ end }}{{ end -}}
 {{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open") -}}
 {{- $drawn := ge (int $open.n) 14 -}}
 {{- $rows := slice -}}
-{{- range $w := slice 30 90 -}}
-  {{- $win := dict "n" $w "unit" "day" -}}
-  {{- $o := index $iss (printf "opened_%dd" $w) }}{{ $c := index $iss (printf "closed_%dd" $w) -}}
-  {{- $v := dict "kind" "net" "reason" "no-data" -}}
-  {{- if and (ne $o nil) (ne $c nil) }}{{ $v = dict "kind" "net" "v" (sub (float $o) (float $c)) }}{{ end -}}
-  {{- $rows = $rows | append
-    (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $win)).text "value" (dict "kind" "count" "v" $o))
-    (dict "label" (partial "fmt/label.html" (dict "metric" "Closed" "window" $win)).text "value" (dict "kind" "count" "v" $c))
-    (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $win)).text
-      "title" "Issues opened minus issues closed in the window." "value" $v) -}}
+{{- range $metric := slice "Opened" "Closed" "Net change" -}}
+  {{- range $w := slice 30 90 -}}
+    {{- $label := (partial "fmt/label.html" (dict "metric" $metric "window" (dict "n" $w "unit" "day"))).text -}}
+    {{- $o := index $iss (printf "opened_%dd" $w) }}{{ $c := index $iss (printf "closed_%dd" $w) -}}
+    {{- if eq $metric "Opened" }}{{ $rows = $rows | append (dict "label" $label "value" (dict "kind" "count" "v" $o)) -}}
+    {{- else if eq $metric "Closed" }}{{ $rows = $rows | append (dict "label" $label "value" (dict "kind" "count" "v" $c)) -}}
+    {{- else -}}
+      {{- $v := dict "kind" "net" "reason" "no-data" -}}
+      {{- if and (ne $o nil) (ne $c nil) }}{{ $v = dict "kind" "net" "v" (sub (float $o) (float $c)) }}{{ end -}}
+      {{- $rows = $rows | append (dict "label" $label "title" "Issues opened minus issues closed in the window." "value" $v) -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
-{{- /* the wide form flows row by row in two columns: pair each 30-day row with its 90-day twin */ -}}
-{{- if not $drawn }}{{ $rows = slice (index $rows 0) (index $rows 3) (index $rows 1) (index $rows 4) (index $rows 2) (index $rows 5) }}{{ end }}
+{{- /* the pending text, from the closed list of 4.22, by the rule ui/chart.html uses for a daily chart */ -}}
+{{- $pending := "" -}}
+{{- if not $drawn -}}
+  {{- $pending = "No data collected yet" -}}
+  {{- if and (gt (int $open.n) 0) $open.first -}}
+    {{- $at := ((time.AsTime (string $open.first)).AddDate 0 0 13).Format "2006-01-02" -}}
+    {{- $pending = "Too few complete weeks to draw a trend" -}}
+    {{- if gt $at (string ($open.to | default "")) }}{{ $pending = printf "Trend available from %s" (partial "fmt/date.html" $at).text }}{{ end -}}
+  {{- end -}}
+{{- end }}
 <section class="v-section" aria-labelledby="backlog">
   {{ partial "ui/section-head.html" (dict "id" "backlog" "title" "Backlog trend") }}
   <div class="v-grid">
-    {{ partial "ui/chart.html" (dict "id" "issues-open" "title" "Open issues" "class" (cond $drawn "v-span-8" "v-span-12")
+    {{- if $drawn }}
+    {{ partial "ui/chart.html" (dict "id" "issues-open" "title" "Open issues" "class" "v-span-8"
         "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "day" "weeks" 26))).cadence
         "metric" "open issues" "metric_one" "open issue" "scope" $r.name "unit" "count" "gran" "day" "kind" "line"
         "from" $open.from "to" $open.to "since" $open.first
         "series" (slice (dict "label" "Open issues" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed))) }}
-    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows "wide" (not $drawn)) }}
+    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows) }}
+    {{- else }}
+    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows "wide" true "pending" $pending) }}
+    {{- end }}
   </div>
 </section>

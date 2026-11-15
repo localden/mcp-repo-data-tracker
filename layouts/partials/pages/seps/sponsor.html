@@ -1,18 +1,25 @@
 {{- /* Sponsor cell of a SEP row (design system v4 4.11): emits the whole <td class="v-c-who">.
-  Dict {r, ord}: r is a pages/seps/entry.html row, ord the handle ranks from pages/seps/data.html.
-  Four forms, one fixed vocabulary: badge action "Needs sponsor" (a proposal with none), badge neutral "No sponsor" (a later stage
-  with none), badge neutral "Self-sponsored", or the sponsor's handle. data-v is the sort key in workflow order: Needs sponsor, No
-  sponsor, Self-sponsored, then handles A to Z.
-  Below 64rem the list has no column header, so a handle is the phrase "Sponsored by {handle}" (the words are a .v-who-label,
-  shown only in list form, like the word "overdue" of the Overdue object) and the cell sits on the row's state line. */ -}}
+  Dict {r, ord}: r is a pages/seps/entry.html row (or, on the styleguide, a dict with needsSponsor, sponsorKind and sponsor),
+  ord the handle ranks from pages/seps/data.html.
+  The cell has the anatomy of the Status cell (4.16): one badge from a fixed vocabulary on the title's line and, when the row
+  has a named sponsor, that person on the meta line under it. Four states, every one opening with a badge, so the column is one
+  shape on every row:
+    badge action  "Needs sponsor"    a proposal with none
+    badge neutral "No sponsor"       a later stage with none
+    badge neutral "Self-sponsored"   written by a core or lead maintainer
+    badge neutral "Sponsored"        then the sponsor, drawn as the person of a row's identity line (12px user icon, handle)
+  data-v is the sort key in workflow order: Needs sponsor, No sponsor, Self-sponsored, then handles A to Z.
+  Below 64rem the cell is the row's state line: the badge on the left edge and the sponsor beside it. There is no typed phrase
+  at any width. */ -}}
 {{- $r := .r -}}
 {{- $v := "1" -}}
 {{- if $r.needsSponsor }}{{ $v = "0" -}}
 {{- else if eq $r.sponsorKind "self" }}{{ $v = "2" -}}
-{{- else if eq $r.sponsorKind "handle" }}{{ $v = printf "%.4f" (add 3.0 (div (float (index (.ord | default dict) (lower $r.sponsor) | default 0)) 10000.0)) }}{{ end -}}
+{{- else if eq $r.sponsorKind "handle" }}{{ $v = printf "%.4f" (add 3.0 (div (float (index (.ord | default dict) (lower (string $r.sponsor)) | default 0)) 10000.0)) }}{{ end -}}
 <td class="v-c-who" data-v="{{ $v }}">
   {{- if $r.needsSponsor }}{{ partial "ui/badge.html" (dict "text" "Needs sponsor" "tone" "action" "title" "A proposal with no sponsor whose author is not a core or lead maintainer.") -}}
   {{- else if eq $r.sponsorKind "self" }}{{ partial "ui/badge.html" (dict "text" "Self-sponsored" "tone" "neutral" "title" "Written by a core or lead maintainer, who sponsors it.") -}}
-  {{- else if eq $r.sponsorKind "handle" }}<span class="v-who" title="Sponsored by {{ $r.sponsor }}"><span class="v-who-label">Sponsored by </span>{{ $r.sponsor }}</span>
+  {{- else if eq $r.sponsorKind "handle" }}{{ partial "ui/badge.html" (dict "text" "Sponsored" "tone" "neutral" "title" "A maintainer has taken this SEP as its sponsor. The sponsor is the first assignee.") -}}
+    <span class="v-detail" title="Sponsored by {{ $r.sponsor }}"><span class="sr-only">by </span><span class="v-who">{{ partial "ui/icon.html" (dict "name" "user" "size" 12) }}<span>{{ $r.sponsor }}</span></span></span>
   {{- else }}{{ partial "ui/badge.html" (dict "text" "No sponsor" "tone" "neutral" "title" "Past the proposal stage with no sponsor.") }}{{ end -}}
 </td>

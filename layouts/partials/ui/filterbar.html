@@ -8,9 +8,12 @@
     total   rows in the default view, for the first paint of the result count.
     matched the narrowed count, for a static specimen of the active state: prints "12 of 288 PRs" and shows "Clear filters".
     open    true (styleguide specimens): the Filters panel is rendered open below 64rem.
-  Row 1: search on the left; on the right "Clear filters" (while a search or filter is active) and the result count it resets.
-  "Clear filters" lives in row 1 so it never moves when a chip takes a value and never wraps onto a line of its own.
-  Row 2 (only with facets): checkbox chips, then select chips.
+  One order at every size: search, facets, "Clear filters", result count.
+  Row 1: search on the left; on the right "Clear filters" (a bordered 28px button with the x icon, shown while a search or filter is
+  active; not shown while the empty result offers its own) and the result count it resets. It lives in row 1 so it never moves when
+  a chip takes a value and never wraps onto a line of its own.
+  Row 2 (three or more facets): checkbox chips, then select chips. With one or two facets the chips sit in row 1, after the search
+  field (.is-inline, from 64rem), so a single checkbox never takes a band of its own: the bar is 52px, or 96 with three or more.
   Below 64rem row 1 is the search field and the "Filters" button (icon, label, and a count of active facets); the button opens
   row 2 as a panel, whose last item is "Clear filters"; the result count moves to the result band (ui/list-band.html).
   The result count is the only live announcement of a filter change: "288 PRs" at rest, "249 of 288 PRs" when narrowed. */ -}}
@@ -26,13 +29,14 @@
 {{- $search := printf "Search %s" $other -}}
 {{- $narrowed := ne $c.matched nil -}}
 {{- $active := 0 }}{{ range $facets }}{{ if or .pressed .value }}{{ $active = add $active 1 }}{{ end }}{{ end -}}
-<div class="v-filterbar" role="search" aria-label="Filter {{ $other }}">
+{{- /* one or two facets share the search row from 64rem (is-inline); three or more take the second row */ -}}
+<div class="v-filterbar{{ if and $facets (le (len $facets) 2) }} is-inline{{ end }}" role="search" aria-label="Filter {{ $other }}">
   <div class="v-filter-row">
     {{ partial "ui/field.html" (dict "id" (printf "%s-search" $id) "label" $search "placeholder" $search) }}
     {{- if $facets }}
     <button type="button" class="v-btn v-filter-toggle" data-facets-toggle aria-expanded="{{ if $c.open }}true{{ else }}false{{ end }}" aria-controls="{{ $id }}-facets">{{ partial "ui/icon.html" "sliders" }}Filters<span class="v-count" data-facets-n{{ if eq $active 0 }} hidden{{ end }}>{{ $active }}</span></button>
     {{- end }}
-    <button type="button" class="v-btn is-ghost" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>Clear filters</button>
+    <button type="button" class="v-btn v-btn-sm" data-filter-reset{{ if not $narrowed }} hidden{{ end }}>{{ partial "ui/icon.html" (dict "name" "x" "size" 14) }}Clear filters</button>
     <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $other }}" data-noun-one="{{ $one }}">
       {{- if ne $c.total nil }}{{ if $narrowed }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.matched)).text }}</span> of {{ end }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $one }}{{ else }}{{ $other }}{{ end }}{{ end -}}
     </p>

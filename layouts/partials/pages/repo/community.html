@@ -1,15 +1,16 @@
 {{- /* 6. Community (design system v4 5.8 module 6). Context: the dict from pages/repo.html. Two rows in one grid, then
   the People section (pages/repo/people.html), which this partial emits after its own section:
-  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers"; a split bar: the maintainers'
-           part in the chart colour, everyone else in the neutral series colour, so it never reads as a share bar that is 3 percent full), New contributors
-           (whole "of {n} active", share bar), Maintainers active (whole "of {n} maintainers", share bar; left out for a repository
+  12       Metric strip md, visual share, 3 tiles: Active contributors (reference pair "Maintainers"; its bar is the maintainers' part of the active
+           contributors, drawn as the share bar of its neighbours, 4.21), New contributors
+           (whole "of {n} active", share bar), Active maintainers (whole "of {n} maintainers", share bar; left out for a repository
            with no maintainer group). A strip is all or none (4.5): a repository with no maintainer group has two tiles with
            neither context nor bar.
-  6 + 6    A chart pair of different measures (4.19): "Active contributors", weekly over the last 52 weeks, one series; "Commits per
-           week", the last 12 rolling 7-day periods of metrics.json as columns, with their average as a context line. The periods end
+  6 + 6    A chart pair of different measures (4.19): "Active contributors", weekly over the last 52 weeks, one series; "Commits",
+           the last 12 rolling 7-day periods of metrics.json as columns, with their average as a context line. The periods end
            on the day of the last update and do not start on a Monday, so nothing on the card calls one a week: the sub line is
            "7-day periods, last 12", the readout "Last 7 days" with its range, the average "12-period average". Each sub line states its own
-           window and hover is not shared. A pending chart never shares a row, so when either is pending each card takes its own
+           window and hover is not shared. When the trend card has a note, the Commits card reserves the same notes row, so both plots
+           have one height and their x axes share a line. A pending chart never shares a row, so when either is pending each card takes its own
            12 row, in the same order.
   Maintainers are this repository's groups only (pages/repo/roles.html), matched ignoring case. The split stays in the tile: the
   stored series is not split by this repository's roles. */ -}}
@@ -32,7 +33,7 @@
 {{- end -}}
 {{- $tiles := slice $t1 $t2 -}}
 {{- if $roles.handles -}}
-  {{- $tiles = $tiles | append (dict "name" "Maintainers active" "qual" $w30 "value" (dict "kind" "count" "v" $p.nActiveM)
+  {{- $tiles = $tiles | append (dict "name" "Active maintainers" "qual" $w30 "value" (dict "kind" "count" "v" $p.nActiveM)
       "title" "This repository's maintainers who were active in the last 30 days."
       "context" (dict "kind" "whole" "n" (len $roles.handles) "of" "maintainers")
       "share" (dict "value" $p.nActiveM "max" (len $roles.handles))) -}}
@@ -62,7 +63,7 @@
   {{- $trendChart = merge $trendChart (dict "readout" (slice (dict "label" "Latest" "key" "accent" "value" (dict "kind" "count" "v" $tot.cur) "date" $tot.cur_date))) -}}
 {{- end -}}
 
-{{- /* commits per week: the 12 rolling 7-day buckets of metrics.json, oldest first, each dated by its first day */ -}}
+{{- /* commits: the 12 rolling 7-day buckets of metrics.json, oldest first, each dated by its first day */ -}}
 {{- $trend := $c.commits_per_week_trend | default slice -}}
 {{- $sum := 0.0 }}{{ range $trend }}{{ $sum = add $sum (float .) }}{{ end -}}
 {{- $cpts := slice }}{{ $avg := 0.0 -}}
@@ -73,13 +74,13 @@
 {{- end -}}
 {{- $commitsPending := lt (len $cpts) 4 -}}
 {{- $span := cond (or $trendPending $commitsPending) "v-span-12" "v-span-6" -}}
-{{- $commits := dict "id" "repo-commits" "title" "Commits per week" "class" $span
+{{- $commits := dict "id" "repo-commits" "title" "Commits" "class" $span
     "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "period7" "weeks" 12))).cadence
-    "metric" "commits" "metric_one" "commit" "scope" $r.name "unit" "count" "gran" "week" "kind" "column"
+    "metric" "commits" "metric_one" "commit" "scope" $r.name "unit" "count" "gran" "week" "kind" "column" "polarity" ""
     "series" (slice (dict "label" "Commits" "role" "accent" "points" $cpts)) -}}
 {{- if not $commitsPending -}}
   {{- $lastC := index $cpts (sub (len $cpts) 1) -}}
-  {{- $commits = merge $commits (dict "avg" $avg "avg_label" "12-period average" "tall" (and $trendNotes (not $trendPending))
+  {{- $commits = merge $commits (dict "avg" $avg "avg_label" "12-period average" "reserve_notes" (and $trendNotes (not $trendPending))
       "readout" (slice
         (dict "label" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window "key" "accent" "value" (dict "kind" "count" "v" $lastC.value)
               "range" (dict "from" $lastC.date "to" (((time.AsTime $lastC.date).AddDate 0 0 6).Format "2006-01-02")))

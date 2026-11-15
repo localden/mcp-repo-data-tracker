@@ -28,22 +28,15 @@
     {{- $max := 1.0 }}{{ range $pn.rows }}{{ $max = math.Max $max (float (.pr_count | default 0)) }}{{ end }}
     <article class="v-card v-span-6">
       {{ partial "ui/card-head.html" (dict "title" $pn.title "sub" $sub "id" (printf "hot-%s-title" $pn.key)) }}
-      <table class="v-dt is-rank is-list" data-numw="{{ len (partial "fmt/count.html" (dict "v" $max)).text }}" aria-labelledby="hot-{{ $pn.key }}-title">
-        <colgroup><col><col class="v-col-bar"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th.html" (dict "label" $pn.head) }}
-          {{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "class" "v-c-bar" "title" "Merged PRs from the last 90 days that changed the path.") }}
-        </tr></thead>
-        <tbody>
-          {{- range $pn.rows }}
-          {{- $c := float (.pr_count | default 0) }}
-          <tr>
-            <th scope="row" class="v-name">{{ partial "ui/value.html" (dict "kind" "path" "v" (string .path) "dir" $pn.dir) }}</th>
-            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $c "max" $max "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" $c) }}</span></td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
+      {{- /* the table comes from ui/rank-table.html, the same call the styleguide makes */}}
+      {{- $rows := slice }}
+      {{- range $pn.rows }}
+        {{- $c := float (.pr_count | default 0) }}
+        {{- $rows = $rows | append (dict "name" (dict "path" (string .path) "dir" $pn.dir) "cells" (slice (dict "kind" "count" "v" $c "bar" $c))) }}
+      {{- end }}
+      {{ partial "ui/rank-table.html" (dict "labelledby" (printf "hot-%s-title" $pn.key) "numw" (len (partial "fmt/count.html" (dict "v" $max)).text) "rows" $rows "head" (slice
+          (dict "label" $pn.head)
+          (dict "label" "Merged PRs" "bar" "rank" "max" $max "title" "Merged PRs from the last 90 days that changed the path."))) }}
     </article>
     {{- end }}
   </div>

@@ -127,8 +127,8 @@
   }
 
   /* Per-series facts: null runs, the end point, isolated points. */
-  function analyse(data, gran, leading) {
-    var n = data.length, minRun = gran === 'day' ? 3 : 1, reach = gran === 'day' ? 2 : 0;
+  function analyse(data, gran, leading, bridge) {
+    var n = data.length, minRun = gran === 'day' ? 3 : 1, reach = gran === 'day' ? (bridge || 2) : 0;
     var first = -1, last = -1, runs = [], s = leading ? 0 : -1, i;
     for (i = 0; i < n; i++) {
       if (data[i] != null) {
@@ -190,14 +190,23 @@
   var marks = { id: 'visrMarks', beforeDatasetsDraw: function (c) {
     var st = S(c); if (!st) return;
     var w = slotW(c), a = c.chartArea, ctx = c.ctx;
+    /* the latest reading: a marker that falls within 12px of it is only its diamond and a 6px tick, so the full-height line never
+       crowds the end dot, the most important point of the chart */
+    var lastX = null;
+    st.info.forEach(function (info, d) { var p = info.last >= 0 && c.getDatasetMeta(d).data[info.last]; if (p && (lastX === null || p.x > lastX)) lastX = p.x; });
     st.marks.forEach(function (m) {
-      var x = vline(c, m.i, T.strong, [2, 3], st.kind === 'line' ? (m.frac - 0.5) * w : 0), y = a.top - 4;
+      var shift = st.kind === 'line' ? (m.frac - 0.5) * w : 0, x, y = a.top - 4;
+      if (lastX !== null && Math.abs(c.scales.x.getPixelForValue(m.i) + shift - lastX) < 12) {
+        x = Math.round(Math.max(a.left, Math.min(c.scales.x.getPixelForValue(m.i) + shift, a.right - 1))) + 0.5;
+        ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.top + 6); ctx.stroke(); ctx.restore();
+      } else x = vline(c, m.i, T.strong, [2, 3], shift);
       ctx.save(); ctx.fillStyle = T.text3; ctx.beginPath();
       ctx.moveTo(x, y - 3); ctx.lineTo(x + 3, y); ctx.lineTo(x, y + 3); ctx.lineTo(x - 3, y); ctx.closePath(); ctx.fill(); ctx.restore();
     });
   } };
-  /* A hole in one of two series (the other has values, so there is no gap band): a 1px neutral connector joins the readings on
-     either side, the same mark as a sparkline's bridge, and the notes row keys it. Nothing crosses a gap band. */
+  /* A hole in one of two series (the other has values, so there is no gap band): up to 7 days are bridged by the line itself
+     (spanGaps), so a short hole never reads as a break; a longer one is joined by a 1px connector in the context colour, which
+     is visible over its span, and the notes row keys it. Nothing crosses a gap band. */
   var bridges = { id: 'visrBridges', beforeDatasetsDraw: function (c) {
     var st = S(c); if (!st || st.kind !== 'line' || st.series.length < 2) return;
     var ctx = c.ctx;
@@ -205,10 +214,11 @@
       var meta = c.getDatasetMeta(d), data = st.series[d].data;
       info.runs.forEach(function (r) {
         var s = r[0], e = r[1], i;
+        if (st.gran === 'day' && e - s + 1 < 8) return;   /* the line spans it */
         if (s <= info.first || e >= info.last || data[s - 1] == null || data[e + 1] == null) return;
         for (i = s; i <= e; i++) if (inBand(st, i)) return;
         var p = meta.data[s - 1], q = meta.data[e + 1]; if (!p || !q) return;
-        ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.strokeStyle = T.context; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
       });
     });
   } };
@@ -285,15 +295,46 @@
     if (st.kind !== 'line') bottom = a.bottom;
     return Math.max(0, Math.min(y1, bottom + 6) - Math.max(y0, top - 6));
   }
-  /* a tooltip row: key (omitted in a trellis, where every row is the same series), right-aligned value, name */
+  /* a tooltip row: key (omitted in a trellis, where every row is the same series), name, then the value on the right edge: the
+     order of the readout above the plot, of a pair and of a stat-list row */
   function tipRow(list, keyCls, valText, name) {
     var li = el('li');
     if (keyCls) { var key = el('span', 'v-key ' + keyCls); key.setAttribute('aria-hidden', 'true'); li.appendChild(key); }
-    li.appendChild(el('span', 'v-tip-value', valText)); li.appendChild(el('span', 'v-tip-name', name)); list.appendChild(li);
-    return valText + ' ' + name;
+    li.appendChild(el('span', 'v-tip-name', name)); li.appendChild(el('span', 'v-tip-value', valText)); list.appendChild(li);
+    return name + ' ' + valText;
+  }
+  /* Trellis, from 64rem: no floating tooltip. Every drawn row's label cell holds a hidden pair (.v-pair.is-scrub, ui/trellis.html);
+     it is filled with the selected period and that row's value, and .is-scrub on the trellis shows it in place of the row's
+     resting fact and notes, so nothing covers a label or a column. Returns the spoken line, or null when this is not a trellis
+     at that width. */
+  var WIDE = window.matchMedia ? window.matchMedia('(min-width: 64rem)') : { matches: true };
+  function scrub(c, i) {
+    var card = c.canvas.closest('[data-trellis]'), host = card && card.querySelector('.v-trellis');
+    if (!host || !WIDE.matches) return null;
+    if (i == null) { host.classList.remove('is-scrub'); return ''; }
+    var spoken = [];
+    [c].concat(siblings(c)).sort(function (a, b) { return a.canvas.compareDocumentPosition(b.canvas) & 4 ? -1 : 1; }).forEach(function (o, k) {
+      var os = S(o), row = o.canvas.closest('.v-trellis-row'), pair = row && row.querySelector('.v-pair.is-scrub'); if (!os || !pair) return;
+      var v = os.series[0] ? os.series[0].data[i] : null, period = periodText(os.labels[i], os.gran, os.kind === 'line'), out;
+      if (!k) spoken.push(period);
+      pair.textContent = '';
+      pair.appendChild(el('span', 'v-pair-label', period));
+      if (v == null) {
+        var why = inBand(os, i) ? 'Data gap' : 'No data';
+        out = el('span', 'v-val is-na'); out.title = why; out.appendChild(el('span', 'sr-only', why));
+        spoken.push((os.scope || '') + ' ' + why);
+      } else {
+        out = el('span', 'v-val', value(os.unit, v)); out.setAttribute('data-kind', os.unit === 'downloads' ? 'volume' : os.unit === 'hours' ? 'dur' : 'count');
+        spoken.push((os.scope || '') + ' ' + out.textContent);
+      }
+      pair.appendChild(out);
+    });
+    host.classList.add('is-scrub');
+    return spoken.join('. ');
   }
   function showTip(c, st, i, announce) {
-    var tip = st.tip;
+    var tip = st.tip, line = scrub(c, i);
+    if (line !== null) { if (tip) tip.hidden = true; if (announce && st.live) st.live.textContent = line; return; }
     if (i == null) { if (tip) tip.hidden = true; if (announce && st.live) st.live.textContent = ''; return; }
     tip = tipEl(c, st);
     tip.textContent = '';
@@ -321,8 +362,9 @@
       row.appendChild(changeEl(ch, st.polarity)); row.appendChild(el('span', 'v-base', base)); tip.appendChild(row);
       spoken.push(ch.sr + ' ' + base);
     }
-    /* a series with no value at this slot has no row: one caption line says so, in the words of the notes key */
-    if (!rows) note('No data');
+    /* a series with no value at this slot has no row: one caption line says so, in the words of the notes key ("Data gap" inside
+       a gap band; "No data" is the reason of a single missing reading) */
+    if (!rows) note(others.length || inBand(st, i) ? 'Data gap' : 'No data');
     else if (missing.length) note(missing.join(', ') + ' not recorded');
     if (st.single && !others.length && st.kind === 'column' && st.gran === 'week' && i > 0) {   /* change against the prior week */
       var ch = changeOf(st.unit, st.polarity, st.series[0].data[i], st.series[0].data[i - 1]);
@@ -337,9 +379,8 @@
     if (!sides.length) sides.push(Math.max(0, Math.min(host.clientWidth - w, hx + 12)));
     var left = sides[0], top = oy + a.top;
     if (others.length) {
-      /* trellis: in the label gutter of the hovered row, left of the y axis, where it covers no column; when the label cell sits
-         above the panel (below 64rem) there is no gutter and it goes beside the hovered slot at the top of that panel */
-      if (ox - 8 - w >= 0) left = ox - 8 - w;
+      /* trellis below 64rem (from 64rem the label cells carry the reading, see scrub): beside the selected slot, at the top of
+         that panel */
       top = Math.max(0, Math.min(host.clientHeight - h, oy + a.top));
     } else {
       /* candidates: the bottom edge, then the top edge, each right then left of the crosshair. The first that covers no mark of
@@ -363,14 +404,21 @@
 
   function build(canvas) {
     var kind = canvas.dataset.viz === 'column' ? 'column' : 'line', unit = canvas.dataset.unit || 'count', gran = canvas.dataset.gran === 'week' ? 'week' : 'day';
-    var panel = canvas.dataset.size === 'panel', xaxis = canvas.dataset.xaxis !== 'off';
+    /* below 64rem a trellis panel sits under its own label block, so every panel carries its dates, not only the last one */
+    var panel = canvas.dataset.size === 'panel', xaxis = canvas.dataset.xaxis !== 'off' || (panel && !WIDE.matches);
     var spec = JSON.parse(canvas.dataset.series), labels = spec.labels || [], series = (spec.series || []).slice(0, 2);
     var line = kind === 'line', single = series.length === 1;
-    var info = series.map(function (s) { return analyse(s.data, gran, panel); });
+    var info = series.map(function (s) { return analyse(s.data, gran, panel, single ? 2 : 7); });
     var bands = !info.length ? [] : info.length < 2 ? mergeRuns(info[0].runs.slice()) : intersectRuns(info.map(function (x) { return x.runs; }), gran === 'day' ? 3 : 1);
+    /* a daily line bridges a hole of up to 7 days itself, except across a gap band: nothing crosses a band */
+    function crossesBand(ctx) {
+      for (var k = ctx.p0DataIndex + 1; k < ctx.p1DataIndex; k++) if (bands.some(function (b) { return k >= b[0] && k <= b[1]; })) return true;
+      return false;
+    }
     var datasets = series.map(function (s, i) {
       var c = color(s.role), a = info[i], order = s.role === 'context' ? 2 : 1;
-      if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day' ? 3 : false,
+      if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day' ? 8 : false,
+        segment: { borderColor: function (ctx) { return ctx.p1DataIndex - ctx.p0DataIndex > 1 && crossesBand(ctx) ? 'transparent' : undefined; } },
         pointRadius: a.radius, pointHoverRadius: 4, pointHitRadius: 0, pointBackgroundColor: c, pointBorderColor: T.surface, pointBorderWidth: 2,
         pointHoverBackgroundColor: c, pointHoverBorderColor: T.surface, pointHoverBorderWidth: 2 };
       return { label: s.label, data: s.data, order: order, backgroundColor: c, hoverBackgroundColor: s.role === 'context' ? c : T.accentStrong, borderWidth: 0, borderRadius: { topLeft: 3, topRight: 3 }, borderSkipped: false };
@@ -397,7 +445,7 @@
       data: { labels: labels, datasets: datasets },
       plugins: [gapBand, marks, bridges, avgRule, crosshair, hover],
       options: {
-        layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
+        layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },   /* the end dot (radius 4, 2px ring) clears the plot's right edge */
         onResize: function (chart, size) {   /* column width follows the slot width */
           if (line) return;
           chart.data.datasets.forEach(function (ds) { ds.maxBarThickness = barMax(size.width, labels.length); });
@@ -417,11 +465,26 @@
     };
   }
 
+  /* A chart must fill its plot. Chart.js sizes the canvas from its container at construction; when that happens while the
+     container is still narrower than it will be (a grid row that has not settled, a font swap), the canvas keeps the transient
+     size. refit() re-measures one chart and re-places a selected slot's tooltip; it runs a frame after mount, whenever a plot
+     box changes size (ResizeObserver, boot), and once more after load and after the fonts are ready. */
+  function refit(canvas) {
+    var c = live.get(canvas), host = canvas.parentNode, st = state.get(canvas); if (!c || !host || !host.clientWidth) return;
+    if (Math.abs(canvas.clientWidth - host.clientWidth) > 1 || Math.abs(canvas.clientHeight - host.clientHeight) > 1 || Math.abs(c.width - host.clientWidth) > 1) c.resize();
+    if (st && st.index != null) { c.setActiveElements(elementsAt(c, st.index)); showTip(c, st, st.index, false); c.render(); }
+  }
+  function refitAll() { Array.from(live.keys()).forEach(refit); }
+  var plotRO = window.ResizeObserver ? new ResizeObserver(function (entries) {
+    entries.forEach(function (en) { var cv = en.target.querySelector('canvas[data-viz]'); if (cv && live.has(cv)) refit(cv); });
+  }) : null;
   function mount(canvas) {
     try {
       var c = new Chart(canvas, build(canvas)); live.set(canvas, c);
       var pin = canvas.getAttribute('data-chart-pin');
       if (pin !== null && pin !== '') { select(c, Math.max(0, Math.min(c.data.labels.length - 1, parseInt(pin, 10) || 0)), false); c.render(); }
+      if (plotRO && canvas.parentNode) plotRO.observe(canvas.parentNode);
+      requestAnimationFrame(function () { if (live.get(canvas) === c) refit(canvas); });
     } catch (e) { state.delete(canvas); if (window.console) console.error('VISR chart failed', canvas.id, e); }
   }
   function unmount(canvas) {
@@ -498,21 +561,28 @@
     function th(text, num, sub) { var h = el('th', num ? 'num' : '', text); h.scope = 'col'; if (sub) h.appendChild(el('span', 'v-th-sub', sub)); hr.appendChild(h); return h; }
     var ph = th(g === 'week' ? 'Week of' : 'Date', false);
     if (how) ph.title = how;
-    cols.forEach(function (c) { th(c.label, true); });
+    /* a daily level shown as weeks: each value column says which reading a week shows (fmt/label.html reading "week-end") */
+    cols.forEach(function (c) { th(c.label, true, binned && !flow ? 'End of week' : ''); });
     if (change) th('Change', true, F.base(g === 'week' ? 'prior-week' : 'prior-day').text);
     var tb = tbl.createTBody();
     function empty(i) { return cols.every(function (c) { return c.data[i] == null; }); }
     /* slots before the first measured one are not rows: nothing was tracked yet */
     var firstData = 0; while (firstData < labels.length && empty(firstData)) firstData++;
     var i = labels.length - 1;
-    function gapCells(r) { for (var k = 0; k < cols.length + (change ? 1 : 0); k++) { var c = r.insertCell(); c.className = 'num'; naCell(c); } }
+    /* a gap is one band row across the table (the group-row look): the gap key, the words "Data gap" and its range. One outage
+       has one range on a page: a run that overlaps the collection outage prints the outage's own dates (data-gap-from, -to) */
+    var gapFrom = first.getAttribute('data-gap-from') || '', gapTo = first.getAttribute('data-gap-to') || '';
     while (i >= firstData) {
       var r = tb.insertRow(), h = el('th'); h.scope = 'row'; r.appendChild(h);
       if (empty(i)) {
         var j = i; while (j > firstData && empty(j - 1)) j--;
-        h.textContent = F.range({ from: labels[j], to: periodEnd(labels[i], g) }).text;
-        if (gapTitle) h.title = gapTitle;   /* the row keeps its bins; the title names the dates of the outage itself */
-        gapCells(r);
+        var from = labels[j], to = periodEnd(labels[i], g);
+        if (gapFrom && gapTo && from <= gapTo && to >= gapFrom) { from = gapFrom; to = gapTo; }
+        r.className = 'v-gap'; h.colSpan = cols.length + 1 + (change ? 1 : 0);
+        var box = el('span', 'v-gap-row'), gk = el('span', 'v-key is-gap'), gr = el('span', 'v-val', F.range({ from: from, to: to }).text);
+        gk.setAttribute('aria-hidden', 'true'); gr.setAttribute('data-kind', 'range');
+        box.appendChild(gk); box.appendChild(el('span', '', 'Data gap')); box.appendChild(gr); h.appendChild(box);
+        if (gapTitle) h.title = gapTitle;   /* the cause of the gap (a collection outage) */
         i = j - 1;
       } else {
         h.textContent = F.date({ d: labels[i] }).text;
@@ -561,7 +631,8 @@
       if (!host.hasAttribute('data-built')) { buildTable(card, host); host.setAttribute('data-built', ''); }
       fitTable(host);
       card.querySelectorAll('canvas[data-viz]').forEach(function (cv) { if (live.has(cv) && !cv.hasAttribute('data-chart-pin')) { var c = live.get(cv); setIndex(c, null); var st = state.get(cv); if (st) hideTip(st); } });
-    }
+      card.querySelectorAll('.v-trellis.is-scrub').forEach(function (t) { t.classList.remove('is-scrub'); });
+    } else requestAnimationFrame(function () { card.querySelectorAll('canvas[data-viz]').forEach(refit); });   /* back from the table: the plot was hidden */
   });
   window.addEventListener('resize', function () {
     document.querySelectorAll('[data-chart][data-view="table"] > .v-chart-table').forEach(fitTable);
@@ -574,6 +645,13 @@
     }, { rootMargin: '200px' });
     document.querySelectorAll('canvas[data-viz]').forEach(function (c) { io.observe(c); });   /* a hidden panel never intersects until shown */
     new MutationObserver(retheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    if (document.readyState === 'complete') refitAll(); else window.addEventListener('load', refitAll);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitAll);
+    /* crossing 64rem changes a trellis (x labels on every panel, tooltip or scrub): its panels are rebuilt */
+    if (WIDE.addEventListener) WIDE.addEventListener('change', function () {
+      document.querySelectorAll('.v-trellis.is-scrub').forEach(function (t) { t.classList.remove('is-scrub'); });
+      Array.from(live.keys()).forEach(function (cv) { if (cv.dataset.size === 'panel') { unmount(cv); mount(cv); } });
+    });
   }
   function start() {   /* mount only after the shipped font is ready, so axis ticks are measured in Inter */
     if (document.fonts && document.fonts.load) document.fonts.load('400 12px "Inter Variable"').then(boot, boot); else boot();

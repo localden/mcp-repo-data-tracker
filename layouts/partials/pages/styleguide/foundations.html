@@ -45,17 +45,35 @@
 <section class="v-section" aria-labelledby="type">
   {{ partial "ui/section-head.html" (dict "id" "type" "title" "Type" "desc" "One typeface shipped with the site and nine roles. Figures are tabular in every numeric value and proportional in running text.") }}
   <div class="v-grid">
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Roles") }}<div class="v-card-body"><div class="v-sg-specs">
-      <div class="v-sg-spec"><p class="v-t-display">{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}</p><p class="v-sg-cap">display, the summary value</p></div>
-      <div class="v-sg-spec"><p class="v-t-title">All repositories</p><p class="v-sg-cap">title, the page heading</p></div>
-      <div class="v-sg-spec"><p class="v-t-heading">Needs attention</p><p class="v-sg-cap">heading, a section title</p></div>
-      <div class="v-sg-spec"><p class="v-t-subhead">Waiting by repository</p><p class="v-sg-cap">subhead, a card title</p></div>
-      <div class="v-sg-spec"><p class="v-t-strong">Proposal</p><p class="v-sg-cap">strong, a group row or a stat value</p></div>
-      <div class="v-sg-spec"><p class="v-t-medium">fix(client): retry the stream</p><p class="v-sg-cap">medium, a row title or a control</p></div>
-      <div class="v-sg-spec"><p class="v-t-body">Open issues with no maintainer reply.</p><p class="v-sg-cap">body, cells and sentences</p></div>
-      <div class="v-sg-spec"><p class="v-t-label">Waiting for a reply</p><p class="v-sg-cap">label, headers, tags and badges</p></div>
-      <div class="v-sg-spec"><p class="v-t-caption">Daily, last 26 weeks</p><p class="v-sg-cap">caption, context and notes</p></div>
-    </div></div></article>
+    {{- /* the ramp as a table, in ramp order, with the numbers a page can be checked against (design system v4 2.2): role, a real
+         specimen, size and line, weight, tracking, default colour; what uses the role is the sub line under its name */}}
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Roles" "id" "sg-roles-title") }}
+      <table class="v-dt is-matrix has-sub" aria-labelledby="sg-roles-title">
+        <colgroup><col><col class="v-col-name"><col class="v-col-num-lg"><col class="v-col-num-sm"><col class="v-col-num"><col class="v-col-num-lg"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Role") }}{{ partial "ui/th.html" (dict "label" "Specimen") }}{{ partial "ui/th.html" (dict "label" "Size and line") }}{{ partial "ui/th.html" (dict "label" "Weight") }}{{ partial "ui/th.html" (dict "label" "Tracking") }}{{ partial "ui/th.html" (dict "label" "Default colour") }}</tr></thead>
+        <tbody>
+          {{- range slice
+            (slice "display" "" "32/40" "600" "-0.022em" "--text" "The value of a summary strip (24/32 on a phone)")
+            (slice "title" "All repositories" "24/32" "600" "-0.018em" "--text" "The page heading")
+            (slice "heading" "Needs attention" "20/28" "600" "-0.015em" "--text" "A section title, the value of a smaller strip, a readout value")
+            (slice "subhead" "Waiting by repository" "16/24" "600" "-0.01em" "--text" "A card title, the wordmark")
+            (slice "strong" "Proposal" "14/20" "600" "0" "--text" "A group row, a callout title, an overdue value, a stat-list value")
+            (slice "medium" "fix(client): retry the stream" "14/20" "500" "0" "--text" "A row title, every control label, a nav item, the label of a summary tile")
+            (slice "body" "Open issues with no maintainer reply." "14/20" "400" "0" "--text" "Cells, sentences (in the second text tier), inputs, menu rows, stat-list labels")
+            (slice "label" "Waiting for a reply" "12/16" "500" "0" "--text-2" "Column headers, the eyebrow, badges, tags, counts, deltas")
+            (slice "caption" "Daily, last 26 weeks" "12/16" "400" "0" "--text-3" "Context lines, row meta, header sub lines, chart notes, tooltips, the footer") }}
+          <tr>
+            {{ partial "ui/name-cell.html" (dict "name" (index . 0) "sub" (index . 6)) }}
+            <td><span class="v-t-{{ index . 0 }}">{{ if index . 1 }}{{ index . 1 }}{{ else }}{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}{{ end }}</span></td>
+            <td>{{ partial "ui/value.html" (dict "kind" "id" "v" (index . 2)) }}</td>
+            <td>{{ partial "ui/value.html" (dict "kind" "id" "v" (index . 3)) }}</td>
+            <td>{{ partial "ui/value.html" (dict "kind" "id" "v" (replace (index . 4) "-" "−")) }}</td>
+            <td>{{ partial "ui/value.html" (dict "kind" "id" "v" (index . 5)) }}</td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
     <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-specs">
       <div class="v-sg-spec">
         <table class="v-dt is-compact" aria-label="Tabular figures"><tbody>
@@ -159,7 +177,31 @@
       <div class="v-sg-spec"><span class="v-sg-td">{{ partial "ui/value.html" (dict "kind" "na" "reason" .) }}</span><p class="v-sg-cap">{{ (partial "fmt/na.html" .).long }}</p></div>
       {{- end }}
     </div><p class="v-sg-cap">One mark, drawn by CSS, with its reason in the title. In a record below 64rem the reason is printed in the mark's place.</p></div></article>
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Labels, windows and bases") }}<div class="v-card-body"><div class="v-sg-specs">
+    {{- /* the closed phrase list of 3.2 as a table fed by fmt/label.html: what each phrase is for, the phrase, and the slot it goes in */}}
+    {{- $w7 := dict "n" 7 "unit" "day" }}{{ $w30 := dict "n" 30 "unit" "day" }}{{ $w90 := dict "n" 90 "unit" "day" }}
+    {{- $phr := slice
+      (dict "use" "Window of a flow" "k" "window" "slot" "Label, header sub line" "a" (slice (dict "window" $w7) (dict "window" $w30) (dict "window" $w90) (dict "window" "wtd") (dict "window" "latest-week")))
+      (dict "use" "Threshold" "k" "threshold" "slot" "Tile qualifier, label" "a" (slice (dict "threshold" "over7") (dict "threshold" "any") (dict "threshold" "answered")))
+      (dict "use" "Base of a level" "k" "base" "slot" "Base slot, header sub line" "a" (slice (dict "base" (dict "date" (printf "%s-10-07" $y)))))
+      (dict "use" "Base of a flow" "k" "base" "slot" "Base slot, header sub line" "a" (slice (dict "base" "prior7") (dict "base" "4w")))
+      (dict "use" "Base in a chart table" "k" "base" "slot" "Change column sub line" "a" (slice (dict "base" "prior-week") (dict "base" "prior-day")))
+      (dict "use" "Reading of a period" "k" "reading" "slot" "Chart table sub line" "a" (slice (dict "reading" "week-end")))
+      (dict "use" "Chart cadence" "k" "cadence" "slot" "Chart card sub line" "a" (slice (dict "cadence" (dict "every" "day" "weeks" 26)) (dict "cadence" (dict "every" "week" "weeks" 26))
+          (dict "cadence" (dict "every" "week" "weeks" 52)) (dict "cadence" (dict "every" "complete-week" "weeks" 26)) (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))
+          (dict "cadence" (dict "every" "period7" "weeks" 12)) (dict "cadence" (dict "every" "day" "since" $asof))))
+      (dict "use" "Last-activity part" "k" "bucket" "slot" "Legend row" "a" (slice (dict "bucket" "active30") (dict "bucket" "idle30") (dict "bucket" "idle60") (dict "bucket" "idle90"))) }}
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Windows, thresholds, bases and cadences" "id" "sg-phrases-title") }}
+      <table class="v-dt is-matrix" aria-labelledby="sg-phrases-title">
+        <colgroup><col class="v-col-bar"><col><col class="v-col-deadline"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Use") }}{{ partial "ui/th.html" (dict "label" "Phrase") }}{{ partial "ui/th.html" (dict "label" "Goes in") }}</tr></thead>
+        <tbody>
+          {{- range $p := $phr }}{{ range $p.a }}
+          <tr><th scope="row" class="v-name"><span>{{ $p.use }}</span></th><td>{{ index (partial "fmt/label.html" .) $p.k }}</td><td>{{ $p.slot }}</td></tr>
+          {{- end }}{{ end }}
+        </tbody>
+      </table>
+    </article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "One metric, every label form") }}<div class="v-card-body"><div class="v-sg-specs">
       {{- $l := partial "fmt/label.html" (dict "metric" "Merged" "scope" "PRs" "window" (dict "n" 7 "unit" "day")) }}
       <div class="v-sg-spec"><span class="v-label">{{ $l.text }}</span><p class="v-sg-cap">A tile or stat-list label: a window follows a comma</p></div>
       <div class="v-sg-spec"><span class="v-caption">{{ $l.sub }}</span><p class="v-sg-cap">The same window as a header sub line</p></div>

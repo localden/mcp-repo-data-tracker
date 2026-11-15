@@ -87,7 +87,7 @@
   {{- $defs = $defs | append (dict "term" "Maintainers" "text" "No maintainer group is defined for this repository.") -}}
 {{- end -}}
 {{- $defs = $defs | append (dict "term" "People" "text" "Everyone active in the last 30 days, together with this repository's maintainers. Active first, then A to Z.") -}}
-{{- $defs = $defs | append (dict "term" "Commits per week" "text" "Commits on the default branch, counted in 7-day periods ending on the day of the last update. A period is not a calendar week.") -}}
+{{- $defs = $defs | append (dict "term" "Commits" "text" "Commits on the default branch, counted in 7-day periods ending on the day of the last update. A period is not a calendar week.") -}}
 
 {{- $head := dict "scope" (dict "kind" "repo" "repo" $r.key) "desc" ($r.cfg.description | default "") "meta" $meta "sources" $src
     "gap" (dict "repos" (slice $r.key) "days" 364) "notes" $notes "defs" $defs "facts" $facts -}}

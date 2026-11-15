@@ -13,8 +13,8 @@
       "Coverage": what part of the data a figure is built from.
         coverage            slice of {label, part, whole, noun, title}: a ratio ("Issue classification" 2 of 9 repositories; the
                             names in title)
-        gaps                ui/page-gaps.html output: each missing run ("No data", or "Collection outage") and each
-                            reconstructed span is a row with its range
+        gaps                ui/page-gaps.html output: each missing run ("Data gap", the one term for it on every surface;
+                            the cause is in its title) and each reconstructed span is a row with its range
   The panel is neutral when open; Escape closes it (ui.js). On a phone the right column comes first. */ -}}
 {{- $c := . -}}
 {{- $g := $c.gaps | default dict -}}
@@ -35,11 +35,14 @@
   {{- if or $groups $c.notes }}
   <div class="v-notes-col is-defs">
     <p class="v-notes-h">Definitions</p>
-    {{- range $groups }}
+    {{- range $gi, $gr := $groups }}
+    {{- /* a named group: from 40rem a sub-head over its definitions; on a phone the sub-head is a 44px row that opens them, closed
+         at first, so opening Data notes does not put four screens of text between the page head and the page */}}
     {{- with .title }}
     <p class="v-notes-sub">{{ . }}</p>
+    <button type="button" class="v-btn is-ghost v-notes-toggle" data-notes-group aria-expanded="false" aria-controls="{{ $c.id }}-g{{ $gi }}">{{ . }}{{ partial "ui/icon.html" (dict "name" "chevron-down" "class" "is-chev") }}</button>
     {{- end }}
-    <dl class="v-defs">
+    <dl class="v-defs" id="{{ $c.id }}-g{{ $gi }}">
       {{- range .items }}
       <div><dt>{{ .term }}</dt><dd>{{ .text }}</dd></div>
       {{- end }}
@@ -92,7 +95,7 @@
       <div><dt>{{ .label }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "ratio" "part" .part "whole" .whole "noun" .noun "title" .title) }}</dd></div>
       {{- end }}
       {{- range $g.runs }}
-      <div><dt>{{ if .outage }}Collection outage{{ else }}No data{{ end }}</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
+      <div><dt{{ if .outage }} title="Collection outage"{{ end }}>Data gap</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>
       {{- end }}
       {{- range $g.reconstructed }}
       <div><dt title="Reconstructed from GitHub history.">Reconstructed</dt><dd>{{ partial "ui/value.html" (dict "kind" "range" "from" .from "to" .to) }}</dd></div>

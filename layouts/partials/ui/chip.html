@@ -6,7 +6,9 @@
                count bubble. Its width never changes when toggled. A count of zero disables it while it is not pressed.
              "select": an attribute with several values. button.v-chip.is-select with a chevron, opening a multi-select menu of
                options with counts. With one value chosen the chip shows it in accent-text; several: "2 selected".
-    count    rows that would match (check). options: slice of {value, label, count} (select); a row matches an option through the
+    count    rows that would match (check). The count pill keeps the width of this rest-state number (--n, its character count), so
+               the facet row does not shift when a filter changes a count; rest: the rest-state count when count is a narrowed
+               figure (static specimens). options: slice of {value, label, count} (select); a row matches an option through the
                data-facets token "key:value".
     id       the list's id prefix; the select menu is "{id}-{key}-menu".
     noun     the plural the counts count, capitalised ("PRs", "Issues", "SEPs"): the right-hand column label of a select menu.
@@ -29,5 +31,5 @@
 </div>
 {{- else -}}
 {{- $zero := false }}{{ if ne $c.count nil }}{{ $zero = eq (float $c.count) 0.0 }}{{ end -}}
-<button type="button" class="v-chip" data-facet="{{ $key }}" aria-pressed="{{ if $c.pressed }}true{{ else }}false{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}{{ if or $c.disabled (and $zero (not $c.pressed)) }} disabled{{ end }}><span class="v-check" aria-hidden="true"></span>{{ $c.label }}{{ if ne $c.count nil }}<span class="v-count" data-facet-count>{{ (partial "fmt/count.html" (dict "v" $c.count)).text }}</span>{{ end }}</button>
+<button type="button" class="v-chip" data-facet="{{ $key }}" aria-pressed="{{ if $c.pressed }}true{{ else }}false{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}{{ if or $c.disabled (and $zero (not $c.pressed)) }} disabled{{ end }}><span class="v-check" aria-hidden="true"></span>{{ $c.label }}{{ if ne $c.count nil }}{{ $ct := (partial "fmt/count.html" (dict "v" ($c.rest | default $c.count))).text }}<span class="v-count" data-facet-count style="--n:{{ len $ct }}">{{ (partial "fmt/count.html" (dict "v" $c.count)).text }}</span>{{ end }}</button>
 {{- end -}}
