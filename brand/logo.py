@@ -37,8 +37,8 @@ GRAPHITE = "#151518"
 WHITE = "#f4f4f5"
 SIGNAL = "#eb6834"
 
-FINAL = "a"
-DEFAULT_SET = ["a", "b", "c", "d", "e", "f", "a3"]
+FINAL = "g2"
+DEFAULT_SET = ["g1", "g2", "g3", "g4", "e2"]
 
 
 def _lin(c):
@@ -280,6 +280,29 @@ def rrect_pts(w, h, r, cx=0.0, cy=0.0, seg=20):
     return _dedupe(pts)
 
 
+def visor_pts(w, h, r, cx=0.0, cy=0.0, notch=None, seg=20):
+    """Rounded rectangle; `notch=(width, height)` lifts a soft nose bridge
+    into the bottom edge, which turns a plain band into a visor/goggle."""
+    r = max(1e-4, min(r, w / 2.0, h / 2.0))
+
+    def arc(x, y, a0):
+        return [(x + r * math.cos(math.radians(a0 + 90.0 * i / seg)),
+                 y + r * math.sin(math.radians(a0 + 90.0 * i / seg))) for i in range(seg + 1)]
+
+    pts = arc(cx + w / 2 - r, cy + h / 2 - r, 0.0)
+    pts += arc(cx - w / 2 + r, cy + h / 2 - r, 90.0)
+    pts += arc(cx - w / 2 + r, cy - h / 2 + r, 180.0)
+    if notch:
+        nw, nh = notch
+        nw = min(nw, w - 2 * r - 0.02)
+        steps = 48
+        for i in range(1, steps):
+            t = -1.0 + 2.0 * i / steps
+            pts.append((cx + t * nw / 2, cy - h / 2 + nh * (0.5 + 0.5 * math.cos(math.pi * t))))
+    pts += arc(cx + w / 2 - r, cy - h / 2 + r, 270.0)
+    return _dedupe(pts)
+
+
 def squircle_pts(half, n=5.0, count=320, cx=0.0, cy=0.0):
     """Superellipse |x|^n + |y|^n = half^n (the app-icon tile shape)."""
     pts = []
@@ -371,6 +394,35 @@ def tube(name, pts, radius, mat, y=0.0, flat=1.0, joints=True):
         for i, (px, pz) in enumerate(pts):
             made.append(sphere(f"{name}.j{i}", (px, y, pz), radius, mat, scale=(1.0, flat, 1.0), seg=48))
     return made
+
+
+def dome(name, pts, spine_half, cz, height, mat, y_base, rings=28):
+    """Convex lens over an (x, z) outline: every outline point slides toward
+    the shape's horizontal spine while rising on a parabola, so the surface
+    has even curvature and catches the softboxes as a broad highlight."""
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    n = len(pts)
+    prev = None
+    for k in range(rings + 1):
+        s = 0.985 * k / rings
+        y = y_base - height * (1.0 - (1.0 - s) ** 2)
+        ring = []
+        for x, z in pts:
+            qx = max(-spine_half, min(spine_half, x))
+            ring.append(bm.verts.new((qx + (x - qx) * (1.0 - s), y, cz + (z - cz) * (1.0 - s))))
+        if prev is not None:
+            for i in range(n):
+                j = (i + 1) % n
+                bm.faces.new((prev[i], prev[j], ring[j], ring[i]))
+        prev = ring
+    bm.faces.new(prev)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me)
+    bm.free()
+    me.polygons.foreach_set("use_smooth", [True] * len(me.polygons))
+    me.materials.append(mat)
+    return link(bpy.data.objects.new(name, me))
 
 
 def prism(name, pts, y0, y1):
@@ -512,7 +564,80 @@ def concept_d(scene):
     camera(scene, ortho_scale=2.1)
 
 
+def visor_mark(tile_mat, screen_mat, line_mat, dot_mat, cover_mat,
+               w=1.60, h=0.78, r=0.30, z=0.08, notch=None,
+               recess=0.07, bulge=0.13, line_r=0.065, dot_r=0.11):
+    """Helmet tile whose visor shows one thing: the trend, and where it ends.
+
+    The tile is the helmet, the domed glass is the visor, and the stroke under
+    the glass is a check mark that is also a recovering chart line.
+    """
+    bevel = 0.06
+    hole = visor_pts(w + 2 * bevel, h + 2 * bevel, r + bevel, 0.0, z, notch)
+    tile(tile_mat, bevel=bevel, holes=[hole])
+    plate("Screen", visor_pts(w + 0.12, h + 0.12, r + 0.06, 0.0, z, notch), 0.03, 0.0, screen_mat, recess)
+    pts = [(-0.46, z + 0.10), (-0.20, z - 0.16), (0.40, z + 0.15)]
+    tube("Trend", pts, line_r, line_mat, y=recess - line_r * 0.55, flat=0.55)
+    sphere("DataPoint", (pts[-1][0], recess - dot_r * 0.5, pts[-1][1]), dot_r, dot_mat, scale=(1.0, 0.5, 1.0))
+    gap = 0.012
+    dome("VisorGlass", visor_pts(w - 2 * gap, h - 2 * gap, r - gap, 0.0, z, notch),
+         max(0.0, (w - h) / 2.0), z, bulge, cover_mat, 0.03)
+
+
+def mat_screen_dark():
+    return principled("Screen", "#0a0c12", rough=0.35, coat=0.3)
+
+
+def mat_screen_lit():
+    return principled("Screen", BLUE, rough=0.45, emission=BLUE, emission_strength=0.9)
+
+
+def mat_cover(tint=(0.9, 0.94, 1.0, 1.0)):
+    return glass("VisorGlass", tint, body=0.02, fresnel=0.45, rough=0.05)
+
+
+def concept_g1(scene):
+    """Graphite helmet, lit blue visor."""
+    lighter = principled("Graphite", "#26262c", rough=0.42, coat=0.35, coat_rough=0.18)
+    visor_mark(lighter, mat_screen_lit(), mat_white(emit=1.2), mat_signal(emit=1.0), mat_cover())
+    studio()
+    camera(scene)
+
+
+def concept_g2(scene):
+    """Blue helmet, dark glass visor."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=1.6), mat_signal(emit=1.4), mat_cover())
+    studio()
+    camera(scene)
+
+
+def concept_g3(scene):
+    """Blue helmet, dark glass visor with a nose bridge."""
+    visor_mark(mat_blue(), mat_screen_dark(), mat_white(emit=1.6), mat_signal(emit=1.4), mat_cover(),
+               h=0.80, r=0.32, z=0.10, notch=(0.60, 0.20))
+    studio()
+    camera(scene)
+
+
+def concept_g4(scene):
+    """White helmet, dark glass visor, blue trend."""
+    visor_mark(mat_white(), mat_screen_dark(), mat_blue(emit=2.2), mat_signal(emit=1.4), mat_cover())
+    studio()
+    camera(scene)
+
+
+def concept_e2(scene):
+    check_trend(mat_blue(), mat_white(), mat_signal(emit=0.4), radius=0.13, dot=0.21)
+    studio()
+    camera(scene)
+
+
 CONCEPTS = {
+    "g1": (concept_g1, "visor: graphite helmet, lit blue visor"),
+    "g2": (concept_g2, "visor: blue helmet, dark glass"),
+    "g3": (concept_g3, "visor: blue helmet, nose bridge"),
+    "g4": (concept_g4, "visor: white helmet, blue trend"),
+    "e2": (concept_e2, "check-trend, blue tile, heavier"),
     "a": (concept_a, "check-trend, graphite tile"),
     "b": (concept_b, "helmet visor, bars in slot"),
     "c": (concept_c, "bars under a glass visor band"),
@@ -536,6 +661,7 @@ def main():
     ap.add_argument("--res", type=int, default=1024)
     ap.add_argument("--blend", default="")
     ap.add_argument("--final", default=FINAL)
+    ap.add_argument("--shard", default="0/1", help="i/n: render every n-th concept starting at i")
     args = ap.parse_args(argv)
 
     out_dir = os.path.abspath(args.out)
@@ -543,6 +669,9 @@ def main():
     wanted = [c.strip() for c in args.concepts.split(",") if c.strip()]
     if wanted == ["all"]:
         wanted = list(CONCEPTS)
+    shard_i, shard_n = (int(v) for v in args.shard.split("/"))
+    index = {key: i for i, key in enumerate(wanted)}
+    wanted = [key for i, key in enumerate(wanted) if i % shard_n == shard_i]
 
     done, failed = [], {}
     for key in wanted:
@@ -572,13 +701,13 @@ def main():
     meta = {
         "order": done,
         "final": args.final if args.final in done else "",
-        "concepts": {k: {"label": CONCEPTS[k][1]} for k in done},
+        "concepts": {k: {"label": CONCEPTS[k][1], "index": index[k]} for k in done},
         "failed": failed,
     }
-    with open(os.path.join(out_dir, "concepts.json"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(out_dir, f"concepts.{shard_i}.json"), "w", encoding="utf-8") as fh:
         json.dump(meta, fh, indent=2)
     print(f"logo: rendered {done}; failed {list(failed)}", flush=True)
-    if not done:
+    if failed:
         raise SystemExit(1)
 
 

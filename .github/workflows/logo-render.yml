@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       concepts:
-        description: 'Comma-separated concept ids (empty = the default set in brand/logo.py)'
+        description: 'Comma-separated concept ids, or "all" (empty = the default set in brand/logo.py)'
         required: false
         default: ''
       samples:
@@ -33,11 +33,19 @@ concurrency:
 env:
   BLENDER_VERSION: '4.2.3'
   BLENDER_SERIES: 'Blender4.2'
+  # sha256 of blender-4.2.3-linux-x64.tar.xz as served by download.blender.org
+  BLENDER_SHA256: '3a64efd1982465395abab4259b4091d5c8c56054c7267e9633e4f702a71ea3f4'
+  SHARDS: '4'
 
 jobs:
   render:
+    name: Render (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,7 +79,7 @@ jobs:
             exit 1
           fi
           echo "Downloaded from ${ok}"
-          sha256sum "/tmp/${file}"
+          echo "${BLENDER_SHA256}  /tmp/${file}" | sha256sum -c -
           mkdir -p ~/blender
           tar -xJf "/tmp/${file}" --strip-components=1 -C ~/blender
           rm -f "/tmp/${file}"
@@ -87,31 +95,57 @@ jobs:
         env:
           CONCEPTS: ${{ github.event.inputs.concepts }}
           SAMPLES: ${{ github.event.inputs.samples }}
+          SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
           ~/blender/blender --version | head -n 1
-          args=(--out out/renders --blend out/visr.blend)
+          args=(--out out/renders --blend out/visr.blend --shard "${SHARD}/${SHARDS}")
           if [ -n "${CONCEPTS:-}" ]; then args+=(--concepts "${CONCEPTS}"); fi
           if [ -n "${SAMPLES:-}" ]; then args+=(--samples "${SAMPLES}"); fi
           ~/blender/blender -b --factory-startup --python-exit-code 1 \
             --python brand/logo.py -- "${args[@]}"
+
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renders-${{ matrix.shard }}
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  sheet:
+    name: Contact sheets and icon sizes
+    needs: render
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Collect renders
+        uses: actions/download-artifact@v4
+        with:
+          pattern: renders-*
+          merge-multiple: true
+          path: out
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Contact sheets and icon sizes
+      - name: Build sheets
         run: |
           set -euo pipefail
           python -m pip install --quiet "pillow>=10.1"
           python brand/post.py --in out/renders --out out
 
       - name: Upload artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visr-logo
           path: out/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30

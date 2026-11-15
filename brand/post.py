@@ -146,17 +146,19 @@ def main():
     ap.add_argument("--final", default="")
     args = ap.parse_args()
 
-    labels = {}
-    meta_path = os.path.join(args.src, "concepts.json")
-    if os.path.exists(meta_path):
+    # Each render shard writes its own concepts.<i>.json; merge them.
+    labels, rank, final = {}, {}, args.final
+    for meta_path in sorted(glob.glob(os.path.join(args.src, "concepts*.json"))):
         with open(meta_path, encoding="utf-8") as fh:
             meta = json.load(fh)
-        labels = {k: v.get("label", k) for k, v in meta.get("concepts", {}).items()}
-        order = [k for k in meta.get("order", []) if os.path.exists(os.path.join(args.src, k + ".png"))]
-        final = args.final or meta.get("final", "")
-    else:
-        order = sorted(os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(args.src, "*.png")))
-        final = args.final
+        for key, info in meta.get("concepts", {}).items():
+            labels[key] = info.get("label", key)
+            rank[key] = info.get("index", len(rank))
+        final = final or meta.get("final", "")
+        for key, err in meta.get("failed", {}).items():
+            print(f"post: concept {key} failed to render:\n{err}")
+    order = sorted(os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(args.src, "*.png")))
+    order.sort(key=lambda k: rank.get(k, 1000))
 
     os.makedirs(os.path.join(args.out, "marks"), exist_ok=True)
     os.makedirs(os.path.join(args.out, "strips"), exist_ok=True)
