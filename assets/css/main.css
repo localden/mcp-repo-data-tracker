@@ -1033,6 +1033,10 @@
   /* a name is never hard-cut. The link is the containing block of its sr-only suffix, so its own overflow clips the suffix and
      the suffix never widens the page */
   .v-name > :is(.v-row-link, span:not([class]):first-child) { position: relative; display: block; overflow: hidden; text-overflow: ellipsis; }
+  /* the suffix is pinned to its link's own corner. Left at its static position it follows the last glyph of the text, which in
+     a shortened title lies past the cell and, in a right-hand card, past the viewport */
+  .v-name-line > .v-row-link { position: relative; }
+  :is(.v-name, .v-item, .v-name-line) > .v-row-link > .sr-only { top: 0; left: 0; }
   /* Repository on an org list is row meta: text-2, so the title is the only text-tier item on the row's first line */
   .v-dt.is-work td.v-c-repo { color: var(--text-2); }
   /* a kept table in a 6-column card at 1024 to 1279: its numeric columns narrow to 5rem and the headers take their short form, so
@@ -1043,6 +1047,10 @@
     .v-span-6 > .v-dt.is-keep .v-th-short { display: inline; }
     /* a matrix name wraps to a second line here; it is never cut while numeric columns have width to spare */
     .v-dt:is(.is-matrix, .is-keep) .v-name > .v-row-link { white-space: normal; }
+    /* the cell gap is 8px here, so a sparkline column between two others needs 80 plus two gaps and the 8px to spare it has at
+       1440. The half rem goes to the name column: Repository is 10rem in the nine-column repositories table, so its longest
+       name ("MCP Specification") stays on one line and the row's values share its line */
+    .v-dt > colgroup > col.v-col-spark:not(:last-child) { width: 6.5rem; }
   }
   /* a date in a body cell is a fixed slot with the month on its left edge (v4 2.6): the slot sits where the cell aligns it, so
      month names start at one x down a column whether the day has one digit or two */
@@ -1499,7 +1507,7 @@
   /* a stand-in for a numeric cell: a real cell width, the mark on the cell's right inset as on a page */
   .v-sg-td { display: flex; align-items: center; justify-content: flex-end; width: 6rem; max-width: 100%; height: var(--row); padding: 0 var(--cell-gap); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
   /* the fixture table: fixed result columns, the raw input takes the rest and wraps instead of being cut */
-  .v-sg-fixture > colgroup > col.v-sg-col-result { width: 11rem; }
+  .v-sg-fixture > colgroup > col.v-sg-col-result { width: 14.5rem; }   /* the longest fixture ("Dec 30, 2023 to Jan 4, 2024", 194px) plus the cell gap and the card inset of the last column */
   .v-sg-fixture > colgroup > col.v-sg-col-kind { width: 5rem; }
   .v-sg-fixture td.v-sg-wide { white-space: normal; overflow-wrap: anywhere; padding-block: var(--s-2); }
   /* the roles table: the usage line under a role name wraps, so the specimen states its rule in full */
