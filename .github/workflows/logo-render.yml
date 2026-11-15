@@ -1,0 +1,117 @@
+name: Render VISR logo
+
+# Renders the VISR brand mark headlessly with Blender (Cycles, CPU) and
+# publishes the renders, contact sheets and the .blend as one artifact.
+# Nothing here deploys; the committed PNGs under static/ are copied by hand
+# from a run's artifact (see brand/README.md).
+
+on:
+  push:
+    branches:
+      - 'logo/**'
+    paths:
+      - 'brand/**'
+      - '.github/workflows/logo-render.yml'
+  workflow_dispatch:
+    inputs:
+      concepts:
+        description: 'Comma-separated concept ids (empty = the default set in brand/logo.py)'
+        required: false
+        default: ''
+      samples:
+        description: 'Cycles samples per pixel (empty = default)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: logo-render-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BLENDER_VERSION: '4.2.3'
+  BLENDER_SERIES: 'Blender4.2'
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Blender
+        id: blender-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ env.BLENDER_VERSION }}-linux-x64-v1
+
+      - name: Download Blender ${{ env.BLENDER_VERSION }} LTS
+        if: steps.blender-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          file="blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          ok=""
+          for base in \
+            "https://download.blender.org/release" \
+            "https://mirrors.ocf.berkeley.edu/blender/release" \
+            "https://mirror.clarkson.edu/blender/release"; do
+            url="${base}/${BLENDER_SERIES}/${file}"
+            echo "Trying ${url}"
+            if curl -fL --retry 3 --retry-delay 5 -A "curl/8 (github-actions; visr-logo-render)" -o "/tmp/${file}" "${url}"; then
+              ok="${url}"
+              break
+            fi
+          done
+          if [ -z "${ok}" ]; then
+            echo "::error::Could not download Blender from any source"
+            exit 1
+          fi
+          echo "Downloaded from ${ok}"
+          sha256sum "/tmp/${file}"
+          mkdir -p ~/blender
+          tar -xJf "/tmp/${file}" --strip-components=1 -C ~/blender
+          rm -f "/tmp/${file}"
+
+      - name: Install runtime libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 \
+            libxkbcommon0 libsm6 libice6 libx11-6 libxext6
+
+      - name: Render concepts (Cycles, CPU)
+        env:
+          CONCEPTS: ${{ github.event.inputs.concepts }}
+          SAMPLES: ${{ github.event.inputs.samples }}
+        run: |
+          set -euo pipefail
+          ~/blender/blender --version | head -n 1
+          args=(--out out/renders --blend out/visr.blend)
+          if [ -n "${CONCEPTS:-}" ]; then args+=(--concepts "${CONCEPTS}"); fi
+          if [ -n "${SAMPLES:-}" ]; then args+=(--samples "${SAMPLES}"); fi
+          ~/blender/blender -b --factory-startup --python-exit-code 1 \
+            --python brand/logo.py -- "${args[@]}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Contact sheets and icon sizes
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet "pillow>=10.1"
+          python brand/post.py --in out/renders --out out
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visr-logo
+          path: out/
+          if-no-files-found: warn
+          retention-days: 30
