@@ -1,0 +1,20 @@
+{{- /* Name cell (design system v4 4.14): the row header of a matrix or rank table. Emits <th scope="row" class="v-name">.
+  Dict {name, href, sub, note, external, site, drill}.
+    name    the row's name. href: makes it the row link (a.v-row-link); put data-row-link on the tr so the whole row is clickable.
+            drill: true marks a link to a list on the same page (a[data-drill]).
+    sub     a sub line (caption text-3; the whole table then takes class has-sub): "npm @modelcontextprotocol/sdk". It may shorten,
+            with the full text in title.
+    note    a ui/note.html dict under the name.
+  Below 64rem the name is the title of the row's record or list row, with a 16px chevron-right at the right end when the row links.
+  No table has a chevron column from 64rem: the name is the link. */ -}}
+{{- $c := . -}}
+{{- $ext := eq $c.external true -}}
+<th scope="row" class="v-name">
+  {{- if $c.href -}}
+  <a class="v-row-link" href="{{ $c.href }}"{{ if $ext }} target="_blank" rel="noopener"{{ end }}{{ if $c.drill }} data-drill{{ end }}>{{ $c.name }}{{ if $ext }}<span class="sr-only"> (opens {{ $c.site | default "GitHub" }})</span>{{ end }}</a>{{ partial "ui/icon.html" (dict "name" "chevron-right" "class" "v-row-chev") }}
+  {{- else -}}
+  <span>{{ $c.name }}</span>
+  {{- end -}}
+  {{- with $c.sub }}<span class="v-cell-sub" title="{{ . }}">{{ . }}</span>{{ end -}}
+  {{- with $c.note }}<span class="v-cell-note">{{ partial "ui/note.html" . }}</span>{{ end -}}
+</th>

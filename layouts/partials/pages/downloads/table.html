@@ -1,90 +1,71 @@
-{{- /* Package summary table (brief 3.5-1, 5.4; design system v3 §4.7, §4.8): one row per package, each compared with itself. No
-  cross-registry total or share (IA-18). A matrix table from 64rem; one block per package below that.
-  Row title: the SDK name, the row's one link (to its repository page, whose head links the registry); under it the registry and
-  package as row meta (ui/registry-name.html labelHTML). Change columns are bare delta badges, the header names the base. A short
-  package (fewer than 7 complete days) leaves its change and 12-week cells blank and says "Since Nov 9" once, in the first of them.
-  Column widths: SDK is the one auto column; the numeric columns are sized to their values, so at 1024 the SDK column still holds
-  the longest registry line and at 1440 the slack goes to the names.
-  Call: partial "pages/downloads/table.html" (dict "pkgs" $pkgs "window" "Nov 3–9" "weeks" $last12 "id" "packages")
-    pkgs: the page's package list, each with its cells (pages/downloads/cells.html); window: the common Last 7 days window, named
-    once in the header; weeks: the 12 shared week starts behind the sparklines (named in the header tooltip); id: the section H2
-    that labels the table. */ -}}
+{{- /* Package summary table (design system v4 5.1 module 5, 5.7 module 1): one row per SDK package in registry order, each compared
+  with itself. A matrix table with sub lines, no sort (registries cannot be compared), no total and no share across registries.
+  Call: partial "pages/downloads/table.html" (dict "data" $x "id" "packages" "full" true)
+    data   pages/downloads/packages.html.   id: the section H2 that labels the table.
+    full   true on the Downloads page: adds "Change vs 4 weeks earlier" (only when at least three rows have a value) and "Lifetime".
+  Columns:
+    SDK              auto          the row link, to /repos/<repo>/; sub line: registry and package
+    Last 7 days      v-col-num     sub line: the common window; a partial window shows its sum with the coverage note under it
+    Change           v-col-num     sub line "vs prior 7 days"; the empty mark "No baseline" without two complete windows
+    Change           v-col-num-lg  sub line "vs 4 weeks earlier" (full)
+    12 weeks         v-col-spark   flow sparkline of complete weeks; the empty baseline with fewer than four
+    Last 30 days     v-col-num     sub line: its window
+    Lifetime         v-col-num     the registry's total; the note "From {date}" under a figure whose series starts later (full)
+  Below 64rem each row is a record; the record labels carry the windows and bases. */ -}}
 {{- $c := . -}}
-{{- $span := "" -}}
-{{- with $c.weeks -}}
-  {{- $end := ((time.AsTime (index . (sub (len .) 1))).AddDate 0 0 6).Format "2006-01-02" -}}
-  {{- $span = partial "data/date-range.html" (dict "from" (index . 0) "to" $end) -}}
-{{- end -}}
-{{- /* Packages with fewer than 7 complete days are read on their own newest days, not on the header window. The note names the
-     days each one actually counts ("Nov 9–13 for Rust SDK"), so the reader never has to work out a second window. */ -}}
-{{- $short := slice -}}
-{{- range $c.pkgs }}{{ if and .short .d.complete_through .cells.win }}{{ $short = $short | append (printf "%s for %s" .cells.win .r.name) }}{{ end }}{{ end }}
-<div class="v-card">
-  {{- /* blocks first, so the card note follows the table directly and gets its top padding (.v-dt + .v-card-note) */}}
-  <ul class="v-blocks lg:hidden" aria-labelledby="{{ $c.id }}">
-    {{- range $p := $c.pkgs }}
-    {{- $x := $p.cells }}
-    <li class="v-block">
-      <p class="v-block-title"><a href="{{ printf "repos/%s/" $p.r.repo | relURL }}">{{ $p.r.name }}</a></p>
-      {{- with $p.reg.labelHTML }}
-      <p class="v-rowmeta">{{ . }}</p>
-      {{- end }}
-      {{- /* values stay short (the dd column is as wide as the widest value), so the labels never wrap; a basis goes in the label */}}
-      <dl class="v-kv">
-        <div><dt>Last 7 days{{ with $x.win }}, {{ . }}{{ end }}</dt><dd class="num">{{ $x.value }}{{ $x.note }}</dd></div>
-        {{- if $x.has7 }}
-        <div><dt>Change vs prior 7 days</dt><dd>{{ $x.chg7 }}</dd></div>
-        {{- end }}
-        {{- if $x.has28 }}
-        <div><dt>Change vs 4 weeks earlier</dt><dd>{{ $x.chg28 }}</dd></div>
-        {{- end }}
-        {{- if $x.hasLife }}
-        <div><dt>Lifetime{{ with $x.lifeFull }}, since {{ . }}{{ end }}</dt><dd class="num">{{ $x.life }}</dd></div>
-        {{- end }}
-        {{- with $p.d.complete_through }}
-        <div><dt>Complete through</dt><dd class="num">{{ $x.through }}</dd></div>
-        {{- end }}
-      </dl>
-    </li>
-    {{- end }}
-  </ul>
-  {{- /* a no-break space keeps "7 days" together when the Change header wraps */}}
-  {{- $nb := printf "%c" 160 }}
-  <table class="v-dt is-fixed hidden lg:table" aria-labelledby="{{ $c.id }}">
-    <colgroup><col class="v-col-auto"><col class="v-col-32"><col class="v-col-28"><col class="v-col-28"><col class="v-col-28"><col class="v-col-28"><col class="v-col-28"></colgroup>
+{{- $x := $c.data -}}
+{{- $full := eq $c.full true -}}
+{{- $show28 := and $full (ge (int $x.n28) 3) -}}
+{{- $l7 := partial "fmt/label.html" (dict "metric" "Downloads" "window" (dict "n" 7 "unit" "day")) -}}
+{{- $l30 := partial "fmt/label.html" (dict "metric" "Downloads" "window" (dict "n" 30 "unit" "day")) -}}
+{{- $l12 := partial "fmt/label.html" (dict "metric" "Downloads" "window" (dict "n" 12 "unit" "week")) -}}
+{{- $c7 := partial "fmt/label.html" (dict "metric" "Change" "base" "prior7") -}}
+{{- $c28 := partial "fmt/label.html" (dict "metric" "Change" "base" "4w") -}}
+{{- $sub7 := "" }}{{ $sub30 := "" -}}
+{{- with $x.common.end -}}
+  {{- $sub7 = dict "kind" "range" "from" $x.common.from "to" . -}}
+  {{- $sub30 = dict "kind" "range" "from" $x.from30 "to" . -}}
+{{- end }}
+<article class="v-card {{ $c.class | default "v-span-12" }}">
+  <table class="v-dt is-matrix has-sub"{{ with $c.id }} aria-labelledby="{{ . }}"{{ end }}>
+    <colgroup><col><col class="v-col-num"><col class="v-col-num">{{ if $show28 }}<col class="v-col-num-lg">{{ end }}<col class="v-col-spark"><col class="v-col-num">{{ if $full }}<col class="v-col-num">{{ end }}</colgroup>
     <thead>
       <tr>
-        <th scope="col">SDK</th>
-        <th scope="col" class="num whitespace-normal">Last 7 days{{ with $c.window }}<span class="sub">{{ . }}</span>{{ end }}</th>
-        <th scope="col" class="num whitespace-normal">Change<span class="sub">vs prior 7{{ $nb }}days</span></th>
-        <th scope="col" class="num whitespace-normal">Change<span class="sub">vs 4 weeks earlier</span></th>
-        <th scope="col"{{ with $span }} title="Weeks of {{ . }}"{{ end }}>12 weeks<span class="sub">weekly totals</span></th>
-        <th scope="col" class="num whitespace-normal">Lifetime</th>
-        <th scope="col" class="num whitespace-normal">Complete through</th>
+        {{ partial "ui/th.html" (dict "label" "SDK") }}
+        {{ partial "ui/th.html" (dict "label" $l7.window "sub" $sub7 "record" $l7.record "num" true
+            "title" "Downloads over the 7 complete days every package with a week of history has reached.") }}
+        {{ partial "ui/th.html" (dict "label" $c7.main "sub" $c7.sub "record" $c7.record "num" true
+            "title" "The last 7 days against the 7 days before them. Shown only when both windows are complete.") }}
+        {{- if $show28 }}
+        {{ partial "ui/th.html" (dict "label" $c28.main "sub" $c28.sub "record" $c28.record "num" true
+            "title" "The last 7 days against the 7 days ending 4 weeks earlier. Shown only when both windows are complete.") }}
+        {{- end }}
+        {{ partial "ui/th.html" (dict "label" "12 weeks" "record" $l12.record "class" "v-c-spark"
+            "title" "Monday to Sunday totals of complete weeks. A week with a missing day is left empty, never drawn as zero.") }}
+        {{ partial "ui/th.html" (dict "label" $l30.window "sub" $sub30 "record" $l30.record "num" true) }}
+        {{- if $full }}
+        {{ partial "ui/th.html" (dict "label" "Lifetime" "record" "Lifetime downloads" "num" true
+            "title" "The registry's lifetime total. npm reports none, so its figure is a running sum from the first tracked day.") }}
+        {{- end }}
       </tr>
     </thead>
     <tbody>
-      {{- range $p := $c.pkgs }}
-      {{- $x := $p.cells }}
+      {{- range $p := $x.pkgs }}
+      {{- $d := $p.d }}
       <tr data-row-link>
-        <th scope="row"><a class="v-row-link" href="{{ printf "repos/%s/" $p.r.repo | relURL }}" title="{{ $p.r.key }}">{{ $p.r.name }}</a>{{ with $p.reg.labelHTML }}<span class="v-rowmeta">{{ . }}</span>{{ end }}</th>
-        <td class="num">{{ $x.value }}{{ $x.note }}</td>
-        {{- with $x.since }}
-        <td><span class="v-caption">{{ . }}</span></td>
-        <td></td>
-        <td></td>
-        {{- else }}
-        <td class="num">{{ $x.chg7 }}</td>
-        <td class="num">{{ $x.chg28 }}</td>
-        <td>{{ $x.spark }}</td>
+        {{ partial "ui/name-cell.html" (dict "name" $p.r.name "href" (printf "repos/%s/" $p.r.repo | relURL) "sub" $p.reg.label) }}
+        <td class="num">{{ partial "pages/downloads/window.html" (dict "v" $d.dl7 "sum" $d.sum7 "days" $d.days_covered "of" 7 "range" $p.days7 "na" $p.na) }}</td>
+        <td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "metric" "downloads") }}</td>
+        {{- if $show28 }}
+        <td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" $d.dl7 "prev" $d.dl7_28 "unit" "percent" "metric" "downloads") }}</td>
         {{- end }}
-        <td class="num">{{ $x.life }}{{ with $x.lifeSub }}<span class="sub" title="since {{ $x.lifeFull }}">{{ . }}</span>{{ end }}</td>
-        <td class="num">{{ $x.through }}</td>
+        <td class="v-c-spark">{{ partial "ui/spark.html" (dict "points" $p.spark "kind" "flow" "size" "cell" "unit" "volume") }}</td>
+        <td class="num">{{ partial "pages/downloads/window.html" (dict "v" $d.dl30 "sum" $p.sum30 "days" $d.days_covered30 "of" 30 "range" $p.days30 "na" $p.na) }}</td>
+        {{- if $full }}
+        <td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" $d.lifetime "reason" "no-data") }}{{ with $p.life_from }}<span class="v-cell-note">{{ partial "ui/note.html" (dict "from" .) }}</span>{{ end }}</td>
+        {{- end }}
       </tr>
       {{- end }}
     </tbody>
   </table>
-  {{- with $short }}
-  <p class="v-card-note">Last 7 days covers {{ delimit . ", " " and " }}, the days collected so far.</p>
-  {{- end }}
-</div>
+</article>

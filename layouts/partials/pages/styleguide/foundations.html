@@ -1,0 +1,194 @@
+{{- /* Styleguide sections 1 to 5: colour, type, formats, space and grid, icons (design system v4 6). */ -}}
+{{- $tokens := slice "--bg" "--surface" "--surface-2" "--surface-raised" "--track" "--segment" "--meter-track" "--border-subtle" "--border" "--border-strong"
+  "--text" "--text-2" "--text-3" "--hover" "--pressed" "--fill-neutral" "--accent" "--accent-text" "--accent-soft" "--accent-border"
+  "--danger" "--danger-soft" "--success" "--success-soft" "--warning" "--warning-soft" "--warning-border" "--chart-1" "--series-context"
+  "--series-neutral" "--ord-1" "--ord-2" "--ord-3" "--ord-4" "--gap" -}}
+<section class="v-section" aria-labelledby="colour">
+  {{ partial "ui/section-head.html" (dict "id" "colour" "title" "Colour" "desc" "Every token with its computed value in the active theme. The dark capture of this page is the dark swatch sheet.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Tokens") }}<div class="v-card-body">
+      <div class="v-sg-swatches">
+        {{- range $tokens }}
+        <div class="v-sg-swatch" data-token="{{ . }}"><span class="v-sg-chipbox"></span><span class="v-sg-name">{{ . }}</span><span class="v-sg-value"></span></div>
+        {{- end }}
+      </div>
+    </div></article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Surface levels") }}<div class="v-card-body">
+      <div class="v-sg-frame is-bg"><p class="v-caption">Page</p>
+        <div class="v-sg-frame"><p class="v-caption">Card</p>
+          <div class="v-sg-frame is-surface-2"><p class="v-caption">Inset band</p></div>
+          <div class="v-sg-frame is-raised"><p class="v-caption">Raised</p></div>
+        </div>
+      </div>
+      <p class="v-sg-cap">Four levels. In dark, higher is lighter.</p>
+    </div></article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Text tiers and state layers") }}<div class="v-card-body">
+      <div class="v-sg-stack">
+        {{- range slice "" "is-surface-2" "is-bg" }}
+        <div class="v-sg-frame {{ . }}"><p class="v-t-body">Primary text, values and titles</p><p class="v-t-label">Secondary text, labels and row meta</p><p class="v-t-caption">Tertiary text, captions and axis ticks</p></div>
+        {{- end }}
+        <div class="v-sg-row"><div class="v-sg-frame is-layer-1"><p class="v-caption">Hover layer</p></div><div class="v-sg-frame is-layer-2"><p class="v-caption">Pressed layer</p></div></div>
+        <div class="v-sg-row">{{ range seq 4 }}<span class="v-key is-box is-ord-{{ . }}" aria-hidden="true"></span>{{ end }}<span class="v-caption">The ordered ramp, most recent activity first</span></div>
+      </div>
+    </div></article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="type">
+  {{ partial "ui/section-head.html" (dict "id" "type" "title" "Type" "desc" "One typeface shipped with the site, nine roles, tabular figures on everything.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-8">{{ partial "ui/card-head.html" (dict "title" "Roles") }}<div class="v-card-body"><div class="v-sg-stack">
+      <p class="v-t-display">{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}</p>
+      <p class="v-t-title">All repositories</p>
+      <p class="v-t-heading">Needs attention</p>
+      <p class="v-t-subhead">Waiting by repository</p>
+      <p class="v-t-strong">Proposal</p>
+      <p class="v-t-medium">fix(client): retry the stream after receiving a session id</p>
+      <p class="v-t-body">Open issues with no maintainer reply, longest wait first.</p>
+      <p class="v-t-label">Waiting for a reply</p>
+      <p class="v-t-caption">Daily, last 26 weeks</p>
+    </div><p class="v-sg-cap">display, title, heading, subhead, strong, medium, body, label, caption</p></div></article>
+    <article class="v-card v-span-4">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-stack">
+      <table class="v-dt is-compact" aria-label="Tabular figures"><tbody>
+        {{- range slice 1111 8888 13765 }}
+        <tr><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</td></tr>
+        {{- end }}
+      </tbody></table>
+      <div class="v-sg-cell"><p class="v-prose v-clamp">A sentence clamps to two lines from the tablet width up and to three on a phone, and only sentences and the page description may clamp at all.</p></div>
+      <div class="v-sg-cell">{{ partial "ui/value.html" (dict "kind" "path" "v" "packages/server/src/transport/streamable/upgrade-to-v2.md") }}</div>
+      <div class="v-sg-row"><span class="v-t-display">{{ partial "ui/value.html" (dict "kind" "dur" "d" 471) }}</span><span class="v-t-heading">{{ partial "ui/value.html" (dict "kind" "dur" "h" 36) }}</span><span class="v-t-body">{{ partial "ui/value.html" (dict "kind" "dur" "d" 3) }}</span></div>
+    </div><p class="v-sg-cap">A tabular column, a clamped sentence, a path in a narrow cell, units beside display, heading and body values</p></div></article>
+  </div>
+</section>
+
+{{- $fx := slice
+  (dict "fmt" "count" "args" (dict "v" 0) "expect" "0")
+  (dict "fmt" "count" "args" (dict "v" 13765) "expect" "13,765")
+  (dict "fmt" "count" "args" (dict "v" 539 "noun" "pr") "expect" "539 PRs")
+  (dict "fmt" "count" "args" (dict "v" 1 "noun" "pr") "expect" "1 PR")
+  (dict "fmt" "count" "args" (dict "v" 6.4 "stat" true) "expect" "6.4")
+  (dict "fmt" "count" "args" (dict "v" 5.0 "stat" true) "expect" "5")
+  (dict "fmt" "volume" "args" (dict "v" 882) "expect" "882")
+  (dict "fmt" "volume" "args" (dict "v" 228400) "expect" "228K")
+  (dict "fmt" "volume" "args" (dict "v" 2590000) "expect" "2.59M")
+  (dict "fmt" "volume" "args" (dict "v" 88041000) "expect" "88.0M")
+  (dict "fmt" "volume" "args" (dict "v" 2010000000) "expect" "2.01B")
+  (dict "fmt" "volume" "args" (dict "v" 999593) "expect" "1.00M")
+  (dict "fmt" "share" "args" (dict "v" 43.2) "expect" "43%")
+  (dict "fmt" "share" "args" (dict "part" 1 "whole" 400) "expect" "<1%")
+  (dict "fmt" "change" "args" (dict "cur" 741 "prev" 602 "metric" "waiting") "expect" "+139")
+  (dict "fmt" "change" "args" (dict "cur" 95 "prev" 100) "expect" "−5")
+  (dict "fmt" "change" "args" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") "expect" "+0.9%")
+  (dict "fmt" "change" "args" (dict "cur" 97 "prev" 100 "unit" "percent") "expect" "−3.0%")
+  (dict "fmt" "change" "args" (dict "cur" 10 "prev" 10) "expect" "0")
+  (dict "fmt" "change" "args" (dict "d" 48 "unit" "hours" "metric" "median") "expect" "+2d")
+  (dict "fmt" "dur" "args" (dict "h" 0.4) "expect" "<1h")
+  (dict "fmt" "dur" "args" (dict "h" 3.9) "expect" "3h")
+  (dict "fmt" "dur" "args" (dict "h" 47.9) "expect" "47h")
+  (dict "fmt" "dur" "args" (dict "h" 48) "expect" "2d")
+  (dict "fmt" "dur" "args" (dict "d" 1024 "unit" "d") "expect" "1,024d")
+  (dict "fmt" "dur" "args" (dict "h" 5 "unit" "d") "expect" "<1d")
+  (dict "fmt" "dur" "args" (dict "h" 113.6 "unit" "h") "expect" "113h")
+  (dict "fmt" "date" "args" (dict "d" "2024-10-09") "expect" "Oct 9, 2024")
+  (dict "fmt" "date" "args" (dict "d" "2024-09-10" "weekday" true) "expect" "Tue, Sep 10, 2024")
+  (dict "fmt" "range" "args" (dict "from" "2024-11-03" "to" "2024-11-09") "expect" "Nov 3–9, 2024")
+  (dict "fmt" "range" "args" (dict "from" "2024-10-08" "to" "2024-11-09") "expect" "Oct 8 to Nov 9, 2024")
+  (dict "fmt" "range" "args" (dict "from" "2023-12-30" "to" "2024-01-04") "expect" "Dec 30, 2023 to Jan 4, 2024")
+  (dict "fmt" "ts" "args" (dict "t" "2024-11-14T08:29:00Z") "expect" "Nov 14, 2024, 08:29 UTC")
+  (dict "fmt" "ratio" "args" (dict "part" 155 "whole" 259) "expect" "155 of 259")
+  (dict "fmt" "ratio" "args" (dict "part" 5 "whole" 7 "noun" "day") "expect" "5 of 7 days")
+  (dict "fmt" "lines" "args" (dict "adds" 417 "dels" 0) "expect" "+417 −0") -}}
+<section class="v-section" aria-labelledby="formats">
+  {{ partial "ui/section-head.html" (dict "id" "formats" "title" "Formats" "desc" "One format per kind of value. The fixture table runs every kind through the Hugo formatters and their JavaScript mirror.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Fixture table") }}
+      <table class="v-dt is-compact" id="formats-table" aria-label="Formatter fixtures">
+        <colgroup><col class="v-col-num-sm"><col><col class="v-col-deadline"><col class="v-col-deadline"><col class="v-col-deadline"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Input") }}{{ partial "ui/th.html" (dict "label" "Expected") }}{{ partial "ui/th.html" (dict "label" "Hugo") }}{{ partial "ui/th.html" (dict "label" "JavaScript") }}</tr></thead>
+        <tbody>
+          {{- range $fx }}
+          <tr data-fixture><th scope="row">{{ .fmt }}</th><td><span class="v-val v-truncate">{{ jsonify .args }}</span></td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Value states") }}
+      <table class="v-dt is-matrix" aria-label="Value states">
+        <colgroup><col><col class="v-col-num"><col class="v-col-num"><col class="v-col-num"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Value" "num" true) }}{{ partial "ui/th.html" (dict "label" "Zero" "num" true) }}{{ partial "ui/th.html" (dict "label" "Missing" "num" true) }}</tr></thead>
+        <tbody>
+          <tr><th scope="row">Count</th><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 1143) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "count" "reason" "not-computed") }}</td></tr>
+          <tr><th scope="row">Volume</th><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" 88208812) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "volume" "reason" "not-sdk") }}</td></tr>
+          <tr><th scope="row">Duration</th><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "d" 744 "unit" "d") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "h" 0 "unit" "d") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "dur" "reason" "no-data") }}</td></tr>
+          <tr><th scope="row">Share</th><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "v" 43) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "reason" "not-classified") }}</td></tr>
+          <tr><th scope="row">Net change</th><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 38) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "v" 0) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "net" "reason" "tracked-90") }}</td></tr>
+          <tr><th scope="row">Change</th><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 741 "prev" 602 "metric" "waiting") }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 5 "prev" 5) }}</td><td class="num">{{ partial "ui/value.html" (dict "kind" "change" "cur" 5) }}</td></tr>
+        </tbody>
+      </table>
+    </article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Reasons for a missing value") }}
+      <table class="v-dt is-matrix" aria-label="Reasons">
+        <colgroup><col><col class="v-col-num-sm"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Reason") }}{{ partial "ui/th.html" (dict "label" "Mark" "num" true) }}</tr></thead>
+        <tbody>
+          {{- range slice "not-sdk" "not-classified" "tracked-90" "no-complete-days" "no-baseline" "no-history" "no-priority-labels" "not-computed" "no-data" }}
+          <tr><th scope="row">{{ (partial "fmt/na.html" .).long }}</th><td class="num">{{ partial "ui/value.html" (dict "kind" "na" "reason" .) }}</td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Labels, windows and bases") }}<div class="v-card-body"><div class="v-sg-row">
+      {{- $l := partial "fmt/label.html" (dict "metric" "Merged" "scope" "PRs" "window" (dict "n" 7 "unit" "day")) }}
+      <span class="v-label">{{ $l.text }}</span><span class="v-caption">{{ $l.sub }}</span><span class="v-caption">{{ $l.record }}</span>
+      {{- $l = partial "fmt/label.html" (dict "metric" "Waiting for a reply" "scope" "Issues" "threshold" "over7") }}
+      <span class="v-label">{{ $l.text }}</span><span class="v-caption">{{ $l.record }}</span>
+      {{- range slice "prior7" "4w" }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end }}
+      <span class="v-base">{{ (partial "fmt/label.html" (dict "base" (dict "date" "2024-10-07"))).base }}</span>
+      {{- range slice "active30" "idle30" "idle60" "idle90" }}<span class="v-caption">{{ (partial "fmt/label.html" (dict "bucket" .)).bucket }}</span>{{ end }}
+      <span class="v-caption">{{ (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence }}</span>
+      <span class="v-caption">{{ (partial "fmt/label.html" (dict "window" "wtd")).window }}</span>
+    </div><p class="v-sg-cap">fmt/label.html: tile label, header sub line, record label, bases, last-activity buckets, a chart cadence, a window</p></div></article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="space">
+  {{ partial "ui/section-head.html" (dict "id" "space" "title" "Space and grid" "desc" "One spacing scale and three grid rows. Side-by-side cards are equal height by construction.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Scale" "action" (safeHTML `<button type="button" class="v-btn v-btn-sm" data-disclosure aria-expanded="false" aria-controls="sg-overlay">Column overlay</button>`)) }}<div class="v-card-body">
+      <div class="v-sg-overlay" id="sg-overlay" hidden>{{ range seq 12 }}<i></i>{{ end }}</div>
+      <div class="v-sg-stack">
+        {{- range slice 2 4 8 12 16 20 24 32 40 48 56 72 }}
+        <div class="v-sg-row"><span class="v-sg-bar" style="--v:{{ . }}px"></span><span class="v-caption">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</span></div>
+        {{- end }}
+      </div>
+    </div></article>
+    <article class="v-card v-span-12"><div class="v-card-body"><p class="v-sg-block">A row of twelve</p></div></article>
+    <article class="v-card v-span-8"><div class="v-card-body"><p class="v-sg-block">Eight</p></div></article>
+    <article class="v-card v-span-4"><div class="v-card-body"><p class="v-sg-block">Four</p></div></article>
+    <article class="v-card v-span-6"><div class="v-card-body"><p class="v-sg-block">Six</p></div></article>
+    <article class="v-card v-span-6"><div class="v-card-body"><p class="v-sg-block">Six</p></div></article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="icons">
+  {{ partial "ui/section-head.html" (dict "id" "icons" "title" "Icons" "desc" "One meaning per icon, in three sizes. An icon never carries meaning alone.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">
+      <table class="v-dt is-matrix" aria-label="Icons">
+        <colgroup><col class="v-col-detail"><col class="v-col-num"><col></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Icon") }}{{ partial "ui/th.html" (dict "label" "Sizes") }}{{ partial "ui/th.html" (dict "label" "The one meaning") }}</tr></thead>
+        <tbody>
+          {{- range slice
+            (slice "alert-triangle" "Past a deadline") (slice "circle-alert" "Data is incomplete") (slice "clock" "Time: updated at, history too short")
+            (slice "calendar" "A date the data runs through") (slice "info" "Definitions") (slice "arrow-up" "Sort direction, ascending")
+            (slice "arrow-down" "Sort direction, descending") (slice "chevron-up-down" "Pick one of several") (slice "arrow-right" "Follows a link to a list or page")
+            (slice "chevron-right" "This row navigates") (slice "chevron-down" "Opens below") (slice "check" "Selected") (slice "x" "Clear")
+            (slice "sliders" "Filters") (slice "search" "Search") (slice "github" "Repository link") (slice "package" "Registry link")
+            (slice "sun" "Switch to light theme") (slice "moon" "Switch to dark theme") }}
+          <tr><th scope="row">{{ index . 0 }}</th><td><span class="v-sg-row">{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 12) }}{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 14) }}{{ partial "ui/icon.html" (index . 0) }}</span></td><td><span class="v-detail">{{ index . 1 }}</span></td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
+  </div>
+</section>

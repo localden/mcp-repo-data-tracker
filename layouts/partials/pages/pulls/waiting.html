@@ -1,0 +1,66 @@
+{{- /* The "Waiting for first review" list card (design system v4 4.13, 4.16, 5.4, 5.5): on /pulls/ (id "pw", no views) and as the
+     queue of a repository without PR classification (id "pq", views "Waiting for first review" and "Drafts").
+     Ctx: dict {id, rows, drafts, org, repos, views, labelledby}.
+       rows        [{w, it, name, slug, stage}], longest wait first: the non-draft rows of data/waiting.html, so the counts on tiles
+                   and links equal this list.
+       drafts      the same shape for draft PRs, longest wait first (only with views).
+       org         true on /pulls/: adds the Repository column and the Repository select facet.
+       repos       the Repository options [{value (slug), label, count}] (org only).
+       views       true adds the view tabs; drafts are decided by GitHub's draft state, never by a label.
+       labelledby  the id of the section title.
+     Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, PR, Waiting; default sort Waiting,
+     descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
+{{- $c := . -}}
+{{- $id := $c.id | default "pq" -}}
+{{- $org := eq $c.org true -}}
+{{- $views := eq $c.views true -}}
+{{- $review := $c.rows | default slice -}}
+{{- $drafts := slice }}{{ if $views }}{{ $drafts = $c.drafts | default slice }}{{ end -}}
+{{- $nReview := len $review }}{{ $nDrafts := len $drafts -}}
+{{- $def := "" -}}
+{{- if $views }}{{ $def = cond (and (eq $nReview 0) (gt $nDrafts 0)) "drafts" "review" }}{{ end -}}
+{{- $shown := $review }}{{ if eq $def "drafts" }}{{ $shown = $drafts }}{{ end -}}
+{{- $nDef := len $shown -}}
+{{- $n7 := 0 }}{{ range $shown }}{{ if ge .w 7.0 }}{{ $n7 = add $n7 1 }}{{ end }}{{ end -}}
+{{- if eq (add $nReview $nDrafts) 0 }}
+{{ partial "ui/empty.html" (dict "title" "No PRs waiting for first review" "body" "Every open PR from a contributor has a maintainer review.") }}
+{{- else }}
+{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer review for 7 days or more." "count" $n7) -}}
+{{- if $org -}}
+  {{- $facets = $facets | append (dict "key" "repo" "label" "Repository" "title" "The repository the PR belongs to." "kind" "select" "options" ($c.repos | default slice)) -}}
+{{- end }}
+<article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="PRs" data-noun-one="PR">
+  {{- if $views }}
+  {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" (slice
+      (dict "key" "review" "label" "Waiting for first review" "count" $nReview)
+      (dict "key" "drafts" "label" "Drafts" "count" $nDrafts))) }}
+  <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
+  {{- end }}
+    {{ partial "ui/filterbar.html" (dict "id" $id "noun" "pr" "total" $nDef "facets" $facets) }}
+    {{ partial "ui/list-band.html" (dict "id" $id "noun" "pr" "total" $nDef) }}
+    <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="{{ $c.labelledby | default "waiting" }}">
+      <colgroup>{{ if $org }}<col class="v-col-repo">{{ end }}<col><col class="v-col-num-sm"></colgroup>
+      <thead><tr>
+        {{- if $org }}
+        {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+        {{- end }}
+        {{ partial "ui/th.html" (dict "label" "PR") }}
+        {{ partial "ui/th.html" (dict "label" "Waiting" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the PR opened."
+            "sort" (dict "key" "waiting" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
+      </tr></thead>
+      <tbody>
+        {{- range $i, $row := $review }}
+        {{ partial "pages/pulls/wait-row.html" (dict "row" (merge $row (dict "view" (cond $views "review" ""))) "org" $org "off" (eq $def "drafts") "k" $i) }}
+        {{- end }}
+        {{- range $i, $row := $drafts }}
+        {{ partial "pages/pulls/wait-row.html" (dict "row" (merge $row (dict "view" "drafts")) "org" $org "off" (ne $def "drafts") "k" $i) }}
+        {{- end }}
+      </tbody>
+    </table>
+    {{ partial "ui/list-empty.html" (dict "noun" "pr") }}
+    {{ partial "ui/list-foot.html" (dict "list" $id "n" $nDef "limit" 25) }}
+  {{- if $views }}
+  </div>
+  {{- end }}
+</article>
+{{- end }}

@@ -1,0 +1,110 @@
+{{- /* SEP data, computed once for /seps/ and for the Overview's "Spec proposals" row (design system v4 5.6). Returns a dict, never emits.
+  Call: $d := partialCached "pages/seps/data.html" "seps" "seps"
+  Source: the specification repository's seps.json. Every age and window is measured from seps.json lastUpdated, so the numbers
+  agree with the page's "Updated" time.
+  Returns:
+    has       false when there is no seps.json (every other key but r and key is then absent)
+    r, key    the repository (data/repo.html) and its "owner/repo"
+    groups    the open stages in pipeline order: [{key, label, id ("sep-in-review"), rows, n, med_h, old_h, noSponsor}]
+              rows: pages/seps/entry.html dicts, oldest first; med_h: median age in hours (-1.0 with no rows); old_h: the oldest
+    grouped   true when two or more stages have rows (group rows render only then)
+    open      every open row, in group order; nNeeds, oldNeeds_h: proposals with no sponsor and the oldest of them; nWg
+    oldest    the oldest open row (an empty dict with none)
+    final     SEPs merged in the last 90 days, newest first: [{r (entry), merged, merged_unix, ttf (whole days, -1 unknown)}]
+    medFinal  median days from opening to merging over final (-1.0 with none); opened90: SEP PRs opened in the last 90 days
+    ord       sponsor handle (lowercased) to its A to Z rank, for the Sponsor column's sort key */ -}}
+{{- $r := partial "data/repo.html" "modelcontextprotocol/modelcontextprotocol" -}}
+{{- if not $r.data.seps -}}
+  {{- range site.Data.repos.repositories -}}
+    {{- $x := partial "data/repo.html" . -}}
+    {{- if and $x.data.seps (not $r.data.seps) }}{{ $r = $x }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $key := cond (ne $r.repo "") $r.key "modelcontextprotocol/modelcontextprotocol" -}}
+{{- $seps := $r.data.seps -}}
+{{- $out := dict "has" false "r" $r "key" $key -}}
+{{- if reflect.IsMap $seps -}}
+
+  {{- /* core and lead maintainers (lowercased): an author in this set sponsors their own SEP */ -}}
+  {{- $core := slice -}}
+  {{- with site.Data.maintainers -}}
+    {{- range (.maintainers | default slice) -}}
+      {{- $roles := .roles | default slice -}}
+      {{- if and .github (or (in $roles "ROLE_IDS.CORE_MAINTAINERS") (in $roles "ROLE_IDS.LEAD_MAINTAINERS")) }}{{ $core = $core | append (lower .github) }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- $ref := now.UTC -}}{{- with $seps.lastUpdated }}{{ $ref = (time.AsTime .).UTC }}{{ end -}}
+  {{- $refU := $ref.Unix -}}
+  {{- $cut := sub $refU 7776000 -}}
+
+  {{- $stageDefs := slice
+    (dict "key" "proposal" "label" "Proposal" "list" "proposals")
+    (dict "key" "draft" "label" "Draft" "list" "drafts")
+    (dict "key" "in-review" "label" "In review" "list" "inReview")
+    (dict "key" "accepted" "label" "Accepted" "list" "accepted") -}}
+  {{- if isset $seps "parked" }}{{ $stageDefs = $stageDefs | append (dict "key" "parked" "label" "Parked" "list" "parked") }}{{ end -}}
+
+  {{- $groups := slice }}{{ $open := slice }}{{ $nonEmpty := 0 }}{{ $handles := slice -}}
+  {{- $nNeeds := 0 }}{{ $oldNeeds := -1.0 }}{{ $nWg := 0 }}{{ $oldest := dict }}{{ $oldestH := -1.0 -}}
+  {{- range $st := $stageDefs -}}
+    {{- $rows := slice -}}
+    {{- range (index $seps $st.list | default slice) -}}
+      {{- if reflect.IsMap . -}}
+        {{- $rows = $rows | append (partial "pages/seps/entry.html" (dict "e" . "stage" $st.key "ref" $refU "core" $core)) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $rows }}{{ $rows = sort $rows "age_h" "desc" }}{{ $nonEmpty = add $nonEmpty 1 }}{{ end -}}
+    {{- $ages := slice }}{{ $old := -1.0 }}{{ $noSp := 0 -}}
+    {{- range $rows -}}
+      {{- if ge .age_h 0.0 }}{{ $ages = $ages | append .age_h }}{{ end -}}
+      {{- if gt .age_h $old }}{{ $old = .age_h }}{{ end -}}
+      {{- if gt .age_h $oldestH }}{{ $oldestH = .age_h }}{{ $oldest = . }}{{ end -}}
+      {{- if eq .sponsorKind "none" }}{{ $noSp = add $noSp 1 }}{{ end -}}
+      {{- if eq .sponsorKind "handle" }}{{ $handles = $handles | append (lower .sponsor) }}{{ end -}}
+      {{- if .needsSponsor }}{{ $nNeeds = add $nNeeds 1 }}{{ if gt .age_h $oldNeeds }}{{ $oldNeeds = .age_h }}{{ end }}{{ end -}}
+      {{- if .wg }}{{ $nWg = add $nWg 1 }}{{ end -}}
+      {{- $open = $open | append . -}}
+    {{- end -}}
+    {{- $groups = $groups | append (dict "key" $st.key "label" $st.label "id" (printf "sep-%s" $st.key) "rows" $rows "n" (len $rows)
+        "med_h" (partial "pages/seps/median.html" $ages) "old_h" $old "noSponsor" $noSp) -}}
+  {{- end -}}
+
+  {{- /* opened in the last 90 days, over every list, each PR once */ -}}
+  {{- $opened := 0 }}{{ $seen := slice -}}
+  {{- range $l := slice "proposals" "drafts" "inReview" "accepted" "parked" "merged" "closed" -}}
+    {{- range $e := (index $seps $l | default slice) -}}
+      {{- if reflect.IsMap $e }}{{ if $e.createdAt -}}
+        {{- if and (ge (time.AsTime $e.createdAt).Unix $cut) (not (in $seen $e.number)) }}{{ $opened = add $opened 1 }}{{ $seen = $seen | append $e.number }}{{ end -}}
+      {{- end }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* reached final in the last 90 days, by mergedAt */ -}}
+  {{- $final := slice }}{{ $ttfs := slice -}}
+  {{- range $e := ($seps.merged | default slice) -}}
+    {{- if reflect.IsMap $e }}{{ with $e.mergedAt -}}
+      {{- $mt := time.AsTime . -}}
+      {{- if ge $mt.Unix $cut -}}
+        {{- $ttf := -1 }}{{ with $e.createdAt }}{{ $ttf = int (div (sub $mt.Unix (time.AsTime .).Unix) 86400) }}{{ end -}}
+        {{- if ge $ttf 0 }}{{ $ttfs = $ttfs | append (float $ttf) }}{{ end -}}
+        {{- $row := partial "pages/seps/entry.html" (dict "e" $e "stage" "merged" "ref" $refU "core" $core) -}}
+        {{- if eq $row.sponsorKind "handle" }}{{ $handles = $handles | append (lower $row.sponsor) }}{{ end -}}
+        {{- $final = $final | append (dict "r" $row "merged" (string .) "merged_unix" $mt.Unix "ttf" $ttf) -}}
+      {{- end -}}
+    {{- end }}{{ end -}}
+  {{- end -}}
+  {{- if $final }}{{ $final = sort $final "merged_unix" "desc" }}{{ end -}}
+
+  {{- /* sponsor handles A to Z: the rank is the fraction of the Sponsor sort key, after the three fixed statuses */ -}}
+  {{- $ord := dict -}}
+  {{- if $handles -}}
+    {{- range $i, $h := sort (uniq $handles) }}{{ $ord = merge $ord (dict $h $i) }}{{ end -}}
+  {{- end -}}
+
+  {{- $out = dict "has" true "r" $r "key" $key "updated" ($seps.lastUpdated | default "")
+      "groups" $groups "grouped" (ge $nonEmpty 2) "open" $open
+      "nNeeds" $nNeeds "oldNeeds_h" $oldNeeds "nWg" $nWg "oldest" $oldest
+      "final" $final "medFinal" (partial "pages/seps/median.html" $ttfs) "opened90" $opened "ord" $ord -}}
+{{- end -}}
+{{- return $out -}}

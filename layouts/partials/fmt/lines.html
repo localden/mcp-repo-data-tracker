@@ -1,0 +1,9 @@
+{{- /* Lines changed (design system v4 3.2). Dict {adds, dels}. Returns {text, long, adds, dels, state, kind}.
+  "+417 −0": plus, count, space, U+2212, count. long: "417 lines added, 0 removed". Both nil is the missing state. */ -}}
+{{- $out := dict "text" "" "long" "No data" "adds" "" "dels" "" "state" "na" "kind" "lines" -}}
+{{- if or (ne .adds nil) (ne .dels nil) -}}
+  {{- $a := lang.FormatNumber 0 (float (.adds | default 0)) }}{{ $d := lang.FormatNumber 0 (float (.dels | default 0)) -}}
+  {{- $out = dict "text" (printf "+%s −%s" $a $d) "long" (printf "%s lines added, %s removed" $a $d)
+    "adds" (printf "+%s" $a) "dels" (printf "−%s" $d) "state" "value" "kind" "lines" -}}
+{{- end -}}
+{{- return $out -}}

@@ -1,0 +1,15 @@
+{{- /* Date (design system v4 3.2, ruling 3). A date or time value, or a dict {d, weekday, year, style}. Returns {text, long, iso, state, kind}.
+  "Nov 14"; the year is added only when it differs from the as-of year ("Nov 14, 2025") or with year: true. weekday: true is for a
+  daily chart tooltip ("Tue, Sep 8"). long always carries the year. style "month" ("Nov 2026") serves the retired ui/date.html only. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "d" . }}{{ end -}}
+{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "date" -}}
+{{- with $c.d -}}
+  {{- $t := (time.AsTime .).UTC -}}
+  {{- $asof := time.AsTime (partialCached "ui/latest-date.html" "latest" "latest") -}}
+  {{- $layout := "Jan 2" -}}
+  {{- if or (eq $c.year true) (ne $t.Year $asof.Year) }}{{ $layout = "Jan 2, 2006" }}{{ end -}}
+  {{- if eq $c.weekday true }}{{ $layout = printf "Mon, %s" $layout }}{{ end -}}
+  {{- if eq $c.style "month" }}{{ $layout = "Jan 2006" }}{{ end -}}
+  {{- $out = dict "text" ($t.Format $layout) "long" ($t.Format "Jan 2, 2006") "iso" ($t.Format "2006-01-02") "state" "value" "kind" "date" -}}
+{{- end -}}
+{{- return $out -}}

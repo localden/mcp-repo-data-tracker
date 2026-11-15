@@ -1,0 +1,98 @@
+{{- /* "Backlog and activity" (design system v4 5.1 module 3, and the whole of /repos/, 5.9): one matrix table card at 12, one row per
+  tracked repository.
+  Call: {{ partial "pages/repo/table.html" (dict "id" "repositories") }} inside a section's .v-grid. The context may also be the
+  page: only an optional "id" (the card id, default "repositories") and "label" (the table's aria-label) are read. The partial emits
+  the card and nothing else, so each page writes its own section head ("Backlog and activity") around it.
+  Columns: Repository (auto, the row link to /repos/<repo>/). Spanner "Issues": Open (num-xs), Net change with the sub line
+  "Last 30 days" (num, a plain signed number), 12 weeks (spark, a level sparkline of open issues, no sort). Spanner "PRs": Open
+  (num-xs), Merged with the sub line "Last 7 days" (num-sm), Typical week (num). Contributors with the sub line "Last 30 days"
+  (num). Stars (num-sm). Plan: 50rem, Repository 10rem at 1024. Default sort Open issues, descending; every numeric column sorts.
+  Typical week is the median of weekly snapshots of pulls.merged_7d over the prior 12 complete weeks, shown with 4 or more samples.
+  A repository with no value for a measure shows the empty mark with its reason; there is no note in a row. Below 64rem the rows are
+  records; on a phone five show, then the list foot. */ -}}
+{{- $id := "repositories" }}{{ $aria := "Backlog and activity by repository" -}}
+{{- if reflect.IsMap . }}{{ with .id }}{{ $id = . }}{{ end }}{{ with .label }}{{ $aria = . }}{{ end }}{{ end -}}
+{{- $w30 := dict "n" 30 "unit" "day" }}{{ $w7 := dict "n" 7 "unit" "day" -}}
+{{- $rows := slice -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $m := $r.data.metrics | default dict -}}
+  {{- $iss := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open" "days" 91) -}}
+  {{- $bins := partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12) -}}
+  {{- /* net change: opened minus closed; without the two counts, the empty mark says since when the repository is tracked */ -}}
+  {{- $net := dict "kind" "net" "reason" "no-data" }}{{ $netK := "" -}}
+  {{- if and (ne $iss.opened_30d nil) (ne $iss.closed_30d nil) -}}
+    {{- $nv := sub (float $iss.opened_30d) (float $iss.closed_30d) -}}
+    {{- $net = dict "kind" "net" "v" $nv }}{{ $netK = printf "%.0f" $nv -}}
+  {{- else if $s.first -}}
+    {{- $net = dict "kind" "net" "reason" "tracking-since" "since" $s.first -}}
+  {{- end -}}
+  {{- /* typical week: one sample per complete week (its last reading); the unfinished week is not a sample */ -}}
+  {{- $ms := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.merged_7d") -}}
+  {{- $mw := partial "data/week-bins.html" (dict "points" $ms.points "agg" "last" "weeks" 12 "partial" false) -}}
+  {{- $vals := slice -}}
+  {{- range $mw.points | default slice }}{{ if ne .value nil }}{{ $vals = $vals | append (float .value) }}{{ end }}{{ end -}}
+  {{- $typ := dict "kind" "stat" "reason" "no-data" }}{{ $typK := "" -}}
+  {{- if ge (len $vals) 4 -}}
+    {{- $sorted := sort $vals }}{{ $n := len $sorted }}{{ $mid := div $n 2 }}{{ $med := 0.0 -}}
+    {{- if modBool $n 2 }}{{ $med = div (add (float (index $sorted (sub $mid 1))) (float (index $sorted $mid))) 2.0 -}}
+    {{- else }}{{ $med = float (index $sorted $mid) }}{{ end -}}
+    {{- $typ = dict "kind" "stat" "v" $med }}{{ $typK = printf "%.1f" $med -}}
+  {{- else if $ms.first -}}
+    {{- $typ = dict "kind" "stat" "reason" "tracking-since" "since" $ms.first -}}
+  {{- end -}}
+  {{- $rows = $rows | append (dict "r" $r "oi" $iss.open_count "net" $net "netK" $netK "points" $bins.points
+      "op" $pr.open_count "m7" $pr.merged_7d "typ" $typ "typK" $typK
+      "ac" ($m.contributors | default dict).active_30d "stars" ($m.repository | default dict).stars
+      "sort" (float ($iss.open_count | default -1))) -}}
+{{- end -}}
+{{- if $rows }}{{ $rows = sort $rows "sort" "desc" }}{{ end -}}
+{{- $n := len $rows -}}
+<article class="v-card v-span-12" id="{{ $id }}" data-list data-limit="0" data-limit-phone="5" data-step="50" data-noun="repositories" data-noun-one="repository">
+  <table class="v-dt is-matrix" id="{{ $id }}-table" aria-label="{{ $aria }}">
+    <colgroup><col><col class="v-col-num-xs"><col class="v-col-num"><col class="v-col-spark"><col class="v-col-num-xs"><col class="v-col-num-sm"><col class="v-col-num"><col class="v-col-num"><col class="v-col-num-sm"></colgroup>
+    <thead>
+      <tr class="v-dt-span"><th></th><th class="v-span" colspan="3" scope="colgroup"><span>Issues</span></th><th class="v-span" colspan="3" scope="colgroup"><span>PRs</span></th><th></th><th></th></tr>
+      <tr>
+        {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repository" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+        {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open issues" "active" "descending"
+            "sort" (dict "key" "issues" "type" "num" "desc" "Most open issues first" "asc" "Fewest open issues first")) }}
+        {{- $l := partial "fmt/label.html" (dict "metric" "Net change" "scope" "Issues" "window" $w30) }}
+        {{ partial "ui/th.html" (dict "label" $l.main "sub" $l.sub "num" true "record" $l.record "title" "Issues opened minus issues closed in the window."
+            "sort" (dict "key" "net" "type" "num" "desc" "Largest net change first" "asc" "Smallest net change first")) }}
+        {{ partial "ui/th.html" (dict "label" "12 weeks" "record" (partial "fmt/label.html" (dict "metric" "Open issues" "window" (dict "n" 12 "unit" "week"))).text "class" "v-c-spark") }}
+        {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open PRs"
+            "sort" (dict "key" "prs" "type" "num" "desc" "Most open PRs first" "asc" "Fewest open PRs first")) }}
+        {{- $l = partial "fmt/label.html" (dict "metric" "Merged" "scope" "PRs" "window" $w7) }}
+        {{ partial "ui/th.html" (dict "label" $l.main "sub" $l.sub "num" true "record" $l.record
+            "sort" (dict "key" "merged" "type" "num" "desc" "Most merged first" "asc" "Fewest merged first")) }}
+        {{- $l = partial "fmt/label.html" (dict "metric" "Typical week" "scope" "PRs") }}
+        {{ partial "ui/th.html" (dict "label" $l.main "num" true "record" $l.record "title" "The median number of PRs merged in a week over the prior 12 complete weeks."
+            "sort" (dict "key" "typical" "type" "num" "desc" "Highest typical week first" "asc" "Lowest typical week first")) }}
+        {{- $l = partial "fmt/label.html" (dict "metric" "Contributors" "window" $w30) }}
+        {{ partial "ui/th.html" (dict "label" $l.main "sub" $l.sub "num" true "record" $l.text "title" "Distinct people, known bots excluded, active in the window."
+            "sort" (dict "key" "contributors" "type" "num" "desc" "Most contributors first" "asc" "Fewest contributors first")) }}
+        {{ partial "ui/th.html" (dict "label" "Stars" "num" true
+            "sort" (dict "key" "stars" "type" "num" "desc" "Most stars first" "asc" "Fewest stars first")) }}
+      </tr>
+    </thead>
+    <tbody>
+      {{- range $i, $row := $rows }}
+      {{- $r := $row.r }}
+      <tr data-row data-row-link{{ if ge $i 5 }} data-over-phone{{ end }}>
+        {{ partial "ui/name-cell.html" (dict "name" $r.name "href" (printf "repos/%s/" $r.repo | relURL)) }}
+        <td class="num" data-v="{{ if ne $row.oi nil }}{{ $row.oi }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $row.oi) }}</td>
+        <td class="num" data-v="{{ $row.netK }}">{{ partial "ui/value.html" $row.net }}</td>
+        <td class="v-c-spark">{{ partial "ui/spark.html" (dict "points" $row.points "kind" "level" "size" "cell") }}</td>
+        <td class="num" data-v="{{ if ne $row.op nil }}{{ $row.op }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $row.op) }}</td>
+        <td class="num" data-v="{{ if ne $row.m7 nil }}{{ $row.m7 }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $row.m7) }}</td>
+        <td class="num" data-v="{{ $row.typK }}">{{ partial "ui/value.html" $row.typ }}</td>
+        <td class="num" data-v="{{ if ne $row.ac nil }}{{ $row.ac }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $row.ac) }}</td>
+        <td class="num" data-v="{{ if ne $row.stars nil }}{{ $row.stars }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $row.stars) }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+  {{ partial "ui/list-foot.html" (dict "list" $id "n" $n "limit" $n) }}
+</article>

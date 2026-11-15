@@ -1,0 +1,18 @@
+{{- /* One download window in a table cell (design system v4 3.3, 4.8): the value, and under it the coverage note when the window is
+  not complete. Emits the cell's content.
+  Call: partial "pages/downloads/window.html" (dict "v" $d.dl7 "sum" $d.sum7 "days" $d.days_covered "of" 7 "range" $p.days7 "na" $p.na)
+    v      the sum of a complete window (nil when any day is missing).
+    sum    the sum of the complete days in the window; days: how many there are; of: the window length.
+    range  {from, to}: the days covered, named in the note's title.
+    na     {reason, since}: the reason for the empty mark when the window has no complete day. */ -}}
+{{- $c := . -}}
+{{- $days := int ($c.days | default 0) -}}
+{{- $na := $c.na | default dict -}}
+{{- if ne $c.v nil -}}
+  {{- partial "ui/value.html" (dict "kind" "volume" "v" $c.v) -}}
+{{- else if gt $days 0 -}}
+  {{- partial "ui/value.html" (dict "kind" "volume" "v" $c.sum) -}}
+  <span class="v-cell-note">{{ partial "ui/note.html" (dict "part" $days "whole" $c.of "noun" "day" "days" $c.range) }}</span>
+{{- else -}}
+  {{- partial "ui/value.html" (dict "kind" "na" "reason" ($na.reason | default "no-data") "since" $na.since) -}}
+{{- end -}}

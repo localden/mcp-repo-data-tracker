@@ -1,13 +1,43 @@
-{{- /* Filter bar for one [data-list]: search field, toggle chips, live count (brief 4.6 g, m; 3.2b-2, 3.3b-2). Place it inside the [data-list].
-  Dict {id, label, placeholder, chips, noun, one, total}.
-    id/label/placeholder: passed to ui/field.html (omit id for chips only). chips: slice of ui/chip.html dicts (no href).
-    noun/one: plural and singular nouns for the count ("issues"/"issue"). total: the server-side row count for the initial text.
-  The count is role=status aria-live=polite; ui.js writes "Showing 12 of 294 issues" while a search, chip or rule filter is active. */ -}}
+{{- /* Filter bar with facets (design system v4 4.12): narrows one list. One anatomy, one position: the band directly above the column
+  header, inside the list card (after the view tabs).
+  Dict {id, noun, facets, total}.
+    id      the list card's id ("pq"): the search input is "{id}-search", the facet row "{id}-facets", select menus "{id}-{key}-menu".
+    noun    a fmt/noun.html key ("pr", "issue", "sep", "person"): "Search PRs", "Filter PRs", "288 PRs".
+    facets  slice of ui/chip.html dicts {key, label, title, kind, count, options}, at most six, in the fixed order of 4.12. Omit for a
+            list with search only; "Clear filters" then sits in row 1 after the search field.
+    total   rows in the default view, for the first paint of the result count.
+  Row 1: search on the left, the Filters button (below 64rem, when the list has facets), the result count on the right.
+  Row 2 (only with facets): checkbox chips, select chips, then "Clear filters". Below 64rem row 2 is the panel the Filters button opens,
+  and the result count moves to the result band (ui/list-band.html).
+  The result count is the only live announcement of a filter change: "288 PRs" at rest, "249 of 288 PRs" when narrowed. */ -}}
 {{- $c := . -}}
-<div class="v-filterbar">
-  {{- with $c.id }}{{ partial "ui/field.html" (dict "id" . "label" $c.label "placeholder" $c.placeholder) }}{{ end -}}
-  {{- with $c.chips }}<div class="v-chips" role="group" aria-label="Filters">{{ range . }}{{ partial "ui/chip.html" . }}{{ end }}</div>{{ end -}}
-  <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $c.noun | default "items" }}" data-noun-one="{{ $c.one | default ($c.noun | default "item") }}">
-    {{- if ne $c.total nil }}{{ partial "ui/plural.html" (dict "n" $c.total "one" ($c.one | default "item") "other" ($c.noun | default "items")) }}{{ end -}}
-  </p>
+{{- $id := $c.id | default "list" -}}
+{{- $nk := replace (lower (string ($c.noun | default "issue"))) "-" " " -}}
+{{- with index (dict "prs" "pr" "issues" "issue" "seps" "sep" "people" "person" "repositories" "repository" "pull requests" "pr") $nk }}{{ $nk = . }}{{ end -}}
+{{- $one := $c.one | default $nk }}{{ $other := $c.noun | default "items" -}}
+{{- if in (slice "issue" "pr" "sep" "person" "repository" "maintainer" "contributor" "label" "version" "package") $nk -}}
+  {{- $w := partial "fmt/noun.html" (dict "key" $nk) }}{{ $one = $w.one }}{{ $other = $w.other -}}
+{{- end -}}
+{{- $facets := $c.facets | default slice -}}
+{{- $search := printf "Search %s" $other -}}
+<div class="v-filterbar" role="search" aria-label="Filter {{ $other }}">
+  <div class="v-filter-row">
+    {{ partial "ui/field.html" (dict "id" (printf "%s-search" $id) "label" $search "placeholder" $search) }}
+    {{- if $facets }}
+    <button type="button" class="v-btn is-icon v-filter-toggle" data-facets-toggle aria-expanded="false" aria-controls="{{ $id }}-facets" aria-label="Filters">{{ partial "ui/icon.html" "sliders" }}<span class="v-count" data-facets-n hidden></span></button>
+    {{- else }}
+    <button type="button" class="v-btn is-ghost" data-filter-reset hidden>Clear filters</button>
+    {{- end }}
+    <p class="v-filter-count" role="status" aria-live="polite" data-filter-count data-noun="{{ $other }}" data-noun-one="{{ $one }}">
+      {{- if ne $c.total nil }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $one }}{{ else }}{{ $other }}{{ end }}{{ end -}}
+    </p>
+  </div>
+  {{- if $facets }}
+  <div class="v-facets" id="{{ $id }}-facets" role="group" aria-label="Filters">
+    {{- range $facets }}
+    {{ partial "ui/chip.html" (merge . (dict "id" $id)) }}
+    {{- end }}
+    <button type="button" class="v-btn is-ghost" data-filter-reset hidden>Clear filters</button>
+  </div>
+  {{- end }}
 </div>

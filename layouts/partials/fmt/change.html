@@ -1,0 +1,61 @@
+{{- /* Change against a base, and net change (design system v4 3.2, 3.5, 4.7). Dict {cur, prev} or {d}, with {unit, metric}.
+  Returns {text, long, state, kind, polarity, sr, d}; never emits. ui/delta.html draws the badge; ui/value.html kind "net" prints
+  the same string as plain text.
+  unit: "count" (default; whole numbers), "stat" (one decimal), "percent" (relative to prev with {cur, prev}, or a percent passed as
+    d; one decimal), "volume" (compact), "hours" (a duration difference given in hours: "+2d"), "days" (given in days).
+  Sign rule: round to the output precision first; a rounded magnitude of zero is state "zero" with text "0" ("0%" for percent);
+    otherwise "+" or U+2212, then the magnitude. No baseline (prev nil, or prev 0 for percent) is the missing state.
+  metric: a key of the polarity table. Up is bad: open-issues, open-prs, waiting, overdue, median, closed-unmerged. Up is good:
+    downloads, contributors, new-contributors, maintainers-active, merged, final. Neutral: opened, commits, net, or no metric.
+  polarity: "good", "bad" or "flat". sr: "Up 139, worsening", "Down 5, improving", "Up 4", "Unchanged". */ -}}
+{{- $c := . -}}
+{{- $unit := $c.unit | default "count" -}}
+{{- $has := false }}{{ $d := 0.0 -}}
+{{- if ne $c.d nil }}{{ $d = float $c.d }}{{ $has = true -}}
+{{- else if and (ne $c.cur nil) (ne $c.prev nil) -}}
+  {{- $cur := float $c.cur }}{{ $prev := float $c.prev -}}
+  {{- if eq $unit "percent" -}}
+    {{- if ne $prev 0.0 }}{{ $d = mul (div (sub $cur $prev) (math.Abs $prev)) 100.0 }}{{ $has = true }}{{ end -}}
+  {{- else }}{{ $d = sub $cur $prev }}{{ $has = true }}{{ end -}}
+{{- end -}}
+{{- $out := dict "text" "" "long" "No baseline" "state" "na" "kind" "change" "polarity" "flat" "sr" "No baseline" "d" 0.0 -}}
+{{- if $has -}}
+  {{- $a := math.Abs $d }}{{ $mag := "" }}{{ $zero := false }}{{ $zt := "0" -}}
+  {{- if eq $unit "percent" -}}
+    {{- $r := div (math.Round (mul $a 10.0)) 10.0 }}{{ $zero = eq $r 0.0 }}{{ $zt = "0%" -}}
+    {{- $mag = printf "%s%%" (lang.FormatNumber 1 $r) -}}
+  {{- else if eq $unit "stat" -}}
+    {{- $r := div (math.Round (mul $a 10.0)) 10.0 }}{{ $zero = eq $r 0.0 -}}
+    {{- $mag = (partial "fmt/count.html" (dict "v" $r "stat" true)).text -}}
+  {{- else if eq $unit "volume" -}}
+    {{- $zero = eq (math.Round $a) 0.0 }}{{ $mag = (partial "fmt/volume.html" (dict "v" $a)).text -}}
+  {{- else if eq $unit "hours" -}}
+    {{- $zero = lt $a 1.0 }}{{ $mag = (partial "fmt/dur.html" (dict "h" $a)).text -}}
+  {{- else if eq $unit "days" -}}
+    {{- $zero = lt $a 1.0 }}{{ $mag = (partial "fmt/dur.html" (dict "d" $a "unit" "d")).text -}}
+  {{- else -}}
+    {{- $r := math.Round $a }}{{ $zero = eq $r 0.0 }}{{ $mag = lang.FormatNumber 0 $r -}}
+  {{- end -}}
+  {{- $up := gt $d 0.0 -}}
+  {{- $metric := lower (string ($c.metric | default "")) -}}
+  {{- $bad := slice "open-issues" "open-prs" "waiting" "overdue" "median" "closed-unmerged" -}}
+  {{- $good := slice "downloads" "contributors" "new-contributors" "maintainers-active" "merged" "final" -}}
+  {{- $neutral := slice "" "opened" "commits" "net" -}}
+  {{- $pol := "flat" -}}
+  {{- if in $bad $metric }}{{ $pol = cond $up "bad" "good" -}}
+  {{- else if in $good $metric }}{{ $pol = cond $up "good" "bad" -}}
+  {{- else if not (in $neutral $metric) }}{{ warnf "fmt/change: unknown metric %q, treated as neutral (design system v4 3.5)" $metric }}{{ end -}}
+  {{- /* the v3 argument, still read: polarity "up" means up is good, "down" means down is good */ -}}
+  {{- if and (eq $pol "flat") (eq $c.polarity "up") }}{{ $pol = cond $up "good" "bad" }}{{ end -}}
+  {{- if and (eq $pol "flat") (eq $c.polarity "down") }}{{ $pol = cond $up "bad" "good" }}{{ end -}}
+  {{- $text := $zt }}{{ $sr := "Unchanged" }}{{ $state := "zero" -}}
+  {{- if $zero }}{{ $pol = "flat" -}}
+  {{- else -}}
+    {{- $state = "value" -}}
+    {{- $text = printf "%s%s" (cond $up "+" "−") $mag -}}
+    {{- $sr = printf "%s %s" (cond $up "Up" "Down") $mag -}}
+    {{- if eq $pol "bad" }}{{ $sr = printf "%s, worsening" $sr }}{{ else if eq $pol "good" }}{{ $sr = printf "%s, improving" $sr }}{{ end -}}
+  {{- end -}}
+  {{- $out = dict "text" $text "long" $sr "state" $state "kind" "change" "polarity" $pol "sr" $sr "d" $d -}}
+{{- end -}}
+{{- return $out -}}

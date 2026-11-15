@@ -2,8 +2,9 @@
   Call: $g := partial "data/gaps.html" (dict "points" $s.points ["min" 3] ["gran" "day|week"])
     points: [{date, value|nil}], one per label, ascending; min: shortest run that counts (default 3 days; use 1 for weekly bins).
   Returns []dict{from, to ("YYYY-MM-DD"; for weeks, to is the last week's Sunday), n (labels in the run), outage bool (the run lies
-  inside the collection outage, 6 days of slack), touches bool (it intersects the outage at all), text ("No data for Oct 8 – Nov 9, 2026
-  (collection outage)", "No data for Aug 31 – Oct 25, 2026 (includes the Oct 8 – Nov 9, 2026 collection outage)" or "No data for {from} – {to}")}. */ -}}
+  inside the collection outage, 6 days of slack), touches bool (it intersects the outage at all), text ("No data for Oct 8 to Nov 9
+  (collection outage)", "No data for Aug 31 to Oct 25 (includes the Oct 8 to Nov 9 collection outage)" or "No data for {range}";
+  ranges come from fmt/range.html)}. */ -}}
 {{- $gran := .gran | default "day" -}}
 {{- $min := int (.min | default (cond (eq $gran "week") 1 3)) -}}
 {{- $o := partial "data/outage.html" . -}}

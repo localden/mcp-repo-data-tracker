@@ -1,0 +1,22 @@
+{{- /* Org-wide change of one snapshot metric against a snapshot about 30 days older (design system v4 4.5: a "waiting, over 7 days" tile
+  has a delta with the base "vs {date}" when a snapshot at least 30 days older exists). Returns a dict, never emits. Shared by
+  pages/issues/org.html and pages/pulls/org.html.
+  Call: $ch := partial "pages/issues/org-change.html" "issues.without_response_7d"
+  Per repository, data/series.html finds the snapshot 30 days back (cmp30: that day, a day either side, then the nearest earlier one).
+  Both sums cover only the repositories that have the current and the earlier reading, so like is compared with like; the tile's
+  coverage note names how many that is.
+  Returns {has (a comparison exists), cur, prev (floats), date ("YYYY-MM-DD", the oldest comparison date), k (repositories compared),
+  n (repositories with a current reading)}. */ -}}
+{{- $path := . -}}
+{{- $n := 0 }}{{ $k := 0 }}{{ $cur := 0.0 }}{{ $prev := 0.0 }}{{ $date := "" -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $s := partial "data/series.html" (dict "repo" . "path" $path "days" 35) -}}
+  {{- if ne $s.cur nil -}}
+    {{- $n = add $n 1 -}}
+    {{- with $s.cmp30 -}}
+      {{- $cur = add $cur (float $s.cur) }}{{ $prev = add $prev (float .value) }}{{ $k = add $k 1 -}}
+      {{- if or (eq $date "") (lt (string .date) $date) }}{{ $date = string .date }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return dict "has" (gt $k 0) "cur" $cur "prev" $prev "date" $date "k" $k "n" $n -}}

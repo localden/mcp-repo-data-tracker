@@ -1,33 +1,17 @@
-{{- /* Stacked bar, one row (design system v3 §4.17): the ord ramp, segments separated by 2px surface gaps, zero segments omitted.
-  Call: partial "ui/stackbar.html" (dict
-    "segments" (slice (dict "label" "Active < 30 days" "n" 69 "role" "ord-1") (dict "label" "30–60 days" "n" 22 "role" "ord-2") …)
-    ["legend" "below|none"] ["pct" true] ["total" 294] ["aria" "Backlog age: …"])
-    role: one of accent, series-2, seg-neutral, other, ord-1 to ord-5 (validated ramps only, §5.10).
-    legend "below" (default): a legend row of count (and % of total with pct=true) per segment, in segment order, and the bar is
-    aria-hidden. legend "none": no legend; the bar is role="img" with aria (default: "label n, …"), for a bar whose numbers sit in
-    adjacent text (the tile caption "10 maintainers and 22 others").
-    total: percentage base (default the sum of the segments). */ -}}
-{{- $segs := slice }}{{ $sum := 0.0 -}}
-{{- range .segments }}{{ if gt (float (.n | default 0)) 0.0 }}{{ $segs = $segs | append . }}{{ $sum = add $sum (float .n) }}{{ end }}{{ end -}}
-{{- $total := $sum }}{{ with .total }}{{ $total = float . }}{{ end -}}
-{{- $legend := .legend | default "below" -}}
-{{- if $segs -}}
-  {{- /* Percent column rule (§6.3): one decimal for every value when any is below 10, otherwise integers; half-up rounding. */ -}}
-  {{- $dec := false -}}
-  {{- if gt $total 0.0 }}{{ range $segs }}{{ if lt (mul (div (float .n) $total) 100.0) 10.0 }}{{ $dec = true }}{{ end }}{{ end }}{{ end -}}
-  {{- $aria := .aria -}}
-  {{- if not $aria }}{{ $parts := slice }}{{ range $segs }}{{ $parts = $parts | append (printf "%s %s" .label (lang.FormatNumber 0 (float .n))) }}{{ end }}{{ $aria = delimit $parts ", " }}{{ end -}}
-<div class="v-stack"{{ if eq $legend "none" }} role="img" aria-label="{{ $aria }}"{{ else }} aria-hidden="true"{{ end }}>
-  {{- range $segs }}<i class="v-stack-seg is-{{ .role | default "accent" }}" style="--n:{{ .n }}"></i>{{ end -}}
-</div>
-  {{- if ne $legend "none" }}
-<ul class="v-legend v-stack-legend">
-  {{- range $segs -}}
-    {{- $p := 0.0 }}{{ if gt $total 0.0 }}{{ $p = mul (div (float .n) $total) 100.0 }}{{ end -}}
-    {{- $ptxt := cond $dec (printf "%.1f%%" (div (math.Round (mul $p 10.0)) 10.0)) (printf "%.0f%%" (math.Round $p)) -}}
-    {{- if and (gt $p 0.0) (lt $p 0.1) }}{{ $ptxt = "<0.1%" }}{{ end }}
-  <li><span class="v-key is-bar is-{{ .role | default "accent" }}" aria-hidden="true"></span><span>{{ .label }}</span> <span class="v-legend-n">{{ lang.FormatNumber 0 (float .n) }}</span>{{ if $.pct }} <span class="v-legend-pct">{{ $ptxt }}</span>{{ end }}</li>
-  {{- end }}
+{{- /* RETIRED (design system v4 8.1): the one stacked bar left is ui/dist.html ("Open issues by last activity"); a two-part split is a
+  share bar with split (ui/meter.html). Kept as a best-effort shim so pages build until the module is rebuilt, then deleted.
+  Dict {segments: [{label, n}], total}: renders the distribution's bar and legend without the card. */ -}}
+{{- warnf "ui/stackbar.html is retired: call ui/dist.html or ui/meter.html (design system v4 4.21)" -}}
+{{- $parts := slice }}{{ $sum := 0.0 -}}
+{{- range .segments | default slice }}{{ $parts = $parts | append (dict "name" .label "n" (.n | default 0)) }}{{ $sum = add $sum (float (.n | default 0)) }}{{ end -}}
+{{- $total := $sum }}{{ if ne .total nil }}{{ $total = float .total }}{{ end -}}
+{{- if $parts -}}
+<div class="v-dist-zone"><div class="v-dist-bar" aria-hidden="true">
+  {{- range $i, $p := $parts }}{{ if lt $i 4 }}{{ $pn := float $p.n }}{{ if gt $pn 0.0 }}<i class="v-dist-seg is-ord-{{ add $i 1 }}" style="--n:{{ printf "%.0f" $pn }}"></i>{{ end }}{{ end }}{{ end -}}
+</div></div>
+<ul class="v-dist-legend">
+  {{- range $i, $p := $parts }}{{ if lt $i 4 }}
+  <li><span class="v-dist-name"><span class="v-key is-box is-ord-{{ add $i 1 }}" aria-hidden="true"></span>{{ $p.name }}</span>{{ partial "ui/value.html" (dict "kind" "count" "v" $p.n) }}{{ partial "ui/value.html" (dict "kind" "share" "part" $p.n "whole" $total) }}</li>
+  {{- end }}{{ end }}
 </ul>
-  {{- end -}}
 {{- end -}}

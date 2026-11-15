@@ -1,0 +1,47 @@
+{{- /* "Waiting for a reply, any age": the list card of /issues/ (id "io") and of /issues/<repo>/ without issue classification (id "iq")
+  (design system v4 4.13, 4.16, 5.2, 5.3). No views. Bands: filter bar, result band, table, empty result, list foot.
+  Ctx: dict {id, rows, org, repos, labelledby}. The card owns the page's query string (data-url).
+    rows        [{w (days waiting), it (a metrics.json issues_without_maintainer_response item), name, slug}], longest wait first:
+                the rows of data/waiting.html, so the counts on tiles and links equal this list.
+    org         true on /issues/: adds the Repository column and the Repository select facet.
+    repos       the Repository options [{value (slug), label, count}] (org only).
+    labelledby  the id of the section title.
+  Facets (4.12): Over 7 days (check); Repository (select, org only). Columns (4.16): Repository, Issue, Comments, Waiting; default sort
+  Waiting, descending. A list that is empty at build time keeps its place with ui/empty.html. */ -}}
+{{- $c := . -}}
+{{- $id := $c.id | default "iq" -}}
+{{- $rows := $c.rows | default slice -}}
+{{- $org := eq $c.org true -}}
+{{- $n := len $rows -}}
+{{- $n7 := 0 }}{{ range $rows }}{{ if ge .w 7.0 }}{{ $n7 = add $n7 1 }}{{ end }}{{ end -}}
+{{- if eq $n 0 }}
+{{ partial "ui/empty.html" (dict "title" "No issues waiting for a reply" "body" "Every open issue from a contributor has a maintainer reply.") }}
+{{- else }}
+{{- $facets := slice (dict "key" "over7" "label" "Over 7 days" "title" "Waiting for a maintainer reply for 7 days or more." "count" $n7) -}}
+{{- if $org -}}
+  {{- $facets = $facets | append (dict "key" "repo" "label" "Repository" "title" "The repository the issue belongs to." "kind" "select" "options" ($c.repos | default slice)) -}}
+{{- end }}
+<article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="issues" data-noun-one="issue">
+  {{ partial "ui/filterbar.html" (dict "id" $id "noun" "issue" "total" $n "facets" $facets) }}
+  {{ partial "ui/list-band.html" (dict "id" $id "noun" "issue" "total" $n) }}
+  <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="{{ $c.labelledby | default "waiting" }}">
+    <colgroup>{{ if $org }}<col class="v-col-repo">{{ end }}<col><col class="v-col-num"><col class="v-col-num-sm"></colgroup>
+    <thead><tr>
+      {{- if $org }}
+      {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+      {{- end }}
+      {{ partial "ui/th.html" (dict "label" "Issue") }}
+      {{ partial "ui/th.html" (dict "label" "Comments" "num" true "sort" (dict "key" "comments" "type" "num" "desc" "Most comments first" "asc" "Fewest comments first")) }}
+      {{ partial "ui/th.html" (dict "label" "Waiting" "num" true "unit" ", days" "active" "descending" "title" "Calendar days since the issue opened."
+          "sort" (dict "key" "waiting" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
+    </tr></thead>
+    <tbody>
+      {{- range $i, $row := $rows }}
+      {{ partial "pages/issues/wait-row.html" (dict "row" $row "org" $org "i" $i) }}
+      {{- end }}
+    </tbody>
+  </table>
+  {{ partial "ui/list-empty.html" (dict "noun" "issue") }}
+  {{ partial "ui/list-foot.html" (dict "list" $id "n" $n "limit" 25) }}
+</article>
+{{- end }}

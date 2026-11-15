@@ -1,0 +1,36 @@
+{{- /* Stat list (design system v4 4.6): three to seven facts beside the chart or table they explain. A card for the 4-column cell of an
+  8 + 4 row; its rows share the card's height, so it is exactly as tall as its neighbour.
+  Dict {title, rows, wide, id, class}.
+    title   the card title ("Opened and closed", "Pace"). No sub line: the window is part of every label.
+    rows    slice of {label, title, value, detail}.
+              label   body text-2, up to 40 characters, from fmt/label.html ("Opened, last 30 days"). title: its definition.
+              value   {kind, ...} for ui/value.html (kind net for a net change). Strong, never wraps.
+              detail  one component before the value: {link: {text, href}} (a quiet link), {tag: ...} (ui/tag.html),
+                      {badge: ...} (ui/badge.html), {note: ...} (ui/note.html), {delta: ...} (ui/delta.html). Never a sentence.
+    wide    true: alone at 12 under a pending chart (4.22); rows flow in two columns from 64rem.
+    class   the grid span, default "v-span-4" ("v-span-12" with wide).
+  Three rows minimum, seven maximum; two facts are never a card. Below 64rem rows flow in two columns on a tablet, one on a phone. */ -}}
+{{- $c := . -}}
+{{- $rows := $c.rows | default slice -}}
+{{- $n := len $rows -}}
+{{- if or (lt $n 3) (gt $n 7) }}{{ warnf "ui/stat-list %q: %d rows; a stat list holds three to seven (design system v4 4.6)" ($c.title | default "") $n }}{{ end -}}
+{{- $cls := $c.class | default (cond (eq $c.wide true) "v-span-12" "v-span-4") -}}
+{{- if $rows -}}
+<article class="v-card is-statlist{{ if $c.wide }} is-wide{{ end }} {{ $cls }}"{{ with $c.id }} id="{{ . }}"{{ end }}>
+  {{- partial "ui/card-head.html" (dict "title" $c.title) }}
+  <dl class="v-statlist">
+    {{- range $rows }}
+    <div><dt{{ with .title }} title="{{ . }}"{{ end }}>{{ .label }}</dt><dd>
+      {{- with .detail -}}
+        {{- if .link }}<a class="v-link-quiet" href="{{ .link.href }}">{{ .link.text }}</a>
+        {{- else if .tag }}{{ partial "ui/tag.html" .tag }}
+        {{- else if .badge }}{{ partial "ui/badge.html" .badge }}
+        {{- else if .note }}{{ partial "ui/note.html" .note }}
+        {{- else if .delta }}{{ partial "ui/delta.html" .delta }}{{ end -}}
+      {{- end -}}
+      {{- partial "ui/value.html" (.value | default (dict "kind" "na")) -}}
+    </dd></div>
+    {{- end }}
+  </dl>
+</article>
+{{- end -}}

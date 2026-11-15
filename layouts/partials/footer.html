@@ -1,17 +1,26 @@
-{{- /* Footer (design system v3 §4.21): small text-3 items in a flex row with gap 20, 1px border top, 48px top margin.
-  Items: Built by Den Delimarsky, Experimental, Source, Maintainer roles, Build <sha>. The build hash is the commit being built
-  (GITHUB_SHA in CI, allowed by hugo.toml security.funcs.getenv), else the page's last commit from GitInfo. */ -}}
+{{- /* Footer (design system v4 4.25): 64px, two groups on the two shell edges, items 20px apart by gap.
+  Left: brand (mark image only when the file exists), the "Experimental" badge, the author. Right: Styleguide, Source, Maintainer roles
+  and the build (the commit being built: GITHUB_SHA in CI, else the page's last commit from GitInfo). The styleguide link lives here
+  and not in the nav. */ -}}
 {{- $src := "https://github.com/localden/mcp-repo-data-tracker" -}}
 {{- $sha := os.Getenv "GITHUB_SHA" -}}
 {{- if not $sha }}{{ with .GitInfo }}{{ $sha = .Hash }}{{ end }}{{ end }}
 <footer class="v-footer">
   <div class="v-shell v-footer-row">
-    <span>Built by <a href="https://den.dev" target="_blank" rel="noopener">Den Delimarsky</a></span>
-    <span>Experimental</span>
-    <a href="{{ $src }}" target="_blank" rel="noopener">Source<span class="sr-only"> (opens GitHub)</span></a>
-    <a href="https://github.com/modelcontextprotocol/access" target="_blank" rel="noopener">Maintainer roles<span class="sr-only"> (opens GitHub)</span></a>
-    {{- with $sha }}
-    <span>Build <a href="{{ $src }}/commit/{{ . }}" target="_blank" rel="noopener">{{ substr . 0 7 }}</a></span>
-    {{- end }}
+    <div class="v-footer-group">
+      <a class="v-footer-brand" href="{{ site.Home.RelPermalink }}">
+        {{- if fileExists "static/brand/visr-mark-64.png" }}<img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}" width="20" height="20" alt="">{{ end -}}
+        <span>{{ site.Title }}</span></a>
+      {{ partial "ui/badge.html" (dict "text" "Experimental" "tone" "neutral") }}
+      <span class="v-footer-item">Built by <a class="v-link-quiet" href="https://den.dev" target="_blank" rel="noopener">Den Delimarsky</a></span>
+    </div>
+    <nav class="v-footer-group is-end" aria-label="Footer">
+      <a class="v-footer-item" href="{{ "styleguide/" | relURL }}">Styleguide</a>
+      <a class="v-footer-item" href="{{ $src }}" target="_blank" rel="noopener">Source<span class="sr-only"> (opens GitHub)</span></a>
+      <a class="v-footer-item" href="https://github.com/modelcontextprotocol/access" target="_blank" rel="noopener">Maintainer roles<span class="sr-only"> (opens GitHub)</span></a>
+      {{- with $sha }}
+      <a class="v-footer-item" href="{{ $src }}/commit/{{ . }}" target="_blank" rel="noopener">Build <span class="v-id">{{ substr . 0 7 }}</span><span class="sr-only"> (opens GitHub)</span></a>
+      {{- end }}
+    </nav>
   </div>
 </footer>

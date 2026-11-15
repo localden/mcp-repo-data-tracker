@@ -1,17 +1,16 @@
-{{- /* Page naming (design system v3 §4.2). Returns {key, eyebrow, h1, doc} for a page; never prints.
+{{- /* Page naming (design system v4 4.2). Returns {key, eyebrow, h1, doc} for a page; never prints.
   Call: $n := partial "ui/page-name.html" .   (head.html; ui/page-head.html calls it with the global page)
     key: the nav section (home, issues, pulls, seps, downloads, repos), from .Section, else the content file's base name.
-    eyebrow: .Params.eyebrow, else the nav section name: Overview, Issues, Pull requests, SEPs, Downloads, Repository
-      ("Repositories" on the /repos/ list page).
+    eyebrow: .Params.eyebrow, else the nav section name: Overview, Issues, Pull requests, SEPs, Downloads, Repositories
+      (the eyebrow and the document title say "Pull requests"; the nav says "PRs").
     h1: the page title (the scope: "All repositories", "TypeScript SDK", "Specification Enhancement Proposals", "SDK packages").
     doc: the <title>: "VISR: {eyebrow}, {h1}"; "VISR: {eyebrow}" when the two match or there is no h1; the home page is "VISR: Overview".
   Content titles are bare scopes (every content file and adapter sets one), so nothing here splits or rewrites a title. */ -}}
 {{- $p := . -}}
 {{- $key := "" -}}
 {{- if $p.IsHome }}{{ $key = "home" }}{{ else }}{{ $key = $p.Section }}{{ if not $key }}{{ with $p.File }}{{ $key = .BaseFileName }}{{ end }}{{ end }}{{ end -}}
-{{- $names := dict "home" "Overview" "issues" "Issues" "pulls" "Pull requests" "seps" "SEPs" "downloads" "Downloads" "repos" "Repository" -}}
+{{- $names := dict "home" "Overview" "issues" "Issues" "pulls" "Pull requests" "seps" "SEPs" "downloads" "Downloads" "repos" "Repositories" -}}
 {{- $eyebrow := index $names $key | default "" -}}
-{{- if and (eq $key "repos") (not $p.Params.repo) }}{{ $eyebrow = "Repositories" }}{{ end -}}
 {{- $h1 := $p.Title | default "" -}}
 {{- with $p.Params.eyebrow }}{{ $eyebrow = . }}{{ end -}}
 {{- $doc := "" -}}

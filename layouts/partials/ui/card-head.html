@@ -1,16 +1,21 @@
-{{- /* Card head (design system v3 §4.4): 52px, title (subhead) on the left, exactly ONE item on the right: a link-action, a small
-  .v-btn, or a segmented control. Dict {title, id, level, right, divided}.
-  id: the title id (for aria-labelledby); level: 2, 3 (default) or 4; right: text or pre-rendered HTML.
-  The divider under the head appears only when the body is a table: automatically when the head is followed by a table, a .v-scroll,
-  a flush body or a tabpanel; divided: true forces it. Renders nothing when both title and right are empty. */ -}}
+{{- /* Card head (design system v4 4.4): 56px, or 72px with a sub line. Title in subhead; the sub line is a window or a cadence from the
+  closed list of 3.2, never a sentence; at most ONE control or link-action on the right.
+  Dict {title, sub, id, action, count}.
+    id      the title id (aria-labelledby). sub: a string, or a fmt/label.html result's cadence or window.
+    action  pre-rendered HTML of the one right-hand item (ui/link-action.html or ui/tabs.html variant "seg"), or a link-action dict
+            {text, href, n, noun}.
+    count   a number shown as a count bubble after the title.
+  A card whose title would repeat its section title has no head: pass no title and this renders nothing. */ -}}
 {{- $c := . -}}
-{{- if or $c.title $c.right -}}
-<div class="v-card-head{{ if $c.divided }} is-divided{{ end }}">
-  {{- with $c.title -}}
-    {{- if eq $c.level 2 }}<h2 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h2>
-    {{- else if eq $c.level 4 }}<h4 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h4>
-    {{- else }}<h3 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}</h3>{{ end -}}
-  {{- else }}<span></span>{{ end -}}
-  {{- with $c.right }}<div class="v-card-aside">{{ . }}</div>{{ end -}}
-</div>
+{{- $action := $c.action | default $c.right -}}
+{{- if or $c.title $action -}}
+<header class="v-card-head">
+  <div class="v-card-heading">
+    {{- with $c.title }}<h3 class="v-card-title"{{ with $c.id }} id="{{ . }}"{{ end }}>{{ . }}{{ if ne $c.count nil }} <span class="v-count">{{ (partial "fmt/count.html" (dict "v" $c.count)).text }}</span>{{ end }}</h3>{{ end -}}
+    {{- with $c.sub }}<p class="v-card-sub">{{ . }}</p>{{ end -}}
+  </div>
+  {{- with $action }}
+  <div class="v-card-actions">{{ if reflect.IsMap . }}{{ partial "ui/link-action.html" . }}{{ else }}{{ . }}{{ end }}</div>
+  {{- end }}
+</header>
 {{- end -}}

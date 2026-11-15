@@ -1,0 +1,20 @@
+{{- /* Styleguide fixture: a deterministic series ending at the site's as-of date. Returns {points, from, to}; never emits.
+  Dict {n, step, base, slope, lead, gapFrom, gapTo}. n: points (default 26). step: days between points (1 daily, 7 weekly; weekly
+  points are dated on Mondays of complete weeks). base, slope: the value at the first point and its growth per point; a small
+  fixed ripple is added. lead: leading points with no value (history starts late). gapFrom, gapTo: indexes of a run with no value. */ -}}
+{{- $n := int (.n | default 26) }}{{ $step := int (.step | default 7) -}}
+{{- $end := time.AsTime (partialCached "ui/latest-date.html" "latest" "latest") -}}
+{{- if eq $step 7 -}}
+  {{- $dow := mod (add (int (printf "%d" $end.Weekday)) 6) 7 -}}
+  {{- $end = $end.AddDate 0 0 (int (sub 0 (add $dow 7))) -}}
+{{- end -}}
+{{- $base := float (.base | default 100) }}{{ $slope := float (.slope | default 1) -}}
+{{- $lead := int (.lead | default 0) }}{{ $gf := int (.gapFrom | default 9999) }}{{ $gt := int (.gapTo | default -1) -}}
+{{- $pts := slice -}}
+{{- range $i := seq 0 (sub $n 1) -}}
+  {{- $d := ($end.AddDate 0 0 (int (mul (sub $i (sub $n 1)) $step))).Format "2006-01-02" -}}
+  {{- $v := math.Max 0.0 (add $base (mul (float $i) $slope) (float (mod (mul $i 7) 5))) -}}
+  {{- if or (lt $i $lead) (and (ge $i $gf) (le $i $gt)) }}{{ $pts = $pts | append (dict "date" $d "value" nil) -}}
+  {{- else }}{{ $pts = $pts | append (dict "date" $d "value" $v) }}{{ end -}}
+{{- end -}}
+{{- return dict "points" $pts "from" (index $pts 0).date "to" (index $pts (sub $n 1)).date -}}

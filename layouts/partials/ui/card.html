@@ -1,14 +1,16 @@
-{{- /* Card (design system v3 §4.4): surface, 1px border, radius 12, card shadow (light only).
-  Dict {title, id, level, right, body, flush, foot, note, class, cardId, divided}.
-  Head via ui/card-head.html (title, id, level, right, divided): 52px, subhead title, ONE item on the right.
-  body: pre-rendered HTML (capture a partial's output and pass it); padding 20 (16 on phone). flush: true drops the padding (tables),
-  and the head then gets its divider. note: one small text-3 caveat under the body. foot: pre-rendered foot content (centred, a
-  .v-btn such as "Show all"; ui/more.html renders its own foot).
-  For tables and lists, writing <div class="v-card"> by hand is equally fine; see build/wp0-api.md for the anatomy. */ -}}
+{{- /* Card (design system v4 4.4): the one container for data. surface, 1px border, radius 12, the xs shadow (light only), clipped.
+  Dict {id, title, sub, action, count, class, body, flush, label}.
+    title, sub, action, count   the head (ui/card-head.html); the title id is "{id}-title".
+    class   extra classes on the article: the grid span ("v-span-8", "v-span-6", "v-span-4") and kind flags.
+    body    pre-rendered HTML. By default it sits in .v-card-body (card inset). flush: true places it directly in the card: a table
+            (.v-dt), a metric grid, a band stack.
+    label   aria-label when the card has no title.
+  Most cards are written by their own partial (ui/metrics.html, ui/stat-list.html, ui/chart.html...) or by hand around a table:
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict ...) }}<table class="v-dt is-rank">...</table></article>
+  A card never contains a bordered card, and its only foot is the list foot. */ -}}
 {{- $c := . -}}
-<div class="v-card{{ with $c.class }} {{ . }}{{ end }}"{{ with $c.cardId }} id="{{ . }}"{{ end }}>
-  {{- partial "ui/card-head.html" $c -}}
-  {{- with $c.body }}<div class="v-card-body{{ if $c.flush }} is-flush{{ end }}">{{ . }}</div>{{ end -}}
-  {{- with $c.note }}<p class="v-card-note">{{ . }}</p>{{ end -}}
-  {{- with $c.foot }}<div class="v-card-foot">{{ . }}</div>{{ end -}}
-</div>
+{{- $cid := $c.id | default $c.cardId -}}
+<article class="v-card{{ with $c.class }} {{ . }}{{ end }}"{{ with $cid }} id="{{ . }}"{{ end }}{{ if $c.title }}{{ with $cid }} aria-labelledby="{{ . }}-title"{{ end }}{{ else }}{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ end }}>
+  {{- partial "ui/card-head.html" (dict "title" $c.title "sub" $c.sub "action" ($c.action | default $c.right) "count" $c.count "id" (cond (ne $cid nil) (printf "%v-title" $cid) "")) -}}
+  {{- with $c.body }}{{ if $c.flush }}{{ . }}{{ else }}<div class="v-card-body">{{ . }}</div>{{ end }}{{ end -}}
+</article>

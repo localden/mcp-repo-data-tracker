@@ -1,0 +1,32 @@
+{{- /* Distribution (design system v4 4.21): one whole split into four ordered parts at one moment, always its own card. Its one use is
+  "Open issues by last activity", in a 6-column cell beside the Labels table, or alone at 12 when that table is omitted.
+  Dict {title, aria, parts, total, id, class}.
+    title   the card title, naming what is measured.
+    parts   slice of {name, n}, in bucket order (most recent activity first), at most four. Names come from fmt/label.html buckets.
+            Every defined part always has a legend row, zeros included; the bar omits zero segments.
+    total   the whole (default: the sum of the parts). aria: the bar's label (default: built from the parts).
+    class   the grid span, default "v-span-6"; "v-span-12" flows the legend rows in two columns.
+  The legend rows absorb the neighbour's height. Identification never rests on the fill alone: each part has a keyed row with its
+  name, count and share. */ -}}
+{{- $c := . -}}
+{{- $parts := $c.parts | default slice -}}
+{{- $sum := 0.0 }}{{ range $parts }}{{ $sum = add $sum (float (.n | default 0)) }}{{ end -}}
+{{- $total := $sum }}{{ if ne $c.total nil }}{{ $total = float $c.total }}{{ end -}}
+{{- $aria := $c.aria | default "" -}}
+{{- if not $aria -}}
+  {{- $bits := slice }}{{ range $parts }}{{ $bits = $bits | append (printf "%s %s" .name (partial "fmt/count.html" (dict "v" (.n | default 0))).text) }}{{ end -}}
+  {{- $aria = printf "%s: %s" ($c.title | default "Distribution") (delimit $bits ", ") -}}
+{{- end -}}
+{{- if $parts -}}
+<article class="v-card v-dist {{ $c.class | default "v-span-6" }}"{{ with $c.id }} id="{{ . }}"{{ end }}>
+  {{- partial "ui/card-head.html" (dict "title" $c.title) }}
+  <div class="v-dist-zone"><div class="v-dist-bar" role="img" aria-label="{{ $aria }}">
+    {{- range $i, $p := $parts }}{{ if lt $i 4 }}{{ $pn := float ($p.n | default 0) }}{{ if gt $pn 0.0 }}<i class="v-dist-seg is-ord-{{ add $i 1 }}" style="--n:{{ printf "%.0f" $pn }}"></i>{{ end }}{{ end }}{{ end -}}
+  </div></div>
+  <ul class="v-dist-legend">
+    {{- range $i, $p := $parts }}{{ if lt $i 4 }}
+    <li><span class="v-dist-name"><span class="v-key is-box is-ord-{{ add $i 1 }}" aria-hidden="true"></span>{{ $p.name }}</span>{{ partial "ui/value.html" (dict "kind" "count" "v" ($p.n | default 0)) }}{{ partial "ui/value.html" (dict "kind" "share" "part" ($p.n | default 0) "whole" $total) }}</li>
+    {{- end }}{{ end }}
+  </ul>
+</article>
+{{- end -}}

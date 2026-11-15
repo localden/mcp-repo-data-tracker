@@ -1,0 +1,31 @@
+{{- /* Volume: downloads only (design system v4 3.2). A number, or a dict {v, noun, tick}. Returns {text, long, exact, state, kind, v}.
+  3 significant figures with K, M, B from 1,000: "882", "228K", "2.59M", "88.0M", "2.01B". Rounds first, then rolls the unit over
+  (999,593 is "1.00M"). long is the exact figure with its noun ("88,208,812 downloads"), for title; exact is the digits alone, for
+  the chart table view. tick: true drops trailing zeros for an axis label ("2M", "1.5M"). noun: a fmt/noun.html key (default download). */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "v" . }}{{ end -}}
+{{- $out := dict "text" "" "long" "No data" "exact" "" "state" "na" "kind" "volume" -}}
+{{- if ne $c.v nil -}}
+  {{- $v := float $c.v -}}{{- $a := math.Abs $v -}}
+  {{- $exact := lang.FormatNumber 0 (math.Round $a) -}}
+  {{- $text := $exact -}}
+  {{- if ge (math.Round $a) 1000.0 -}}
+    {{- $units := slice "K" "M" "B" -}}{{- $divs := slice 1000.0 1000000.0 1000000000.0 -}}{{- $pow := slice 1.0 10.0 100.0 -}}
+    {{- $i := 0 }}{{ if ge $a 1000000000.0 }}{{ $i = 2 }}{{ else if ge $a 1000000.0 }}{{ $i = 1 }}{{ end -}}
+    {{- $x := div $a (index $divs $i) -}}
+    {{- $dec := cond (lt $x 10.0) 2 (cond (lt $x 100.0) 1 0) -}}
+    {{- $r := div (math.Round (mul $x (index $pow $dec))) (index $pow $dec) -}}
+    {{- $dec = cond (lt $r 10.0) 2 (cond (lt $r 100.0) 1 0) -}}
+    {{- $r = div (math.Round (mul $x (index $pow $dec))) (index $pow $dec) -}}
+    {{- if and (ge $r 1000.0) (lt $i 2) -}}
+      {{- $i = add $i 1 }}{{ $x = div $a (index $divs $i) }}{{ $dec = 2 -}}
+      {{- $r = div (math.Round (mul $x 100.0)) 100.0 -}}
+    {{- end -}}
+    {{- $s := lang.FormatNumber $dec $r -}}
+    {{- if $c.tick }}{{ $s = replaceRE `\.0+$` "" $s }}{{ $s = replaceRE `(\.[0-9]*[1-9])0+$` "$1" $s }}{{ end -}}
+    {{- $text = printf "%s%s" $s (index $units $i) -}}
+  {{- end -}}
+  {{- if and (lt $v 0.0) (ne $text "0") }}{{ $text = printf "−%s" $text }}{{ end -}}
+  {{- $long := printf "%s %s" $exact (partial "fmt/noun.html" (dict "key" ($c.noun | default "download") "n" $a)).text -}}
+  {{- $out = dict "text" $text "long" $long "exact" $exact "state" (cond (eq $v 0.0) "zero" "value") "kind" "volume" "v" $v -}}
+{{- end -}}
+{{- return $out -}}

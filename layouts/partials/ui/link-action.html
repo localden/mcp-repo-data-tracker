@@ -1,8 +1,14 @@
-{{- /* Link-action (design system v3 §4.10): navigation to another page only. small 500 accent-text, 14px arrow-right after,
-  no underline at rest, underline on hover. "View all", "All downloads", "All SEPs", "Issues".
-  Dict {text, href, sr}. sr: sr-only words that finish the link name ("issues waiting for a reply" after "View all").
-  Renders nothing without href. Hand-written equivalent: a.v-link-action holding the text then the arrow-right icon at size 14. */ -}}
+{{- /* Link-action (design system v4 4.9): navigation to a list or page. Medium, accent-text, a 14px arrow-right after the text,
+  underline on hover only. The label names the destination: "All downloads", "All SEPs". Never "View all".
+  Dict {text, href, n, noun, drill, sr}.
+    n + noun: the label is "All {n} {noun}" ("All 209 issues"), built by fmt/count.html. Pass n only when the destination is one list
+      and n is that list's result count at the linked URL, computed from the same rows.
+    drill: true marks a link to a list on the same page (a[data-drill]): ui.js applies the view and filters in place.
+    sr: sr-only words that finish the link name.
+  Renders nothing without href. */ -}}
 {{- $c := . -}}
+{{- $text := $c.text | default "" -}}
+{{- if ne $c.n nil }}{{ $text = printf "All %s" (partial "fmt/count.html" (dict "v" $c.n "noun" ($c.noun | default "issue"))).text }}{{ end -}}
 {{- with $c.href -}}
-<a class="v-link-action" href="{{ . }}">{{ $c.text }}{{ with $c.sr }}<span class="sr-only"> {{ . }}</span>{{ end }}{{ partial "ui/icon.html" (dict "name" "arrow-right" "size" 14) }}</a>
+<a class="v-link-action" href="{{ . }}"{{ if $c.drill }} data-drill{{ end }}>{{ $text }}{{ with $c.sr }}<span class="sr-only"> {{ . }}</span>{{ end }}{{ partial "ui/icon.html" (dict "name" "arrow-right" "size" 14) }}</a>
 {{- end -}}

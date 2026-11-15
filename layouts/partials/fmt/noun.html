@@ -1,0 +1,16 @@
+{{- /* Noun registry (design system v4 3.5). Dict {key, n}. Returns {text, one, other}: text is the singular when |n| is 1, else the
+  plural (n nil gives the plural). Keys: issue, pr, sep, repository, maintainer, contributor, person, label, version, package, file,
+  directory, commit, comment, download, day, week, hour, business day, line, duplicate. An unknown key fails the build. */ -}}
+{{- $reg := dict
+  "issue" (slice "issue" "issues") "pr" (slice "PR" "PRs") "sep" (slice "SEP" "SEPs") "repository" (slice "repository" "repositories")
+  "maintainer" (slice "maintainer" "maintainers") "contributor" (slice "contributor" "contributors") "person" (slice "person" "people")
+  "label" (slice "label" "labels") "version" (slice "version" "versions") "package" (slice "package" "packages") "file" (slice "file" "files")
+  "directory" (slice "directory" "directories") "commit" (slice "commit" "commits") "comment" (slice "comment" "comments")
+  "download" (slice "download" "downloads") "day" (slice "day" "days") "week" (slice "week" "weeks") "hour" (slice "hour" "hours")
+  "business day" (slice "business day" "business days") "line" (slice "line" "lines") "duplicate" (slice "duplicate" "duplicates") -}}
+{{- $key := replace (lower (string (.key | default ""))) "-" " " -}}
+{{- $e := index $reg $key -}}
+{{- if not $e }}{{ errorf "fmt/noun: unknown noun key %q (design system v4 3.5)" $key }}{{ $e = slice $key $key }}{{ end -}}
+{{- $w := index $e 1 -}}
+{{- if ne .n nil }}{{ if eq (math.Abs (float .n)) 1.0 }}{{ $w = index $e 0 }}{{ end }}{{ end -}}
+{{- return dict "text" $w "one" (index $e 0) "other" (index $e 1) -}}

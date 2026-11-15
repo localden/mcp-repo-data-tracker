@@ -1,0 +1,10 @@
+{{- /* Timestamp (design system v4 3.2). A time value, or a dict {t}. Returns {text, long, iso, state, kind}.
+  "Nov 14, 2026, 08:29 UTC": always with the year. One is visible at rest per page, in the page head. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "t" . }}{{ end -}}
+{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "ts" -}}
+{{- with $c.t -}}
+  {{- $t := (time.AsTime .).UTC -}}
+  {{- $text := $t.Format "Jan 2, 2006, 15:04 UTC" -}}
+  {{- $out = dict "text" $text "long" $text "iso" ($t.Format "2006-01-02T15:04:05Z") "state" "value" "kind" "ts" -}}
+{{- end -}}
+{{- return $out -}}

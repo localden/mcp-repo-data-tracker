@@ -1,24 +1,25 @@
-{{- /* Section head (design system v3 §4.3): H2 (heading role) on the left, an optional link-action on the right on the same baseline,
-  an optional one-sentence description below (small, text-2). 16px to content.
-  Dict {title, id, action, right, description, caption}. id: the H2 id for aria-labelledby (default: anchorize title).
-  action: {text, href, sr} rendered by ui/link-action.html ("All downloads" + arrow); navigation to another page only.
-  right: pre-rendered HTML for the one right-hand item when it is not a link-action: a small .v-btn disclosure ("10 labels" +
-    chevron). Ignored when action is set (one item only).
-  description: one sentence; caption is the older name for the same line. */ -}}
+{{- /* Section head (design system v4 4.3): names a group of cards. The page template writes the section around it:
+    <section class="v-section" aria-labelledby="queue">{{ partial "ui/section-head.html" (dict "id" "queue" "title" "Queue" ...) }}
+      <div class="v-grid">...cards...</div></section>
+  Dict {id, title, desc, action}.
+    id      the H2 id, for aria-labelledby and drill-down anchors (default: anchorize title).
+    desc    optional: one sentence, a definition, at most 72ch, with no digit, date, count or name. A window belongs in a card sub line,
+            a header sub line or a label.
+    action  optional: one ui/link-action.html dict {text, href, n, noun}, right edge on the shell edge.
+  A section head has a title, an optional description and an optional action, nothing else: counts live on tabs and tiles. A section
+  is rendered only when it has at least one card. */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default (anchorize $c.title) -}}
 {{- $act := $c.action -}}
-{{- if and (not $act) $c.link }}{{ $act = dict "text" ($c.linkText | default "View all") "href" $c.link }}{{ end -}}
-<div class="v-section-head">
-  <div class="v-section-row">
+{{- if and (not $act) $c.link }}{{ $act = dict "text" ($c.linkText | default "All") "href" $c.link }}{{ end -}}
+<header class="v-section-head">
+  <div class="v-section-titlerow">
     <h2 class="v-section-title" id="{{ $id }}">{{ $c.title }}</h2>
     {{- with $act }}
-    {{ partial "ui/link-action.html" . }}
-    {{- else }}{{ with $c.right }}
-    {{ . }}
-    {{- end }}{{ end }}
+    <div class="v-section-actions">{{ partial "ui/link-action.html" . }}</div>
+    {{- end }}
   </div>
-  {{- with $c.description | default $c.caption | default $c.meta }}
-  <p class="v-section-caption">{{ . }}</p>
+  {{- with $c.desc | default $c.description | default $c.caption }}
+  <p class="v-section-desc v-prose">{{ . }}</p>
   {{- end }}
-</div>
+</header>

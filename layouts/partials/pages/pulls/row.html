@@ -1,73 +1,33 @@
-{{- /* One classified queue row (brief 3.3b-2; design system v3 §4.8, §4.20). Cells: Pull request, State, Reason, Waiting on us (Age
-     before D3-2).
-     Dict: a row from pages/pulls/rows.html ({pr, tab, state, n, over, waiting, bot, id, kids}) plus
-       icon (bool: false when more than half the tab is overdue), wait (bool: waiting_days mode), more (bool: data-over, hidden
-       until ui.js applies the 25-row limit), parent (the primary row id, for duplicate-cluster members), stages (pages/pulls/sep-stages.html,
-       for the "SEP: Draft" tag; empty outside the spec repo).
-     Pull request: the title is the row's only link. Under it the row meta (pages/pulls/meta.html): "#2017", "ankitvirdi4",
-       "+179 −14", then the tags (Touches auth, Maintainer, Bot, Primary, SEP stage). A tag the State already says is left out
-       ("Maintainer" next to "Maintainer PR, needs review" or "Parked maintainer draft", "Bot" next to "Release PR"); its chip token
-       stays. A duplicate-cluster primary adds a small .v-btn disclosure ("2 PRs" + chevron) on its own line.
-     Overdue (sla_breach in the needs tab), the one red expression: with waiting_days (D3-2) the Waiting on us value is the overdue
-       value, so it renders as status; before that the Age stays neutral text (an age is not a deadline) and the State cell carries a
-       status line "Overdue" under the state. Nothing else in the row is red.
-     Phones (< 40rem, .is-list): State and Reason hide, so a phone-only line (.v-listmeta) carries them as one wrapping phrase
-       ("Needs re-review: Author pushed changes after a change request") plus the overdue status. The waiting figure stays on the right. */ -}}
-{{- $c := . -}}
-{{- $pr := $c.pr -}}
+{{- /* One row of the classified PR queue (design system v4 4.16). Ctx: dict {r, off, k, parent}.
+     r       a row from pages/pulls/rows.html.
+     off     true when the row is outside the default view (data-off: hidden at first paint).
+     k       the row's index inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
+     parent  for a duplicate-cluster member: its primary row {id, n (the primary's PR number)}. The member renders as a child row
+             (data-child-of) with the attribute tag "Duplicate of #N"; it follows its parent through views, filters and sorting.
+     Cells in the fixed order: PR (ui/row-item.html: id, author and role, lines changed, "Touches auth", the row expander), Status (one
+     badge), Detail (pages/pulls/reason.html), Overdue (ui/sla.html), Age (whole days; the title names the opening date). The data has
+     no labels for classified PRs. An empty Detail cell is exactly empty. */ -}}
+{{- $r := .r }}{{ $pr := $r.pr }}{{ $k := int (.k | default 0) }}{{ $parent := .parent -}}
 {{- $num := int ($pr.number | default 0) -}}
-{{- $author := strings.TrimPrefix "app/" (string ($pr.author | default "")) -}}
-{{- $state := partial "pages/pulls/state-label.html" $c.state -}}
-{{- $reason := partial "pages/pulls/reason.html" (dict "pr" $pr "n" $c.n) -}}
-{{- /* filter tokens and tags; a tag is a string or a ui/tag.html dict */ -}}
-{{- $tags := slice }}{{ $tok := slice "all" $c.tab -}}
-{{- with index ($c.stages | default dict) (string $num) }}{{ $tags = $tags | append (printf "SEP: %s" .) }}{{ end -}}
-{{- if $c.over }}{{ $tok = $tok | append "overdue" }}{{ end -}}
-{{- if $c.waiting }}{{ $tok = $tok | append "waiting" }}{{ end -}}
-{{- if $pr.is_auth }}{{ $tags = $tags | append "Touches auth" }}{{ $tok = $tok | append "auth" }}{{ end -}}
-{{- if $pr.is_maintainer -}}
-  {{- $tok = $tok | append "maint" -}}
-  {{- if not (in (slice "maintainer-intake" "parked") $c.state) }}{{ $tags = $tags | append "Maintainer" }}{{ end -}}
-{{- end -}}
-{{- if $c.bot -}}
-  {{- $tok = $tok | append "bot" -}}
-  {{- if ne $c.state "bot-release" }}{{ $tags = $tags | append "Bot" }}{{ end -}}
-{{- end -}}
-{{- if $pr.cluster_pick }}{{ $tags = $tags | append "Primary" }}{{ end -}}
-{{- /* lines changed: "+179 −14" */ -}}
-{{- $adds := float ($pr.additions | default 0) }}{{ $dels := float ($pr.deletions | default 0) -}}
-{{- $lines := printf "+%s −%s" (lang.FormatNumber 0 $adds) (lang.FormatNumber 0 $dels) -}}
-{{- /* verdict: whole days waiting on a maintainer (D3-2), else calendar age */ -}}
-{{- $dv := "" }}{{ $html := "" -}}
-{{- if $c.wait -}}
-  {{- $wd := partial "pages/pulls/wait.html" $pr.waiting_days -}}
-  {{- $html = $wd.html }}{{ if ne $wd.v nil }}{{ $dv = string $wd.v }}{{ end -}}
-{{- else -}}
-  {{- $html = (partial "ui/dur.html" (dict "d" ($pr.age_days | default 0) "years" true)).html }}{{ $dv = string (float ($pr.age_days | default 0)) -}}
-{{- end -}}
-{{- $status := "" -}}
-{{- if $c.over -}}
-  {{- $rule := index (dict
-      "1st-review" "Overdue: first review within 7 days (team SLA)"
-      "re-review" "Overdue: re-review within 24 hours (team SLA)"
-      "maintainer" "Overdue: review of a maintainer PR within 24 hours (team SLA)") (string ($pr.sla_kind | default "")) | default "Overdue: past a team review SLA" -}}
-  {{- if $c.wait -}}
-    {{- $html = partial "ui/status.html" (dict "html" (printf "%s<span class=\"sr-only\">, overdue</span>" $html | safeHTML) "title" $rule "icon" $c.icon) -}}
-  {{- else -}}
-    {{- $status = partial "ui/status.html" (dict "text" "Overdue" "title" $rule "icon" $c.icon) -}}
-  {{- end -}}
+{{- $attrs := slice -}}
+{{- if eq $pr.is_auth true }}{{ $attrs = $attrs | append "Touches auth" }}{{ end -}}
+{{- with $parent }}{{ $attrs = $attrs | append (printf "Duplicate of #%d" (int .n)) }}{{ end -}}
+{{- $kids := dict -}}
+{{- with $r.kids }}{{ $kids = dict "n" (len .) "id" $r.id }}{{ end -}}
+{{- $d := dict }}{{ if not $parent }}{{ $d = partial "pages/pulls/reason.html" $pr }}{{ end -}}
+{{- if $parent }}
+<tr data-row data-row-link id="{{ $r.id }}" data-child-of="{{ $parent.id }}" data-views="{{ $r.view }}">
+{{- else }}
+<tr data-row data-row-link id="{{ $r.id }}" data-views="{{ $r.view }}" data-facets="{{ delimit $r.tok " " }}"{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
 {{- end }}
-<tr data-row data-row-link id="{{ $c.id }}" data-tags="{{ delimit $tok " " }}" data-text="{{ lower (printf "%s|%s" (string ($pr.title | default "")) $author) }}"{{ with $c.parent }} data-child-of="{{ . }}"{{ end }}{{ if $c.more }} data-over{{ end }}>
-  <td class="v-title-cell">
-    <a class="v-row-link v-clamp" href="{{ $pr.url }}" target="_blank" rel="noopener">{{ $pr.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    {{ partial "pages/pulls/meta.html" (dict "num" $num "author" $author "lines" $lines "tags" $tags) }}
-    <span class="v-listmeta">{{ $state }}{{ with $reason }}: {{ . }}{{ end }}{{ with $status }}<span>{{ . }}</span>{{ end }}</span>
-    {{- with $c.kids }}
-    {{- $ids := slice }}{{ range . }}{{ $ids = $ids | append .id }}{{ end }}
-    <span class="v-rowmeta"><button type="button" class="v-btn v-btn-sm" data-disclosure aria-expanded="false" aria-controls="{{ delimit $ids " " }}">{{ $c.n }} PRs{{ partial "ui/icon.html" "chevron-down" }}</button></span>
-    {{- end }}
+  {{ partial "ui/row-item.html" (dict "title" (string ($pr.title | default "")) "href" $pr.url "id" (printf "#%d" $num) "author" $pr.author "role" $r.role
+      "diff" (dict "add" $pr.additions "del" $pr.deletions) "attrs" $attrs "kids" $kids) }}
+  <td class="v-c-status" data-v="{{ $r.st.order }}">{{ partial "ui/badge.html" $r.st }}</td>
+  <td class="v-c-detail">
+    {{- with $d.text -}}
+    <span class="v-detail">{{ . }}{{ with $d.who }} {{ . }}{{ end }}{{ with $d.ref }} {{ partial "ui/value.html" (dict "kind" "id" "v" .) }}{{ end }}{{ if ne $d.days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" $d.days "unit" "d" "compact" true) }}{{ end }}</span>
+    {{- end -}}
   </td>
-  <td>{{ $state }}{{ with $status }}<span class="sub">{{ . }}</span>{{ end }}</td>
-  <td>{{ $reason }}</td>
-  <td class="num v-verdict"{{ with $dv }} data-v="{{ . }}"{{ end }}>{{ $html }}</td>
+  {{ partial "ui/sla.html" (dict "rules" $r.rules) }}
+  <td class="num" data-v="{{ printf "%.1f" $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" $r.opened) }}</td>
 </tr>

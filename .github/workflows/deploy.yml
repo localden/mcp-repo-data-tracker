@@ -47,6 +47,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Inter Variable is shipped with the site: the two woff2 files go from node_modules to static/fonts (git-ignored).
+      - name: Copy fonts
+        run: npm run fonts:copy
+
       - name: Design-system guard
         run: bash .github/scripts/design-guard.sh
 

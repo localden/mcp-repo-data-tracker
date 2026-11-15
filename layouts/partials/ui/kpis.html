@@ -1,18 +1,16 @@
-{{- /* KPI strip (design system v3 §4.5): one card, 3 or 4 equal tiles in a grid, 1px dividers, every tile the same height.
-  Dict {tiles, label, id}. tiles: slice of ui/kpi.html dicts. Columns: one per tile from 48rem, 2 below (an odd last tile spans 2).
-  label: optional aria-label for the group.
-  Never 1 or 2 tiles: two or fewer facts are a stat list (v3 §4.6), so with fewer than 3 tiles this renders the same facts as a
-  ui/stats.html list inside a card (and warns at build time so the page can say so explicitly). More than 4 tiles also warns. */ -}}
-{{- $tiles := .tiles | default slice -}}
-{{- $n := len $tiles -}}
-{{- if gt $n 4 }}{{ warnf "VISR ui/kpis: %d tiles; a KPI strip holds 3 or 4 (design system v3 §4.5)" $n }}{{ end -}}
-{{- if ge $n 3 -}}
-<div class="v-card v-kpis" style="--n:{{ $n }}"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
-  {{- range $tiles }}{{ partial "ui/kpi.html" . }}{{ end -}}
-</div>
-{{- else if gt $n 0 -}}
-{{- warnf "VISR ui/kpis: %d tiles; two or fewer facts are a stat list, rendered as ui/stats.html (design system v3 §4.5)" $n -}}
-<div class="v-card"{{ with .id }} id="{{ . }}"{{ end }}{{ with .label }} role="group" aria-label="{{ . }}"{{ end }}>
-  <div class="v-card-body"><dl class="v-stats">{{ range $tiles }}{{ partial "ui/kpi.html" (merge . (dict "variant" "stat")) }}{{ end }}</dl></div>
-</div>
+{{- /* RETIRED (design system v4 8.1): use ui/metrics.html. Kept as a best-effort shim so pages build until their strip is rebuilt, then
+  deleted. Dict {tiles, label, id}: each v3 tile {label, labelTitle, value, format, overdue, delta, points} is mapped to a v4 tile
+  (name, title, value, tone, delta, points). Pre-rendered values (valueHTML), qualifier sentences and filter tiles have no v4 form
+  and are dropped. */ -}}
+{{- warnf "ui/kpis.html is retired: call ui/metrics.html (design system v4 4.5)" -}}
+{{- $tiles := slice }}{{ $trend := false -}}
+{{- range .tiles | default slice -}}
+  {{- $f := .format | default "num" -}}
+  {{- $v := dict "kind" "count" "v" .value -}}
+  {{- if eq $f "dur" }}{{ $v = dict "kind" "dur" "h" .value }}{{ else if eq $f "pct" }}{{ $v = dict "kind" "share" "v" .value }}{{ else if eq $f "compact" }}{{ $v = dict "kind" "volume" "v" .value }}{{ end -}}
+  {{- $t := dict "name" .label "title" .labelTitle "value" $v "points" .points -}}
+  {{- if .overdue }}{{ $t = merge $t (dict "tone" "breach") }}{{ end -}}
+  {{- if .points }}{{ $trend = true }}{{ end -}}
+  {{- $tiles = $tiles | append $t -}}
 {{- end -}}
+{{- partial "ui/metrics.html" (dict "label" (.label | default "Summary") "id" .id "size" "lg" "visual" (cond $trend "trend" "none") "tiles" $tiles) -}}

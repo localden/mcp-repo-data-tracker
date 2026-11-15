@@ -1,13 +1,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-{{- /* <title> (design system v3 §4.2): "VISR: {eyebrow}, {H1}" ("VISR: Issues, TypeScript SDK"); the home page is "VISR: Overview".
-  Built by ui/page-name.html from the section and the page title (the H1). */ -}}
+{{- /* theme-color (design system v4 4.1): the header surface in each theme; theme-toggle.js keeps a third, unconditional meta in step
+  with a stored choice. */ -}}
+{{- with site.Params.themeColorLight }}
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="{{ . }}">
+{{- end }}
+{{- with site.Params.themeColorDark }}
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="{{ . }}">
+{{- end }}
+{{- /* <title>: "VISR: {eyebrow}, {H1}" ("VISR: Pull requests, TypeScript SDK"); the home page is "VISR: Overview". Built by ui/page-name.html. */ -}}
 <title>{{ (partial "ui/page-name.html" .).doc }}</title>
 <meta name="description" content="{{ .Description | default site.Params.description }}">
+{{- if or (eq .Params.robots "noindex") (eq .Layout "styleguide") }}
+<meta name="robots" content="noindex">
+{{- end }}
 {{- if eq .Layout "redirect" }}
-{{- /* Retired URL (layout: redirect, brief 2.1). The script redirects first, so a legacy ?repo=owner/repo link lands on that repo's
-  page instead of racing a zero-second refresh; the meta refresh is the no-JS path. Only repos listed in repos.json are followed. */ -}}
+{{- /* Retired URL (layout: redirect). The script redirects first, so a legacy ?repo=owner/repo link lands on that repository's page
+  instead of racing a zero-second refresh; the meta refresh is the no-JS path. Only repositories listed in repos.json are followed. */ -}}
 {{- $to := .Params.target | default "repos/modelcontextprotocol/" | relURL }}
 {{- $slugs := slice }}{{ range site.Data.repos.repositories }}{{ $slugs = $slugs | append .repo }}{{ end }}
 <script>
@@ -22,10 +32,36 @@
 <meta name="robots" content="noindex">
 <link rel="canonical" href="{{ $to | absURL }}">
 {{- end }}
+{{- /* Favicon (design system v4 4.1): the brand mark PNGs when they exist, else the SVG that ships today. */ -}}
+{{- if fileExists "static/brand/visr-mark-32.png" }}
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "brand/visr-mark-32.png" | relURL }}">
+{{- if fileExists "static/brand/visr-mark-64.png" }}
+<link rel="icon" type="image/png" sizes="64x64" href="{{ "brand/visr-mark-64.png" | relURL }}">
+{{- end }}
+{{- if fileExists "static/brand/visr-mark-256.png" }}
+<link rel="apple-touch-icon" href="{{ "brand/visr-mark-256.png" | relURL }}">
+{{- end }}
+{{- else }}
 <link rel="icon" type="image/svg+xml" href="{{ "favicon.svg" | relURL }}">
+{{- end }}
+{{- /* Typeface (design system v4 2.2): Inter Variable, self-hosted. `npm run fonts:copy` puts the two files in static/fonts.
+  The CSS is built as a string and passed through safeCSS so the URL is not rewritten; only the latin file is preloaded. */ -}}
+{{- $fLatin := "fonts/inter-latin-wght-normal.woff2" -}}
+{{- $fExt := "fonts/inter-latin-ext-wght-normal.woff2" -}}
+{{- if and (fileExists (printf "static/%s" $fLatin)) (fileExists (printf "static/%s" $fExt)) }}
+{{- $rLatin := "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD" -}}
+{{- $rExt := "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF" -}}
+{{- $face := `@font-face{font-family:"Inter Variable";font-style:normal;font-weight:100 900;font-display:swap;src:url("%s") format("woff2");unicode-range:%s}` -}}
+{{- $fallback := `@font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107.06%;ascent-override:90.49%;descent-override:22.56%;line-gap-override:0%}` }}
+<link rel="preload" href="{{ $fLatin | relURL }}" as="font" type="font/woff2" crossorigin>
+<style>{{ printf $face ($fLatin | relURL) $rLatin | safeCSS }}{{ printf $face ($fExt | relURL) $rExt | safeCSS }}{{ $fallback | safeCSS }}</style>
+{{- else }}
+  {{- if os.Getenv "CI" }}{{ errorf "static/fonts is missing the Inter files: run `npm run fonts:copy` before hugo" }}
+  {{- else }}{{ warnf "static/fonts is missing the Inter files: run `npm run fonts:copy` (the site falls back to system fonts)" }}{{ end }}
+{{- end }}
 <script>
 (function () {
-  /* theme before first paint: a stored choice wins, else the system preference (brief 7.2 D6); html.js gates JS-only styles */
+  /* theme before first paint: a stored choice wins, else the system preference; html.js gates the JS-only styles of lists */
   var d = document.documentElement, t = null;
   d.classList.add('js');
   try { t = localStorage.getItem('theme'); } catch (e) {}

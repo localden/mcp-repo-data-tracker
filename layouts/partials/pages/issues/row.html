@@ -1,27 +1,28 @@
-{{- /* One classified queue row (brief 3.2b-2; design system v3 §4.8). Cells: Issue, Next step, Age, Overdue.
-  Ctx: dict {r (a pages/issues/rows.html row), copy ("flat" | "group"), over (bool: beyond the first paint), icon (bool: status icon),
-    tier (the tier group row label above a group copy, or "")}.
-    Issue: the title is the row's single link (#123 is plain text). Under it the row meta (span.v-rowmeta, small text-2 spans with a
-      12px gap): the number, the author, the waiting phrase ("Waiting on us for 275 business days", "Waiting on the reporter"), then the
-      tags as text-3 spans ("Maintainer", P0/P1 strong, "Fix proposed in #2051", conflicting type labels, "Missing priority").
-    Next step: the tier's plain label; under a tier group row it is left blank when it only repeats the tier name (3.2b-2).
-    Age: calendar age, neutral text (ages are never red); the tooltip gives business days.
-    Overdue: the one red cell (v3 §4.20): status "744d over" (danger, alert icon unless more than half the list is overdue), the rule
-      name ("Repro") as line 2. Blank when the issue is within every deadline.
-    The group copy sits under a tier group row in the Bugs or Enhancements tab and starts hidden (ui.js shows it), so without JS
-    only the flat list renders.
-  Phone (.is-list): title and Age stay; the row meta stays; a phone-only line (.v-listmeta) carries the columns that hide: the next
-  step and the overdue status ("Repro, 744d over"). */ -}}
-{{- $r := .r }}{{ $group := eq .copy "group" -}}
-{{- $tier := .tier | default "" -}}
-{{- $next := $r.next }}{{ if and $group (ne $tier "") (eq $next $tier) }}{{ $next = "" }}{{ end -}}
-<tr data-row data-row-link data-tags="{{ cond $group $r.gtags $r.ftags }}" data-text="{{ $r.text }}"{{ if .over }} data-over{{ end }}{{ if $group }} hidden{{ end }}>
-  <td class="v-title-cell"><a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener" title="{{ $r.ctitle }}">{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    <span class="v-rowmeta"><span>#{{ $r.n }}</span><span>{{ $r.author }}</span>{{ with $r.wait }}<span>{{ . }}</span>{{ end }}{{ partial "ui/tag.html" $r.tags }}</span>
-    {{- if or $next $r.over }}
-    <span class="v-listmeta">{{ with $next }}<span>{{ . }}</span>{{ end }}{{ with $r.over }}<span>{{ partial "ui/status.html" (dict "text" (printf "%s, %s" $r.orule .) "title" $r.otitle "icon" $.icon) }}</span>{{ end }}</span>
-    {{- end }}</td>
-  <td>{{ $next }}</td>
-  <td class="num v-verdict" data-v="{{ printf "%.1f" $r.age }}"><span title="{{ $r.ageTitle }}">{{ $r.ageHTML }}</span></td>
-  <td class="num" data-v="{{ printf "%.1f" $r.k }}">{{ with $r.over }}{{ partial "ui/status.html" (dict "text" . "title" $r.otitle "icon" $.icon) }}<span class="sub">{{ $r.orule }}</span>{{ end }}</td>
+{{- /* One row of the classified issue queue (design system v4 4.16). Ctx: dict {r, off, k}.
+    r    a row from pages/issues/rows.html.
+    off  true when the row is outside the default view (data-off: hidden at first paint).
+    k    the row's index inside the default view, for the first-paint marks (data-over past 25, data-over-phone past 10).
+  Cells in the fixed order: Issue (ui/row-item.html: id, author and role, priority, flags, labels), Status (one badge), Detail (a short
+  phrase that may end in one component), Overdue (ui/sla.html), Age (whole days; the title names the opening date). An empty Detail
+  cell is exactly empty, so it takes no line in list form. */ -}}
+{{- $r := .r }}{{ $k := int (.k | default 0) -}}
+<tr data-row data-row-link id="issue-{{ $r.n }}" data-views="{{ $r.view }}" data-facets="{{ delimit $r.tok " " }}"{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
+  {{ partial "ui/row-item.html" (dict "title" $r.title "href" $r.url "id" (printf "#%s" $r.n) "author" $r.author "role" $r.role
+      "prio" $r.prio "flags" $r.flags "tags" $r.labels) }}
+  <td class="v-c-status" data-v="{{ $r.st.order }}">{{ partial "ui/badge.html" $r.st }}</td>
+  <td class="v-c-detail">
+    {{- with $r.detail -}}
+      {{- if eq .kind "reporter-waiting" -}}
+        <span class="v-detail">Reporter waiting
+          {{- if ne .days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" .days "unit" "d" "compact" true "title" (partial "fmt/count.html" (dict "v" .bd "noun" "business day")).text) }}{{ end -}}
+        </span>
+      {{- else if eq .kind "fix" -}}
+        <span class="v-detail">Fix in {{ partial "ui/value.html" (dict "kind" "id" "v" (printf "#%d" .pr)) }}</span>
+      {{- else if eq .kind "reporter" -}}
+        <span class="v-detail">Waiting on reporter</span>
+      {{- end -}}
+    {{- end -}}
+  </td>
+  {{ partial "ui/sla.html" (dict "rules" $r.rules) }}
+  <td class="num" data-v="{{ printf "%.1f" $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" $r.opened) }}</td>
 </tr>

@@ -1,6 +1,6 @@
-{{- /* /repos/<repo>/: one page per tracked repository (brief 2.1, 3.6). Rendered by layouts/partials/pages/repo.html.
-  The title is the bare display name (design system v3 §4.2), so the H1 reads "TypeScript SDK" under the eyebrow "Repository" and
-  the document title reads "VISR: Repository, TypeScript SDK". */ -}}
+{{- /* /repos/<repo>/: one page per tracked repository (design system v4 5.8). Rendered by layouts/partials/pages/repo.html.
+  The title is the bare display name, so the H1 scope switcher reads "TypeScript SDK" under the eyebrow "Repositories" and the
+  document title reads "VISR: Repositories, TypeScript SDK". */ -}}
 {{- range .Site.Data.repos.repositories -}}
   {{- $.AddPage (dict
       "path" .repo

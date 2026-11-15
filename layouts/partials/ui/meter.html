@@ -1,7 +1,12 @@
-{{- /* Ranking/share bar (design system v3 §4.17): one --accent colour for every row, 8px tall, radius 4, no track, scaled to the max
-  row (pass max = the largest row). Always aria-hidden: print the number or percentage beside it in its own right-aligned element
-  (span.v-meter-pct). Add class is-fill on a hand-written meter to let it fill its cell.
-  Call: partial "ui/meter.html" (dict "value" 12 "max" 40 ["fill" true]). The old "rank" key is accepted (every bar is trackless now). */ -}}
+{{- /* Bar (design system v4 4.21): 6px tall, one colour (chart-1), always aria-hidden, always beside its number.
+  Dict {value, max, mode, split}.
+    mode "rank" (default): value over the largest row, no track. The number beside it is a count compared across rows.
+    mode "share": value over the whole, on the meter track. The number beside it is a percent of a whole.
+    split: true with share: a two-part named split; the rest of the bar is the neutral series colour.
+  A value above zero is at least 2px wide; zero draws no fill. In a table cell wrap the bar and its number in span.v-barnum inside a
+  td.v-c-bar (column v-col-bar): the bar is exactly 96px, left of the number. Bars are never coloured by rank, value or status. */ -}}
 {{- $max := float (.max | default 1) }}{{ if le $max 0.0 }}{{ $max = 1.0 }}{{ end -}}
-{{- $pct := math.Max 0.0 (math.Min 100.0 (mul (div (float (.value | default 0)) $max) 100.0)) -}}
-<span class="v-meter{{ if .fill }} is-fill{{ end }}" aria-hidden="true"><i style="--v:{{ printf "%.1f" $pct }}%"></i></span>
+{{- $v := float (.value | default 0) -}}
+{{- $pct := math.Max 0.0 (math.Min 100.0 (mul (div $v $max) 100.0)) -}}
+{{- $mode := .mode | default "rank" -}}
+<span class="v-meter is-{{ if eq $mode "share" }}share{{ else }}rank{{ end }}{{ if and .split (eq $mode "share") }} is-split{{ end }}" aria-hidden="true">{{ if gt $v 0.0 }}<i style="--v:{{ printf "%.1f" $pct }}%"></i>{{ end }}</span>

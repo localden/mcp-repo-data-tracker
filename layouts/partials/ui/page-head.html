@@ -1,44 +1,37 @@
-{{- /* Page head (design system v3 §4.2): one structure on every page.
-    eyebrow (label role, accent-text) = the nav section
-    H1 row: H1 = the scope; the scope switcher ("Switch repository", a .v-btn menu) at the right end (under the meta row on phone)
-    description (small, text-2): repository pages only, one line
-    meta row (small, text-2, gap 20): each item = a 16px text-3 icon + text, in the order links, the clock item ("Updated …"),
-      meta (stars, "Tracking since …"); then the "Data notes" small button (info icon)
-    callout (optional, at most ONE per page): warning-soft box with an alert icon, a 600 lead ("Data gap:"), the gap sentence and,
-      as a further sentence, the staleness ("PyPI data is 5 days old.")
-    Data notes panel (hidden; opens below the head)
-  Dict {title, eyebrow, description, repo, switch, links, meta, sources, gap, notes, defs, id}. Every key is optional.
-    title: the H1 (the scope: "TypeScript SDK", "All repositories"). Default: the page title. Content titles are bare scopes; the
-      section goes in the eyebrow, never in the title.
-    eyebrow: default from the page's nav section (Overview, Issues, Pull requests, SEPs, Downloads, Repository).
-    repo + switch: the current "owner/repo" ("" on org views) and the page kind ("issues", "pulls" or "repo") for ui/scope-switcher.html.
-    links: first meta items, dicts {text, href, site, icon, prefix}. icon: default "github" for github.com URLs, else "package".
-      prefix: a text-3 word before the text ("npm" before "@modelcontextprotocol/sdk"). Links open in a new tab; sr-only "(opens {site})".
-    meta: further items, each a string or a dict {text, icon, href, site, prefix}. A string starting "Tracking since" gets the calendar
-      icon, one ending in "star" or "stars" the star icon.
-    sources: ui/sources.html output (plus your own dicts). The clock item reads "Updated {oldest GitHub metrics time}" when a kind
-      "metrics" source is present; else "Complete through {oldest through day}" when every source is a registry; else "Updated
-      {oldest at}". A source more than 2 days old adds "{noun} is N days old." to the callout. Registry sources never move a GitHub
-      page's "Updated" time.
-    gap: a ui/page-gaps.html dict {repos, days, key, noun, tail} for the charted window, or a string printed verbatim after the lead.
-      noun default "GitHub data"; tail default (key "issues") "Charts show the gap." The callout reads
-      "Data gap: no GitHub data for Oct 8 – Nov 9, 2026 (collection outage). Charts show the gap."
-    notes and defs: extra Data notes paragraphs and {term, text} definitions (see ui/data-notes.html).
-    id: element id prefix (default "page"): H1 "{id}-title", panel "{id}-notes", switcher "{id}-scope-btn" and "{id}-scope-list". */ -}}
+{{- /* Page head (design system v4 4.2): say where you are, let you change scope, state freshness. One structure on every page:
+  eyebrow (the nav section), title row (the H1 and, on its right, the Data notes button), description, meta, callout, Data notes.
+  Dict {eyebrow, title, scope, desc, meta, updated, sources, note, callout, gap, defs, notes, facts, id}. Every key is optional.
+    eyebrow   default: the page's nav section (Overview, Issues, Pull requests, SEPs, Downloads, Repositories). Pass "" for none.
+    title     the H1, the scope ("All repositories", "TypeScript SDK"). Default: the page title.
+    scope     {kind: "issues" | "pulls" | "repo", repo: "owner/repo" or ""}: the H1 becomes the scope switcher (ui/scope-switcher.html).
+    desc      one line, a repository's own description (clamped to 2 lines on a phone).
+    meta      at most three items, in order: repository link, registry link, then freshness. Each is a dict
+                {icon, text, href, site}                a link ("github" or "package" icon; site names it for screen readers)
+                {icon, label, value: {kind, ...}}       a labelled value: "Updated" + {kind "ts"}, "Complete through" + {kind "date"}
+    updated   a time: shortcut for the item {icon "clock", label "Updated", value {kind "ts"}}, placed after the meta items.
+    sources   ui/sources.html output: adds the freshness item (the oldest GitHub metrics time, or "Complete through" when every source
+              is a registry) and fills the Sources list of Data notes.
+    note      a ui/note.html dict shown after the meta items: {since: "2026-11-10"} is "Tracking since Nov 10". Once per page, here.
+    callout   a ui/callout.html dict {title, items}. gap: {repos, days, key} computes the data-gap callout from ui/page-gaps.html instead.
+    defs      Data notes definitions: slice of {term, text}. notes: further sentences (slice of strings). facts: Sources rows, slice of
+              {label, value: {kind, ...}} (a tracking start date, a star count). Every sentence removed from a page lands here.
+    id        element id prefix (default "page"): H1 "{id}-title", panel "{id}-notes", menu "{id}-scope-menu".
+  No page head holds a work count or a popularity count. */ -}}
 {{- $c := . -}}
 {{- $id := $c.id | default "page" -}}
 {{- $pn := partial "ui/page-name.html" page -}}
 {{- $h1 := $c.title | default $pn.h1 -}}
-{{- $eyebrow := $c.eyebrow | default "" -}}
-{{- if not $eyebrow -}}
-  {{- $eyebrow = index (dict "issues" "Issues" "pulls" "Pull requests" "repo" "Repository") ($c.switch | default "") | default $pn.eyebrow -}}
-{{- end -}}
+{{- $eyebrow := $pn.eyebrow -}}
+{{- if isset $c "eyebrow" }}{{ $eyebrow = $c.eyebrow }}{{ end -}}
+{{- $scope := $c.scope -}}
+{{- if and (not $scope) $c.switch }}{{ $scope = dict "kind" $c.switch "repo" ($c.repo | default "") }}{{ end -}}
+{{- with $scope }}{{ with index (dict "issues" "Issues" "pulls" "Pull requests" "repo" "Repositories") (.kind | default "") }}{{ if not (isset $c "eyebrow") }}{{ $eyebrow = . }}{{ end }}{{ end }}{{ end -}}
 {{- if eq $eyebrow $h1 }}{{ $eyebrow = "" }}{{ end -}}
 {{- $srcs := $c.sources | default slice -}}
-{{- /* freshness: the GitHub metrics time (oldest across the page's repos) when the page has GitHub metrics, so a slow registry never
-     pins a GitHub page; a registry-only page says "Complete through {oldest day}"; anything else uses its oldest source. */ -}}
+
+{{- /* freshness from sources: the oldest GitHub metrics time; a registry-only page says "Complete through {oldest day}" */ -}}
 {{- $oldU := 0 }}{{ $oldT := "" }}{{ $ghU := 0 }}{{ $ghT := "" }}{{ $thru := "" }}{{ $allThru := gt (len $srcs) 0 -}}
-{{- $stale := "" }}{{ $staleAge := 2 -}}
+{{- $stale := slice -}}
 {{- range $srcs -}}
   {{- $s := . -}}
   {{- with $s.at -}}
@@ -46,89 +39,89 @@
     {{- if or (eq $oldU 0) (lt $t.Unix $oldU) }}{{ $oldU = $t.Unix }}{{ $oldT = $t }}{{ end -}}
     {{- if eq $s.kind "metrics" }}{{ if or (eq $ghU 0) (lt $t.Unix $ghU) }}{{ $ghU = $t.Unix }}{{ $ghT = $t }}{{ end }}{{ end -}}
   {{- end -}}
-  {{- with $s.through }}{{ if or (eq $thru "") (lt (string .) $thru) }}{{ $thru = string . }}{{ end }}{{ else }}{{ $allThru = false }}{{ end -}}
-  {{- $ref := $s.at }}{{ with $s.through }}{{ $ref = time.AsTime . }}{{ end -}}
-  {{- with $ref -}}
-    {{- $age := div (sub now.Unix (time.AsTime .).Unix) 86400 -}}
-    {{- if gt $age $staleAge }}{{ $staleAge = $age }}{{ $stale = printf "%s is %d days old." ($s.noun | default $s.label | default "Data") $age }}{{ end -}}
-  {{- end -}}
+  {{- with $s.through -}}
+    {{- if or (eq $thru "") (lt (string .) $thru) }}{{ $thru = string . }}{{ end -}}
+    {{- if gt (div (sub now.Unix (time.AsTime .).Unix) 86400) 3 -}}
+      {{- $stale = $stale | append (dict "text" (printf "%s is complete through {date}." ($s.noun | default $s.label | default "Data")) "date" (string .)) -}}
+    {{- end -}}
+  {{- else }}{{ $allThru = false }}{{ end -}}
 {{- end -}}
-{{- $fresh := "" -}}
-{{- if ne $ghU 0 }}{{ $fresh = printf "Updated %s" (partial "ui/date.html" (dict "d" $ghT "style" "ts")) -}}
-{{- else if and $allThru $thru }}{{ $fresh = printf "Complete through %s" (partial "ui/date.html" (dict "d" $thru)) -}}
-{{- else if $oldT }}{{ $fresh = printf "Updated %s" (partial "ui/date.html" (dict "d" $oldT "style" "ts")) }}{{ end -}}
-{{- /* the gap sentence */ -}}
-{{- $gapText := "" }}{{ $gapTail := "" }}{{ $gapNote := "" }}{{ $gaps := dict -}}
-{{- if reflect.IsMap $c.gap -}}
-  {{- $gaps = partial "ui/page-gaps.html" $c.gap -}}
-  {{- $key := $c.gap.key | default "issues" -}}
-  {{- $noun := $c.gap.noun | default (cond (eq $key "issues") "GitHub data" "data") -}}
-  {{- $tail := "" }}{{ if eq $key "issues" }}{{ $tail = "Charts show the gap." }}{{ end -}}
-  {{- if isset $c.gap "tail" }}{{ $tail = $c.gap.tail }}{{ end -}}
-  {{- $ranges := slice }}{{ $outage := false -}}
-  {{- range $gaps.runs }}{{ $ranges = $ranges | append (partial "data/date-range.html" (dict "from" .from "to" .to)) }}{{ if .outage }}{{ $outage = true }}{{ end }}{{ end -}}
-  {{- if $ranges -}}
-    {{- $gapText = printf "no %s for %s%s." $noun (delimit $ranges ", " " and ") (cond $outage " (collection outage)" "") -}}
-    {{- $gapTail = $tail -}}
-    {{- if eq $key "issues" }}{{ $gapNote = "7-day comparisons across a gap use the nearest earlier snapshot." }}{{ end -}}
-  {{- end -}}
-{{- else if $c.gap -}}
-  {{- $gapText = $c.gap -}}
-{{- end -}}
-{{- $hasNotes := or $srcs $gaps.runs $gaps.reconstructed $c.notes $c.defs -}}
-{{- /* meta items: {icon, text, href, site, prefix} */ -}}
+
+{{- /* meta items */ -}}
 {{- $items := slice -}}
-{{- range $c.links -}}
-  {{- $l := . -}}
-  {{- if reflect.IsMap $l }}{{ with $l.href -}}
-    {{- $items = $items | append (merge (dict "icon" (cond (strings.Contains . "github.com") "github" "package")) $l) -}}
-  {{- end }}{{ end -}}
-{{- end -}}
-{{- with $fresh }}{{ $items = $items | append (dict "text" . "icon" "clock") }}{{ end -}}
+{{- range $c.links }}{{ if reflect.IsMap . }}{{ if .href -}}
+  {{- $t := .text }}{{ with .prefix }}{{ $t = printf "%s %s" . $t }}{{ end -}}
+  {{- $items = $items | append (dict "icon" (.icon | default (cond (strings.Contains .href "github.com") "github" "package")) "text" $t "href" .href "site" .site) -}}
+{{- end }}{{ end }}{{ end -}}
+{{- $noteArg := $c.note -}}
 {{- range $c.meta -}}
   {{- if reflect.IsMap . }}{{ $items = $items | append . -}}
-  {{- else if . -}}
-    {{- $s := string . }}{{ $ic := "" -}}
-    {{- if hasPrefix $s "Tracking since" }}{{ $ic = "calendar" }}{{ else if or (hasSuffix $s " stars") (hasSuffix $s " star") }}{{ $ic = "star" }}{{ end -}}
-    {{- $items = $items | append (dict "text" $s "icon" $ic) -}}
-  {{- end -}}
+  {{- else if hasPrefix (string .) "Tracking since" }}{{ if not $noteArg }}{{ $noteArg = dict "text" (string .) "tone" "info" }}{{ end }}{{ end -}}
 {{- end -}}
+{{- if $c.updated }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $c.updated)) -}}
+{{- else if ne $ghU 0 }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $ghT)) -}}
+{{- else if and $allThru $thru }}{{ $items = $items | append (dict "icon" "calendar" "label" "Complete through" "value" (dict "kind" "date" "d" $thru)) -}}
+{{- else if $oldT }}{{ $items = $items | append (dict "icon" "clock" "label" "Updated" "value" (dict "kind" "ts" "t" $oldT)) }}{{ end -}}
+
+{{- /* callout: passed in, or computed from the charted window's gaps */ -}}
+{{- $callout := $c.callout | default dict }}{{ $gaps := dict -}}
+{{- if reflect.IsMap $c.gap -}}
+  {{- $gaps = partial "ui/page-gaps.html" $c.gap -}}
+  {{- $noun := $c.gap.noun | default "GitHub data" -}}
+  {{- $ci := slice -}}
+  {{- range $i, $run := $gaps.runs -}}
+    {{- $t := printf "No %s from {range}%s." $noun (cond (eq $run.outage true) " (collection outage)" "") -}}
+    {{- if eq $i 0 }}{{ $t = printf "%s Charts show the gap." $t }}{{ end -}}
+    {{- $ci = $ci | append (dict "text" $t "from" $run.from "to" $run.to) -}}
+  {{- end -}}
+  {{- if $ci }}{{ $callout = dict "title" "Data gap" "items" ($ci | append $stale) }}{{ end -}}
+{{- end -}}
+{{- if and (not $callout.items) $stale }}{{ $callout = dict "title" "Stale data" "items" $stale }}{{ end -}}
+
+{{- $noteList := slice -}}
+{{- if reflect.IsSlice $c.notes }}{{ $noteList = $c.notes }}{{ else if $c.notes }}{{ if not (reflect.IsMap $c.notes) }}{{ $noteList = slice $c.notes }}{{ end }}{{ end -}}
+{{- $defs := $c.defs | default slice -}}
+{{- $facts := $c.facts | default slice -}}
+{{- if reflect.IsMap $c.notes }}{{ with $c.notes.defs }}{{ $defs = . }}{{ end }}{{ with $c.notes.facts }}{{ $facts = . }}{{ end }}{{ with $c.notes.sentences }}{{ $noteList = . }}{{ end }}{{ end -}}
+{{- $hasNotes := or $srcs $gaps.runs $gaps.reconstructed $noteList $defs $facts -}}
 <header class="v-page-head">
   {{- with $eyebrow }}
   <p class="v-eyebrow">{{ . }}</p>
   {{- end }}
+  {{- with $scope }}
+  {{ partial "ui/scope-switcher.html" (dict "kind" (.kind | default "repo") "repo" (.repo | default "") "id" $id "open" .open) }}
+  {{- else }}
   <h1 class="v-page-title" id="{{ $id }}-title">{{ $h1 }}</h1>
-  {{- with $c.switch }}
-  <div class="v-page-scope">{{ partial "ui/scope-switcher.html" (dict "repo" ($c.repo | default "") "kind" . "id" (printf "%s-scope" $id)) }}</div>
-  {{- end }}
-  {{- with $c.description }}
-  <p class="v-page-desc">{{ . }}</p>
-  {{- end }}
-  {{- if or $items $hasNotes }}
-  <div class="v-page-meta">
-    {{- range $items -}}
-      {{- $ic := "" }}{{ with .icon }}{{ $ic = partial "ui/icon.html" . }}{{ end -}}
-      {{- if .href -}}
-      <a class="v-meta-item" href="{{ .href }}" target="_blank" rel="noopener">{{ $ic }}{{ with .prefix }}<span class="v-meta-pre">{{ . }}</span>{{ end }}<span>{{ .text }}</span>{{ with .site }}<span class="sr-only"> (opens {{ . }})</span>{{ end }}</a>
-      {{- else -}}
-      <span class="v-meta-item">{{ $ic }}{{ with .prefix }}<span class="v-meta-pre">{{ . }}</span>{{ end }}<span>{{ .text }}</span></span>
-      {{- end -}}
-    {{- end -}}
-    {{- if $hasNotes }}<button type="button" class="v-btn v-btn-sm" data-disclosure aria-expanded="false" aria-controls="{{ $id }}-notes">{{ partial "ui/icon.html" "info" }}Data notes</button>{{ end -}}
-  </div>
-  {{- end }}
-  {{- if or $gapText $stale }}
-  <p class="v-callout">{{ partial "ui/icon.html" "alert-triangle" }}<span>
-    {{- if $gapText -}}
-      <span class="v-callout-lead">Data gap:</span> {{ $gapText }}{{ with $gapTail }} {{ . }}{{ end }}{{ with $stale }} {{ . }}{{ end }}
-    {{- else -}}
-      <span class="v-callout-lead">Stale data:</span> {{ $stale }}
-    {{- end -}}
-  </span></p>
   {{- end }}
   {{- if $hasNotes }}
-  {{- $notes := $c.notes | default slice }}{{ if not (reflect.IsSlice $notes) }}{{ $notes = slice $notes }}{{ end -}}
-  {{- with $gapNote }}{{ $notes = $notes | append . }}{{ end }}
-  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $notes "defs" $c.defs) }}
+  <div class="v-page-actions"><button type="button" class="v-btn" data-disclosure aria-expanded="{{ if $c.notes_open }}true{{ else }}false{{ end }}" aria-controls="{{ $id }}-notes">{{ partial "ui/icon.html" "info" }}Data notes</button></div>
+  {{- end }}
+  {{- with $c.desc | default $c.description }}
+  <p class="v-page-desc v-prose v-clamp">{{ . }}</p>
+  {{- end }}
+  {{- if or $items $noteArg }}
+  <ul class="v-page-meta">
+    {{- range $items }}
+    {{- $ic := "" }}{{ with .icon }}{{ $ic = partial "ui/icon.html" . }}{{ end }}
+    <li>
+      {{- if .href -}}
+      <a class="v-meta-item" href="{{ .href }}" target="_blank" rel="noopener">{{ $ic }}<span>{{ .text }}</span>{{ with .site }}<span class="sr-only"> (opens {{ . }})</span>{{ end }}</a>
+      {{- else if .value -}}
+      <span class="v-meta-item">{{ $ic }}<span>{{ with .label }}{{ . }} {{ end }}{{ partial "ui/value.html" .value }}</span></span>
+      {{- else -}}
+      <span class="v-meta-item">{{ $ic }}<span>{{ .text }}</span></span>
+      {{- end -}}
+    </li>
+    {{- end }}
+    {{- with $noteArg }}
+    <li>{{ partial "ui/note.html" . }}</li>
+    {{- end }}
+  </ul>
+  {{- end }}
+  {{- with $callout.items }}
+  {{ partial "ui/callout.html" $callout }}
+  {{- end }}
+  {{- if $hasNotes }}
+  {{ partial "ui/data-notes.html" (dict "id" (printf "%s-notes" $id) "sources" $srcs "gaps" $gaps "notes" $noteList "defs" $defs "facts" $facts "open" $c.notes_open) }}
   {{- end }}
 </header>

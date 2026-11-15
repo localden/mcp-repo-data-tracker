@@ -1,0 +1,53 @@
+{{- /* Overdue counts of one repository, per SLA rule (design system v4 4.11, 5.1 module 2). Returns a dict, never emits.
+  Call: $o := partial "pages/overview/overdue.html" $repoEntry        (a repos.json entry, "owner/repo" or the repository name)
+  Issue rules come from issues.json summary (SDK repositories with issue classification); PR rules from actionability.json summary.sla
+  (repositories with PR classification). Keys are those of data/sla-rules.html.
+  Returns:
+    r        the data/repo.html result
+    iss      true when issue classification runs for the repository.   cls: true when PR classification does.
+    rules    {rule key: overdue count (float)} for every rule that has a count
+    reasons  {rule key: fmt/na.html reason} for a rule that applies but has no count ("no-priority-labels")
+    total    the sum over all rules with a count; nil when the repository is not classified at all
+    author   PRs whose author is waiting for a maintainer (the classifier's first tier); nil without PR classification */ -}}
+{{- $r := partial "data/repo.html" . -}}
+{{- $nums := slice "float64" "int" "int64" -}}
+{{- $m := dict }}{{ with $r.data.metrics }}{{ if reflect.IsMap . }}{{ $m = . }}{{ end }}{{ end -}}
+{{- $sum := dict }}{{ with $r.data.issues }}{{ if reflect.IsMap . }}{{ with .summary }}{{ if reflect.IsMap . }}{{ $sum = . }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- $isla := dict }}{{ with $sum.sla }}{{ if reflect.IsMap . }}{{ $isla = . }}{{ end }}{{ end -}}
+{{- $iss := and $r.sdk (gt (len $isla) 0) -}}
+{{- /* a repository without priority labels has no P0 or P1 count to miss */ -}}
+{{- $hasP := false -}}
+{{- with $m.issues }}{{ if reflect.IsMap . }}{{ with .by_label }}{{ if reflect.IsMap . }}{{ range $k, $_ := . }}{{ if in (slice "P0" "P1" "P2" "P3") $k }}{{ $hasP = true }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- $act := dict }}{{ $cls := false -}}
+{{- with $r.data.actionability }}{{ if reflect.IsMap . }}{{ with .summary }}{{ if reflect.IsMap . }}{{ $act = . }}{{ $cls = true }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- $asla := dict }}{{ with $act.sla }}{{ if reflect.IsMap . }}{{ $asla = . }}{{ end }}{{ end -}}
+{{- $defs := slice
+  (dict "key" "triage" "src" $isla "f" "triage_2bd_breach" "on" $iss "prio" false)
+  (dict "key" "p0" "src" $isla "f" "p0_7d_breach" "on" $iss "prio" true)
+  (dict "key" "question" "src" $sum "f" "questions_stale_2d" "on" $iss "prio" false)
+  (dict "key" "follow-up" "src" $isla "f" "reply_2bd_breach" "on" $iss "prio" false)
+  (dict "key" "p1" "src" $isla "f" "p1_90d_breach" "on" $iss "prio" true)
+  (dict "key" "repro" "src" $sum "f" "needs_repro_14d" "on" $iss "prio" false)
+  (dict "key" "first-review" "src" $asla "f" "first_review_7d_breach" "on" $cls "prio" false)
+  (dict "key" "re-review" "src" $asla "f" "re_review_24h_breach" "on" $cls "prio" false)
+  (dict "key" "maintainer-pr" "src" $asla "f" "maint_24h_breach" "on" $cls "prio" false) -}}
+{{- $rules := dict }}{{ $reasons := dict }}{{ $total := 0.0 -}}
+{{- range $defs -}}
+  {{- if .on -}}
+    {{- if and .prio (not $hasP) -}}
+      {{- $reasons = merge $reasons (dict .key "no-priority-labels") -}}
+    {{- else -}}
+      {{- $v := index .src .f -}}
+      {{- if in $nums (printf "%T" $v) }}{{ $rules = merge $rules (dict .key (float $v)) }}{{ $total = add $total (float $v) }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- /* the classifier's first tier, matched by name or index (by_tier[0] is not always that tier) */ -}}
+{{- $author := 0.0 }}{{ $found := false -}}
+{{- with $act.by_tier }}{{ if reflect.IsSlice . }}{{ range . -}}
+  {{- if and (not $found) (reflect.IsMap .) -}}
+    {{- if or (eq .name "We're blocking someone") (eq (float (.idx | default -1)) 1.0) }}{{ $author = float (.count | default 0) }}{{ $found = true }}{{ end -}}
+  {{- end -}}
+{{- end }}{{ end }}{{ end -}}
+{{- return dict "r" $r "iss" $iss "cls" $cls "rules" $rules "reasons" $reasons
+  "total" (cond (or $iss $cls) $total nil) "author" (cond $cls $author nil) -}}

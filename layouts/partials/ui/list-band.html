@@ -1,0 +1,18 @@
+{{- /* Result band of a list card below 64rem (design system v4 4.13): 32px on surface-2, directly above the rows. Left: the live result
+  count (the grammar of the filter bar). Right: the sort button, which shows the current sort column and opens a menu of radio rows
+  with the choices in words from the column headers ("Longest wait first"). ui.js fills the menu from th[data-sort] and keeps the
+  count and the label current. Hidden from 64rem and without JavaScript.
+  Dict {id, noun, total}: the list card's id, a fmt/noun.html key and the first-paint count, as passed to ui/filterbar.html. */ -}}
+{{- $c := . -}}
+{{- $id := $c.id | default "list" -}}
+{{- $nk := replace (lower (string ($c.noun | default "issue"))) "-" " " -}}
+{{- $w := partial "fmt/noun.html" (dict "key" $nk) -}}
+<div class="v-list-band">
+  <p class="v-filter-count" data-filter-count data-noun="{{ $w.other }}" data-noun-one="{{ $w.one }}">
+    {{- if ne $c.total nil }}<span class="v-filter-n">{{ (partial "fmt/count.html" (dict "v" $c.total)).text }}</span> {{ if eq (float $c.total) 1.0 }}{{ $w.one }}{{ else }}{{ $w.other }}{{ end }}{{ end -}}
+  </p>
+  <div class="v-menu-wrap" data-menu data-sort-menu>
+    <button type="button" class="v-btn v-btn-xs is-ghost" id="{{ $id }}-sort-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="{{ $id }}-sort-menu"><span class="sr-only">Sort by </span><span data-sort-label></span>{{ partial "ui/icon.html" (dict "name" "chevron-up-down" "size" 12) }}</button>
+    <ul class="v-menu is-end" id="{{ $id }}-sort-menu" role="menu" aria-label="Sort" hidden></ul>
+  </div>
+</div>

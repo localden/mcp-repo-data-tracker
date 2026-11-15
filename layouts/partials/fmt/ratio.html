@@ -1,0 +1,13 @@
+{{- /* Ratio (design system v4 3.2). Dict {part, whole, noun}. Returns {text, long, part, whole, state, kind}.
+  "{part} of {whole}": "155 of 259", "0 of 0", "5 of 7 days". part and whole are the two halves for .v-ratio-part and
+  .v-ratio-whole (whole starts with "of"). noun: a fmt/noun.html key, pluralised by the whole. */ -}}
+{{- $c := . -}}
+{{- $out := dict "text" "" "long" "No data" "part" "" "whole" "" "state" "na" "kind" "ratio" -}}
+{{- if and (ne $c.part nil) (ne $c.whole nil) -}}
+  {{- $p := lang.FormatNumber 0 (math.Round (float $c.part)) -}}
+  {{- $w := printf "of %s" (lang.FormatNumber 0 (math.Round (float $c.whole))) -}}
+  {{- with $c.noun }}{{ $w = printf "%s %s" $w (partial "fmt/noun.html" (dict "key" . "n" $c.whole)).text }}{{ end -}}
+  {{- $text := printf "%s %s" $p $w -}}
+  {{- $out = dict "text" $text "long" $text "part" $p "whole" $w "state" "value" "kind" "ratio" -}}
+{{- end -}}
+{{- return $out -}}

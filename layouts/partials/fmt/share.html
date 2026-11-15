@@ -1,0 +1,17 @@
+{{- /* Share (design system v4 3.2). A percent 0 to 100, or a dict {v} or {part, whole}. Returns {text, long, state, kind, pct}.
+  Integer percent with the "<1%" and ">99%" guards: "95%", "43%", "<1%". pct is the unrounded percent as a float (for a bar's --v).
+  A whole of 0, or no input, is the missing state. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "v" . }}{{ end -}}
+{{- $has := false }}{{ $p := 0.0 -}}
+{{- if ne $c.v nil }}{{ $p = float $c.v }}{{ $has = true -}}
+{{- else if and (ne $c.part nil) (ne $c.whole nil) -}}
+  {{- if gt (float $c.whole) 0.0 }}{{ $p = mul (div (float $c.part) (float $c.whole)) 100.0 }}{{ $has = true }}{{ end -}}
+{{- end -}}
+{{- $out := dict "text" "" "long" "No data" "state" "na" "kind" "share" "pct" 0.0 -}}
+{{- if $has -}}
+  {{- $p = math.Max 0.0 (math.Min 100.0 $p) -}}
+  {{- $text := printf "%s%%" (lang.FormatNumber 0 (math.Round $p)) -}}
+  {{- if and (gt $p 0.0) (lt $p 1.0) }}{{ $text = "<1%" }}{{ else if and (gt $p 99.0) (lt $p 100.0) }}{{ $text = ">99%" }}{{ end -}}
+  {{- $out = dict "text" $text "long" $text "state" (cond (eq $p 0.0) "zero" "value") "kind" "share" "pct" $p -}}
+{{- end -}}
+{{- return $out -}}

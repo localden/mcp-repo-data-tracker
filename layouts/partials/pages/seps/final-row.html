@@ -1,30 +1,13 @@
-{{- /* One row of "Final in the last 90 days" (brief 3.4-5, design system v3 §4.8): the title (the row's single link) with the SEP id and
-  the author as row meta, then Sponsor, Merged ("Oct 29") and Time to final ("33 days").
-  Context: dict "r" (pages/seps/entry.html) "merged" (mergedAt) "ttf" (whole days from opening to merge, -1 when unknown)
-  "year" (the year of seps.json lastUpdated; a merge in another year prints its full date). Below 640px Merged is the verdict, and
-  the sponsor and the time to final go to the phone-only meta line (.v-listmeta). */ -}}
-{{- $r := .r }}{{ $ttfDays := .ttf -}}
-{{- $m := time.AsTime .merged -}}
-{{- $mergedText := partial "ui/date.html" (dict "d" .merged "style" (cond (eq $m.Year .year) "short" "date")) -}}
-{{- $mergedFull := partial "ui/date.html" .merged -}}
-{{- $ttf := "" -}}
-{{- if ge $ttfDays 1 }}{{ $ttf = partial "ui/plural.html" (dict "n" $ttfDays "one" "day") }}{{ else if eq $ttfDays 0 }}{{ $ttf = "less than a day" }}{{ end -}}
-{{- $spLine := "No sponsor assigned" -}}
-{{- if eq $r.sponsorKind "handle" }}{{ $spLine = printf "Sponsor %s" $r.sponsor }}{{ else if eq $r.sponsorKind "self" }}{{ $spLine = "Self-sponsored" }}{{ end }}
-<tr data-row-link>
-  <td class="v-title-cell">
-    <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener">{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    <span class="v-rowmeta">
-      {{- if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }}<span title="PR #{{ $r.num }}">{{ $r.sep }}</span>{{ else }}<span>{{ $r.sep }}</span>{{ end -}}
-      {{- with $r.author }}<span>{{ . }}</span>{{ end -}}
-    </span>
-    <span class="v-listmeta"><span>{{ $spLine }}</span>{{ with $ttf }}<span>{{ . }} to final</span>{{ end }}</span>
-  </td>
-  <td>
-    {{- if eq $r.sponsorKind "handle" }}{{ $r.sponsor -}}
-    {{- else if eq $r.sponsorKind "self" }}<span class="v-faint" title="Sponsored by the author">self</span>
-    {{- else }}<span class="v-faint">Not assigned</span>{{ end -}}
-  </td>
-  <td class="num v-verdict"><span title="Merged {{ $mergedFull }}">{{ $mergedText }}</span></td>
-  <td class="num">{{ with $ttf }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown") }}{{ end }}</td>
+{{- /* One row of "Reached final" (design system v4 4.16): SEP, Sponsor, Time to final, Merged. One tr per SEP.
+  Dict {r, merged, merged_unix, ttf, ord}: r is a pages/seps/entry.html row, merged the mergedAt time, ttf whole days from opening
+  the PR to merging it (-1 when unknown), ord the handle ranks from pages/seps/data.html.
+  Meta slots: id ("SEP-3392", or "#3440" when the title names none) and author. */ -}}
+{{- $r := .r -}}
+{{- $ttf := dict "kind" "dur" "unit" "d" "compact" true -}}
+{{- if ge .ttf 0 }}{{ $ttf = merge $ttf (dict "d" .ttf) }}{{ end }}
+<tr data-row data-row-link id="sep-{{ $r.num }}">
+  {{ partial "ui/row-item.html" (dict "title" $r.title "href" $r.url "id" $r.sep "author" $r.author) }}
+  {{ partial "pages/seps/sponsor.html" (dict "r" $r "ord" .ord) }}
+  <td class="num v-c-num"{{ if ge .ttf 0 }} data-v="{{ .ttf }}"{{ end }}>{{ partial "ui/value.html" $ttf }}</td>
+  <td class="num" data-v="{{ .merged_unix }}">{{ partial "ui/value.html" (dict "kind" "date" "d" .merged) }}</td>
 </tr>

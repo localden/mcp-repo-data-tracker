@@ -1,14 +1,24 @@
-{{- /* Tag (design system v3 §4.8): a small text-3 span, no border, no box ("enhancement", "Maintainer", "Touches auth"). Tags sit in
-  the row meta line after the meta spans (span.v-rowmeta), gap 12. P0/P1 use strong (500, text-2).
-  Call with a string, a dict {text, strong, href, title}, or a slice of either (rendered in a .v-tags group).
-  Empty text renders nothing. href makes the tag a quiet link (no underline at rest). GitHub labels go in verbatim. */ -}}
+{{- /* Tag (design system v4 4.8): a GitHub label or a derived attribute. A 20px outlined pill; never a link, no states.
+  Call with a string, or a dict {text, kind, title}. kind:
+    label (default)  a GitHub label, verbatim (at most 8rem wide, the full text in title)
+    role             Maintainer, Bot, Contributor
+    prio             P0 to P3; P0 and P1 take the strong edge
+    flag             a 12px circle-alert before the text ("Type conflict", the conflicting labels in title)
+    attr             a derived attribute ("Touches auth", "SEP draft", "Latest", "Duplicate of #1813", "SEP-1730", "Team target")
+    more             "+2", the folded tags named in title
+  A slice of either renders each tag inside one span.v-tags. Empty text renders nothing. */ -}}
 {{- $c := . -}}
 {{- if reflect.IsSlice $c -}}
   {{- if $c }}<span class="v-tags">{{ range $c }}{{ partial "ui/tag.html" . }}{{ end }}</span>{{ end -}}
 {{- else -}}
   {{- if not (reflect.IsMap $c) }}{{ $c = dict "text" $c }}{{ end -}}
+  {{- $kind := $c.kind | default "label" -}}
+  {{- if not (in (slice "label" "role" "prio" "flag" "attr" "more") $kind) }}{{ $kind = "label" }}{{ end -}}
   {{- with $c.text -}}
-    {{- if $c.href -}}<a class="v-tag{{ if $c.strong }} is-strong{{ end }}" href="{{ $c.href }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ . }}</a>
-    {{- else -}}<span class="v-tag{{ if $c.strong }} is-strong{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ . }}</span>{{- end -}}
+    {{- $t := string . -}}
+    {{- $strong := or (and (eq $kind "prio") (in (slice "P0" "P1") $t)) (eq $c.strong true) -}}
+    <span class="v-tag is-{{ $kind }}{{ if $strong }} is-strong{{ end }}" title="{{ $c.title | default $t }}">
+      {{- if eq $kind "flag" }}{{ partial "ui/icon.html" (dict "name" "circle-alert" "size" 12) }}{{ end -}}
+      {{ $t }}</span>
   {{- end -}}
 {{- end -}}

@@ -1,5 +1,9 @@
-{{- /* Group row (design system v3 §4.8): the first row of a tbody[data-group] block, 40px on surface-2, subhead label + a text-3 count
-  (danger when the group holds overdue rows). Dict {label, count, cols, id, overdue}. cols: the table's column count (colspan).
-  ui.js rewrites the count from the rows that match the current tab and filters, and hides the whole tbody when none do.
-  Only render groups when a tab has 2 or more of them. */ -}}
-<tr class="v-group"><th colspan="{{ .cols | default 1 }}" scope="rowgroup"{{ with .id }} id="{{ . }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-count{{ if .overdue }} is-danger{{ end }}" data-group-count>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</th></tr>
+{{- /* Group row (design system v4 4.14): the only band in any table, used by one list: open SEPs by stage. tr.v-group > th[colspan],
+  36px on surface-2, the label in strong, then a count bubble. Put it first in a tbody[data-group]; rows under a group keep every cell.
+  Dict {label, count, danger, cols, id}. cols: the table's column count. id: a link target ("sep-in-review"). danger: the group holds
+  overdue rows (the count takes the danger tone above zero).
+  ui.js rewrites the count from the rows that match the view and filters, and hides the tbody when none do. Render groups only when
+  there are two or more. */ -}}
+{{- $n := "" }}{{ $zero := true -}}
+{{- if ne .count nil }}{{ $n = (partial "fmt/count.html" (dict "v" .count)).text }}{{ $zero = eq (float .count) 0.0 }}{{ end -}}
+<tr class="v-group"><th colspan="{{ .cols | default 1 }}" scope="rowgroup"{{ with .id }} id="{{ . }}"{{ end }}>{{ .label }}{{ with $n }}<span class="v-count{{ if and (or $.danger $.overdue) (not $zero) }} is-danger{{ end }}" data-group-count>{{ . }}</span>{{ end }}</th></tr>

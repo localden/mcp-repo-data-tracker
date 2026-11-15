@@ -1,6 +1,24 @@
-{{- /* Data-quality note (design system v3 §4.18): inline, never boxed. small 500 --warning text with a 14px info icon
-  ("4 of 7 days", "Tracking since Nov 10", "Version data stopped on Nov 10"). In a table cell (or a .v-kv value or stat value) it sits on its
-  own line under the value. The only boxed warning on a page is the page-head callout.
-  Call with the text or a dict {text, title}. Empty text renders nothing. ui/flag.html is an alias that renders this note. */ -}}
+{{- /* Data-quality note (design system v4 4.8): a caveat about the data beside a value. Inline icon plus text, never boxed.
+  Dict, one of:
+    {part, whole, noun}  a coverage ratio through fmt/ratio.html ("5 of 7 days", "7 of 9 repositories"); tone warning
+    {since}              "Tracking since Nov 10" (date through fmt/date.html); tone info
+    {from}               "From Jan 15", a figure whose series starts late; tone info
+    {text, tone}         a text from the closed lists of 4.8 (a string is read as text); tone default warning
+  Optional: title, or days: {from, to}, which names the days covered in title through fmt/range.html.
+  tone warning: circle-alert, the value beside it is built from incomplete data. tone info: clock, the data is young or starts late.
+  One note per value: under the value in a table cell, in a tile's context row, after a readout value, after the page-head meta. */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
-{{- with $c.text }}<span class="v-dq"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ partial "ui/icon.html" (dict "name" "info" "size" 14) }}<span>{{ . }}</span></span>{{ end -}}
+{{- $text := $c.text | default "" }}{{ $tone := $c.tone | default "" -}}
+{{- if and (ne $c.part nil) (ne $c.whole nil) -}}
+  {{- $text = (partial "fmt/ratio.html" (dict "part" $c.part "whole" $c.whole "noun" $c.noun)).text }}{{ $tone = $tone | default "warning" -}}
+{{- else if $c.since -}}
+  {{- $text = printf "Tracking since %s" (partial "fmt/date.html" $c.since).text }}{{ $tone = $tone | default "info" -}}
+{{- else if $c.from -}}
+  {{- $text = printf "From %s" (partial "fmt/date.html" $c.from).text }}{{ $tone = $tone | default "info" -}}
+{{- end -}}
+{{- if not (in (slice "warning" "info") $tone) }}{{ $tone = "warning" }}{{ end -}}
+{{- $title := $c.title | default "" -}}
+{{- with $c.days }}{{ if reflect.IsMap . }}{{ $title = (partial "fmt/range.html" (dict "from" .from "to" .to)).text }}{{ end }}{{ end -}}
+{{- with $text -}}
+<span class="v-note is-{{ $tone }}"{{ with $title }} title="{{ . }}"{{ end }}>{{ partial "ui/icon.html" (dict "name" (cond (eq $tone "info") "clock" "circle-alert") "size" 14) }}<span>{{ . }}</span></span>
+{{- end -}}

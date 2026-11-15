@@ -1,76 +1,78 @@
-{{- /* Issue queue for a classified repo (brief 3.2b-2; design system v3 §4.8, §4.11, §4.13, §4.14): one table under list tabs
-  (segmented control, role=tablist, ?tab= and ?q= in the URL), the search field with toggle chips and the inline count, "Show all N".
+{{- /* Queue of a classified repository (design system v4 4.10 to 4.16, 5.3 module 2): the list card "iq".
   Ctx: dict {r (data/repo.html), q (pages/issues/rows.html result), id (list id, default "iq")}.
-    Tabs: Overdue, Waiting for a reply, Untriaged, Bugs, Enhancements, Questions, All; counts come from the rendered rows (ui.js
-    recounts them). Only the Overdue tab colours its count (danger, v3 §4.20). "Waiting for a reply" is the Overview's ?tab=waiting
-    target: the rows of metrics.json's no-reply list older than 7 days, so it lists exactly the Overview count.
-    Bugs and Enhancements show tier group rows (subhead + count) when the tab has 2 or more tiers; their rows are a second copy under
-    those group rows, tagged for that tab only, so the flat tabs stay sorted by overage and no count includes a row twice.
-    The default tab is Overdue while it has rows, else All. Every row of that default list is overdue, so the Overdue cells drop the
-    status icon and keep the danger text (more than half of the list is overdue); the column header names the state.
-    Columns (fixed): Issue auto (title + row meta: number, author, waiting phrase, tags), Next step 10rem (the longest label, "Review
-    proposed fix", on one line), Age 5rem, Overdue 8rem. The number, author and "Waiting on" facts live in the row meta, not in
-    columns of their own, so the table fits from 40rem without a scroll region.
-    The SLA Show buttons (pages/issues/show.html) filter this list; the rule note above the table names the rule, with a Clear button. */ -}}
+    Views (disjoint piles, by who has the next step): Needs a maintainer, Ready, Waiting on reporter, Close candidates, All. All five
+      always render; an empty one is disabled and keeps its place. The default is the first that is not empty.
+    Facets, the same six on every repository: Overdue, Waiting for a reply (checks); Status, Type, Priority, SLA rule (selects).
+      First-paint counts are the rows of the default view; ui.js keeps them live.
+    Columns: Issue, Status, Detail, Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
+    One tr per issue, no group rows. Rows outside the default view carry data-off; inside it, rows past the first step carry data-over. */ -}}
 {{- $r := .r }}{{ $q := .q }}{{ $id := .id | default "iq" -}}
-{{- $n := len $q.rows -}}
-{{- $sel := cond (gt (int $q.overdue) 0) "overdue" "open" -}}
-{{- $icon := and (ne $sel "overdue") (le (mul (int $q.overdue) 2) $n) -}}
-{{- $tabs := slice
-  (dict "key" "overdue" "label" "Overdue" "count" (index $q.tabs "overdue") "overdue" (gt (int $q.overdue) 0))
-  (dict "key" "waiting" "label" "Waiting for a reply" "count" (index $q.tabs "waiting"))
-  (dict "key" "untriaged" "label" "Untriaged" "count" (index $q.tabs "untriaged"))
-  (dict "key" "bugs" "label" "Bugs" "count" (index $q.tabs "bugs"))
-  (dict "key" "enhancements" "label" "Enhancements" "count" (index $q.tabs "enhancements"))
-  (dict "key" "questions" "label" "Questions" "count" (index $q.tabs "questions"))
-  (dict "key" "open" "label" "All" "count" $n) -}}
-{{- $chips := slice (dict "label" "P0 and P1" "tag" "p01") (dict "label" "Fix proposed" "tag" "fix") (dict "label" "Close candidates" "tag" "close") -}}
-{{- $inSel := int (index $q.tabs $sel | default 0) -}}
+{{- $n := int $q.all -}}
+{{- $def := $q.def -}}
 <section class="v-section" aria-labelledby="queue">
-  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue") }}
-  {{- if eq $n 0 }}
-  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" (printf "No open issues in %s." $r.name)) }}
-  {{- else }}
-  <div data-list id="{{ $id }}" data-limit="25" data-url>
-    <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" $id "label" "Issue queue" "panel" (printf "%s-panel" $id) "selected" $sel "tabs" $tabs) }}</div>
-    {{ partial "ui/filterbar.html" (dict "id" (printf "%s-search" $id) "label" "Search issues" "placeholder" "Search titles, authors, labels"
-        "chips" $chips "noun" "issues" "one" "issue" "total" $inSel) }}
-    <p class="v-rule-note" data-rule-note hidden>Filtered to <span data-rule-label></span> <button type="button" class="v-btn v-btn-sm" data-rule-clear>{{ partial "ui/icon.html" "filter-x" }}Clear</button></p>
-    <div class="v-card" role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $sel }}">
-      <table class="v-dt is-fixed is-list" id="{{ $id }}-table" aria-labelledby="queue">
-        <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-20"><col class="v-col-32"></colgroup>
-        <thead><tr>
-          <th scope="col">Issue</th>
-          <th scope="col">Next step</th>
-          {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true) }}
-          {{ partial "ui/th-sort.html" (dict "label" "Overdue" "num" true "active" "descending") }}
-        </tr></thead>
-        <tbody>
-          {{- $k := 0 }}
-          {{- range $q.rows }}
-          {{- $in := or (eq $sel "open") (in (split .ftags " ") $sel) -}}
-          {{- if $in }}{{ $k = add $k 1 }}{{ end }}
-          {{ partial "pages/issues/row.html" (dict "r" . "copy" "flat" "over" (or (not $in) (gt $k 25)) "icon" $icon) }}
-          {{- end }}
-        </tbody>
-        {{- range $g := $q.grouped }}
-        {{- $multi := ge (len $g.tiers) 2 }}
-        {{- range $tr := $g.tiers }}
-        <tbody data-group hidden>
-          {{- if $multi }}
-          {{ partial "ui/group-row.html" (dict "label" $tr.label "count" (len $tr.rows) "cols" 4) }}
-          {{- end }}
-          {{- range $tr.rows }}
-          {{ partial "pages/issues/row.html" (dict "r" . "copy" "group" "icon" $icon "tier" (cond $multi $tr.label "")) }}
-          {{- end }}
-        </tbody>
-        {{- end }}
-        {{- end }}
-      </table>
-      <p class="v-card-note">Age is calendar days since the issue opened.</p>
-      {{ partial "ui/more.html" (dict "list" $id "controls" (printf "%s-table" $id) "n" $inSel) }}
-    </div>
-    <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>
+  {{ partial "ui/section-head.html" (dict "id" "queue" "title" "Queue" "desc" "Open issues grouped by who has the next step.") }}
+  <div class="v-grid">
+    {{- if eq $n 0 }}
+    {{ partial "ui/empty.html" (dict "title" "No open issues" "body" "This repository has no open issues to classify.") }}
+    {{- else }}
+    {{- $tabs := slice -}}
+    {{- range slice (slice "needs" "Needs a maintainer") (slice "ready" "Ready") (slice "reporter" "Waiting on reporter") (slice "close" "Close candidates") -}}
+      {{- $key := index . 0 -}}
+      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))
+          "danger" (and (eq $key "needs") (gt (int $q.needsOver) 0))) -}}
+    {{- end -}}
+    {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $n) -}}
+    {{- /* first-paint facet counts: the tokens of the rows in the default view */ -}}
+    {{- $sc := newScratch }}{{ $nDef := 0 -}}
+    {{- range $q.rows }}{{ if or (eq $def "all") (eq .view $def) }}{{ $nDef = add $nDef 1 }}{{ range .tok }}{{ $sc.Add . 1 }}{{ end }}{{ end }}{{ end -}}
+    {{- $status := slice -}}
+    {{- range partial "data/issue-status.html" "*" }}{{ $status = $status | append (dict "value" .key "label" .label "count" (int ($sc.Get (printf "status:%s" .key) | default 0))) }}{{ end -}}
+    {{- $type := slice -}}
+    {{- range slice (slice "bug" "Bug") (slice "enhancement" "Enhancement") (slice "question" "Question") -}}
+      {{- $type = $type | append (dict "value" (index . 0) "label" (index . 1) "count" (int ($sc.Get (printf "type:%s" (index . 0)) | default 0))) -}}
+    {{- end -}}
+    {{- $priority := slice -}}
+    {{- range slice (slice "p0" "P0") (slice "p1" "P1") (slice "p2" "P2") (slice "p3" "P3") (slice "none" "No priority") -}}
+      {{- $priority = $priority | append (dict "value" (index . 0) "label" (index . 1) "count" (int ($sc.Get (printf "priority:%s" (index . 0)) | default 0))) -}}
+    {{- end -}}
+    {{- $rule := slice -}}
+    {{- range partial "data/sla-rules.html" "issue" }}{{ if .filter }}{{ $rule = $rule | append (dict "value" .key "label" .name "count" (int ($sc.Get (printf "rule:%s" .key) | default 0))) }}{{ end }}{{ end -}}
+    {{- $facets := slice
+      (dict "key" "overdue" "label" "Overdue" "title" "Past a deadline in Response SLAs." "count" (int ($sc.Get "overdue" | default 0)))
+      (dict "key" "waiting" "label" "Waiting for a reply" "title" "No maintainer reply for 7 days or more." "count" (int ($sc.Get "waiting" | default 0)))
+      (dict "key" "status" "label" "Status" "title" "The next step, from issue classification." "kind" "select" "options" $status)
+      (dict "key" "type" "label" "Type" "title" "The type label on the issue." "kind" "select" "options" $type)
+      (dict "key" "priority" "label" "Priority" "title" "The priority label on the issue." "kind" "select" "options" $priority)
+      (dict "key" "rule" "label" "SLA rule" "title" "The Response SLA the issue is past." "kind" "select" "options" $rule) }}
+    <article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="issues" data-noun-one="issue">
+      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
+      <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
+        {{ partial "ui/filterbar.html" (dict "id" $id "noun" "issue" "total" $nDef "facets" $facets) }}
+        {{ partial "ui/list-band.html" (dict "id" $id "noun" "issue" "total" $nDef) }}
+        <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="queue">
+          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <thead><tr>
+            {{ partial "ui/th.html" (dict "label" "Issue") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
+            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "title" "Calendar days past the deadline of the rule named beside it."
+                "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
+            {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the issue opened."
+                "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
+          </tr></thead>
+          <tbody>
+            {{- $k := 0 }}
+            {{- range $q.rows }}
+            {{- $in := or (eq $def "all") (eq .view $def) }}
+            {{ partial "pages/issues/row.html" (dict "r" . "off" (not $in) "k" $k) }}
+            {{- if $in }}{{ $k = add $k 1 }}{{ end }}
+            {{- end }}
+          </tbody>
+        </table>
+        {{ partial "ui/list-empty.html" (dict "noun" "issue") }}
+        {{ partial "ui/list-foot.html" (dict "list" $id "n" $nDef "limit" 25) }}
+      </div>
+    </article>
+    {{- end }}
   </div>
-  {{- end }}
 </section>

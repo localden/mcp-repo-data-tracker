@@ -1,0 +1,176 @@
+{{- /* Styleguide sections 12 to 16: buttons and links, menu, tabs, filter bar, list card (design system v4 6). */ -}}
+{{- $asof := .asof -}}
+<section class="v-section" aria-labelledby="buttons">
+  {{ partial "ui/section-head.html" (dict "id" "buttons" "title" "Buttons and links" "desc" "One button family, no filled primary button: this site is read-only. A link-action navigates to a list or page.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Sizes and kinds") }}<div class="v-card-body"><div class="v-sg-stack">
+      <div class="v-sg-row"><button type="button" class="v-btn">{{ partial "ui/icon.html" "info" }}Data notes</button><button type="button" class="v-btn v-btn-sm">Show 50 more</button><button type="button" class="v-btn v-btn-xs is-ghost">2 duplicates{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 12 "class" "is-chev") }}</button></div>
+      <div class="v-sg-row"><button type="button" class="v-btn is-ghost">Clear filters</button><button type="button" class="v-btn v-btn-sm is-ghost">Collapse</button><button type="button" class="v-btn is-icon" aria-label="Filters">{{ partial "ui/icon.html" "sliders" }}</button><button type="button" class="v-btn">Needs a maintainer{{ partial "ui/icon.html" (dict "name" "chevron-down" "class" "is-chev") }}</button></div>
+    </div><p class="v-sg-cap">.v-btn default, sm, xs; ghost; icon; with a leading icon; with a chevron</p></div></article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "States") }}<div class="v-card-body"><div class="v-sg-stack">
+      <div class="v-sg-row"><button type="button" class="v-btn">Rest</button><span data-specimen-state="hover"><button type="button" class="v-btn">Hover</button></span><span data-specimen-state="focus"><button type="button" class="v-btn">Focus</button></span><button type="button" class="v-btn" aria-expanded="true">Open{{ partial "ui/icon.html" (dict "name" "chevron-down" "class" "is-chev") }}</button><button type="button" class="v-btn" disabled>Disabled</button></div>
+      <div class="v-sg-row"><button type="button" class="v-btn is-ghost">Rest</button><span data-specimen-state="hover"><button type="button" class="v-btn is-ghost">Hover</button></span><span data-specimen-state="focus"><button type="button" class="v-btn is-ghost">Focus</button></span><button type="button" class="v-btn is-ghost" disabled>Disabled</button></div>
+    </div><p class="v-sg-cap">rest, hover, focus, open, disabled. Open is never selected: a control that opens something takes only the open state.</p></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Link-action") }}<div class="v-card-body"><div class="v-sg-row">
+      {{ partial "ui/link-action.html" (dict "text" "All downloads" "href" ("downloads/" | relURL)) }}
+      {{ partial "ui/link-action.html" (dict "n" 209 "noun" "issue" "href" "#buttons") }}
+      <span data-specimen-state="hover">{{ partial "ui/link-action.html" (dict "text" "All SEPs" "href" ("seps/" | relURL)) }}</span>
+      <span data-specimen-state="focus">{{ partial "ui/link-action.html" (dict "n" 263 "noun" "pr" "href" "#buttons") }}</span>
+    </div><p class="v-sg-cap">ui/link-action.html: without and with a count, hover, focus</p></div></article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="menu">
+  {{ partial "ui/section-head.html" (dict "id" "menu" "title" "Menu" "desc" "One popover for navigation, select filters and, on narrow screens, the view and sort choices.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Multi-select options") }}<div class="v-card-body"><div class="v-sg-pop is-short">
+      {{ partial "ui/menu.html" (dict "id" "sg-menu-multi" "bare" true "multi" true "open" true "label" "Status" "cols" (slice "Status" "PRs") "items" (slice
+        (dict "text" "Needs review" "value" "needs-review" "count" 212 "checked" true) (dict "text" "Needs re-review" "value" "needs-re-review" "count" 31 "checked" true)
+        (dict "text" "Needs decision" "value" "needs-decision" "count" 9) (dict "text" "Backport" "value" "backport" "count" 0 "disabled" true))) }}
+    </div><p class="v-sg-cap">ui/menu.html multi: two checked, a disabled option at zero, the labelled count column</p></div></article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Radio options") }}<div class="v-card-body"><div class="v-sg-pop is-short">
+      {{ partial "ui/menu.html" (dict "id" "sg-menu-radio" "bare" true "open" true "label" "Sort" "items" (slice
+        (dict "text" "Longest wait first" "value" "waiting:desc" "checked" true) (dict "text" "Shortest wait first" "value" "waiting:asc")
+        (dict "text" "Repository, A to Z" "value" "repo:asc" "sep" true) (dict "text" "Repository, Z to A" "value" "repo:desc"))) }}
+    </div><p class="v-sg-cap">ui/menu.html radio: the current row has the check and weight 500; a separator</p></div></article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="tabs">
+  {{ partial "ui/section-head.html" (dict "id" "tabs" "title" "Tabs" "desc" "View tabs switch between a list's disjoint piles. The segmented control switches between two ways of showing the same data.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">
+      {{ partial "ui/tabs.html" (dict "id" "sg-views-five" "label" "Views, five" "panel" "sg-views-five-panel" "tabs" (slice
+        (dict "key" "needs" "label" "Needs a maintainer" "count" 288 "danger" true) (dict "key" "housekeeping" "label" "Housekeeping" "count" 31)
+        (dict "key" "close" "label" "Close candidates" "count" 0) (dict "key" "author" "label" "Waiting on author" "count" 56) (dict "key" "all" "label" "All" "count" 375))) }}
+      <div class="v-card-body" id="sg-views-five-panel" role="tabpanel"><p class="v-sg-cap">ui/tabs.html variant views: five views, a danger count, one view disabled at zero. Below 64rem the band is the view button.</p></div>
+    </article>
+    <article class="v-card v-span-6">
+      {{ partial "ui/tabs.html" (dict "id" "sg-views-two" "label" "Views, two" "panel" "sg-views-two-panel" "selected" "drafts" "tabs" (slice
+        (dict "key" "review" "label" "Waiting for first review" "count" 7) (dict "key" "drafts" "label" "Drafts" "count" 3))) }}
+      <div class="v-card-body" id="sg-views-two-panel" role="tabpanel"><p class="v-sg-cap">two views, the second selected</p></div>
+    </article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Segmented control"
+        "action" (partial "ui/tabs.html" (dict "id" "sg-seg" "variant" "seg" "selected" "chart" "tabs" (slice (dict "key" "chart" "label" "Chart" "panel" "sg-seg-chart") (dict "key" "table" "label" "Table" "panel" "sg-seg-table"))))) }}
+      <div class="v-card-body"><p class="v-sg-cap" id="sg-seg-chart" role="tabpanel">ui/tabs.html variant seg: Chart selected</p><p class="v-sg-cap" id="sg-seg-table" role="tabpanel" hidden>Table selected</p></div>
+    </article>
+  </div>
+</section>
+
+{{- $statusOpts := slice }}{{ range partial "data/pr-status.html" "*" }}{{ $statusOpts = $statusOpts | append (dict "value" .key "label" .label "count" 3) }}{{ end -}}
+{{- $ruleOpts := slice }}{{ range partial "data/sla-rules.html" "pr" }}{{ $ruleOpts = $ruleOpts | append (dict "value" .key "label" .name "count" 5) }}{{ end -}}
+{{- $authorOpts := slice (dict "value" "maintainer" "label" "Maintainer" "count" 40) (dict "value" "bot" "label" "Bot" "count" 12) (dict "value" "contributor" "label" "Contributor" "count" 236) -}}
+<section class="v-section" aria-labelledby="filter-bar">
+  {{ partial "ui/section-head.html" (dict "id" "filter-bar" "title" "Filter bar" "desc" "One anatomy and one position for every list: search and the result count, then the facets. These specimens are static; the list card below is live.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-search" "noun" "person" "total" 123) }}
+      <div class="v-card-body"><p class="v-sg-cap">ui/filterbar.html with search only (People): the hint at rest, the result count</p></div>
+    </article>
+    <article class="v-card v-span-12">
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-rest" "noun" "pr" "total" 288 "facets" (slice
+        (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249)
+        (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 41)
+        (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 0)
+        (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts)
+        (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts)
+        (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts))) }}
+      <div class="v-card-body"><p class="v-sg-cap">six facets at rest: three checkbox chips (one disabled at zero), three select chips</p></div>
+    </article>
+    <article class="v-card v-span-12">
+      {{ partial "ui/filterbar.html" (dict "id" "sg-fb-active" "noun" "pr" "total" 288 "facets" (slice
+        (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 249 "pressed" true)
+        (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 41 "pressed" true)
+        (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 0 "pressed" true)
+        (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts "value" "2 selected")
+        (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts "value" "Maintainer")
+        (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts "value" "Maintainer PR"))) }}
+      <div class="v-card-body"><p class="v-sg-cap">every facet active at once (the wrap case): pressed chips, a pressed chip at zero, select chips with one value and with several</p></div>
+    </article>
+  </div>
+</section>
+
+{{- /* the live list card: a PR queue in fixture data */ -}}
+{{- $rows := slice
+  (dict "n" 1521 "title" "fix(client): retry the SSE stream after receiving a session id" "state" "needs-first-review" "author" "LucaButBoring" "role" "Maintainer" "add" 417 "del" 0 "auth" true "rules" (slice (dict "key" "first-review" "days" 319) (dict "key" "maintainer-pr" "days" 12)) "age" 326 "view" "needs")
+  (dict "n" 1760 "title" "feat(server): add resumable streams, with a title long enough to run well past the width of any item column so that it has to end in an ellipsis" "state" "needs-re-review" "author" "travisbreaks" "role" "Contributor" "add" 1204 "del" 88 "waiting" true "rules" (slice (dict "key" "re-review" "days" 44)) "age" 120 "view" "needs" "detail" "Reviewed by" "who" "felixweinberger")
+  (dict "n" 1990 "title" "Decide whether the client should cache discovery documents" "state" "needs-decision" "author" "mcp-user" "role" "Contributor" "add" 12 "del" 3 "rules" (slice (dict "key" "first-review")) "age" 30 "view" "needs")
+  (dict "n" 1813 "title" "Add OAuth token refresh" "state" "duplicate-cluster" "author" "app/dependabot" "role" "Bot" "add" 96 "del" 14 "auth" true "age" 64 "view" "needs" "kids" 2)
+  (dict "n" 2051 "title" "docs: correct the transport example" "state" "needs-merge" "author" "ihrpr" "role" "Maintainer" "add" 8 "del" 8 "age" 3 "view" "needs")
+  (dict "n" 1650 "title" "Rework the session store" "state" "approved-rotted" "author" "someone-else" "role" "Contributor" "add" 640 "del" 512 "age" 240 "view" "author" "detail" "Changes requested" "days" 228)
+  (dict "n" 1402 "title" "Support custom fetch implementations" "state" "awaiting-author" "author" "another-user" "role" "Contributor" "add" 54 "del" 9 "age" 198 "view" "author")
+  (dict "n" 1333 "title" "Fix flaky stdio test" "state" "ci-red-silent" "author" "third-user" "role" "Contributor" "add" 21 "del" 4 "age" 330 "view" "author" "detail" "Failing" "days" 325)
+  (dict "n" 1200 "title" "WIP: streaming tool results" "state" "stale-draft" "author" "draft-author" "role" "Contributor" "add" 300 "del" 2 "age" 460 "view" "housekeeping" "detail" "No activity" "days" 458)
+  (dict "n" 1100 "title" "chore: release packages" "state" "bot-release" "author" "app/github-actions" "role" "Bot" "add" 30 "del" 30 "age" 2 "view" "housekeeping")
+  (dict "n" 999 "title" "Unlabelled experiment" "state" "unknown" "author" "fourth-user" "role" "Contributor" "add" 5 "del" 1 "age" 500 "view" "close")
+  (dict "n" 900 "title" "Old branch that never ran checks" "state" "pre-ci-ghost" "author" "fifth-user" "role" "Contributor" "add" 2 "del" 2 "age" 610 "view" "close") -}}
+{{- $views := slice (dict "key" "needs" "label" "Needs a maintainer") (dict "key" "housekeeping" "label" "Housekeeping") (dict "key" "close" "label" "Close candidates") (dict "key" "author" "label" "Waiting on author") -}}
+{{- $tabs := slice }}{{ $nNeeds := 0 -}}
+{{- range $v := $views -}}
+  {{- $k := 0 }}{{ $d := false }}{{ range $rows }}{{ if eq .view $v.key }}{{ $k = add $k 1 }}{{ if .rules }}{{ $d = true }}{{ end }}{{ end }}{{ end -}}
+  {{- if eq $v.key "needs" }}{{ $nNeeds = $k }}{{ end -}}
+  {{- $tabs = $tabs | append (dict "key" $v.key "label" $v.label "count" $k "danger" $d) -}}
+{{- end -}}
+{{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" (len $rows)) -}}
+<section class="v-section" aria-labelledby="list-card">
+  {{ partial "ui/section-head.html" (dict "id" "list-card" "title" "List card" "desc" "Every list of issues, PRs, SEPs or people is one card with fixed bands: views, filter bar, table, list foot.") }}
+  <div class="v-grid">
+    <article class="v-card is-list v-span-12" data-list id="sg-list" data-limit="5" data-limit-phone="3" data-step="50" data-noun="PRs" data-noun-one="PR">
+      {{ partial "ui/tabs.html" (dict "id" "sg-list" "label" "Views" "panel" "sg-list-panel" "tabs" $tabs) }}
+      <div role="tabpanel" id="sg-list-panel">
+        {{ partial "ui/filterbar.html" (dict "id" "sg-list" "noun" "pr" "total" $nNeeds "facets" (slice
+          (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline." "count" 3)
+          (dict "key" "author-waiting" "label" "Author waiting" "title" "The author is waiting for a maintainer." "count" 1)
+          (dict "key" "auth" "label" "Touches auth" "title" "Changes authentication or authorisation code." "count" 2)
+          (dict "key" "status" "label" "Status" "title" "The PR's status." "kind" "select" "options" $statusOpts)
+          (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $authorOpts)
+          (dict "key" "rule" "label" "SLA rule" "title" "The review deadline the PR is past." "kind" "select" "options" $ruleOpts))) }}
+        {{ partial "ui/list-band.html" (dict "id" "sg-list" "noun" "pr" "total" $nNeeds) }}
+        <table class="v-dt is-work is-list" id="sg-list-table" aria-label="PR queue, fixture">
+          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <thead><tr>
+            {{ partial "ui/th.html" (dict "label" "PR") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
+            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
+            {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the PR opened." "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
+          </tr></thead>
+          <tbody>
+            {{- range $i, $r := $rows }}
+            {{- $st := partial "data/pr-status.html" $r.state }}
+            {{- $role := lower $r.role }}
+            {{- $facets := slice (printf "status:%s" $st.key) (printf "author:%s" $role) }}
+            {{- if $r.rules }}{{ $facets = $facets | append "overdue" }}{{ range $r.rules }}{{ $facets = $facets | append (printf "rule:%s" .key) }}{{ end }}{{ end }}
+            {{- if $r.auth }}{{ $facets = $facets | append "auth" }}{{ end }}{{ if $r.waiting }}{{ $facets = $facets | append "author-waiting" }}{{ end }}
+            {{- $rid := printf "sg-pr-%d" $r.n }}
+            {{- $attrs := slice }}{{ if $r.auth }}{{ $attrs = $attrs | append "Touches auth" }}{{ end }}
+            <tr data-row data-row-link id="{{ $rid }}" data-views="{{ $r.view }}" data-facets="{{ delimit $facets " " }}"{{ if ne $r.view "needs" }} data-off{{ end }}>
+              {{ partial "ui/row-item.html" (dict "title" $r.title "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" $r.n) "id" (printf "#%d" $r.n)
+                  "author" $r.author "role" $r.role "diff" (dict "add" $r.add "del" $r.del) "attrs" $attrs "kids" (cond (ne $r.kids nil) (dict "n" $r.kids "id" $rid) nil)) }}
+              <td class="v-c-status" data-v="{{ $st.order }}">{{ partial "ui/badge.html" $st }}</td>
+              <td class="v-c-detail">{{ with $r.detail }}<span class="v-detail">{{ . }}{{ with $r.who }} {{ . }}{{ end }}{{ if ne $r.days nil }} {{ partial "ui/value.html" (dict "kind" "dur" "d" $r.days "unit" "d" "compact" true) }}{{ end }}</span>{{ end }}</td>
+              {{ partial "ui/sla.html" (dict "rules" ($r.rules | default slice)) }}
+              <td class="num" data-v="{{ $r.age }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $r.age "unit" "d" "compact" true "opened" ((time.AsTime $asof).AddDate 0 0 (int (sub 0 $r.age)))) }}</td>
+            </tr>
+            {{- if $r.kids }}
+            {{- range $k := seq $r.kids }}
+            <tr data-row data-child-of="{{ $rid }}" data-views="{{ $r.view }}">
+              {{ partial "ui/row-item.html" (dict "title" (printf "%s, attempt %d" $r.title $k) "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" (add $r.n (mul $k 7))) "id" (printf "#%d" (add $r.n (mul $k 7)))
+                  "author" "copycat" "role" "Contributor" "attrs" (slice (printf "Duplicate of #%d" $r.n))) }}
+              <td class="v-c-status">{{ partial "ui/badge.html" (partial "data/pr-status.html" "duplicate-cluster-member") }}</td>
+              <td class="v-c-detail"></td>
+              {{ partial "ui/sla.html" (dict "rules" slice) }}
+              <td class="num" data-v="{{ sub $r.age $k }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" (sub $r.age $k) "unit" "d" "compact" true) }}</td>
+            </tr>
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          </tbody>
+        </table>
+        {{ partial "ui/list-empty.html" (dict "noun" "pr") }}
+        {{ partial "ui/list-foot.html" (dict "list" "sg-list" "n" $nNeeds "limit" 5) }}
+      </div>
+    </article>
+    {{ partial "ui/empty.html" (dict "title" "No SEPs reached final" "body" "Nothing reached the final stage in this window." "class" "v-span-12") }}
+  </div>
+</section>

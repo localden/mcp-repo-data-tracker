@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ site.LanguageCode }}">
+<html lang="{{ site.LanguageCode }}" data-asof="{{ partialCached "ui/latest-date.html" "latest" "latest" }}">
 <head>
   {{- partial "head.html" . -}}
 </head>
-<body class="v-body">
+<body class="v-page-body">
   <a class="v-skip" href="#main">Skip to content</a>
   {{- partial "header.html" . }}
   <main id="main" class="v-shell v-main" tabindex="-1">
@@ -12,8 +12,12 @@
   {{- partial "footer.html" . }}
   <script src="{{ "js/theme-toggle.js" | relURL }}"></script>
   <script src="{{ "js/menu.js" | relURL }}"></script>
+  <script src="{{ "js/format.js" | relURL }}"></script>
   <script src="{{ "js/ui.js" | relURL }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
-  <script src="{{ "js/charts.js" | relURL }}"></script>
+  {{- /* Chart.js and charts.js load only on pages that rendered ui/chart.html or ui/trellis.html (they set the "charts" flag). */ -}}
+  {{- if .Store.Get "charts" }}
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+  <script defer src="{{ "js/charts.js" | relURL }}"></script>
+  {{- end }}
 </body>
 </html>

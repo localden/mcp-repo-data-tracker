@@ -1,0 +1,19 @@
+{{- /* Missing value (design system v4 3.3). A reason key, or a dict {reason, since}. Returns {text, long, state, kind}.
+  text is always empty: the empty mark is drawn by CSS (.v-val.is-na) and no glyph is ever typed. long is the reason, for title and
+  sr-only text, from the closed list: not-sdk, not-classified, tracking-since (with since), tracked-90, no-complete-days, no-baseline,
+  no-history, no-priority-labels, not-computed, no-data (default). An unknown key fails the build; a reason given in the full words
+  of the list is accepted. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "reason" . }}{{ end -}}
+{{- $reg := dict
+  "not-sdk" "Not an SDK repository" "not-classified" "Not classified" "tracking-since" "Tracking since"
+  "tracked-90" "Tracked for 90 days only" "no-complete-days" "No complete days" "no-baseline" "No baseline"
+  "no-history" "No history for this measure" "no-priority-labels" "No priority labels" "not-computed" "Not computed" "no-data" "No data" -}}
+{{- $key := string ($c.reason | default "no-data") -}}
+{{- $long := index $reg $key | default "" -}}
+{{- if not $long -}}
+  {{- if hasPrefix $key "Tracking since " }}{{ $long = $key }}{{ end -}}
+  {{- range $reg }}{{ if eq . $key }}{{ $long = $key }}{{ end }}{{ end -}}
+{{- end -}}
+{{- if not $long }}{{ errorf "fmt/na: unknown reason %q (design system v4 3.3)" $key }}{{ $long = "No data" }}{{ end -}}
+{{- if and (eq $key "tracking-since") $c.since }}{{ $long = printf "Tracking since %s" (partial "fmt/date.html" $c.since).text }}{{ end -}}
+{{- return dict "text" "" "long" $long "state" "na" "kind" "na" -}}

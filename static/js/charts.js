@@ -1,96 +1,53 @@
-/* VISR charts.js: Chart.js 4.4.1, no date adapter. Reads design tokens from CSS, mounts visible canvases lazily, re-themes on toggle.
-   Contract (emitted by layouts/partials/ui/chart.html, brief §5.11):
-     <canvas data-viz="line|column|stack" data-unit="count|downloads|hours|percent" data-metric="open issues" data-scope="TypeScript SDK"
-       data-gran="day|week|month" data-agg="last|sum"
-       data-series='{"labels":[every date],"series":[{"label":"…","role":"accent|series-N|spark|other|seg-neutral|ord-N","data":[n|null]}],
-         "outage":["YYYY-MM-DD","YYYY-MM-DD"],"reconstructed":["from","to"]|null,"metricOne":"open issue",
-         "avg":{"value":n,"label":"12-wk avg 22.8"}|null,"capLabel":false,"ticks":"auto|all","fill":true}'>
-   Card hooks: [data-chart] card, [data-chart-toggle] Table button (aria-controls = table host), [data-chart-live] sr-only mirror,
-   [data-chart-legend] HTML legend. Every data string goes into the DOM through textContent. */
+/* VISR charts.js (design system v4 4.19): Chart.js 4.4.1, no date adapter. The canvas draws marks and axis ticks and nothing else:
+   every number is HTML (the readout, the notes row, the tooltip, the table view). Loaded only on pages that render a chart.
+   Contract (layouts/partials/ui/chart.html and ui/trellis.html, built by ui/chart-canvas.html):
+     <canvas data-viz="line|column" data-unit="count|downloads|hours" data-gran="day|week" data-metric="issues" data-scope="TypeScript SDK"
+       data-size="main|panel" data-xaxis="on|off" [data-chart-pin="42"]
+       data-series='{"labels":[every date],"series":[{"label":"...","role":"accent|context","data":[n|null]}],
+         "marks":[{"date":"YYYY-MM-DD","label":"..."}],"avg":{"value":n,"label":"..."}|null,"reconstructed":[from,to]|null,"metricOne":"issue"}'>
+   Card hooks: [data-chart] card ([data-trellis] for small multiples), the Chart and Table segments (ui/tabs.html; ui.js dispatches
+   "visr:tabchange"), .v-chart-table (the table host), [data-chart-live] (sr-only mirror of the tooltip).
+   Values are formatted by VISR.fmt (format.js). Reads design tokens from CSS, mounts after the font is ready, re-themes on toggle. */
 (function () {
   'use strict';
-  if (!window.Chart) return;
-  var root = document.documentElement, T = null, live = new Map(), state = new Map();
+  if (!window.Chart || !window.VISR || !window.VISR.fmt) return;
+  var F = window.VISR.fmt, root = document.documentElement, T = null, live = new Map(), state = new Map();
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-  var cf = new Intl.NumberFormat('en-US', { notation: 'compact', maximumSignificantDigits: 3 });
-  var cf3 = new Intl.NumberFormat('en-US', { notation: 'compact', minimumSignificantDigits: 3, maximumSignificantDigits: 3 });
-  var mctx = document.createElement('canvas').getContext('2d');   /* text measuring for end-label padding */
-  function fix(n, d) { return String(Number(n.toFixed(d))); }
-  var FMT = {   /* mirrors layouts/partials/ui/{num,dur,pct}.html (brief §6.3) */
-    number: function (v) { return v == null ? '—' : Math.abs(v) >= 1e3 ? cf.format(v) : nf.format(v); },   /* axes: compact from 1,000 */
-    count: function (v) { return v == null ? '—' : Math.abs(v) >= 1e4 ? cf.format(v) : nf.format(v); },    /* tiles, tooltips */
-    downloads: function (v) { return v == null ? '—' : Math.abs(v) >= 1e3 ? cf3.format(v) : nf.format(v); }, /* 3 significant figures */
-    full: function (v) { return v == null ? '—' : nf.format(v); },                                           /* table view */
-    hours: function (h) {
-      if (h == null) return '—'; var a = Math.abs(h), s = h < 0 ? '−' : '';
-      if (a < 1) return '<1h'; if (a < 10) return s + fix(a, 1) + 'h'; if (a < 48) return s + Math.round(a) + 'h';
-      var d = a / 24; return s + (d < 10 ? fix(d, 1) : String(Math.round(d))) + 'd';
-    },
-    percent: function (v) { if (v == null) return '—'; var a = Math.abs(v); return (a > 0 && a < 0.1 ? '<0.1' : a < 10 ? fix(v, 1) : String(Math.round(v))) + '%'; }
-  };
-  function valueFmt(unit) { return unit === 'hours' ? FMT.hours : unit === 'percent' ? FMT.percent : unit === 'downloads' ? FMT.downloads : FMT.count; }
+  function el(tag, cls, text) { var x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; }
 
   /* Dates are "YYYY-MM-DD" strings, read as UTC calendar days. */
   function parts(s) { var p = String(s).split('-'); return { y: +p[0], m: +p[1] - 1, d: +(p[2] || 1) }; }
-  function utc(s) { var p = parts(s); return new Date(Date.UTC(p.y, p.m, p.d)); }
-  function shortDate(s) { var p = parts(s); return MONTHS[p.m] + ' ' + p.d; }
-  function longDate(s) { var p = parts(s); return MONTHS[p.m] + ' ' + p.d + ', ' + p.y; }
-  function monthYear(s) { var p = parts(s); return MONTHS[p.m] + ' ' + p.y; }
-  function addDays(s, n) { var t = utc(s); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
-  function periodEnd(s, gran) {
-    if (gran === 'week') return addDays(s, 6);
-    if (gran === 'month') { var p = parts(s); return new Date(Date.UTC(p.y, p.m + 1, 0)).toISOString().slice(0, 10); }
-    return s;
-  }
-  function dateRange(a, b) {   /* "Nov 6–12, 2026", "Oct 8 – Nov 9, 2026", "Dec 30, 2025 – Jan 4, 2026" */
-    if (a === b) return longDate(a); var p = parts(a), q = parts(b);
-    if (p.y !== q.y) return longDate(a) + ' – ' + longDate(b);
-    if (p.m === q.m) return MONTHS[p.m] + ' ' + p.d + '–' + q.d + ', ' + p.y;
-    return shortDate(a) + ' – ' + longDate(b);
-  }
-  function periodTitle(s, gran) {   /* §5.7 */
-    if (gran === 'week') return 'Week of ' + longDate(s);
-    if (gran === 'month') return monthYear(s);
-    return WEEKDAYS[utc(s).getUTCDay()] + ', ' + longDate(s);
-  }
-  var wkCache = {};
-  function weekStart(s) { if (!wkCache[s]) wkCache[s] = addDays(s, -((utc(s).getUTCDay() + 6) % 7)); return wkCache[s]; }
+  function addDays(s, n) { var p = parts(s), t = new Date(Date.UTC(p.y, p.m, p.d + n)); return t.toISOString().slice(0, 10); }
+  function periodEnd(s, gran) { return gran === 'week' ? addDays(s, 6) : s; }
+  function periodText(s, gran) { return gran === 'week' ? F.range({ from: s, to: addDays(s, 6) }).text : F.date({ d: s, weekday: true }).text; }
   function cap1(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function value(unit, v) { return unit === 'downloads' ? F.volume(v).text : unit === 'hours' ? F.dur({ h: v }).text : F.count(v).text; }
+  function exact(unit, v) { return unit === 'downloads' ? F.volume(v).exact : unit === 'hours' ? F.dur({ h: v }).text : F.count(v).text; }
 
-  /* Design system v3 §1, §4.16: series from --chart-1 (= --accent) and --chart-2; axis ticks --text-3; gridlines and axis lines --border;
-     direct labels --text-2; crosshair and average rule --border-strong; the tooltip is HTML on --surface-raised (main.css .v-tip). */
+  /* Tokens (v4 2.1): the subject series is chart-1, a second series is always context grey; gridlines, axis, gap band, crosshair. */
   function tokens() {
     var cs = getComputedStyle(root);
-    function g(n, fb) { var v = cs.getPropertyValue(n).trim(); return v || (fb ? cs.getPropertyValue(fb).trim() : ''); }
-    var t = { surface: g('--surface'), text: g('--text'), text2: g('--text-2'), text3: g('--text-3'),
-      border: g('--border'), strong: g('--border-strong'), gap: g('--gap'), font: getComputedStyle(document.body).fontFamily, roles: {} };
-    if (!t.gap) t.gap = t.border;
-    t.roles.accent = g('--chart-1', '--accent'); t.roles.spark = g('--spark'); t.roles.other = g('--other'); t.roles['seg-neutral'] = g('--seg-neutral', '--other');
-    for (var i = 1; i <= 8; i++) t.roles['series-' + i] = g('--chart-' + i);
-    for (var j = 1; j <= 5; j++) t.roles['ord-' + j] = g('--ord-' + j);
-    return t;
+    function g(n) { return cs.getPropertyValue(n).trim(); }
+    return { accent: g('--chart-1') || g('--accent'), context: g('--series-context'), grid: g('--chart-grid') || g('--border-subtle'),
+      axis: g('--chart-axis') || g('--border'), gap: g('--gap'), surface: g('--surface'), text3: g('--text-3'), strong: g('--border-strong'),
+      font: getComputedStyle(document.body).fontFamily };
   }
-  function color(role) { return T.roles[role] || T.roles.accent; }
-  function hoverColor(role, c) { return role === 'accent' || role === 'series-1' ? (T.roles['ord-4'] || c) : c; }   /* next ord step of the blue */
-  function wash(c) { return /^#[0-9a-f]{6}$/i.test(c) ? c + '1a' : 'color-mix(in srgb, ' + c + ' 10%, transparent)'; }   /* 10% */
-
+  function color(role) { return role === 'context' ? T.context : T.accent; }
   function applyDefaults() {
     var d = Chart.defaults;
-    d.font.family = T.font; d.font.size = 12; d.color = T.text3; d.borderColor = T.border;
+    d.font.family = T.font; d.font.size = 12; d.font.weight = 400; d.font.lineHeight = 16 / 12;
+    d.color = T.text3; d.borderColor = T.grid;
     d.responsive = true; d.maintainAspectRatio = false; d.animation = false;
     d.interaction.mode = 'visrIndex'; d.interaction.intersect = false;
-    Object.assign(d.elements.line, { borderWidth: 2, tension: 0, borderCapStyle: 'round', borderJoinStyle: 'round' });
+    Object.assign(d.elements.line, { borderWidth: 2, tension: 0, fill: false, borderCapStyle: 'round', borderJoinStyle: 'round' });
     Object.assign(d.elements.point, { radius: 0, hoverRadius: 4, hitRadius: 0, hoverBorderWidth: 2 });
-    /* Chart.js 4 reads bar sizing from the dataset defaults, not elements.bar. */
-    if (d.datasets.bar) Object.assign(d.datasets.bar, { maxBarThickness: 24, categoryPercentage: 0.7, barPercentage: 0.9 });
-    d.plugins.legend.display = false;    /* the HTML legend above the plot (§5.8) */
-    d.plugins.tooltip.enabled = false;   /* the external HTML tooltip below (§5.7) */
+    if (d.datasets.bar) Object.assign(d.datasets.bar, { maxBarThickness: 16, categoryPercentage: 0.8, barPercentage: 0.9 });
+    d.plugins.legend.display = false;    /* the readout row is the legend */
+    d.plugins.tooltip.enabled = false;   /* the HTML tooltip below */
   }
 
-  /* Axes (§5.2) */
-  function niceScale(max, integer) {   /* step ∈ {1, 2, 2.5, 5} × 10ⁿ, k ∈ {3, 4, 5}: the smallest step × k above max (1% headroom) */
+  /* Y axis: starts at 0; step in {1, 2, 2.5, 5} x 10^n with 3 to 5 steps, the smallest top above the maximum. */
+  function niceScale(max, integer) {
     var target = Math.max(+max || 0, 0) * 1.01; if (!(target > 0)) target = 1;
     var best = null, p0 = Math.floor(Math.log10(target)) - 2;
     for (var p = p0; p <= p0 + 3; p++) {
@@ -102,7 +59,7 @@
     }
     return best || { max: Math.ceil(target), step: Math.ceil(target / 4) };
   }
-  function durationScale(maxH) {   /* hours below 72h, else days; ticks print whole units */
+  function durationScale(maxH) {   /* hours below 72 hours, else days; ticks print whole units */
     var target = Math.max(+maxH || 0, 0) * 1.01, hours = maxH < 72, u = hours ? 1 : 24, best = null;
     if (!(target > 0)) target = 1;
     (hours ? [1, 2, 4, 6, 12, 24] : [1, 2, 5, 7, 14, 30, 60, 90, 180]).forEach(function (s) {
@@ -112,55 +69,60 @@
     best.u = u; best.unit = hours ? 'h' : 'd';
     return best;
   }
-  function textWidth(t) { mctx.font = '12px ' + T.font; return mctx.measureText(t).width; }
-  /* x labels: month names at month boundaries (with the year on the first one and on January), always the last label, first and
-     last only for 21 days or less; "all" puts a label on every bar that fits. Overlaps are dropped, the last label wins. */
-  function xTicks(scale, labels, gran, mode) {
-    var n = labels.length, out = {}, last = n - 1; if (!n) return out;
-    var w = scale.width || 600, slot = w / Math.max(1, scale.options.offset ? n : n - 1);
-    out[last] = gran === 'month' ? monthYear(labels[last]) : shortDate(labels[last]);
-    var lastW = textWidth(out[last]), i;
-    if (mode === 'all') {
-      var every = Math.max(1, Math.ceil((lastW + 12) / slot));
-      for (i = last - every; i >= 0; i -= every) out[i] = shortDate(labels[i]);
+  /* Axis text: counts in full digits; volumes in ONE unit for the whole axis ("2M, 1.5M, 1M, 0.5M, 0"); durations in whole units. */
+  function axisText(unit, sc) {
+    if (unit === 'hours') return function (v) { return v === 0 ? '0' : F.count(Math.round(v / sc.u)).text + sc.unit; };
+    if (unit === 'downloads' && sc.max >= 1000) {
+      var div = sc.max >= 1e9 ? 1e9 : sc.max >= 1e6 ? 1e6 : 1e3, suffix = div === 1e9 ? 'B' : div === 1e6 ? 'M' : 'K';
+      return function (v) { return v === 0 ? '0' : String(Math.round(v / div * 100) / 100) + suffix; };
+    }
+    return function (v) { return F.count(v).text; };
+  }
+  /* X labels: 14 slots or fewer use short dates; otherwise month names at month starts, the year on the first tick and each January,
+     at a stride of 1, 2, 3 or 6 months. There is no special last-date tick. */
+  function xTicks(scale, labels, gran) {
+    var n = labels.length, out = {}, w = scale.width || 600, i;
+    if (!n) return out;
+    var slot = w / Math.max(1, scale.options.offset ? n : n - 1);
+    if (n <= 14) {
+      var every = Math.max(1, Math.ceil(56 / slot));
+      for (i = n - 1; i >= 0; i -= every) out[i] = F.date({ d: labels[i] }).text;
       return out;
     }
-    if (gran === 'day' && n <= 21) { if (last > 0 && last * slot >= lastW + 12) out[0] = shortDate(labels[0]); return out; }
-    var prevX = -Infinity, prevW = 0, first = true, lp = parts(labels[last]);
-    for (i = 0; i < last; i++) {
+    var starts = [];
+    for (i = 0; i < n; i++) {
       var p = parts(labels[i]);
-      var boundary = i === 0 ? (gran === 'day' ? p.d === 1 : gran === 'week' ? p.d <= 7 : true) : parts(labels[i - 1]).m !== p.m;
-      if (!boundary) continue;
-      var text = first || p.m === 0 ? MONTHS[p.m] + ' ' + p.y : MONTHS[p.m], x = i * slot, tw = textWidth(text), room = last * slot - x;
-      /* the last label already names its month ("Nov 9"): a same-month tick near it only stutters ("Nov  Nov 9") */
-      if (gran !== 'month' && p.m === lp.m && p.y === lp.y && room < 2 * (lastW + tw)) continue;
-      if (x - prevX < (prevW + tw) / 2 + 16 || room < (lastW + tw) / 2 + 16) continue;
-      out[i] = text; prevX = x; prevW = tw; first = false;
+      if (i === 0 ? (gran === 'day' ? p.d === 1 : p.d <= 7) : parts(labels[i - 1]).m !== p.m) starts.push(i);
     }
+    if (!starts.length) return out;
+    var per = starts.length > 1 ? (starts[starts.length - 1] - starts[0]) / (starts.length - 1) * slot : w, stride = 6;
+    [1, 2, 3, 6].some(function (s) { if (per * s >= 64) { stride = s; return true; } return false; });
+    starts.forEach(function (ix, k) {
+      if (k % stride) return;
+      var q = parts(labels[ix]);
+      out[ix] = k === 0 || q.m === 0 ? MONTHS[q.m] + ' ' + q.y : MONTHS[q.m];
+    });
     return out;
   }
 
-  /* Per-series facts: null runs (gap bands), end point, isolated points, fill eligibility (§5.3). */
-  function analyse(data, gran) {
-    var n = data.length, minRun = gran === 'day' ? 3 : 1, reach = gran === 'day' ? 3 : 1;
-    var first = -1, last = -1, runs = [], s = -1, segs = [], seg = 0, prev = -1, i;
+  /* Per-series facts: null runs, the end point, isolated points. */
+  function analyse(data, gran, leading) {
+    var n = data.length, minRun = gran === 'day' ? 3 : 1, reach = gran === 'day' ? 2 : 0;
+    var first = -1, last = -1, runs = [], s = leading ? 0 : -1, i;
     for (i = 0; i < n; i++) {
       if (data[i] != null) {
         if (first < 0) first = i;
         if (s >= 0 && i - s >= minRun) runs.push([s, i - 1]);
-        s = -1;
-        if (prev >= 0 && i - prev > reach) { segs.push(seg); seg = 0; }
-        seg++; prev = i; last = i;
-      } else if (first >= 0 && s < 0) s = i;
+        s = -1; last = i;
+      } else if ((first >= 0 || leading) && s < 0) s = i;
     }
-    if (s >= 0 && n - s >= minRun) runs.push([s, n - 1]);
-    if (seg) segs.push(seg);
+    if (s >= 0 && n - s >= minRun && (first >= 0 || leading)) runs.push([s, n - 1]);
     var radius = data.map(function (v, k) {
       if (v == null) return 0; if (k === last) return 4;
-      for (var j = 1; j <= reach; j++) if (data[k - j] != null || data[k + j] != null) return 0;
-      return 4;   /* isolated: nothing within spanGaps reach on either side */
+      for (var j = 1; j <= reach + 1; j++) if (data[k - j] != null || data[k + j] != null) return 0;
+      return 3;   /* isolated: no neighbour the line would reach */
     });
-    return { first: first, last: last, runs: runs, radius: radius, shortSeg: segs.some(function (c) { return c < 7; }) };
+    return { first: first, last: last, runs: runs, radius: radius };
   }
   function mergeRuns(runs) {
     runs.sort(function (a, b) { return a[0] - b[0]; });
@@ -168,8 +130,7 @@
     runs.forEach(function (r) { var p = out[out.length - 1]; if (p && r[0] <= p[1] + 1) p[1] = Math.max(p[1], r[1]); else out.push([r[0], r[1]]); });
     return out;
   }
-  /* Bands only where every series is missing: a hole in one series breaks its own line, but a full-height "No data" band over a
-     line that has data would be false. */
+  /* A gap band only where NO series has a value: a hole in one of two series breaks that line and reads "No data" in the tooltip. */
   function intersectRuns(lists, minRun) {
     var out = lists[0].slice();
     for (var k = 1; k < lists.length; k++) {
@@ -179,81 +140,40 @@
     }
     return mergeRuns(out);
   }
-  /* A null run is named the collection outage only when it lies inside the outage (6 days of slack for week rounding); a longer
-     run that merely touches it keeps its own dates and says it includes the outage. Mirrors layouts/partials/data/gaps.html. */
-  function gapText(from, to, o) {
-    var hit = o && o.length === 2 && from <= o[1] && to >= o[0];
-    if (hit && from >= addDays(o[0], -6) && to <= addDays(o[1], 6)) return { range: dateRange(o[0], o[1]), note: ' (collection outage)' };
-    return { range: dateRange(from, to), note: hit ? ' (includes the ' + dateRange(o[0], o[1]) + ' collection outage)' : '' };
-  }
-  function bandText(st, b) {
-    var g = gapText(st.labels[b[0]], periodEnd(st.labels[b[1]], st.gran), st.spec.outage);
-    return 'No data for ' + g.range + g.note;
-  }
+  function inBand(st, i) { return st.bands.some(function (b) { return i >= b[0] && i <= b[1]; }); }
 
-  /* Plugins (§5.11-3). State lives in a Map keyed by canvas, set before the chart is constructed. */
+  /* Plugins. State lives in a Map keyed by canvas, set before the chart is constructed. Rectangles and lines only: no canvas text. */
   function S(c) { return state.get(c.canvas); }
   var gapBand = { id: 'visrGapBand', beforeDatasetsDraw: function (c) {
     var st = S(c); if (!st || !st.bands.length) return;
     var a = c.chartArea, x = c.scales.x, ctx = c.ctx, n = st.labels.length;
     var half = n > 1 ? Math.abs(x.getPixelForValue(1) - x.getPixelForValue(0)) / 2 : a.width / 2;
-    ctx.save();
+    ctx.save(); ctx.fillStyle = T.gap;
     st.bands.forEach(function (b) {
       var l = Math.max(a.left, x.getPixelForValue(b[0]) - half), r = Math.min(a.right, x.getPixelForValue(b[1]) + half);
-      if (r <= l) return;
-      ctx.fillStyle = T.gap; ctx.fillRect(l, a.top, r - l, a.bottom - a.top);
-      if (r - l >= textWidth('No data') + 16) {   /* the label only where it fits with 8px either side */
-        ctx.fillStyle = T.text3; ctx.font = '12px ' + T.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('No data', (l + r) / 2, (a.top + a.bottom) / 2);
-      }
+      if (r > l) ctx.fillRect(l, a.top, r - l, a.bottom - a.top);
     });
     ctx.restore();
   } };
-  var crosshair = { id: 'visrCrosshair', beforeDatasetsDraw: function (c) {   /* lines only; bars are their own hit target */
-    var st = S(c); if (!st || st.index == null || st.kind !== 'line') return;
-    var x = Math.round(c.scales.x.getPixelForValue(st.index)) + 0.5, a = c.chartArea, ctx = c.ctx;
-    ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke(); ctx.restore();
+  function vline(c, i, stroke) {
+    var x = Math.round(c.scales.x.getPixelForValue(i)) + 0.5, a = c.chartArea, ctx = c.ctx;
+    ctx.save(); ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke(); ctx.restore();
+  }
+  var marks = { id: 'visrMarks', beforeDatasetsDraw: function (c) {   /* event markers: 1px border-strong, keyed in the notes row */
+    var st = S(c); if (!st) return;
+    st.markIdx.forEach(function (i) { vline(c, i, T.strong); });
   } };
-  var endLabel = { id: 'visrEndLabel', afterDatasetsDraw: function (c) {   /* last non-null value, right of the end dot (§5.8) */
-    var st = S(c); if (!st || st.kind !== 'line') return;
-    var ctx = c.ctx, a = c.chartArea, items = [], k;
-    st.info.forEach(function (inf, d) {
-      var meta = c.getDatasetMeta(d), el = inf.last >= 0 && meta.data[inf.last]; if (!el || meta.hidden || !st.endText[d]) return;
-      items.push({ d: d, x: el.x, y: el.y });
-    });
-    if (!items.length) return;
-    /* every series keeps its label: colliding labels are pushed apart 14px (top down), then the group is lifted back inside the plot */
-    items.sort(function (p, q) { return p.y - q.y; });
-    for (k = 1; k < items.length; k++) if (items[k].y - items[k - 1].y < 14) items[k].y = items[k - 1].y + 14;
-    var over = items[items.length - 1].y - (a.bottom - 6);
-    if (over > 0) items.forEach(function (it) { it.y -= over; });
-    var under = a.top + 6 - items[0].y;
-    if (under > 0) items.forEach(function (it) { it.y += under; });
-    ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.text2; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    items.forEach(function (it) { ctx.fillText(st.endText[it.d], it.x + 8, it.y); });
-    ctx.restore();
-  } };
-  var capLabel = { id: 'visrCapLabel', afterDatasetsDraw: function (c) {   /* value on the latest column's cap */
-    var st = S(c); if (!st || !st.spec.capLabel || st.kind === 'line') return;
-    var inf = st.info[0], el = inf && inf.last >= 0 && c.getDatasetMeta(0).data[inf.last]; if (!el) return;
-    var ctx = c.ctx; ctx.save(); ctx.font = '12px ' + T.font; ctx.fillStyle = T.text2; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    var y = el.y - 4, av = st.spec.avg;   /* never on the labeled average rule: sit just above it when they would touch */
-    if (av && av.value != null) { var ay = c.scales.y.getPixelForValue(av.value); if (Math.abs(y - ay) < 14) y = Math.min(y, ay - 4); }
-    ctx.fillText(st.endText[0], el.x, y); ctx.restore();
-  } };
-  var avgRule = { id: 'visrAvgRule', afterDatasetsDraw: function (c) {   /* 1px --border-strong rule, labeled (commits, §5.1) */
+  var avgRule = { id: 'visrAvgRule', beforeDatasetsDraw: function (c) {   /* 1px context rule; its value is a readout item */
     var st = S(c), avg = st && st.spec.avg; if (!avg || avg.value == null) return;
-    var a = c.chartArea, y = Math.round(c.scales.y.getPixelForValue(avg.value)) + 0.5, ctx = c.ctx, label = String(avg.label || '');
-    ctx.save(); ctx.strokeStyle = T.strong; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.left, y); ctx.lineTo(a.right, y); ctx.stroke();
-    if (label) {
-      ctx.font = '12px ' + T.font; var w = ctx.measureText(label).width;
-      ctx.fillStyle = T.surface; ctx.fillRect(a.left, y - 18, w + 8, 16);
-      ctx.fillStyle = T.text2; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(label, a.left + 4, y - 3);
-    }
-    ctx.restore();
+    var a = c.chartArea, y = Math.round(c.scales.y.getPixelForValue(avg.value)) + 0.5, ctx = c.ctx;
+    ctx.save(); ctx.strokeStyle = T.context; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.left, y); ctx.lineTo(a.right, y); ctx.stroke(); ctx.restore();
+  } };
+  var crosshair = { id: 'visrCrosshair', beforeDatasetsDraw: function (c) {
+    var st = S(c); if (!st || st.index == null || st.kind !== 'line') return;
+    vline(c, st.index, T.strong);
   } };
 
-  /* Hover and keyboard share one index (§5.7). */
+  /* Hover, touch and keyboard share one index. A tap pins the nearest slot; a horizontal drag scrubs (touch-action: pan-y in CSS). */
   function indexAt(c, x) { var n = c.data.labels.length; return Math.max(0, Math.min(n - 1, Math.round(c.scales.x.getValueForPixel(x)))); }
   function elementsAt(c, i) {
     var out = [];
@@ -264,126 +184,128 @@
     var a = c.chartArea; return a && e.x >= a.left && e.x <= a.right ? elementsAt(c, indexAt(c, e.x)) : [];
   };
   var hover = { id: 'visrHover', afterEvent: function (c, args) {
-    var st = S(c), e = args.event; if (!st) return;
-    var i = e.type !== 'mouseout' && args.inChartArea ? indexAt(c, e.x) : null;
+    var st = S(c), e = args.event; if (!st || e.type === 'click') return;
+    var i = e.type !== 'mouseout' && args.inChartArea ? indexAt(c, e.x) : (e.type === 'mouseout' ? null : st.index);
     if (i !== st.index) { select(c, i, false); args.changed = true; }
   } };
+  function siblings(c) {   /* the other live charts of a trellis card */
+    var card = c.canvas.closest('[data-trellis]'); if (!card) return [];
+    return Array.prototype.slice.call(card.querySelectorAll('canvas[data-viz]')).filter(function (cv) { return cv !== c.canvas && live.has(cv); })
+      .map(function (cv) { return live.get(cv); });
+  }
+  function setIndex(c, i) {
+    var st = S(c); if (!st) return;
+    st.index = i; c.setActiveElements(i == null ? [] : elementsAt(c, i));
+  }
   function select(c, i, announce) {
     var st = S(c); if (!st) return;
-    st.index = i;
-    c.setActiveElements(i == null ? [] : elementsAt(c, i));
+    setIndex(c, i);
+    siblings(c).forEach(function (o) { var os = S(o); if (os && os.index !== i) { setIndex(o, i); hideTip(os); o.render(); } });
     showTip(c, st, i, announce);
   }
+  function hideTip(st) { if (st.tip) st.tip.hidden = true; }
 
-  /* External HTML tooltip: --surface-raised card built with textContent, above the hovered x, flipped below when it would leave the plot. */
+  /* The HTML tooltip: beside the crosshair, pinned to the top of the plot, never on the hovered points. Title (the period), then a
+     three-column grid of key, right-aligned value, label; an optional change line. Built with textContent. */
+  function tipRow(list, keyCls, valText, name, isNA) {
+    var li = el('li'), key = el('span', 'v-key ' + keyCls), val = el('span', 'v-tip-value', isNA ? '' : valText), nm = el('span', 'v-tip-name', name);
+    key.setAttribute('aria-hidden', 'true');
+    if (isNA) { var na = el('span', 'v-val is-na'); na.title = 'No data'; na.appendChild(el('span', 'sr-only', 'No data')); val.appendChild(na); }
+    li.appendChild(key); li.appendChild(val); li.appendChild(nm); list.appendChild(li);
+    return (isNA ? 'No data' : valText) + ' ' + name;
+  }
   function showTip(c, st, i, announce) {
-    var box = c.canvas.parentNode, el = st.tip;
-    if (i == null) { if (el) el.hidden = true; if (announce && st.live) st.live.textContent = ''; return; }
-    if (!el) { el = st.tip = document.createElement('div'); el.className = 'v-tip'; el.setAttribute('aria-hidden', 'true'); box.appendChild(el); }
-    el.textContent = '';
-    var spoken = [], label = st.labels[i], band = null, total = 0, shown = 0;
-    st.bands.forEach(function (b) { if (i >= b[0] && i <= b[1]) band = b; });
-    var head = document.createElement('p'); head.className = 'v-tip-title'; head.textContent = periodTitle(label, st.gran); el.appendChild(head);
-    spoken.push(head.textContent);
-    var list = document.createElement('ul'); list.className = 'v-tip-rows';
-    st.series.forEach(function (s, d) {
-      var v = s.data[i]; if (v == null) return;
-      total += v; shown++;
-      var li = document.createElement('li'), key = document.createElement('span'), val = document.createElement('span'), noun = document.createElement('span');
-      key.className = 'v-tip-key ' + (st.kind === 'line' ? 'is-line' : 'is-bar'); key.style.backgroundColor = color(s.role);
-      val.className = 'v-tip-value'; val.textContent = st.f(v);
-      noun.className = 'v-tip-noun'; noun.textContent = st.single ? (v === 1 ? st.metricOne : st.metric) : s.label;
-      li.appendChild(key); li.appendChild(val); li.appendChild(document.createTextNode(' ')); li.appendChild(noun); list.appendChild(li);
-      spoken.push(val.textContent + ' ' + noun.textContent);
-    });
-    if (shown) el.appendChild(list);
-    function note(text) { var p = document.createElement('p'); p.className = 'v-tip-note'; p.textContent = text; el.appendChild(p); spoken.push(text); }
-    if (st.kind === 'stack' && shown > 1) note('Total ' + st.f(total));
-    if (st.unit === 'downloads' && st.single && st.gran === 'week') {   /* "+1.7% vs prior week" */
-      var v0 = st.series[0].data[i], v1 = i > 0 ? st.series[0].data[i - 1] : null;
-      if (v0 != null && v1 != null && v1 > 0) { var pc = (v0 - v1) / v1 * 100; note((pc > 0 ? '+' : pc < 0 ? '−' : '±') + FMT.percent(Math.abs(pc)) + ' vs prior week'); }
+    var box = c.canvas.parentNode, tip = st.tip;
+    if (i == null) { if (tip) tip.hidden = true; if (announce && st.live) st.live.textContent = ''; return; }
+    if (!tip) { tip = st.tip = el('div', 'v-tip'); tip.setAttribute('aria-hidden', 'true'); box.appendChild(tip); }
+    tip.textContent = '';
+    var spoken = [], label = st.labels[i], keyForm = st.kind === 'line' ? 'is-line' : 'is-bar';
+    var title = el('p', 'v-tip-title', periodText(label, st.gran)); tip.appendChild(title); spoken.push(title.textContent);
+    var list = el('ul', 'v-tip-rows'), rows = 0, others = siblings(c);
+    if (others.length) {   /* trellis: one row per panel, labelled by its scope */
+      [c].concat(others).sort(function (a, b) { return a.canvas.compareDocumentPosition(b.canvas) & 4 ? -1 : 1; }).forEach(function (o) {
+        var os = S(o), v = os.series[0] ? os.series[0].data[i] : null;
+        spoken.push(tipRow(list, keyForm + ' is-accent', v == null ? '' : value(os.unit, v), os.scope || (os.series[0] && os.series[0].label) || '', v == null)); rows++;
+      });
+    } else if (!inBand(st, i)) {
+      st.series.forEach(function (s) {
+        var v = s.data[i]; if (v == null && st.single) return;
+        var name = st.single ? (v === 1 ? st.metricOne : st.metric) : s.label;
+        spoken.push(tipRow(list, keyForm + ' is-' + (s.role === 'context' ? 'context' : 'accent'), v == null ? '' : value(st.unit, v), name, v == null)); rows++;
+      });
     }
-    if (band) note(bandText(st, band));
-    el.hidden = false;
-    var a = c.chartArea, x = c.scales.x.getPixelForValue(i), act = elementsAt(c, i), y = a.top;
-    if (act.length) y = Math.min.apply(null, act.map(function (e) { return e.element.y; }));
-    var w = el.offsetWidth, h = el.offsetHeight, left, top = y - h - 12;
-    if (top >= 0) left = Math.min(Math.max(x - w / 2, a.left), box.clientWidth - w);
-    else {   /* no room above (small multiples): beside the hovered x, kept inside the plot so it never covers the x labels */
-      top = Math.max(0, Math.min(y - h / 2, a.bottom - h));
-      left = x + 12 + w <= box.clientWidth ? x + 12 : x - 12 - w;
+    if (rows) tip.appendChild(list);
+    function note(text) { tip.appendChild(el('p', 'v-tip-note', text)); spoken.push(text); }
+    if (!rows) note('No data');
+    if (st.single && !others.length && st.kind === 'column' && st.gran === 'week' && i > 0) {   /* change against the prior week */
+      var v0 = st.series[0].data[i], v1 = st.series[0].data[i - 1];
+      if (v0 != null && v1 != null) {
+        var ch = st.unit === 'downloads' ? F.change({ cur: v0, prev: v1, unit: 'percent' }) : F.change({ cur: v0, prev: v1 });
+        if (ch.state !== 'na') note(ch.text + ' vs prior 7 days');
+      }
     }
-    if (left < 0) left = 0;
-    el.style.left = Math.round(left) + 'px'; el.style.top = Math.round(top) + 'px';
+    tip.hidden = false;
+    var a = c.chartArea, x = c.scales.x.getPixelForValue(i), w = tip.offsetWidth;
+    var left = x + 12 + w <= box.clientWidth ? x + 12 : x - 12 - w;
+    if (left < 0) left = Math.max(0, Math.min(box.clientWidth - w, x + 12));
+    tip.style.left = Math.round(left) + 'px'; tip.style.top = Math.round(a.top) + 'px';
     if (announce && st.live) st.live.textContent = spoken.join('. ');
   }
 
   function build(canvas) {
-    var kind = canvas.dataset.viz || 'line', unit = canvas.dataset.unit || 'count', gran = canvas.dataset.gran || 'day';
-    var spec = JSON.parse(canvas.dataset.series), labels = spec.labels || [], series = spec.series || [];
-    var line = kind === 'line', stack = kind === 'stack', single = series.length === 1, f = valueFmt(unit);
-    var info = series.map(function (s) { return analyse(s.data, gran); });
-    var bands = info.length < 2 ? mergeRuns((info[0] ? info[0].runs : []).slice())
-      : intersectRuns(info.map(function (x) { return x.runs; }), gran === 'day' ? 3 : 1);
+    var kind = canvas.dataset.viz === 'column' ? 'column' : 'line', unit = canvas.dataset.unit || 'count', gran = canvas.dataset.gran === 'week' ? 'week' : 'day';
+    var panel = canvas.dataset.size === 'panel', xaxis = canvas.dataset.xaxis !== 'off';
+    var spec = JSON.parse(canvas.dataset.series), labels = spec.labels || [], series = (spec.series || []).slice(0, 2);
+    var line = kind === 'line', single = series.length === 1;
+    var info = series.map(function (s) { return analyse(s.data, gran, panel); });
+    var bands = !info.length ? [] : info.length < 2 ? mergeRuns(info[0].runs.slice()) : intersectRuns(info.map(function (x) { return x.runs; }), gran === 'day' ? 3 : 1);
     var datasets = series.map(function (s, i) {
-      var role = s.role || (i ? 'series-2' : 'accent'), c = color(role), a = info[i];
-      if (line) {
-        var fill = single && spec.fill !== false && !a.runs.length && !a.shortSeg;   /* §5.3: no wash over gaps or short segments */
-        return { label: s.label, data: s.data, borderColor: c, backgroundColor: fill ? wash(c) : c, fill: fill ? 'origin' : false,
-          spanGaps: gran === 'day' ? 3 : false, pointRadius: a.radius, pointHoverRadius: 4, pointHitRadius: 0,
-          pointBackgroundColor: c, pointBorderColor: T.surface, pointBorderWidth: 2,
-          pointHoverBackgroundColor: c, pointHoverBorderColor: T.surface, pointHoverBorderWidth: 2 };
-      }
-      var ds = { label: s.label, data: s.data, backgroundColor: c, hoverBackgroundColor: hoverColor(role, c), borderWidth: 0, borderRadius: 4, borderSkipped: 'start' };
-      if (stack) {   /* 2px surface gap between stacked segments; rounded data end on the top segment only */
-        ds.stack = 'all'; ds.borderSkipped = false; ds.borderColor = T.surface; ds.hoverBorderColor = T.surface;
-        ds.borderWidth = i ? { bottom: 2 } : 0; ds.borderRadius = i === series.length - 1 ? { topLeft: 4, topRight: 4 } : 0;
-      }
-      return ds;
+      var c = color(s.role), a = info[i], order = s.role === 'context' ? 2 : 1;
+      if (line) return { label: s.label, data: s.data, order: order, borderColor: c, backgroundColor: c, fill: false, spanGaps: gran === 'day' ? 3 : false,
+        pointRadius: a.radius, pointHoverRadius: 4, pointHitRadius: 0, pointBackgroundColor: c, pointBorderColor: T.surface, pointBorderWidth: 2,
+        pointHoverBackgroundColor: c, pointHoverBorderColor: T.surface, pointHoverBorderWidth: 2 };
+      return { label: s.label, data: s.data, order: order, backgroundColor: c, hoverBackgroundColor: c, borderWidth: 0, borderRadius: { topLeft: 3, topRight: 3 }, borderSkipped: false };
     });
-
     var max = 0;
-    if (stack) labels.forEach(function (_, x) { var t = 0; series.forEach(function (s) { t += s.data[x] || 0; }); if (t > max) max = t; });
-    else series.forEach(function (s) { s.data.forEach(function (v) { if (v != null && v > max) max = v; }); });
+    series.forEach(function (s) { s.data.forEach(function (v) { if (v != null && v > max) max = v; }); });
     if (spec.avg && spec.avg.value > max) max = spec.avg.value;
-    var sc = unit === 'hours' ? durationScale(max) : niceScale(max, unit !== 'percent');
-    var tick = unit === 'hours' ? function (v) { return v === 0 ? '0' : Math.round(v / sc.u) + sc.unit; }
-      : unit === 'percent' ? function (v) { return v === 0 ? '0' : FMT.percent(v); }
-      : sc.max >= 1000 ? function (v) { return v === 0 ? '0' : cf.format(v); }   /* one format per axis */
-      : function (v) { return nf.format(v); };
-
-    var endText = series.map(function (s, i) { var l = info[i].last; return l < 0 ? '' : f(s.data[l]); });
-    var padRight = 4;
-    if (line) { var tw = 0; endText.forEach(function (t) { tw = Math.max(tw, textWidth(t)); }); padRight = Math.max(36, Math.ceil(tw) + 12); }
+    var sc = unit === 'hours' ? durationScale(max) : niceScale(max, true), tick = axisText(unit, sc);
+    var markIdx = [];
+    (spec.marks || []).forEach(function (m) {   /* the slot that holds the date (for weeks: the week that contains it) */
+      var ix = -1; labels.forEach(function (l, i) { if (l <= m.date) ix = i; });
+      if (ix >= 0 && m.date <= periodEnd(labels[ix], gran)) markIdx.push(ix);
+    });
     var host = canvas.closest('[data-chart]');
-    state.set(canvas, { kind: kind, unit: unit, gran: gran, spec: spec, labels: labels, series: series, info: info, bands: bands,
-      endText: endText, f: f, single: single, index: null, tip: null, live: host && host.querySelector('[data-chart-live]'),
+    state.set(canvas, { kind: kind, unit: unit, gran: gran, spec: spec, labels: labels, series: series, info: info, bands: bands, markIdx: markIdx,
+      single: single, index: null, tip: null, live: host && host.querySelector('[data-chart-live]'), scope: canvas.dataset.scope || '',
       metric: canvas.dataset.metric || '', metricOne: spec.metricOne || canvas.dataset.metric || '' });
-    var all = spec.ticks === 'all';
     return {
       type: line ? 'line' : 'bar',
       data: { labels: labels, datasets: datasets },
-      plugins: [gapBand, crosshair, endLabel, capLabel, avgRule, hover],
+      plugins: [gapBand, marks, avgRule, crosshair, hover],
       options: {
-        layout: { padding: { top: spec.capLabel ? 20 : 8, right: padRight } },
+        layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
         interaction: { mode: 'visrIndex', intersect: false },
         hover: { mode: 'visrIndex', intersect: false },
         scales: {
-          x: { type: 'category', stacked: stack, offset: !line, border: { color: T.border },
-               grid: { display: all, drawOnChartArea: false, drawTicks: true, tickLength: 4, color: T.border },
-               /* every label is a tick (no autoSkip, no maxTicksLimit thinning of tick marks); '' keeps the tick, hides the text */
-               ticks: { autoSkip: false, maxTicksLimit: labels.length + 1, maxRotation: 0, color: T.text3, padding: 4,
-                        callback: function (v, i) { if (i === 0 || !this._visr) this._visr = xTicks(this, labels, gran, spec.ticks); var t = this._visr[i]; return t == null ? '' : t; } } },
-          y: { stacked: stack, min: 0, max: sc.max, beginAtZero: true, border: { display: false }, grid: { color: T.border, drawTicks: false },
-               ticks: { stepSize: sc.step, autoSkip: false, color: T.text3, padding: 8, callback: tick },
-               afterFit: function (s) { s.width = 44; } }   /* plots in one row share a left edge */
+          x: { type: 'category', offset: !line, border: { color: T.axis }, grid: { display: false, tickLength: 0 },
+               ticks: { display: xaxis, autoSkip: false, maxTicksLimit: labels.length + 1, maxRotation: 0, color: T.text3, padding: 8,
+                        callback: function (v, i) { if (i === 0 || !this._visr) this._visr = xTicks(this, labels, gran); var t = this._visr[i]; return t == null ? '' : t; } },
+               afterFit: function (s) { s.height = xaxis ? 24 : 0; } },
+          y: { min: 0, max: sc.max, beginAtZero: true, border: { display: false }, grid: { color: T.grid, drawTicks: false },
+               ticks: { stepSize: panel ? sc.max : sc.step, autoSkip: false, color: T.text3, padding: 8, callback: tick },
+               afterFit: function (s) { s.width = 44; } }   /* plots in one row, and every panel of a trellis, share a left edge */
         }
       }
     };
   }
 
   function mount(canvas) {
-    try { live.set(canvas, new Chart(canvas, build(canvas))); } catch (e) { state.delete(canvas); console.error('VISR chart failed', canvas.id, e); }
+    try {
+      var c = new Chart(canvas, build(canvas)); live.set(canvas, c);
+      var pin = canvas.getAttribute('data-chart-pin');
+      if (pin !== null && pin !== '') { select(c, Math.max(0, Math.min(c.data.labels.length - 1, parseInt(pin, 10) || 0)), false); c.render(); }
+    } catch (e) { state.delete(canvas); if (window.console) console.error('VISR chart failed', canvas.id, e); }
   }
   function unmount(canvas) {
     var c = live.get(canvas), st = state.get(canvas);
@@ -393,128 +315,121 @@
   }
   function retheme() {
     T = tokens(); applyDefaults();
-    // Copy first: Map#forEach visits keys re-added during iteration, so re-mounting in place loops forever.
-    Array.from(live.keys()).forEach(function (cv) { unmount(cv); mount(cv); });
+    Array.from(live.keys()).forEach(function (cv) { unmount(cv); mount(cv); });   /* copy first: the map changes while re-mounting */
   }
 
-  /* Keyboard (§5.7): ArrowLeft/Right step, Home/End jump, Escape clears; the sr-only live region mirrors the tooltip. */
+  /* Keyboard: the canvas is focusable; arrows step, Home and End jump, Escape clears; the sr-only live line mirrors the tooltip. */
   document.addEventListener('keydown', function (e) {
     var cv = e.target; if (!cv || cv.tagName !== 'CANVAS' || !live.has(cv)) return;
     var c = live.get(cv), st = state.get(cv), n = st.labels.length, i = st.index, k = e.key;
     if (k === 'ArrowRight' || k === 'ArrowLeft') {
-      var dir = k === 'ArrowRight' ? 1 : -1, lastData = Math.max.apply(null, st.info.map(function (x) { return x.last; }));
-      i = i == null ? (lastData >= 0 ? lastData : n - 1) : Math.max(0, Math.min(n - 1, i + dir));
+      var lastData = Math.max.apply(null, st.info.map(function (x) { return x.last; }).concat([-1]));
+      i = i == null ? (lastData >= 0 ? lastData : n - 1) : Math.max(0, Math.min(n - 1, i + (k === 'ArrowRight' ? 1 : -1)));
     } else if (k === 'Home') i = 0;
     else if (k === 'End') i = n - 1;
     else if (k === 'Escape' && i != null) i = null;
     else return;
     e.preventDefault(); select(c, i, true); c.render();
   });
-  document.addEventListener('focusout', function (e) {
-    var cv = e.target; if (!cv || cv.tagName !== 'CANVAS' || !live.has(cv)) return;
-    var c = live.get(cv); if (state.get(cv).index != null) { select(c, null, true); c.render(); }
-  });
+  function clear(cv) { var c = live.get(cv), st = state.get(cv); if (c && st && st.index != null && !cv.hasAttribute('data-chart-pin')) { select(c, null, true); c.render(); } }
+  document.addEventListener('focusout', function (e) { var cv = e.target; if (cv && cv.tagName === 'CANVAS' && live.has(cv)) clear(cv); });
+  /* a tap outside the plot clears a pinned slot */
+  document.addEventListener('touchstart', function (e) {
+    var plot = e.target.closest && e.target.closest('.v-plot, .v-trellis-panel'), card = plot && plot.closest('[data-chart]');
+    Array.from(live.keys()).forEach(function (cv) { if (!card || cv.closest('[data-chart]') !== card) clear(cv); });
+  }, { passive: true });
 
-  /* Table view (§5.9): replaces the plot in place at the plot's height; newest first, null runs collapsed, scrolls inside. */
-  function toWeekly(labels, series, agg) {
-    var keys = [], at = {}, size = {};
-    labels.forEach(function (l) { var k = weekStart(l); if (!(k in at)) { at[k] = keys.length; keys.push(k); size[k] = 0; } size[k]++; });
-    var keep = keys.map(function (k) { return agg !== 'sum' || size[k] === 7; });   /* flows: complete weeks only */
-    return { labels: keys.filter(function (_, j) { return keep[j]; }), series: series.map(function (s) {
+  /* Table view: the switch swaps the plot for a flush compact table in the same box, newest first, exact values. A daily series over
+     90 days is shown as week ranges. A gap is one ordinary row: the range in the date cell, the empty mark in each value cell. */
+  function weekStart(s) { var p = parts(s), t = new Date(Date.UTC(p.y, p.m, p.d)); return addDays(s, -((t.getUTCDay() + 6) % 7)); }
+  function toWeekly(labels, cols, flow) {
+    var keys = [], at = {};
+    labels.forEach(function (l) { var k = weekStart(l); if (!(k in at)) { at[k] = keys.length; keys.push(k); } });
+    return { labels: keys, cols: cols.map(function (col) {
       var bins = keys.map(function () { return { sum: 0, n: 0, last: null }; });
-      s.data.forEach(function (v, i) { if (v == null) return; var b = bins[at[weekStart(labels[i])]]; b.sum += v; b.n++; b.last = v; });
-      var data = bins.map(function (b) { return agg === 'sum' ? (b.n === 7 ? b.sum : null) : b.last; });
-      return { label: s.label, role: s.role, data: data.filter(function (_, j) { return keep[j]; }) };
+      col.data.forEach(function (v, i) { if (v == null) return; var b = bins[at[weekStart(labels[i])]]; b.sum += v; b.n++; b.last = v; });
+      return { label: col.label, unit: col.unit, data: bins.map(function (b) { return flow ? (b.n === 7 ? b.sum : null) : b.last; }) };
     }) };
   }
-  function na(td) { td.textContent = '—'; var s = document.createElement('span'); s.className = 'sr-only'; s.textContent = 'no data'; td.appendChild(s); }
-  function buildTable(cv, host) {
-    var spec = JSON.parse(cv.dataset.series), unit = cv.dataset.unit || 'count', gran = cv.dataset.gran || 'day', kind = cv.dataset.viz || 'line';
-    var agg = cv.dataset.agg || (kind === 'line' ? 'last' : 'sum'), labels = spec.labels || [], series = spec.series || [], g = gran;
-    if (gran === 'day' && labels.length > 90) { var wk = toWeekly(labels, series, agg); labels = wk.labels; series = wk.series; g = 'week'; }
-    var share = kind === 'stack', rec = spec.reconstructed, out = spec.outage, metric = cv.dataset.metric || '';
-    var cell = unit === 'hours' ? function (v) { return (v / 24).toFixed(1); } : unit === 'percent' ? function (v) { return v.toFixed(1) + '%'; } : FMT.full;
-    var unitText = unit === 'hours' ? ' (days)' : unit === 'percent' ? ' (%)' : '';
-    var heads = [g === 'week' ? 'Week of' : g === 'month' ? 'Month' : 'Date'];
-    if (series.length === 1) heads.push(cap1(metric) + unitText); else series.forEach(function (s) { heads.push(s.label + (share ? ' (%)' : unitText)); });
-    if (share) heads.push('Total');
-    var withSource = !!(rec && rec.length === 2); if (withSource) heads.push('Source');
-    var tbl = document.createElement('table'); tbl.className = 'v-dt v-dt-chart';
-    var cap = tbl.createCaption(); cap.className = 'sr-only'; cap.textContent = cap1(metric) + (cv.dataset.scope ? ', ' + cv.dataset.scope : '');
-    var hr = tbl.createTHead().insertRow();
-    heads.forEach(function (h, j) {
-      var th = document.createElement('th'); th.scope = 'col'; th.textContent = h;
-      if (j && !(withSource && j === heads.length - 1)) th.className = 'num'; hr.appendChild(th);
+  function naCell(td) { var s = el('span', 'v-val is-na'); s.title = 'No data'; s.appendChild(el('span', 'sr-only', 'No data')); td.appendChild(s); }
+  function buildTable(card, host) {
+    var canvases = Array.prototype.slice.call(card.querySelectorAll('canvas[data-viz]')); if (!canvases.length) return;
+    var first = canvases[0], spec0 = JSON.parse(first.dataset.series), gran = first.dataset.gran === 'week' ? 'week' : 'day', flow = first.dataset.viz === 'column';
+    var labels = spec0.labels || [], cols = [], trellis = card.hasAttribute('data-trellis');
+    canvases.forEach(function (cv) {
+      var spec = cv === first ? spec0 : JSON.parse(cv.dataset.series), unit = cv.dataset.unit || 'count';
+      if (trellis) cols.push({ label: cv.dataset.scope || (spec.series[0] && spec.series[0].label) || '', unit: unit, data: spec.series[0] ? spec.series[0].data : [] });
+      else (spec.series || []).slice(0, 2).forEach(function (s) { cols.push({ label: (spec.series.length === 1 ? cap1(cv.dataset.metric || s.label) : s.label), unit: unit, data: s.data }); });
     });
-    var tb = tbl.createTBody(); tb.id = host.id + '-rows';
-    function empty(i) { return series.every(function (s) { return s.data[i] == null; }); }
-    var rows = 0, i = labels.length - 1, r, th, td;
-    while (i >= 0) {
-      r = tb.insertRow(); th = document.createElement('th'); th.scope = 'row'; r.appendChild(th);
-      if (empty(i)) {   /* one row per null run */
-        var j = i; while (j > 0 && empty(j - 1)) j--;
-        var from = labels[j], to = periodEnd(labels[i], g);
-        r.className = 'is-gap'; th.colSpan = heads.length;
-        var gt = gapText(from, to, out);
-        th.textContent = 'No data for ' + dateRange(from, to) + gt.note;
+    var g = gran;
+    if (gran === 'day' && labels.length > 90) { var wk = toWeekly(labels, cols, flow); labels = wk.labels; cols = wk.cols; g = 'week'; }
+    var change = cols.length === 1;
+    var tbl = el('table', 'v-dt is-compact'), cap = tbl.createCaption(); cap.className = 'sr-only';
+    cap.textContent = cap1(first.dataset.metric || '') + (trellis ? '' : (first.dataset.scope ? ', ' + first.dataset.scope : ''));
+    var hr = tbl.createTHead().insertRow();
+    function th(text, num) { var h = el('th', num ? 'num' : '', text); h.scope = 'col'; hr.appendChild(h); }
+    th(g === 'week' ? 'Week' : 'Date', false);
+    cols.forEach(function (c) { th(c.label, true); });
+    if (change) th('Change', true);
+    var fill = el('th', 'v-fill'); fill.setAttribute('aria-hidden', 'true'); hr.appendChild(fill);
+    var tb = tbl.createTBody();
+    function empty(i) { return cols.every(function (c) { return c.data[i] == null; }); }
+    /* slots before the first measured one are not rows: nothing was tracked yet */
+    var firstData = 0; while (firstData < labels.length && empty(firstData)) firstData++;
+    var i = labels.length - 1;
+    function gapCells(r) { for (var k = 0; k < cols.length + (change ? 1 : 0); k++) { var c = r.insertCell(); c.className = 'num'; naCell(c); } }
+    while (i >= firstData) {
+      var r = tb.insertRow(), h = el('th'); h.scope = 'row'; r.appendChild(h);
+      if (empty(i)) {
+        var j = i; while (j > firstData && empty(j - 1)) j--;
+        h.textContent = F.range({ from: labels[j], to: periodEnd(labels[i], g) }).text;
+        gapCells(r);
         i = j - 1;
       } else {
-        var total = 0; series.forEach(function (s) { total += s.data[i] || 0; });
-        th.textContent = g === 'month' ? monthYear(labels[i]) : longDate(labels[i]);
-        series.forEach(function (s) {
-          var v = s.data[i]; td = r.insertCell(); td.className = 'num';
-          if (v == null) na(td); else td.textContent = share ? (total ? (v / total * 100).toFixed(1) + '%' : '—') : cell(v);
+        h.textContent = g === 'week' ? F.range({ from: labels[i], to: addDays(labels[i], 6) }).text : F.date({ d: labels[i] }).text;
+        cols.forEach(function (c) {
+          var td = r.insertCell(); td.className = 'num';
+          if (c.data[i] == null) naCell(td); else { var s = el('span', 'v-val', exact(c.unit, c.data[i])); s.setAttribute('data-kind', c.unit === 'downloads' ? 'volume' : c.unit === 'hours' ? 'dur' : 'count'); td.appendChild(s); }
         });
-        if (share) { td = r.insertCell(); td.className = 'num'; td.textContent = FMT.full(total); }
-        if (withSource) {
-          td = r.insertCell(); var d1 = periodEnd(labels[i], g);
-          if (labels[i] <= rec[1] && d1 >= rec[0]) { var tag = document.createElement('span'); tag.className = 'v-tag'; tag.textContent = 'reconstructed'; td.appendChild(tag); }
+        if (change) {
+          var td = r.insertCell(), prev = i > 0 ? cols[0].data[i - 1] : null, cur = cols[0].data[i]; td.className = 'num';
+          var ch = prev == null || cur == null ? null : cols[0].unit === 'downloads' ? F.change({ cur: cur, prev: prev, unit: 'percent' })
+            : cols[0].unit === 'hours' ? F.change({ cur: cur, prev: prev, unit: 'hours' }) : F.change({ cur: cur, prev: prev });
+          if (!ch || ch.state === 'na') { var m = el('span', 'v-val is-na'); m.title = 'No baseline'; m.appendChild(el('span', 'sr-only', 'No baseline')); td.appendChild(m); }
+          else { var d = el('span', 'v-delta is-flat'); d.appendChild(el('span', 'sr-only', ch.sr)); var vis = el('span', '', ch.text); vis.setAttribute('aria-hidden', 'true'); d.appendChild(vis); td.appendChild(d); }
         }
         i--;
       }
-      rows++;
+      r.appendChild(el('td', 'v-fill'));
     }
-    /* every row, newest first, in a box of the plot's height that scrolls under a sticky header (keyboard-scrollable region) */
-    host.setAttribute('tabindex', '0'); host.setAttribute('role', 'region');
-    host.setAttribute('aria-label', cap1(metric) + ' table, ' + rows + ' rows');
+    host.setAttribute('aria-label', cap1(first.dataset.metric || '') + ' table');
     host.appendChild(tbl);
+    function clip() { host.classList.toggle('is-clipped', host.scrollTop + host.clientHeight < host.scrollHeight - 1); }
+    host.addEventListener('scroll', clip, { passive: true });
+    host._clip = clip;
   }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest) return;
-    var more = e.target.closest('.v-chart-more');
-    if (more) {
-      var tb = document.getElementById(more.getAttribute('aria-controls')); if (!tb) return;
-      var open = more.getAttribute('aria-expanded') !== 'true';
-      Array.prototype.forEach.call(tb.rows, function (row, k) { if (k >= 12) row.hidden = !open; });
-      more.setAttribute('aria-expanded', open ? 'true' : 'false'); more.textContent = open ? 'Show fewer' : more.getAttribute('data-label');
-      if (!open) tb.parentNode.scrollIntoView({ block: 'nearest' });
-      return;
+  document.addEventListener('visr:tabchange', function (e) {
+    var panel = e.detail && e.detail.panel; if (!panel) return;
+    var card = panel.closest('[data-chart]'); if (!card) return;
+    var host = card.querySelector('.v-chart-table');
+    if (panel === host) {
+      if (!host.hasAttribute('data-built')) { buildTable(card, host); host.setAttribute('data-built', ''); }
+      if (host._clip) host._clip();
+      card.querySelectorAll('canvas[data-viz]').forEach(function (cv) { if (live.has(cv) && !cv.hasAttribute('data-chart-pin')) { var c = live.get(cv); setIndex(c, null); var st = state.get(cv); if (st) hideTip(st); } });
     }
-    var btn = e.target.closest('[data-chart-toggle]'); if (!btn) return;
-    var card = btn.closest('[data-chart]'), cv = card && card.querySelector('canvas[data-viz]'), host = document.getElementById(btn.getAttribute('aria-controls'));
-    if (!cv || !host) return;
-    var on = btn.getAttribute('aria-pressed') !== 'true';
-    if (on && !host.hasAttribute('data-built')) { buildTable(cv, host); host.setAttribute('data-built', ''); }
-    var legend = card.querySelector('[data-chart-legend]');
-    if (on) {   /* the table takes exactly the room the plot (and a body legend) held, and scrolls inside it: the card never changes height (4.6 s, 5.9) */
-      var hgt = cv.parentNode.offsetHeight;
-      if (legend && legend.closest('.v-chart-body') && !legend.hidden) hgt += legend.offsetHeight + (parseFloat(getComputedStyle(legend).marginBottom) || 0);
-      if (hgt > 0) host.style.height = hgt + 'px';
-    }
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    cv.parentNode.hidden = on; host.hidden = !on;
-    if (legend) legend.hidden = on;
-    if (on && live.has(cv)) { select(live.get(cv), null, false); }
   });
 
-  function init() {
+  function boot() {
     T = tokens(); applyDefaults();
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) { if (en.isIntersecting && !live.has(en.target)) { mount(en.target); io.unobserve(en.target); } });
     }, { rootMargin: '200px' });
-    document.querySelectorAll('canvas[data-viz]').forEach(function (c) { io.observe(c); });   /* hidden tabs never intersect until shown */
+    document.querySelectorAll('canvas[data-viz]').forEach(function (c) { io.observe(c); });   /* a hidden panel never intersects until shown */
     new MutationObserver(retheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
   }
-  window.VISR = Object.assign(window.VISR || {}, { FMT: FMT, niceScale: niceScale, durationScale: durationScale });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  function start() {   /* mount only after the shipped font is ready, so axis ticks are measured in Inter */
+    if (document.fonts && document.fonts.load) document.fonts.load('400 12px "Inter Variable"').then(boot, boot); else boot();
+  }
+  window.VISR = Object.assign(window.VISR || {}, { niceScale: niceScale, durationScale: durationScale });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -1,0 +1,28 @@
+{{- /* Column header (design system v4 4.14): plain, 40px, label role, sentence case, one line. With a sub line anywhere in the table
+  every header is 52px and bottom-aligned (CSS). A header never wraps or truncates: a label that does not fit takes the next column
+  width (2.3).
+  Dict {label, sub, record, unit, num, sort, active, title, class}.
+    label   at most 24 characters. sub: the sub line, a window, range or base ("Last 30 days", "vs prior 7 days"): a string from
+            fmt/label.html, or a ui/value.html dict ({kind "range", from, to}).
+    record  the label this column takes in a record or list row below 64rem, from fmt/label.html ("Issues waiting over 7 days").
+            ui.js copies it to each cell (data-label); default: the label.
+    unit    sr-only unit of a time column (", days").
+    num     true right-aligns the column; the sort icon then sits before the label.
+    sort    {key, type, desc, asc}: makes the header sortable (th[data-sort] > button.v-th-btn). key: the URL sort key. type:
+            "num" (numbers, durations and dates; first click descending), "text" (ascending first) or "order" (workflow order from
+            data-v; ascending first). desc and asc: the choice in words for the sort menu below 64rem ("Longest wait first").
+    active  "descending" or "ascending" on the column the server sorted by (aria-sort; there is no unsorted state).
+    title   the definition of the column's metric (also in Data notes).
+  The title column never sorts. A table whose rows have a fixed order has no sortable header and no icon. */ -}}
+{{- $c := . -}}
+{{- $sort := $c.sort -}}
+{{- if and $sort (not (reflect.IsMap $sort)) }}{{ $sort = dict "key" (anchorize (string $c.label)) "type" (string $sort) }}{{ end -}}
+{{- $cls := slice }}{{ if $c.num }}{{ $cls = $cls | append "num" }}{{ end }}{{ with $c.class }}{{ $cls = $cls | append . }}{{ end -}}
+<th scope="col"{{ with $cls }} class="{{ delimit . " " }}"{{ end }}{{ with $sort }} data-sort="{{ .key }}" data-sort-type="{{ .type | default "num" }}"{{ with .desc }} data-desc="{{ . }}"{{ end }}{{ with .asc }} data-asc="{{ . }}"{{ end }}{{ end }}{{ with $c.active }} aria-sort="{{ . }}"{{ end }}{{ with $c.record }} data-record="{{ . }}"{{ end }}{{ with $c.title }} title="{{ . }}"{{ end }}>
+  {{- if $sort -}}
+  <button type="button" class="v-th-btn">{{ $c.label }}{{ with $c.unit }}<span class="sr-only">{{ . }}</span>{{ end }}{{ partial "ui/icon.html" (dict "name" "chevron-up-down" "size" 12 "class" "v-sort-rest") }}{{ partial "ui/icon.html" (dict "name" "arrow-up" "size" 12 "class" "v-sort-up") }}{{ partial "ui/icon.html" (dict "name" "arrow-down" "size" 12 "class" "v-sort-down") }}</button>
+  {{- else -}}
+  {{ $c.label }}{{ with $c.unit }}<span class="sr-only">{{ . }}</span>{{ end }}
+  {{- end -}}
+  {{- with $c.sub }}<span class="v-th-sub">{{ if reflect.IsMap . }}{{ partial "ui/value.html" . }}{{ else }}{{ . }}{{ end }}</span>{{ end -}}
+</th>

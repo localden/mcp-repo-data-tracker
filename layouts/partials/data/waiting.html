@@ -1,0 +1,38 @@
+{{- /* Waiting items (design system v4 4.18): the ONE place that counts waiting items, so a number and the list it opens can never
+  disagree. Every tile, cell, tab and link-action that shows one of these numbers calls it.
+  Call: $w := partial "data/waiting.html" (dict "repo" "typescript-sdk" "kind" "issues")       kind: "issues" (default) or "pulls"
+    repo: a repos.json entry, "owner/repo" or the repository name.
+  issues: metrics.json issues.issues_without_maintainer_response (open issues by a non-maintainer with no maintainer comment).
+  pulls: metrics.json pulls.prs_without_maintainer_review, non-draft PRs only (open PRs with no maintainer review).
+  Returns {any, over7, rows, rows7, longest, drafts, has}:
+    any      rows at any age ("Waiting for a reply, any age").          rows: those items, longest wait first.
+    over7    rows waiting 7 days or more ("Waiting for a reply").       rows7: those items.
+    longest  the longest wait in days among the over7 rows (nil when there are none).
+    drafts   the draft PRs left out of rows (pulls only; the Drafts view of an unclassified queue).
+    has      false when the repository has no metrics for this kind (render empty marks, never zeros).
+  Each row is the source item: {number, title, url, createdAt, daysWaiting, labels, commentCount, author, isDraft, additions...}. */ -}}
+{{- $r := partial "data/repo.html" (.repo | default "") -}}
+{{- $kind := .kind | default "issues" -}}
+{{- $src := slice }}{{ $has := false -}}
+{{- with $r.data.metrics -}}
+  {{- if eq $kind "pulls" -}}
+    {{- with .pulls }}{{ if reflect.IsMap . }}{{ $has = true }}{{ $src = .prs_without_maintainer_review | default slice }}{{ end }}{{ end -}}
+  {{- else -}}
+    {{- with .issues }}{{ if reflect.IsMap . }}{{ $has = true }}{{ $src = .issues_without_maintainer_response | default slice }}{{ end }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $tmp := slice }}{{ $drafts := slice -}}
+{{- range $src -}}
+  {{- if reflect.IsMap . -}}
+    {{- if and (eq $kind "pulls") (eq .isDraft true) }}{{ $drafts = $drafts | append . -}}
+    {{- else }}{{ $tmp = $tmp | append (dict "w" (float (.daysWaiting | default 0)) "it" .) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $tmp }}{{ $tmp = sort $tmp "w" "desc" }}{{ end -}}
+{{- $rows := slice }}{{ $rows7 := slice }}{{ $longest := 0.0 -}}
+{{- range $tmp -}}
+  {{- $rows = $rows | append .it -}}
+  {{- if ge .w 7.0 }}{{ $rows7 = $rows7 | append .it }}{{ if gt .w $longest }}{{ $longest = .w }}{{ end }}{{ end -}}
+{{- end -}}
+{{- return dict "any" (len $rows) "over7" (len $rows7) "rows" $rows "rows7" $rows7
+  "longest" (cond (gt (len $rows7) 0) $longest nil) "drafts" $drafts "has" $has -}}

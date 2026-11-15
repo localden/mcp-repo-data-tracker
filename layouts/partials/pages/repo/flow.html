@@ -1,54 +1,60 @@
-{{- /* 4. Flow (brief 3.6-4): issues opened, closed and net; PRs opened, merged and closed without merging; last 7, 30 and 90 days from
-  metrics.json. Plain numbers, no links (P6). Net change is opened minus closed inside each window, a signed count ("+9", "−1") in
-  a table of per-window counts; the KPI strip shows the 30-day figure as the Open issues delta badge. Badges here would put a
-  5rem column of "No change" badges past their cells.
-  Closed without merging is collected for 90 days only: its 7- and 30-day cells stay blank and the reason is said once, under the
-  row label (design system v3 §4.8: blank cells with one reason, no walls of dashes).
-  Rendered as two cards, Issues and PRs, side by side at >= 64rem, so each sits under its Activity chart. Each card is a 4-column
-  table of short numbers that fits at 390px, so it stays a table on phones (no horizontal scroll, R1/R3).
-  Context: the dict from pages/repo.html. */ -}}
+{{- /* 4. Opened and closed (design system v4 5.8 module 4, ruling 46): one matrix table at 12, three rows in fixed order (Last 7 days,
+  Last 30 days, Last 90 days), no sort. Context: the dict from pages/repo.html.
+  Spanner "Issues": Opened, Closed, Net change. Spanner "PRs": Opened, Merged, Closed without merging (num-xl), Net change. The six
+  short columns are num-sm. Plan: 47rem, the row header 13rem at 1024.
+  Net change is a value, a plain signed number: opened minus closed for issues; opened minus merged minus closed without merging for
+  PRs. "Closed without merging" is tracked for 90 days only, so it and the PR net change are empty marks with that reason in the
+  7-day and 30-day rows. The card has no head: its title would repeat the section title. Below 64rem each period is a record whose
+  labels carry the spanner ("Issues opened", "PRs, net change"). */ -}}
 {{- $m := .m -}}
 {{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
-{{- $heads := slice "7 days" "30 days" "90 days" -}}
-{{- $iOpened := slice }}{{ $iClosed := slice }}{{ $iNet := slice }}{{ $pOpened := slice }}{{ $pMerged := slice }}{{ $pClosed := slice -}}
-{{- range slice "7d" "30d" "90d" -}}
-  {{- $o := index $is (printf "opened_%s" .) }}{{ $x := index $is (printf "closed_%s" .) -}}
-  {{- $iOpened = $iOpened | append (dict "v" $o) }}{{ $iClosed = $iClosed | append (dict "v" $x) -}}
-  {{- $n := dict "v" nil "net" true -}}
-  {{- if and (ne $o nil) (ne $x nil) }}{{ $n = dict "v" (sub (float $o) (float $x)) "net" true }}{{ end -}}
-  {{- $iNet = $iNet | append $n -}}
-  {{- $pOpened = $pOpened | append (dict "v" (index $pr (printf "opened_%s" .))) -}}
-  {{- $pMerged = $pMerged | append (dict "v" (index $pr (printf "merged_%s" .))) -}}
-  {{- if eq . "90d" }}{{ $pClosed = $pClosed | append (dict "v" $pr.closed_not_merged_90d) -}}
-  {{- else }}{{ $pClosed = $pClosed | append (dict "blank" true "na" "tracked for 90 days only") }}{{ end -}}
-{{- end -}}
-{{- $cards := slice
-  (dict "id" "flow-issues" "title" "Issues" "rows" (slice
-    (dict "label" "Opened" "cells" $iOpened)
-    (dict "label" "Closed" "cells" $iClosed)
-    (dict "label" "Net change" "cells" $iNet)))
-  (dict "id" "flow-pulls" "title" "PRs" "rows" (slice
-    (dict "label" "Opened" "cells" $pOpened)
-    (dict "label" "Merged" "cells" $pMerged)
-    (dict "label" "Closed without merging" "sub" "Tracked for 90 days only" "cells" $pClosed))) }}
-<section class="v-section" aria-labelledby="flow">
-  {{ partial "ui/section-head.html" (dict "title" "Flow" "id" "flow" "description" "Issues and PRs opened and closed in the last 7, 30 and 90 days.") }}
+{{- $cols := slice
+  (dict "label" "Opened" "scope" "Issues") (dict "label" "Closed" "scope" "Issues") (dict "label" "Net change" "scope" "Issues")
+  (dict "label" "Opened" "scope" "PRs") (dict "label" "Merged" "scope" "PRs") (dict "label" "Closed without merging" "scope" "PRs")
+  (dict "label" "Net change" "scope" "PRs") -}}
+{{- if or $m.issues $m.pulls }}
+<section class="v-section" aria-labelledby="opened-and-closed">
+  {{ partial "ui/section-head.html" (dict "id" "opened-and-closed" "title" "Opened and closed") }}
   <div class="v-grid">
-    {{- range $cards }}
-    <div class="v-span-6">
-      <div class="v-card">
-        {{ partial "ui/card-head.html" (dict "title" .title "id" (printf "%s-title" .id)) }}
-        <table class="v-dt is-fixed" aria-labelledby="{{ .id }}-title">
-          <colgroup><col class="v-col-auto"><col class="v-col-20"><col class="v-col-20"><col class="v-col-20"></colgroup>
-          <thead><tr><th scope="col"><span class="sr-only">{{ .title }}</span></th>{{ range $heads }}<th scope="col" class="num">{{ . }}</th>{{ end }}</tr></thead>
-          <tbody>
-            {{- range .rows }}
-            <tr><th scope="row">{{ .label }}{{ with .sub }}<span class="sub">{{ . }}</span>{{ end }}</th>{{ range .cells }}<td class="num">{{ partial "pages/repo/flow-cell.html" . }}</td>{{ end }}</tr>
+    <article class="v-card v-span-12">
+      <table class="v-dt is-matrix" aria-labelledby="opened-and-closed">
+        <colgroup><col><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-sm"><col class="v-col-num-xl"><col class="v-col-num-sm"></colgroup>
+        <thead>
+          <tr class="v-dt-span"><th></th><th class="v-span" colspan="3" scope="colgroup"><span>Issues</span></th><th class="v-span" colspan="4" scope="colgroup"><span>PRs</span></th></tr>
+          <tr>
+            {{ partial "ui/th.html" (dict "label" "Period") }}
+            {{- range $cols }}
+            {{ partial "ui/th.html" (dict "label" .label "num" true "record" (partial "fmt/label.html" (dict "metric" .label "scope" .scope)).record) }}
             {{- end }}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {{- end }}
+          </tr>
+        </thead>
+        <tbody>
+          {{- range slice 7 30 90 }}
+          {{- $k := printf "%dd" . }}
+          {{- $io := index $is (printf "opened_%s" $k) }}{{ $ic := index $is (printf "closed_%s" $k) }}
+          {{- $po := index $pr (printf "opened_%s" $k) }}{{ $pm := index $pr (printf "merged_%s" $k) }}
+          {{- $iNet := dict "kind" "net" "reason" "no-data" }}
+          {{- if and (ne $io nil) (ne $ic nil) }}{{ $iNet = dict "kind" "net" "v" (sub (float $io) (float $ic)) }}{{ end }}
+          {{- $pClosed := dict "kind" "count" "reason" "tracked-90" }}{{ $pNet := dict "kind" "net" "reason" "tracked-90" }}
+          {{- if eq . 90 }}
+            {{- $pc := $pr.closed_not_merged_90d }}
+            {{- $pClosed = dict "kind" "count" "v" $pc "reason" "no-data" }}{{ $pNet = dict "kind" "net" "reason" "no-data" }}
+            {{- if and (ne $po nil) (ne $pm nil) (ne $pc nil) }}{{ $pNet = dict "kind" "net" "v" (sub (sub (float $po) (float $pm)) (float $pc)) }}{{ end }}
+          {{- end }}
+          <tr>
+            <th scope="row">{{ (partial "fmt/label.html" (dict "window" (dict "n" . "unit" "day"))).window }}</th>
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $io) }}</td>
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $ic) }}</td>
+            <td class="num">{{ partial "ui/value.html" $iNet }}</td>
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $po) }}</td>
+            <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" $pm) }}</td>
+            <td class="num">{{ partial "ui/value.html" $pClosed }}</td>
+            <td class="num">{{ partial "ui/value.html" $pNet }}</td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
   </div>
 </section>
+{{- end }}

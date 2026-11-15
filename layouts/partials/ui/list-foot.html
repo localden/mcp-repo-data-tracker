@@ -1,0 +1,20 @@
+{{- /* List foot (design system v4 4.13): the only foot a card has. Left: the range "Showing 25 of 249". Right: the step button and,
+  after any expansion, a ghost "Collapse". No numbered pages: lists are sorted worst first and filtered in the browser.
+  Dict {list, n, limit, step}. list: the list card's id (its table is "{list}-table"). n: matched rows at first paint (the default
+  view). limit: the first step (default 25; 10 on People). step: default 50 at every width.
+  Labels (ui.js keeps them current): 100 matched rows or fewer: "Show all 87". More: "Show 50 more", then "Show remaining 14".
+  Hidden while every matched row is shown and the list is not expanded, and without JavaScript. */ -}}
+{{- $n := int (.n | default 0) }}{{ $limit := int (.limit | default 25) }}{{ $step := int (.step | default 50) -}}
+{{- $shown := $n }}{{ if gt $n $limit }}{{ $shown = $limit }}{{ end -}}
+{{- $rest := sub $n $shown -}}
+<div class="v-list-foot" data-list-foot{{ if le $n $limit }} hidden{{ end }}>
+  <p class="v-list-range" data-list-range>Showing <span class="v-list-n">{{ (partial "fmt/count.html" (dict "v" $shown)).text }}</span> of <span class="v-list-n">{{ (partial "fmt/count.html" (dict "v" $n)).text }}</span></p>
+  <div class="v-list-actions">
+    <button type="button" class="v-btn v-btn-sm is-ghost" data-collapse hidden>Collapse</button>
+    <button type="button" class="v-btn v-btn-sm" data-more aria-expanded="false" aria-controls="{{ .list }}-table">
+      {{- if le $n 100 }}Show all {{ (partial "fmt/count.html" (dict "v" $n)).text }}
+      {{- else if gt $rest $step }}Show {{ $step }} more
+      {{- else }}Show remaining {{ (partial "fmt/count.html" (dict "v" $rest)).text }}{{ end -}}
+    </button>
+  </div>
+</div>

@@ -1,9 +1,9 @@
-{{- /* Hours from a seps.json moment to seps.json lastUpdated, for every duration on the SEPs page (Age, Last updated, Last activity,
-  time in stage); print the result with ui/dur.html. Returns a float, or -1.0 when unknown. Never emits.
-  Dict {days, at, ref}: days = the pipeline's whole-day count (daysWaiting, daysInCurrentStatus, lastActivityDays, daysInStage);
+{{- /* Hours from a seps.json moment to seps.json lastUpdated, for every duration on the SEPs page (Age, Last activity). Returns a
+  float, or -1.0 when unknown. Never emits; ui/value.html (kind "dur", unit "d") prints the result.
+  Dict {days, at, ref}: days = the pipeline's whole-day count (daysWaiting, daysInCurrentStatus, lastActivityDays);
   at = the matching timestamp (createdAt, updatedAt, lastActivityAt); ref = Unix seconds of seps.json lastUpdated.
-  Whole days win, so a cell matches the pipeline's own count ("319d" for daysWaiting 319). Below 2 days the timestamp is used,
-  where whole days would print "<1h" for 0 and "24h" for 1. */ -}}
+  Whole days win, so a cell matches the pipeline's own count (319 days for daysWaiting 319). Below 2 days the timestamp is used,
+  so a SEP opened this morning reads as less than a day. */ -}}
 {{- $h := -1.0 -}}
 {{- $at := 0 }}{{ with .at }}{{ $at = (time.AsTime .).Unix }}{{ end -}}
 {{- $exact := -1.0 -}}

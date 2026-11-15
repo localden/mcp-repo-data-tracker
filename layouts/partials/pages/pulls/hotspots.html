@@ -1,17 +1,9 @@
-{{- /* Where merged PRs land (brief 3.3b-5, 4.3, 5.13, TR-05, DV-30; design system v3 §4.4, §4.8, §4.17). Dict {m (metrics.json)};
-     source metrics › hotspots.
-     Layout change from the brief, made after the first render: the brief's single full-width table behind a Files and Directories
-     segmented control left about 700px of empty space between a 30-character path and its count at 1440px, and hid one list.
-     Both are 3-column ranking tables, which 4.3 places on a 6-column span, and both hold up to 10 rows, so they sit side by side as
-     two titled cards (a section with two cards titles each, 4.4) at >= 64rem and stack below. Each table: path auto, merged PRs 7rem,
-     ranking bar 6rem (ui/meter.html: one accent colour, no track, scaled to that list's top row, aria-hidden, dropped on phones).
-     Paths are code: mono. They break only after a "/": each segment of up to 26 characters is a nowrap span with a <wbr> after its
-     slash, so "upgrade-to-v2.md" never splits at a hyphen; a longer segment may break anywhere (the cell is wrap-anywhere), which
-     keeps the cell from overflowing on a 390px phone. Counts are right-aligned and never clipped.
-     Until D1-12 lands, the paths the pipeline will exclude (lockfiles, .changeset/, CHANGELOG*.md) are skipped here before taking the
-     top 10. Omitted when metrics.json has no hotspots. */ -}}
+{{- /* Where merged PRs land (design system v4 5.5 module 6, 4.14, 4.21, 4.23). Ctx: dict {m (metrics.json)}; source metrics.json hotspots.
+     6 + 6: two rank table cards under the pair rule, "Files" and "Directories", each with the card sub line "Last 90 days": the path
+     (ui/value.html kind path: the directory part gives way first, the last segment never truncates) and Merged PRs (rank bar and number).
+     Both cards render the same number of rows: the shorter list's length, at most 10. Lockfiles, .changeset files and changelogs are
+     left out before the rows are taken. The section is omitted when either list is empty. */ -}}
 {{- $h := dict }}{{ with .m }}{{ with .hotspots }}{{ if reflect.IsMap . }}{{ $h = . }}{{ end }}{{ end }}{{ end -}}
-{{- if $h -}}
 {{- $skipFile := `(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|uv\.lock|Cargo\.lock|Gemfile\.lock)$|(^|/)\.changeset/|(^|/)CHANGELOG[^/]*\.md$` -}}
 {{- $files := slice -}}
 {{- range $h.by_file | default slice -}}
@@ -23,58 +15,37 @@
   {{- $p := string (.path | default "") -}}
   {{- if and $p (lt (len $dirs) 10) (not (findRE `(^|/)\.changeset/$` $p)) }}{{ $dirs = $dirs | append . }}{{ end -}}
 {{- end -}}
-{{- $panels := slice -}}
-{{- with $files }}{{ $panels = $panels | append (dict "key" "files" "title" "Files" "head" "File" "rows" .) }}{{ end -}}
-{{- with $dirs }}{{ $panels = $panels | append (dict "key" "dirs" "title" "Directories" "head" "Directory" "rows" .) }}{{ end }}
+{{- $n := int (math.Min (float (len $files)) (float (len $dirs))) -}}
+{{- if gt $n 0 -}}
+{{- $sub := (partial "fmt/label.html" (dict "window" (dict "n" 90 "unit" "day"))).window -}}
+{{- $panels := slice
+  (dict "key" "files" "title" "Files" "head" "File" "dir" false "rows" (first $n $files))
+  (dict "key" "dirs" "title" "Directories" "head" "Directory" "dir" true "rows" (first $n $dirs)) }}
 <section class="v-section" aria-labelledby="hotspots">
-  {{ partial "ui/section-head.html" (dict "title" "Where merged PRs land" "id" "hotspots" "description" "The files and directories touched by the most PRs merged in the last 90 days.") }}
-  {{- if $panels }}
+  {{ partial "ui/section-head.html" (dict "id" "hotspots" "title" "Where merged PRs land") }}
   <div class="v-grid">
-    {{- range $panels }}
-    {{- $pn := . -}}
-    {{- $max := float ((index $pn.rows 0).pr_count | default 1) }}{{ if le $max 0.0 }}{{ $max = 1.0 }}{{ end }}
-    <div class="v-span-6">
-      <div class="v-card">
-        {{ partial "ui/card-head.html" (dict "title" $pn.title "id" (printf "hot-%s-title" $pn.key)) }}
-        <table class="v-dt is-fixed" aria-labelledby="hot-{{ $pn.key }}-title">
-          <colgroup><col class="v-col-auto"><col class="v-col-28"><col class="v-col-24 v-desk-only"></colgroup>
-          <thead><tr>
-            <th scope="col">{{ $pn.head }}</th>
-            <th scope="col" class="num">Merged PRs</th>
-            <th scope="col" class="v-desk-only"><span class="sr-only">Compared with the top {{ lower $pn.head }}</span></th>
-          </tr></thead>
-          <tbody>
-            {{- range $pn.rows }}
-            {{- $p := string .path -}}
-            {{- $tip := "" }}{{ with .total_changes }}{{ $tip = printf "%s lines changed" (lang.FormatNumber 0 (float .)) }}{{ end }}{{ with .file_count }}{{ $tip = partial "ui/plural.html" (dict "n" . "one" "file") }}{{ end -}}
-            {{- /* the path as nowrap segments joined by <wbr>; "/" alone is the repository root */ -}}
-            {{- $path := "/ (root)" -}}
-            {{- if ne $p "/" -}}
-              {{- $path = "" -}}
-              {{- $segs := split $p "/" -}}
-              {{- range $i, $s := $segs -}}
-                {{- $last := eq $i (sub (len $segs) 1) -}}
-                {{- $t := $s }}{{ if not $last }}{{ $t = printf "%s/" $s }}{{ end -}}
-                {{- if $t -}}
-                  {{- if le (len $t) 26 }}{{ $path = printf `%s<span class="v-nowrap">%s</span>` $path (htmlEscape $t) }}{{ else }}{{ $path = printf "%s%s" $path (htmlEscape $t) }}{{ end -}}
-                  {{- if not $last }}{{ $path = printf "%s<wbr>" $path }}{{ end -}}
-                {{- end -}}
-              {{- end -}}
-            {{- end }}
-            <tr>
-              <th scope="row" class="wrap-anywhere"><span class="v-code"{{ with $tip }} title="{{ . }}"{{ end }}>{{ $path | safeHTML }}</span></th>
-              <td class="num">{{ partial "ui/num.html" (dict "v" .pr_count "mode" "full") }}</td>
-              <td class="v-desk-only">{{ partial "ui/meter.html" (dict "value" .pr_count "max" $max) }}</td>
-            </tr>
-            {{- end }}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    {{- range $pn := $panels }}
+    {{- $max := 1.0 }}{{ range $pn.rows }}{{ $max = math.Max $max (float (.pr_count | default 0)) }}{{ end }}
+    <article class="v-card v-span-6">
+      {{ partial "ui/card-head.html" (dict "title" $pn.title "sub" $sub "id" (printf "hot-%s-title" $pn.key)) }}
+      <table class="v-dt is-rank is-list" aria-labelledby="hot-{{ $pn.key }}-title">
+        <colgroup><col><col class="v-col-bar"></colgroup>
+        <thead><tr>
+          {{ partial "ui/th.html" (dict "label" $pn.head) }}
+          {{ partial "ui/th.html" (dict "label" "Merged PRs" "num" true "title" "Merged PRs from the last 90 days that changed the path.") }}
+        </tr></thead>
+        <tbody>
+          {{- range $pn.rows }}
+          {{- $c := float (.pr_count | default 0) }}
+          <tr>
+            <th scope="row" class="v-name">{{ partial "ui/value.html" (dict "kind" "path" "v" (string .path) "dir" $pn.dir) }}</th>
+            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $c "max" $max "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" $c) }}</span></td>
+          </tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
     {{- end }}
   </div>
-  {{- else }}
-  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No merged PRs in the last 90 days.") }}
-  {{- end }}
 </section>
 {{- end -}}

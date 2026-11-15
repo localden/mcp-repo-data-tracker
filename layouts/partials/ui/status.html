@@ -1,24 +1,10 @@
-{{- /* Overdue status (design system v3 §4.20): one expression, the value in --danger with an alert icon (12px in tables, 18px in tiles).
-  Use it only for items past a published deadline; nothing else is red (no red ages, no red row edges).
-  Dict {n, text, html, title, icon, mode, na, size}:
-    n: the overdue count (formatted with ui/num.html, mode default "full"); 0 -> "0" in text-3; nil (with no text/html) -> "—" + sr-only na.
-    text, html: the status text instead of a number ("514d over"); html is pre-rendered markup.
-    title: names the rule ("Overdue: triage within 2 business days").
-    icon: false drops the icon and keeps the danger text (when more than 50% of a list's rows are overdue).
-    size: icon size, 12 (default) or 18 (KPI tiles; ui/kpi.html passes it). */ -}}
+{{- /* RETIRED (design system v4 8.1): on a row use ui/sla.html; a count past a deadline is span.v-over around ui/value.html; overdue
+  with unknown days is ui/badge.html tone danger. Kept as a thin shim until the last caller is rebuilt, then deleted.
+  Dict {n, text, html}: n is the overdue count (0 prints "0", nil the empty mark); text or html is printed in the overdue style. */ -}}
 {{- $c := . -}}
-{{- $body := "" }}{{ $state := "status" }}{{ $icon := true -}}
-{{- /* the old "crit"/"warn" string form is retired: it renders nothing */ -}}
-{{- if not (reflect.IsMap $c) }}{{ $c = dict }}{{ $state = "none" }}{{ else if isset $c "icon" }}{{ $icon = $c.icon }}{{ end -}}
-{{- if eq $state "none" }}
-{{- else if $c.html }}{{ $body = $c.html -}}
-{{- else if $c.text }}{{ $body = $c.text -}}
-{{- else if eq $c.n nil }}{{ $state = "na" -}}
-{{- else if eq (float $c.n) 0.0 }}{{ $state = "zero" -}}
-{{- else }}{{ $body = partial "ui/num.html" (dict "v" $c.n "mode" ($c.mode | default "full")) }}{{ end -}}
-{{- if eq $state "none" -}}
-{{- else if eq $state "na" -}}{{ partial "ui/num.html" (dict "v" nil "na" ($c.na | default "not tracked")) }}
-{{- else if eq $state "zero" -}}<span class="v-zero">0</span>
-{{- else -}}
-<span class="v-status{{ if not $icon }} no-icon{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-status-icon">{{ partial "ui/icon.html" (dict "name" "alert-triangle" "size" ($c.size | default 12)) }}</span><span class="v-status-text{{ if or $c.html $c.text }} is-text{{ end }}">{{ $body }}</span></span>
+{{- if reflect.IsMap $c -}}
+  {{- if or $c.html $c.text }}<span class="v-over"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ $c.html | default $c.text }}</span>
+  {{- else if eq $c.n nil }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "not-computed") -}}
+  {{- else if eq (float $c.n) 0.0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+  {{- else }}<span class="v-over"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ partial "ui/value.html" (dict "kind" "count" "v" $c.n) }}</span>{{ end -}}
 {{- end -}}

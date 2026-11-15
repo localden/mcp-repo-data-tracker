@@ -1,0 +1,118 @@
+{{- /* Chart data (design system v4 4.19): the shared inner step of ui/chart.html and ui/trellis.html. Fills the x domain, decides
+  whether there is enough history to draw, and builds the canvas contract. Returns a dict; never emits.
+  Dict {kind, unit, gran, metric, metric_one, scope, from, to, series, avg, avg_label, marks}: as documented in ui/chart.html.
+  Returns:
+    labels     every date in the domain (days, or ISO week starts)          from, to: the domain
+    rows       per series {label, role, n, last, lastIdx, lastDate, prev}   (last: the latest non-null value; prev: the one before)
+    canvas     true when there are at least 14 daily points or 4 weekly bins in some series (else the card is pending)
+    any        true when any series has a point                             first: the first date with a value in any series
+    gaps       runs where no series has a value, after the first value: [{from, to, n}] (3 or more days, or any week); gapN: their labels
+    marks      the event markers that fall inside the domain [{date, label}]
+    rec        the reconstructed span inside the domain {from, to}, or an empty dict
+    json       the data-series attribute: {"labels":[...],"series":[{"label","role","data":[n|null]}],"marks":[{"date","label"}],
+               "avg":{"value","label"}|null,"reconstructed":["from","to"]|null,"metricOne":"issue"}
+    aria       the canvas aria-label: "{Metric}, {scope}: {daily|weekly}, {range}. Latest: {label value, ...}." (it contains metric) */ -}}
+{{- $c := . -}}
+{{- $kind := $c.kind | default "line" }}{{ $gran := cond (eq $c.gran "week") "week" "day" }}{{ $unit := $c.unit | default "count" -}}
+{{- $metric := $c.metric | default "value" -}}
+{{- $series := $c.series | default slice -}}
+{{- $sc := newScratch }}{{ $from := $c.from | default "" }}{{ $to := $c.to | default "" }}{{ $recF := "" }}{{ $recT := "" -}}
+{{- range $i, $s := $series -}}
+  {{- range $s.points | default slice -}}
+    {{- if ne .value nil }}{{ $sc.SetInMap (printf "s%d" $i) .date .value }}{{ end -}}
+    {{- if not $c.from }}{{ if or (eq $from "") (lt .date $from) }}{{ $from = .date }}{{ end }}{{ end -}}
+    {{- if not $c.to }}{{ if or (eq $to "") (gt .date $to) }}{{ $to = .date }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- with $s.reconstructed }}{{ if ge (len .) 2 -}}
+    {{- $a := index . 0 }}{{ $b := index . 1 -}}
+    {{- if or (eq $recF "") (lt $a $recF) }}{{ $recF = $a }}{{ end }}{{ if or (eq $recT "") (gt $b $recT) }}{{ $recT = $b }}{{ end -}}
+  {{- end }}{{ end -}}
+{{- end -}}
+
+{{- $labels := slice -}}
+{{- if and $from $to -}}
+  {{- $t := time.AsTime $from }}{{ $stop := (time.AsTime $to).Unix -}}
+  {{- range $i := seq 0 (cond (eq $gran "day") 400 110) -}}
+    {{- $d := $t.AddDate 0 0 (int (cond (eq $gran "week") (mul 7 $i) $i)) -}}
+    {{- if le $d.Unix $stop }}{{ $labels = $labels | append ($d.Format "2006-01-02") }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $nl := len $labels -}}
+
+{{- $rows := slice }}{{ $nMax := 0 }}{{ $first := "" }}{{ $ser := slice -}}
+{{- range $i, $s := $series -}}
+  {{- $m := $sc.Get (printf "s%d" $i) | default dict -}}
+  {{- $cells := slice }}{{ $n := 0 }}{{ $lv := 0.0 }}{{ $pv := 0.0 }}{{ $li := -1 }}{{ $pi := -1 }}{{ $f := "" -}}
+  {{- range $j, $d := $labels -}}
+    {{- $v := index $m $d -}}
+    {{- if ne $v nil -}}
+      {{- $cells = $cells | append (string $v) -}}
+      {{- $pv = $lv }}{{ $pi = $li }}{{ $n = add $n 1 }}{{ $lv = float $v }}{{ $li = $j }}{{ if eq $f "" }}{{ $f = $d }}{{ end -}}
+    {{- else }}{{ $cells = $cells | append "null" }}{{ end -}}
+  {{- end -}}
+  {{- if gt $n $nMax }}{{ $nMax = $n }}{{ end -}}
+  {{- if and $f (or (eq $first "") (lt $f $first)) }}{{ $first = $f }}{{ end -}}
+  {{- $role := cond (eq $s.role "context") "context" "accent" -}}
+  {{- if and (not $s.role) (gt $i 0) }}{{ $role = "context" }}{{ end -}}
+  {{- $label := $s.label | default (strings.FirstUpper $metric) -}}
+  {{- $lastDate := "" }}{{ if ge $li 0 }}{{ $lastDate = index $labels $li }}{{ end -}}
+  {{- $rows = $rows | append (dict "label" $label "role" $role "n" $n "last" $lv "lastIdx" $li "lastDate" $lastDate "prev" $pv "prevIdx" $pi) -}}
+  {{- $ser = $ser | append (printf `{"label":%s,"role":%s,"data":[%s]}` (jsonify $label) (jsonify $role) (delimit $cells ",")) -}}
+{{- end -}}
+{{- $minPts := cond (eq $gran "day") 14 4 -}}
+{{- $canvas := and (gt $nl 1) (ge $nMax $minPts) -}}
+
+{{- /* gap runs: labels where no series has a value, once any series has started; trailing runs count */ -}}
+{{- $gaps := slice }}{{ $gapN := 0 }}{{ $started := false }}{{ $rf := "" }}{{ $rl := "" }}{{ $rn := 0 -}}
+{{- $minRun := cond (eq $gran "day") 3 1 -}}
+{{- range $j, $d := $labels -}}
+  {{- $has := false -}}
+  {{- range $i, $s := $series }}{{ if ne (index ($sc.Get (printf "s%d" $i) | default dict) $d) nil }}{{ $has = true }}{{ end }}{{ end -}}
+  {{- if $has -}}
+    {{- if ge $rn $minRun }}{{ $gaps = $gaps | append (dict "from" $rf "last" $rl "n" $rn) }}{{ $gapN = add $gapN $rn }}{{ end -}}
+    {{- $started = true }}{{ $rn = 0 -}}
+  {{- else if $started -}}
+    {{- if eq $rn 0 }}{{ $rf = $d }}{{ end }}{{ $rl = $d }}{{ $rn = add $rn 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if ge $rn $minRun }}{{ $gaps = $gaps | append (dict "from" $rf "last" $rl "n" $rn) }}{{ $gapN = add $gapN $rn }}{{ end -}}
+{{- $gapOut := slice -}}
+{{- range $gaps -}}
+  {{- $gt := .last }}{{ if eq $gran "week" }}{{ $gt = ((time.AsTime .last).AddDate 0 0 6).Format "2006-01-02" }}{{ end -}}
+  {{- $gapOut = $gapOut | append (dict "from" .from "to" $gt "n" .n) -}}
+{{- end -}}
+
+{{- /* a weekly domain ends on its last week START: an event inside that last week (start + 6 days) is still in the domain */ -}}
+{{- $markTo := $to }}{{ if and $to (eq $gran "week") }}{{ $markTo = ((time.AsTime $to).AddDate 0 0 6).Format "2006-01-02" }}{{ end -}}
+{{- $marks := slice }}{{ $mj := slice -}}
+{{- range $c.marks }}{{ if reflect.IsMap . }}{{ if and .date $from (ge (string .date) $from) (le (string .date) $markTo) -}}
+  {{- $marks = $marks | append (dict "date" (string .date) "label" (.label | default "")) -}}
+  {{- $mj = $mj | append (printf `{"date":%s,"label":%s}` (jsonify (string .date)) (jsonify (.label | default ""))) -}}
+{{- end }}{{ end }}{{ end -}}
+
+{{- $rec := dict }}{{ $recJSON := "null" -}}
+{{- if and $recF $from (le $recF $to) (ge $recT $from) }}{{ $rec = dict "from" $recF "to" $recT }}{{ $recJSON = jsonify (slice $recF $recT) }}{{ end -}}
+
+{{- $avg := "null" -}}
+{{- if ne $c.avg nil }}{{ $avg = printf `{"value":%s,"label":%s}` (jsonify (float $c.avg)) (jsonify ($c.avg_label | default "12-week average")) }}{{ end -}}
+{{- $json := printf `{"labels":%s,"series":[%s],"marks":[%s],"avg":%s,"reconstructed":%s,"metricOne":%s}`
+  (jsonify $labels) (delimit $ser ",") (delimit $mj ",") $avg $recJSON (jsonify ($c.metric_one | default $metric)) -}}
+
+{{- /* aria-label: plain text through the formatters */ -}}
+{{- $aria := strings.FirstUpper $metric -}}
+{{- with $c.scope }}{{ $aria = printf "%s, %s" $aria . }}{{ end -}}
+{{- if gt $nl 0 -}}
+  {{- $aria = printf "%s: %s, %s." $aria (cond (eq $gran "week") "weekly" "daily") (partial "fmt/range.html" (dict "from" (index $labels 0) "to" (index $labels (sub $nl 1)))).text -}}
+  {{- $bits := slice -}}
+  {{- range $rows }}{{ if ge .lastIdx 0 -}}
+    {{- $vt := "" -}}
+    {{- if eq $unit "downloads" }}{{ $vt = (partial "fmt/volume.html" (dict "v" .last)).text -}}
+    {{- else if eq $unit "hours" }}{{ $vt = (partial "fmt/dur.html" (dict "h" .last)).long -}}
+    {{- else }}{{ $vt = (partial "fmt/count.html" (dict "v" .last)).text }}{{ end -}}
+    {{- $bits = $bits | append (printf "%s %s" .label $vt) -}}
+  {{- end }}{{ end -}}
+  {{- with $bits }}{{ $aria = printf "%s Latest: %s." $aria (delimit . ", ") }}{{ end -}}
+  {{- range $gapOut }}{{ $aria = printf "%s No data %s." $aria (partial "fmt/range.html" (dict "from" .from "to" .to)).text }}{{ end -}}
+{{- end -}}
+{{- return dict "labels" $labels "from" $from "to" $to "rows" $rows "canvas" $canvas "any" (gt $nMax 0) "first" $first
+  "gaps" $gapOut "gapN" $gapN "marks" $marks "rec" $rec "json" $json "aria" $aria "kind" $kind "unit" $unit "gran" $gran "metric" $metric -}}

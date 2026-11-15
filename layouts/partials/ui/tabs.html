@@ -1,20 +1,49 @@
-{{- /* Segmented control (design system v3 §4.11): role=tablist of role=tab buttons. Track surface-2, radius 8, padding 3; segment 28px,
-  small 500 text-2; the count follows the label in text-3 (danger when the tab holds overdue rows). Selected: surface (dark:
-  surface-raised), text, a soft shadow. Never inverted. Phone: one scrolling line with an edge fade.
-  Dict {id, label, tabs, selected, panel, panels, for}.
-    id: prefix; each tab gets id "{id}-tab-{key}". label: the tablist aria-label.
-    tabs: slice of {key, label, count, panel, overdue}. count (number, optional) prints after the label; overdue: true colours it danger.
-    selected: the key of the selected tab (required).
-  Two modes:
-    list tabs (default): every tab carries data-tab=key and filters the rows of one [data-list] by their data-tags token (key "all" = no filter).
-      All tabs aria-control the same panel: pass panel = the id of the role=tabpanel element that wraps the table. Counts get data-tab-count
-      and ui.js rewrites them from the rendered rows. Put the tablist inside the [data-list], or pass for = its id.
-    panel tabs (panels: true): each tab shows its own role=tabpanel (tabs[].panel ids) and hides the others; nothing is counted.
-  Keys: ArrowLeft/Right, Home/End; ?tab= is kept in the URL when the [data-list] has data-url. */ -}}
+{{- /* Tabs (design system v4 4.10). Tabs switch views and nothing else: a tab never filters, and a filter is never a tab.
+  Dict {id, label, variant, selected, tabs, panel}.
+    id        prefix: each tab is "{id}-tab-{key}".
+    label     aria-label of the tablist ("Views").
+    variant   "views" (default): the first band of a list card, underline tabs with counts. A view is one of the list's disjoint
+                piles; "All" is last. Below 64rem the band is replaced by the view button, one .v-btn that opens the same choices as
+                a menu of radio rows; both are rendered here and CSS shows one.
+              "seg": the segmented control, for "Chart" and "Table" in a chart card head. No counts.
+    tabs      slice of {key, label, count, danger, panel}. count: rows in the view (it does not move while filtering); a view at 0 is
+                aria-disabled and keeps its place. danger: the view holds overdue rows (the count takes the danger tone above zero).
+                panel: the id of the tab's own panel (seg); views all control one panel, the dict's panel.
+    selected  the selected key. Default for views: the first tab whose count is above zero, else the first tab.
+  ui.js: Left, Right, Home and End move and select (roving tabindex); a view tab carries data-view; seg tabs show their own panel and
+  dispatch "visr:tabchange". */ -}}
 {{- $c := . -}}{{- $id := $c.id | default "tabs" -}}
-<div class="v-tabs" role="tablist"{{ with $c.label }} aria-label="{{ . }}"{{ end }}{{ with $c.for }} data-for="{{ . }}"{{ end }}>
-{{- range $c.tabs -}}
-  {{- $on := eq .key $c.selected -}}
-  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}"{{ if not $c.panels }} data-tab="{{ .key }}"{{ end }}>{{ .label }}{{ if ne .count nil }}<span class="v-tab-count{{ if .overdue }} is-danger{{ end }}"{{ if not $c.panels }} data-tab-count{{ end }}>{{ partial "ui/num.html" (dict "v" .count "mode" "full" "plain" true) }}</span>{{ end }}</button>
+{{- $tabs := $c.tabs | default slice -}}
+{{- $seg := eq $c.variant "seg" -}}
+{{- $sel := $c.selected | default "" -}}
+{{- if and (not $sel) $tabs -}}
+  {{- range $tabs }}{{ if and (not $sel) (ne .count nil) }}{{ if gt (float .count) 0.0 }}{{ $sel = .key }}{{ end }}{{ end }}{{ end -}}
+  {{- if not $sel }}{{ $sel = (index $tabs 0).key }}{{ end -}}
 {{- end -}}
+{{- if $seg -}}
+<div class="v-seg" role="tablist" aria-label="{{ $c.label | default "View" }}">
+  {{- range $tabs -}}
+  {{- $on := eq .key $sel -}}
+  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}">{{ .label }}</button>
+  {{- end -}}
 </div>
+{{- else -}}
+{{- $items := slice }}{{ $curLabel := "" }}{{ $curCount := "" -}}
+<div class="v-views" role="tablist" aria-label="{{ $c.label | default "Views" }}">
+  {{- range $tabs -}}
+  {{- $on := eq .key $sel -}}
+  {{- $zero := false }}{{ $n := "" -}}
+  {{- if ne .count nil }}{{ $zero = eq (float .count) 0.0 }}{{ $n = (partial "fmt/count.html" (dict "v" .count)).text }}{{ end -}}
+  {{- if $on }}{{ $curLabel = .label }}{{ $curCount = $n }}{{ end -}}
+  {{- $danger := and (or .danger .overdue) (not $zero) -}}
+  {{- $items = $items | append (dict "text" .label "value" .key "checked" $on "count" .count "disabled" (and $zero (not $on))) -}}
+  <button type="button" role="tab" class="v-tab" id="{{ $id }}-tab-{{ .key }}" aria-selected="{{ if $on }}true{{ else }}false{{ end }}" tabindex="{{ if $on }}0{{ else }}-1{{ end }}" aria-controls="{{ .panel | default $c.panel }}" data-view="{{ .key }}"{{ if and $zero (not $on) }} aria-disabled="true"{{ end }}>{{ .label }}{{ with $n }}<span class="v-count{{ if $danger }} is-danger{{ end }}" data-view-count>{{ . }}</span>{{ end }}</button>
+  {{- end -}}
+</div>
+<div class="v-viewbar">
+  <div class="v-menu-wrap" data-menu data-view-menu>
+    <button type="button" class="v-btn" id="{{ $id }}-view-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="{{ $id }}-view-menu"><span class="v-view-cur"><span data-view-label>{{ $curLabel }}</span>{{ with $curCount }}<span class="v-count" data-view-n>{{ . }}</span>{{ end }}</span>{{ partial "ui/icon.html" (dict "name" "chevron-down" "class" "is-chev") }}</button>
+    {{ partial "ui/menu.html" (dict "id" (printf "%s-view-menu" $id) "bare" true "label" ($c.label | default "Views") "items" $items) }}
+  </div>
+</div>
+{{- end -}}

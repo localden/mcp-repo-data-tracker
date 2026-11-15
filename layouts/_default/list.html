@@ -1,8 +1,8 @@
 {{ define "main" }}
 {{- /*
   Section list pages (/issues/, /pulls/, /repos/): same routing contract as single.html. content/<section>/_index.md sets
-  params.page (e.g. page: issues) so the org view and the per-repo pages share layouts/partials/pages/issues.html; the partial
-  tells them apart by .Params.repo (empty on the org view). Without a matching partial the section lists its pages.
+  params.page (page: issues) so the org view and the per-repository pages share layouts/partials/pages/issues.html; the partial
+  tells them apart by .Params.repo (empty on the org view). A section without a matching partial renders its title and Markdown body.
 */ -}}
 {{- $name := .Params.page | default .Section -}}
 {{- $p := printf "pages/%s.html" $name -}}
@@ -12,15 +12,6 @@
 {{- else }}
   {{ partial "ui/page-head.html" (dict "title" .Title) }}
   {{- with .Content }}<div class="v-prose">{{ . }}</div>{{ end }}
-  {{- with .Pages }}
-  <div class="v-card">
-    <ul class="v-blocks">
-      {{- range . }}
-      <li class="v-block"><p class="v-block-title"><a href="{{ .RelPermalink }}">{{ (partial "ui/page-name.html" .).h1 }}</a></p></li>
-      {{- end }}
-    </ul>
-  </div>
-  {{- end }}
 {{- end }}
 </article>
 {{ end }}

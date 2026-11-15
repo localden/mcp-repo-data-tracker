@@ -1,0 +1,33 @@
+{{- /* SLA rule registry (design system v4 4.11): the one source of rule names, deadlines and sources.
+  Call with a rule key ("p1"): returns {key, name, deadline, source, entity, title}. An unknown key fails the build.
+  Call with "*" for every rule in registry order, with "issue" or "pr" for that entity's rules.
+  name is the only name a rule has: in the SLA table's Rule column, the Overdue object on a row, the SLA rule filter, table headers and
+  tiles. The verb lives in deadline. title is "{deadline}, {source}", the title of any of them.
+  first-reply has no breach field in the data yet: its SLA table row shows empty marks ("Not computed") and it is not an option of the
+  SLA rule filter (filter: false). */ -}}
+{{- $rows := slice
+  (dict "key" "first-reply" "name" "First reply" "deadline" "Reply within 2 business days" "source" "SEP-1730" "entity" "issue" "filter" false)
+  (dict "key" "triage" "name" "Triage" "deadline" "Triage within 2 business days" "source" "SEP-1730" "entity" "issue" "filter" true)
+  (dict "key" "p0" "name" "P0 bug" "deadline" "Resolve within 7 days" "source" "SEP-1730" "entity" "issue" "filter" true)
+  (dict "key" "question" "name" "Question" "deadline" "Answer within 2 business days" "source" "SEP-1730" "entity" "issue" "filter" true)
+  (dict "key" "follow-up" "name" "Follow-up" "deadline" "Reply within 2 business days" "source" "Team target" "entity" "issue" "filter" true)
+  (dict "key" "p1" "name" "P1 bug" "deadline" "Resolve within 90 days" "source" "Team target" "entity" "issue" "filter" true)
+  (dict "key" "repro" "name" "Repro" "deadline" "Reproduce within 14 days" "source" "Team target" "entity" "issue" "filter" true)
+  (dict "key" "first-review" "name" "First review" "deadline" "Review within 7 days" "source" "Team target" "entity" "pr" "filter" true)
+  (dict "key" "re-review" "name" "Re-review" "deadline" "Review within 24 hours" "source" "Team target" "entity" "pr" "filter" true)
+  (dict "key" "maintainer-pr" "name" "Maintainer PR" "deadline" "Review within 24 hours" "source" "Team target" "entity" "pr" "filter" true) -}}
+{{- $k := string . -}}
+{{- $all := slice }}{{ $hit := dict -}}
+{{- range $rows -}}
+  {{- $e := merge . (dict "title" (printf "%s, %s" .deadline .source)) -}}
+  {{- if or (eq $k "*") (eq $k .entity) }}{{ $all = $all | append $e }}{{ end -}}
+  {{- if eq $k .key }}{{ $hit = $e }}{{ end -}}
+{{- end -}}
+{{- $multi := in (slice "*" "issue" "pr") $k -}}
+{{- if and (not $multi) (not $hit) -}}
+  {{- errorf "data/sla-rules: unknown rule key %q (design system v4 4.11)" $k -}}
+  {{- $hit = dict "key" $k "name" (partial "ui/humanize.html" $k) "deadline" "" "source" "" "entity" "" "title" "" "filter" false -}}
+{{- end -}}
+{{- $ret := $hit -}}
+{{- if $multi }}{{ $ret = $all }}{{ end -}}
+{{- return $ret -}}

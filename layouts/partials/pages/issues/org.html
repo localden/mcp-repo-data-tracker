@@ -1,62 +1,76 @@
-{{- /* /issues/ (brief 3.2a): all repositories. Context: the section page (content/issues/_index.md, .Params.repo empty; title
-  "All repositories", the H1; the eyebrow "Issues" comes from the switcher kind).
-    1 Repo chips: navigation chips to /issues/<repo>/ with metrics.json issues.open_count (links, not filters), led by an
-      "Open issues" label so the bare counts are not read as waiting counts.
-    2 Longest waiting for a maintainer reply: the union of every repo's metrics.json issues.issues_without_maintainer_response,
-      oldest first. Columns Repository, Issue (title, then the row meta: number and at most 2 tags), Age, Comments; 25 rows, then
-      "Show all N". No status markers (P4).
-  Updated = the oldest metrics.json timestamp across the repositories. No chart, so no gap callout. */ -}}
-{{- $keys := slice }}{{ $chips := slice }}{{ $rows := slice -}}
+{{- /* /issues/ (design system v4 5.2): all repositories. Context: the section page (content/issues/_index.md).
+    0 page head: the H1 is the scope switcher on "All repositories"; meta: Updated.
+    1 Summary: metric strip lg, trend, 3 tiles: Waiting for a reply over 7 days (drill ?over7=1#waiting), any age (drill #waiting),
+      Open issues with the reference pair "Net change, last 30 days" (no link).
+    2 By repository: ui/repo-table.html, kind issues.
+    3 Waiting for a reply, any age (id waiting): the list card "io" (pages/issues/waiting.html) with the facets Over 7 days and
+      Repository.
+  Every waiting number comes from data/waiting.html, so a tile and the list it opens count the same rows. */ -}}
+{{- $keys := slice }}{{ $rows := slice }}{{ $opts := slice -}}
+{{- $nAny := 0 }}{{ $n7 := 0 }}{{ $open := 0.0 }}{{ $hasOpen := false }}{{ $net := 0.0 }}{{ $hasNet := false -}}
 {{- range site.Data.repos.repositories -}}
   {{- $r := partial "data/repo.html" . -}}
   {{- $keys = $keys | append $r.key -}}
-  {{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
-  {{- $chips = $chips | append (dict "label" $r.name "href" (printf "issues/%s/" $r.repo | relURL) "count" $iss.open_count "title" $r.key) -}}
-  {{- $asof := "" }}{{ with $r.data.metrics }}{{ with .timestamp }}{{ $asof = . }}{{ end }}{{ end -}}
-  {{- range ($iss.issues_without_maintainer_response | default slice) -}}
-    {{- $rows = $rows | append (dict "age" (float (.daysWaiting | default 0)) "it" . "repo" $r.name "asof" $asof) -}}
+  {{- $w := partial "data/waiting.html" (dict "repo" $r.cfg "kind" "issues") -}}
+  {{- $nAny = add $nAny (int $w.any) }}{{ $n7 = add $n7 (int $w.over7) -}}
+  {{- $opts = $opts | append (dict "value" $r.repo "label" $r.name "count" $w.any) -}}
+  {{- range $w.rows -}}
+    {{- $rows = $rows | append (dict "w" (float (.daysWaiting | default 0)) "it" . "name" $r.name "slug" $r.repo) -}}
   {{- end -}}
+  {{- with $r.data.metrics }}{{ with .issues }}{{ if reflect.IsMap . -}}
+    {{- if ne .open_count nil }}{{ $open = add $open (float .open_count) }}{{ $hasOpen = true }}{{ end -}}
+    {{- if and (ne .opened_30d nil) (ne .closed_30d nil) }}{{ $net = add $net (sub (float .opened_30d) (float .closed_30d)) }}{{ $hasNet = true }}{{ end -}}
+  {{- end }}{{ end }}{{ end -}}
 {{- end -}}
-{{- if $rows }}{{ $rows = sort $rows "age" "desc" }}{{ end -}}
-{{- $n := len $rows -}}
+{{- if $rows }}{{ $rows = sort $rows "w" "desc" }}{{ end -}}
+
+{{- $defWait := "Open issues not opened by a maintainer or a bot, with no comment from a maintainer of their repository, opened 7 or more days ago." -}}
+{{- $defAny := "The same issues at any age: every row of the list on this page." -}}
+{{- $defOpen := "Issues open now, summed over all tracked repositories." -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
-{{ partial "ui/page-head.html" (dict "title" .Title "eyebrow" "Issues" "repo" "" "switch" "issues" "sources" $src
+{{ partial "ui/page-head.html" (dict "scope" (dict "kind" "issues" "repo" "") "sources" $src
     "defs" (slice
-      (dict "term" "Age" "text" "Calendar days since the issue opened.")
-      (dict "term" "Longest waiting for a maintainer reply" "text" "Open issues by non-maintainers with no comment from a maintainer of their repository, at any age, oldest first."))) }}
+      (dict "term" "Waiting for a reply" "text" $defWait)
+      (dict "term" "Waiting for a reply, any age" "text" $defAny)
+      (dict "term" "Waiting" "text" "Calendar days since the issue opened.")
+      (dict "term" "Longest wait" "text" "The longest wait among a repository's issues that have waited 7 or more days.")
+      (dict "term" "Open issues" "text" $defOpen)
+      (dict "term" "Net change" "text" "Issues opened minus issues closed in the window.")
+      (dict "term" "Change on the waiting tile" "text" "Compares the repositories that have a snapshot about 30 days older; the note under the value says how many that is."))) }}
 
-<nav class="v-section" aria-label="Open issues by repository">
-  <div class="v-chiplinks items-baseline"><span class="v-label">Open issues</span>{{ range $chips }}{{ partial "ui/chip.html" . }}{{ end }}</div>
-</nav>
-
-<section class="v-section" aria-labelledby="longest-waiting">
-  {{ partial "ui/section-head.html" (dict "title" "Longest waiting for a maintainer reply" "id" "longest-waiting"
-      "description" "Open issues with no maintainer comment, oldest first.") }}
-  {{- if eq $n 0 }}
-  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No open issues are waiting for a maintainer reply.") }}
-  {{- else }}
-  <div data-list id="io" data-limit="25" data-url>
-    {{ partial "ui/filterbar.html" (dict "id" "io-search" "label" "Search issues" "placeholder" "Search titles, repositories, labels"
-        "noun" "issues" "one" "issue" "total" $n) }}
-    <div class="v-card">
-      <table class="v-dt is-fixed is-list" id="io-table" aria-labelledby="longest-waiting">
-        <colgroup><col class="v-col-40"><col class="v-col-auto"><col class="v-col-20"><col class="v-col-24"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
-          <th scope="col">Issue</th>
-          {{ partial "ui/th-sort.html" (dict "label" "Age" "num" true "active" "descending") }}
-          {{ partial "ui/th-sort.html" (dict "label" "Comments" "num" true) }}
-        </tr></thead>
-        <tbody>
-          {{- range $i, $row := $rows }}
-          {{ partial "pages/issues/wait-row.html" (dict "it" $row.it "asof" $row.asof "repo" $row.repo "comments" true "over" (ge $i 25)) }}
-          {{- end }}
-        </tbody>
-      </table>
-      <p class="v-card-note">Age is calendar days since the issue opened.</p>
-      {{ partial "ui/more.html" (dict "list" "io" "controls" "io-table" "n" $n) }}
-    </div>
-    <p class="v-empty-text" data-filter-empty hidden>No issues match.</p>
+{{- /* 1 Summary */ -}}
+{{- $ch := partial "pages/issues/org-change.html" "issues.without_response_7d" -}}
+{{- $t1 := dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
+    "value" (dict "kind" "count" "v" $n7)
+    "points" (partial "data/org-weekly.html" (dict "path" "issues.without_response_7d" "weeks" 12)).points
+    "href" "?over7=1#waiting" "drill" true -}}
+{{- if $ch.has -}}
+  {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting") "context" (dict "kind" "base" "date" $ch.date)) -}}
+  {{- if lt $ch.k $ch.n }}{{ $t1 = merge $t1 (dict "note" (dict "part" $ch.k "whole" $ch.n "noun" "repository")) }}{{ end -}}
+{{- end -}}
+{{- $t2 := dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual "title" $defAny
+    "value" (dict "kind" "count" "v" $nAny) "reason" "no-history" "href" "#waiting" "drill" true -}}
+{{- $t3 := dict "name" "Open issues" "title" $defOpen "value" (dict "kind" "count" "v" (cond $hasOpen $open nil))
+    "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" (dict "n" 30 "unit" "day"))).text
+      "value" (dict "kind" "net" "v" (cond $hasNet $net nil) "reason" "no-data"))
+    "points" (partial "data/org-weekly.html" (dict "path" "issues.open" "weeks" 12)).points }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" (slice $t1 $t2 $t3)) }}
   </div>
-  {{- end }}
+</section>
+
+<section class="v-section" aria-labelledby="by-repository">
+  {{ partial "ui/section-head.html" (dict "id" "by-repository" "title" "By repository") }}
+  <div class="v-grid">
+    {{ partial "ui/repo-table.html" (dict "kind" "issues") }}
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="waiting">
+  {{ partial "ui/section-head.html" (dict "id" "waiting" "title" (partial "fmt/label.html" (dict "metric" "Waiting for a reply" "threshold" "any")).text
+      "desc" "Open issues with no maintainer reply, longest wait first.") }}
+  <div class="v-grid">
+    {{ partial "pages/issues/waiting.html" (dict "id" "io" "rows" $rows "org" true "repos" $opts "labelledby" "waiting") }}
+  </div>
 </section>

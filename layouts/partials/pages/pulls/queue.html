@@ -1,71 +1,82 @@
-{{- /* Queue for a classified repo (brief 3.3b-2; design system v3 §4.8, §4.11, §4.13, §4.14): one table, segmented tabs, the search
-     field with toggle chips and the inline count, 25 rows then "Show all".
-     Dict {r (data/repo.html), a (actionability.json)}. Tab counts come from the rendered rows (pages/pulls/rows.html, cached per repo)
-     and the segments sum to All (TS today: Needs a maintainer 287, Housekeeping 10, Close candidates 12, Waiting on author 65, All 374).
-     No tab count is red: there is no Overdue tab here (the Overdue chip filters), and only an Overdue tab may colour its count.
-     Default tab: Needs a maintainer. Rows outside it, beyond its first 25, and collapsed cluster members carry data-over.
-     Chips: Overdue, Author waiting on us, Touches auth, Maintainer, Bot, each shown only when a row carries it. "Author waiting on
-     us" (glossary 6.2, classifier tier 1, 17 on TS today) is the one addition to the brief's chip list: the Overview Needs attention
-     column with that name links here, and without the chip those PRs sit behind "Show all" in an age sort.
-     Section description, one sentence in words: "374 open PRs, 287 need a maintainer (249 overdue), about 112 hours of review by the
-     classifier's estimate."
-     Columns (fixed): Pull request auto (title + row meta), State 10rem, Reason 15rem, Waiting on us (Age before D3-2) 6rem. The definition of
-     Age, and of Waiting on us, lives in the header title and Data notes. */ -}}
-{{- $q := partialCached "pages/pulls/rows.html" .a .r.key -}}
-{{- $stages := partial "pages/pulls/sep-stages.html" .r.data -}}
-{{- $needs := index $q.count "needs" -}}
-{{- /* more than half the needs tab overdue: row status drops the icon and keeps the danger text */ -}}
-{{- $icon := le (mul $q.over 2) $needs -}}
-{{- $desc := printf "%s, %s %s a maintainer" (partial "ui/plural.html" (dict "n" $q.all "one" "open PR")) (lang.FormatNumber 0 $needs) (cond (eq $needs 1) "needs" "need") -}}
-{{- if gt $q.over 0 }}{{ $desc = printf "%s (%s overdue)" $desc (lang.FormatNumber 0 $q.over) }}{{ end -}}
-{{- with .a.summary }}{{ with .effort_hours }}{{ if gt (float .) 0.0 -}}
-  {{- $desc = printf "%s, about %s of review by the classifier's estimate" $desc (partial "ui/plural.html" (dict "n" (math.Round (float .)) "one" "hour")) -}}
-{{- end }}{{ end }}{{ end -}}
-{{- $desc = printf "%s." $desc -}}
-{{- $tabs := slice (dict "key" "needs" "label" "Needs a maintainer" "count" $needs) -}}
-{{- with index $q.count "housekeeping" }}{{ $tabs = $tabs | append (dict "key" "housekeeping" "label" "Housekeeping" "count" .) }}{{ end -}}
-{{- with index $q.count "close" }}{{ $tabs = $tabs | append (dict "key" "close" "label" "Close candidates" "count" .) }}{{ end -}}
-{{- with index $q.count "author" }}{{ $tabs = $tabs | append (dict "key" "author" "label" "Waiting on author" "count" .) }}{{ end -}}
-{{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $q.all) -}}
-{{- $chips := slice -}}
-{{- if gt $q.over 0 }}{{ $chips = $chips | append (dict "label" "Overdue" "tag" "overdue" "title" "Past a team review SLA") }}{{ end -}}
-{{- if gt $q.waiting 0 }}{{ $chips = $chips | append (dict "label" "Author waiting on us" "tag" "waiting" "title" "The author did what was asked, or a maintainer's own PR awaits a review") }}{{ end -}}
-{{- if gt $q.auth 0 }}{{ $chips = $chips | append (dict "label" "Touches auth" "tag" "auth") }}{{ end -}}
-{{- if gt $q.maint 0 }}{{ $chips = $chips | append (dict "label" "Maintainer" "tag" "maint" "title" "Authored by a maintainer") }}{{ end -}}
-{{- if gt $q.bot 0 }}{{ $chips = $chips | append (dict "label" "Bot" "tag" "bot" "title" "Authored by a bot") }}{{ end -}}
-{{- $verdict := cond $q.wait "Waiting on us" "Age" -}}
-{{- $verdictTitle := cond $q.wait "Days since the next step moved to a maintainer" "Calendar days since the PR opened" }}
+{{- /* Queue of a classified repository (design system v4 4.10 to 4.16, 5.5 module 2): the list card "pq".
+     Ctx: dict {r (data/repo.html), q (pages/pulls/rows.html result)}.
+       Views (disjoint piles, by who has the next step): Needs a maintainer, Housekeeping, Close candidates, Waiting on author, All.
+         All five always render; an empty one is disabled and keeps its place. The default is the first that is not empty.
+       Facets, the same six on every repository: Overdue, Author waiting, Touches auth (checks); Status, Author, SLA rule (selects).
+         First-paint counts are the rows of the default view; ui.js keeps them live.
+       Columns: PR, Status, Detail, Overdue, Age. Default sort: Overdue descending, then Age descending (the order of q.rows).
+       One tr per PR. The other PRs of a duplicate cluster are child rows behind their primary's expander. Rows outside the default
+       view carry data-off; inside it, rows past the first step carry data-over. */ -}}
+{{- $q := .q -}}
+{{- $id := "pq" -}}
+{{- $n := int $q.all -}}
+{{- $def := $q.def }}
 <section class="v-section" aria-labelledby="queue">
-  {{ partial "ui/section-head.html" (dict "title" "Queue" "id" "queue" "description" $desc) }}
-  <div data-list id="pq" data-limit="25" data-url>
-    <div class="v-tabbar">{{ partial "ui/tabs.html" (dict "id" "pq" "label" "PR queue" "panel" "pq-panel" "selected" "needs" "tabs" $tabs) }}</div>
-    {{ partial "ui/filterbar.html" (dict "id" "pq-search" "label" "Search pull requests" "placeholder" "Search titles and authors"
-        "chips" $chips "noun" "PRs" "one" "PR" "total" $needs) }}
-    <div class="v-card" role="tabpanel" id="pq-panel" aria-labelledby="pq-tab-needs">
-      <table class="v-dt is-fixed is-list" id="pq-table" aria-labelledby="queue">
-        <colgroup><col class="v-col-auto"><col class="v-col-40"><col class="v-col-60"><col class="v-col-24"></colgroup>
-        <thead><tr>
-          <th scope="col">Pull request</th>
-          <th scope="col">State</th>
-          <th scope="col">Reason</th>
-          <th scope="col" class="num" title="{{ $verdictTitle }}">{{ $verdict }}</th>
-        </tr></thead>
-        <tbody>
-          {{- $seen := 0 -}}
-          {{- range $q.rows -}}
-            {{- $row := . -}}
-            {{- $first := eq .tab "needs" }}
-          {{ partial "pages/pulls/row.html" (merge . (dict "icon" $icon "wait" $q.wait "stages" $stages "more" (or (not $first) (ge $seen 25)))) }}
-            {{- if $first }}{{ $seen = add $seen 1 }}{{ end -}}
-            {{- range .kids }}
-          {{ partial "pages/pulls/row.html" (merge . (dict "icon" $icon "wait" $q.wait "stages" $stages "more" true "parent" $row.id)) }}
-              {{- if $first }}{{ $seen = add $seen 1 }}{{ end -}}
-            {{- end -}}
-          {{- end }}
-        </tbody>
-      </table>
-      {{ partial "ui/more.html" (dict "list" "pq" "controls" "pq-table" "n" $needs) }}
-    </div>
-    <p class="v-empty-text" data-filter-empty hidden>No PRs match.</p>
+  {{ partial "ui/section-head.html" (dict "id" "queue" "title" "Queue" "desc" "Open PRs grouped by who has the next step.") }}
+  <div class="v-grid">
+    {{- if eq $n 0 }}
+    {{ partial "ui/empty.html" (dict "title" "No open PRs" "body" "This repository has no open PRs to classify.") }}
+    {{- else }}
+    {{- $tabs := slice -}}
+    {{- range slice (slice "needs" "Needs a maintainer") (slice "housekeeping" "Housekeeping") (slice "close" "Close candidates") (slice "author" "Waiting on author") -}}
+      {{- $key := index . 0 -}}
+      {{- $tabs = $tabs | append (dict "key" $key "label" (index . 1) "count" (int (index $q.views $key | default 0))
+          "danger" (and (eq $key "needs") (gt (int $q.over) 0))) -}}
+    {{- end -}}
+    {{- $tabs = $tabs | append (dict "key" "all" "label" "All" "count" $n) -}}
+    {{- /* first-paint facet counts: the tokens of the rows in the default view */ -}}
+    {{- $sc := newScratch }}{{ $nDef := 0 -}}
+    {{- range $q.rows }}{{ if or (eq $def "all") (eq .view $def) }}{{ $nDef = add $nDef 1 }}{{ range .tok }}{{ $sc.Add . 1 }}{{ end }}{{ end }}{{ end -}}
+    {{- $status := slice -}}
+    {{- range partial "data/pr-status.html" "*" }}{{ $status = $status | append (dict "value" .key "label" .label "count" (int ($sc.Get (printf "status:%s" .key) | default 0))) }}{{ end -}}
+    {{- $author := slice -}}
+    {{- range slice "Maintainer" "Bot" "Contributor" -}}
+      {{- $author = $author | append (dict "value" (lower .) "label" . "count" (int ($sc.Get (printf "author:%s" (lower .)) | default 0))) -}}
+    {{- end -}}
+    {{- $rule := slice -}}
+    {{- range partial "data/sla-rules.html" "pr" }}{{ if .filter }}{{ $rule = $rule | append (dict "value" .key "label" .name "count" (int ($sc.Get (printf "rule:%s" .key) | default 0))) }}{{ end }}{{ end -}}
+    {{- $facets := slice
+      (dict "key" "overdue" "label" "Overdue" "title" "Past a review deadline in Review SLAs." "count" (int ($sc.Get "overdue" | default 0)))
+      (dict "key" "author-waiting" "label" "Author waiting" "title" "The author did what was asked and is waiting for a maintainer." "count" (int ($sc.Get "author-waiting" | default 0)))
+      (dict "key" "auth" "label" "Touches auth" "title" "The PR changes authentication or authorization code." "count" (int ($sc.Get "auth" | default 0)))
+      (dict "key" "status" "label" "Status" "title" "The next step, from PR classification." "kind" "select" "options" $status)
+      (dict "key" "author" "label" "Author" "title" "Who opened the PR." "kind" "select" "options" $author)
+      (dict "key" "rule" "label" "SLA rule" "title" "The Review SLA the PR is past." "kind" "select" "options" $rule) }}
+    <article class="v-card is-list v-span-12" data-list id="{{ $id }}" data-url data-limit="25" data-limit-phone="10" data-step="50" data-noun="PRs" data-noun-one="PR">
+      {{ partial "ui/tabs.html" (dict "id" $id "label" "Views" "panel" (printf "%s-panel" $id) "selected" $def "tabs" $tabs) }}
+      <div role="tabpanel" id="{{ $id }}-panel" aria-labelledby="{{ $id }}-tab-{{ $def }}">
+        {{ partial "ui/filterbar.html" (dict "id" $id "noun" "pr" "total" $nDef "facets" $facets) }}
+        {{ partial "ui/list-band.html" (dict "id" $id "noun" "pr" "total" $nDef) }}
+        <table class="v-dt is-work is-list" id="{{ $id }}-table" aria-labelledby="queue">
+          <colgroup><col><col class="v-col-status"><col class="v-col-detail"><col class="v-col-sla"><col class="v-col-num-sm"></colgroup>
+          <thead><tr>
+            {{ partial "ui/th.html" (dict "label" "PR") }}
+            {{ partial "ui/th.html" (dict "label" "Status" "sort" (dict "key" "status" "type" "order" "asc" "Status, workflow order" "desc" "Status, reverse order")) }}
+            {{ partial "ui/th.html" (dict "label" "Detail") }}
+            {{ partial "ui/th.html" (dict "label" "Overdue" "num" true "unit" ", days" "active" "descending" "title" "Calendar days past the deadline of the rule named beside it."
+                "sort" (dict "key" "overdue" "type" "num" "desc" "Most overdue first" "asc" "Least overdue first")) }}
+            {{ partial "ui/th.html" (dict "label" "Age" "num" true "unit" ", days" "title" "Calendar days since the PR opened."
+                "sort" (dict "key" "age" "type" "num" "desc" "Oldest first" "asc" "Newest first")) }}
+          </tr></thead>
+          <tbody>
+            {{- $k := 0 }}
+            {{- range $row := $q.rows }}
+            {{- $in := or (eq $def "all") (eq $row.view $def) }}
+            {{ partial "pages/pulls/row.html" (dict "r" $row "off" (not $in) "k" $k) }}
+            {{- if $in }}{{ $k = add $k 1 }}{{ end }}
+            {{- with $row.kids }}
+            {{- $parent := dict "id" $row.id "n" (int ($row.pr.number | default 0)) }}
+            {{- range . }}
+            {{ partial "pages/pulls/row.html" (dict "r" . "parent" $parent) }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          </tbody>
+        </table>
+        {{ partial "ui/list-empty.html" (dict "noun" "pr") }}
+        {{ partial "ui/list-foot.html" (dict "list" $id "n" $nDef "limit" 25) }}
+      </div>
+    </article>
+    {{- end }}
   </div>
 </section>

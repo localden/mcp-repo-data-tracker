@@ -1,20 +1,17 @@
 {{ define "main" }}
 {{- /*
-  Overview at the site root (brief 3.1, design system v3): the org view of every tracked repository; one module per row, in the order of the
-  questions it answers.
-  0 Page head (v3 §4.2): eyebrow "Overview" (the home page), H1 "All repositories" (the scope). The "Updated" meta item is the
-    oldest GitHub-side source the page uses (GitHub metrics, issue and PR classification, SEP data). The registries stay out of
-    it: their complete-through days always trail by 1-2 days, so they would pin the headline time days behind the numbers shown.
-    A registry more than 2 days behind still adds its staleness sentence to the one page callout ("PyPI data is 5 days old.") and
-    is listed with its complete-through day in Data notes; the SDK adoption section names the download window itself.
-    The callout's gap sentence covers the 26-week charted window; definitions live in Data notes.
-  Modules, each a page-local partial in layouts/partials/pages/overview/ that takes the page as context:
-    1 KPI strip (Q1, Q3)
-    2 Needs attention (Q1, Q2)
-    3 Backlog trend (Q3)
-    4 Repositories (Q3, Q4)
-    5 SDK adoption (Q5)
-    6 Spec proposals (Q6)
+  Overview at the site root (design system v4 5.1): the org view of every tracked repository, decision first.
+  Page head (4.2): eyebrow "Overview", H1 "All repositories" (plain text), meta "Updated": the oldest GitHub-side source the page
+    uses (GitHub metrics, issue and PR classification, SEP data). The registries keep their "Complete through" days in Data notes and
+    never move "Updated": their days always trail the GitHub data. The callout carries the data gap of the charted 26 weeks.
+  Modules, in order:
+    1 Summary               metric strip, four link tiles                 pages/overview/summary.html
+    2 Needs attention       two matrix cards, 12 and 12                   pages/overview/attention.html
+    3 Backlog and activity  the repositories matrix table, 12             pages/repo/table.html (also the whole of /repos/)
+    4 Backlog trend         a pair of chart cards, 6 + 6                  pages/overview/trend.html
+    5 SDK adoption          the package matrix table, 12                  pages/overview/adoption.html
+    6 Spec proposals        rank table and stat list, 8 + 4               pages/seps/stages.html (also on /seps/)
+  Every sentence that used to sit on the page (which repositories are classified, the deadlines, how sums are built) is in Data notes.
 */ -}}
 <article class="v-page">
 {{- $keys := slice -}}
@@ -22,47 +19,69 @@
 {{- $title := .Title | default "All repositories" -}}
 {{- if $keys }}
   {{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics" "issues" "actionability" "seps")) -}}
-  {{- /* registries: keep "through" (staleness sentence, Data notes "Complete through"), drop "at" (so they never move "Updated") */ -}}
+  {{- /* registries: keep "through" (the staleness sentence, Data notes "complete through"), drop "at" so they never move "Updated" */ -}}
   {{- range partial "ui/sources.html" (dict "repo" $keys "use" (slice "downloads")) -}}
     {{- $src = $src | append (dict "kind" .kind "label" .label "noun" .noun "through" .through) -}}
   {{- end -}}
-  {{- /* the Triage overdue count is type-only until D1-9 redefines it (the same switch as the Issues and repository pages) */ -}}
-  {{- $d19 := false -}}
-  {{- range $keys }}{{ with (partial "data/repo.html" .).data.issues }}{{ with .summary }}{{ with .sla }}{{ if isset . "first_reply_2bd_breach" }}{{ $d19 = true }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end -}}
-  {{- /* registry methods, one sentence each, only for the registries the SDKs actually use */ -}}
-  {{- $regs := slice }}{{ range site.Data.repos.repositories }}{{ with .package }}{{ with .registry }}{{ $regs = $regs | append (string .) }}{{ end }}{{ end }}{{ end -}}
-  {{- $how := slice -}}
-  {{- if in $regs "npm" }}{{ $how = $how | append "npm: daily counts from the npm range API." }}{{ end -}}
-  {{- if in $regs "pypi" }}{{ $how = $how | append "PyPI: BigQuery, complete UTC days." }}{{ end -}}
-  {{- if in $regs "crates" }}{{ $how = $how | append "crates.io: daily range API." }}{{ end -}}
-  {{- $cum := slice }}{{ if in $regs "nuget" }}{{ $cum = $cum | append "NuGet" }}{{ end }}{{ if in $regs "rubygems" }}{{ $cum = $cum | append "RubyGems" }}{{ end -}}
-  {{- with $cum }}{{ $how = $how | append (printf "%s: daily = change in lifetime total; days the total did not move are shown as missing." (delimit . " and ")) }}{{ end -}}
+
+  {{- /* Data notes. Definitions: the terms used in titles on the page, then every rule shown in "Overdue by rule" from the registry. */ -}}
   {{- $defs := slice
-    (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
-    (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 days ago or earlier.")
+    (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 days ago or earlier.")
+    (dict "term" "Overdue" "text" "Open issues and PRs past a published deadline. The Overdue column adds up every rule, so an item past two rules is counted under each.")
+    (dict "term" "Author waiting" "text" "PRs whose author answered maintainer feedback and is waiting for a maintainer, from PR classification.") -}}
+  {{- range slice "triage" "p0" "p1" "first-review" "re-review" "maintainer-pr" -}}
+    {{- $rule := partial "data/sla-rules.html" . -}}
+    {{- $defs = $defs | append (dict "term" $rule.name "text" (printf "%s. Source: %s." $rule.deadline $rule.source)) -}}
+  {{- end -}}
+  {{- $defs = $defs | append
     (dict "term" "Net change" "text" "Issues opened minus issues closed in the last 30 days.")
-    (dict "term" "SEP-1730" "text" "Response rules for SDK repositories: a first reply and triage (a type label plus a priority or status label) within 2 business days, and P0 bugs resolved within 7 days.")
-    (dict "term" "Triage overdue" "text" (cond $d19
-      "Open issues without a type label and a priority or status label after 2 business days (SEP-1730)."
-      "Open issues without a type label after 2 business days (SEP-1730)."))
-    (dict "term" "Team targets" "text" "P1 bugs resolved within 90 days, and a first maintainer review of each classified PR within 7 days (team SLA). Neither is part of SEP-1730.")
-    (dict "term" "Author waiting on us" "text" "PRs whose author answered maintainer feedback and now waits on a maintainer, from PR classification.")
-    (dict "term" "Typical week" "text" "Median of the weekly merged-PR counts over the prior 12 complete weeks, weeks without data skipped. Shown from 4 weeks of data.")
-    (dict "term" "Weekly sums" "text" "Org-wide sparklines and the backlog trend sum, for each week, only the repositories that have a value that week.")
-    (dict "term" "Downloads, last 7 days" "text" "Sum of the 7 complete UTC days ending on the newest day that every SDK package with a week of history covers; every SDK uses the same window. A missing day is never counted as zero: a window with one shows its partial sum, muted, with a day count and no change.")
-    (dict "term" "Downloads, 12 weeks" "text" "Weekly totals over the last 12 complete ISO weeks. A week with a missing day is not plotted; when too few weeks are complete the cell says how many are.") -}}
-  {{- with $how }}{{ $defs = $defs | append (dict "term" "Registry counts" "text" (delimit . " ")) }}{{ end -}}
-  {{- $defs = $defs | append (dict "term" "Reached final" "text" "SEP pull requests merged in the 90 days before the SEP data was collected.") }}
-  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs) }}
-  {{ partial "pages/overview/kpis.html" . }}
+    (dict "term" "Typical week" "text" "The median number of PRs merged in a week over the prior 12 complete weeks, shown once 4 of those weeks have data.")
+    (dict "term" "Contributors" "text" "Distinct people, known bots excluded, who opened an issue or PR or authored a commit in the last 30 days.")
+    (dict "term" "Weekly sums" "text" "The summary sparklines and the backlog trend add up, for each week, the repositories that have a reading that week.")
+    (dict "term" "Downloads, last 7 days" "text" "The 7 complete days ending on the newest day that every SDK package with a week of history has reached. A missing day is never counted as zero: a window with one shows the sum of its complete days with a coverage note, and no change.")
+    (dict "term" "Downloads, 12 weeks" "text" "Weekly totals over the last 12 complete weeks, Monday to Sunday. A week with a missing day is not drawn.")
+    (dict "term" "Reached final" "text" "SEP PRs merged in the 90 days before the SEP data was collected.") -}}
+
+  {{- /* further sentences: which repositories are classified (a name list, never a count) */ -}}
+  {{- $iss := slice }}{{ $cls := slice -}}
+  {{- range site.Data.repos.repositories -}}
+    {{- $o := partial "pages/overview/overdue.html" . -}}
+    {{- if $o.iss }}{{ $iss = $iss | append $o.r.name }}{{ end -}}
+    {{- if $o.cls }}{{ $cls = $cls | append $o.r.name }}{{ end -}}
+  {{- end -}}
+  {{- $notes := slice -}}
+  {{- with $iss }}{{ $notes = $notes | append (printf "Issue classification runs for %s." (delimit . ", " " and ")) -}}
+  {{- else }}{{ $notes = $notes | append "Issue classification does not run for any repository yet." }}{{ end -}}
+  {{- with $cls }}{{ $notes = $notes | append (printf "PR classification runs for %s." (delimit . ", " " and ")) -}}
+  {{- else }}{{ $notes = $notes | append "PR classification does not run for any repository yet." }}{{ end -}}
+  {{- $notes = $notes | append "Overdue by rule lists classified repositories only. The other issue rules are on each repository's Issues page." }}
+  {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview" "sources" $src "gap" (dict "repos" $keys "days" 182) "defs" $defs "notes" $notes) }}
+  {{ partial "pages/overview/summary.html" . }}
   {{ partial "pages/overview/attention.html" . }}
-  {{ partial "pages/overview/backlog.html" . }}
-  {{ partial "pages/overview/repos.html" . }}
+  <section class="v-section" aria-labelledby="backlog-and-activity">
+    {{ partial "ui/section-head.html" (dict "id" "backlog-and-activity" "title" "Backlog and activity") }}
+    <div class="v-grid">
+      {{ partial "pages/repo/table.html" (dict "id" "repositories") }}
+    </div>
+  </section>
+  {{ partial "pages/overview/trend.html" . }}
   {{ partial "pages/overview/adoption.html" . }}
-  {{ partial "pages/overview/seps.html" . }}
+  {{- if (partialCached "pages/seps/data.html" "seps" "seps").has }}
+  <section class="v-section" aria-labelledby="spec-proposals">
+    {{ partial "ui/section-head.html" (dict "id" "spec-proposals" "title" "Spec proposals" "action" (dict "text" "All SEPs" "href" ("seps/" | relURL))) }}
+    <div class="v-grid">
+      {{ partial "pages/seps/stages.html" . }}
+    </div>
+  </section>
+  {{- end }}
 {{- else }}
   {{ partial "ui/page-head.html" (dict "title" $title "eyebrow" "Overview") }}
-  {{ partial "ui/empty.html" (dict "size" "none" "body" "No data collected for the MCP repositories yet.") }}
+  <section class="v-section" aria-label="Repositories">
+    <div class="v-grid">
+      {{ partial "ui/empty.html" (dict "title" "No repositories tracked" "body" "No data has been collected for the MCP repositories yet.") }}
+    </div>
+  </section>
 {{- end }}
 </article>
 {{ end }}

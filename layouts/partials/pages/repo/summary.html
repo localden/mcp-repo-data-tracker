@@ -1,0 +1,78 @@
+{{- /* 1. Summary (design system v4 5.8 module 1): metric strip lg, visual trend, 4 link tiles. Context: the dict from pages/repo.html.
+    Issues waiting for a reply, over 7 days   the count of data/waiting.html rows; links to the org list filtered to this repository
+    PRs waiting for first review, over 7 days  the same for PRs
+    Open issues                                reference pair "Net change, last 30 days"; no delta
+    Downloads, last 7 days                     volume, change against the prior 7 days, flow sparkline (a repository with a package)
+    Open PRs                                   reference pair "Merged, last 30 days"; no delta (a repository without one)
+  A waiting tile has a delta, with its base "vs {date}", only when a snapshot about 30 days older exists. A package with fewer than
+  7 complete days shows the sum of the days it has, with the coverage note and no delta. A waiting tile links only above zero, so
+  its value always equals the result count of the list it opens. When no tile has four weekly points ui/metrics.html renders the
+  strip without visuals. */ -}}
+{{- $r := .r }}{{ $m := .m }}{{ $d := .dl }}{{ $s := .s }}{{ $wi := .wi }}{{ $wp := .wp -}}
+{{- $is := $m.issues | default dict }}{{ $pr := $m.pulls | default dict -}}
+{{- $over7 := (partial "fmt/label.html" (dict "threshold" "over7")).qual -}}
+{{- $w30 := dict "n" 30 "unit" "day" -}}
+{{- $tiles := slice -}}
+
+{{- /* the two waiting tiles */ -}}
+{{- range slice
+  (dict "w" $wi "ser" $s.iWait "kind" "issues" "name" "Issues waiting for a reply"
+        "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 or more days ago.")
+  (dict "w" $wp "ser" $s.pWait "kind" "pulls" "name" "PRs waiting for first review"
+        "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago.") -}}
+  {{- $t := dict "name" .name "qual" $over7 "title" .title
+      "points" (partial "data/week-bins.html" (dict "points" (.ser.points | default slice) "agg" "last" "weeks" 12)).points -}}
+  {{- if .w.has -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "count" "v" .w.over7)) -}}
+    {{- if gt .w.over7 0 }}{{ $t = merge $t (dict "href" (printf "%s/?repo=%s&over7=1#waiting" .kind $r.repo | relURL)) }}{{ end -}}
+    {{- $w := .w -}}
+    {{- with .ser.cmp30 -}}
+      {{- $t = merge $t (dict "delta" (dict "cur" $w.over7 "prev" .value "metric" "waiting") "context" (dict "kind" "base" "date" .date)) -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "count" "reason" "no-data")) -}}
+  {{- end -}}
+  {{- $tiles = $tiles | append $t -}}
+{{- end -}}
+
+{{- /* open issues: the fixed definition, a reference pair and no delta */ -}}
+{{- $t := dict "name" "Open issues" "value" (dict "kind" "count" "v" $is.open_count) "href" (printf "issues/%s/" $r.repo | relURL)
+    "points" (partial "data/week-bins.html" (dict "points" ($s.iOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
+{{- if and (ne $is.opened_30d nil) (ne $is.closed_30d nil) -}}
+  {{- $t = merge $t (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $w30)).text
+      "value" (dict "kind" "net" "v" (sub (float $is.opened_30d) (float $is.closed_30d))))) -}}
+{{- end -}}
+{{- $tiles = $tiles | append $t -}}
+
+{{- if $r.package -}}
+  {{- /* downloads: 12 complete weeks for the sparkline; the unfinished week is never plotted */ -}}
+  {{- $pts := slice -}}
+  {{- with $d.points }}{{ $pts = (partial "data/week-bins.html" (dict "points" . "agg" "sum" "weeks" 12 "end" ($d.complete_through | default ""))).points }}{{ end -}}
+  {{- $t = dict "name" "Downloads" "qual" (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).qual
+      "title" "Downloads of the registry package over 7 complete days." "href" ("downloads/" | relURL) "points" $pts "flow" true -}}
+  {{- if ne $d.dl7 nil -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "volume" "v" $d.dl7)) -}}
+    {{- if ne $d.prev7 nil -}}
+      {{- $t = merge $t (dict "delta" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "metric" "downloads") "context" (dict "kind" "base" "window" "prior7")) -}}
+    {{- end -}}
+  {{- else if gt (int ($d.days_covered | default 0)) 0 -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "volume" "v" $d.sum7)
+        "note" (dict "part" (int $d.days_covered) "whole" 7 "noun" "day" "days" (dict "from" $d.from "to" $d.end))) -}}
+  {{- else -}}
+    {{- $t = merge $t (dict "value" (dict "kind" "volume" "reason" "no-complete-days") "context" (dict "kind" "reason" "reason" "no-complete-days")) -}}
+  {{- end -}}
+  {{- $tiles = $tiles | append $t -}}
+{{- else -}}
+  {{- $t = dict "name" "Open PRs" "value" (dict "kind" "count" "v" $pr.open_count) "href" (printf "pulls/%s/" $r.repo | relURL)
+      "points" (partial "data/week-bins.html" (dict "points" ($s.pOpen.points | default slice) "agg" "last" "weeks" 12)).points -}}
+  {{- if ne $pr.merged_30d nil -}}
+    {{- $t = merge $t (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $w30)).text
+        "value" (dict "kind" "count" "v" $pr.merged_30d))) -}}
+  {{- end -}}
+  {{- $tiles = $tiles | append $t -}}
+{{- end }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" $tiles) }}
+  </div>
+</section>

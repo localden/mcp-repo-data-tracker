@@ -1,0 +1,80 @@
+{{- /* Value (design system v4 3.3 to 3.5): the ONLY partial that turns a formatter result into markup. Every number, date and identifier
+  on a page comes from here. Dict {kind, ...the formatter's arguments, title, class, compact, reason, since}.
+  kind (default "count"):
+    count    {v, noun}                 fmt/count.html     "1,143", "539 PRs"
+    stat     {v}                       fmt/count.html     a mean or median of counts: "6.4", "5"
+    volume   {v}                       fmt/volume.html    "88.0M" with the exact figure in title
+    share    {v} | {part, whole}       fmt/share.html     "43%", "<1%"
+    net      {v} | {cur, prev}         fmt/change.html    a signed count as plain text: "+38", "−4", "0"
+    change   {cur, prev} | {d}, {unit, metric}            the delta badge (ui/delta.html), or the empty mark "No baseline"
+    dur      {h | d, unit, opened}     fmt/dur.html       "3h", "471d"; compact: true is the short form for work-list time columns;
+                                                          opened: a date, makes the title "Opened Oct 9, 2024 (767 days)"
+    date     {d, weekday, year}        fmt/date.html      <time datetime>
+    range    {from, to}                fmt/range.html     "Nov 3–9", "Oct 8 to Nov 9"
+    ts       {t}                       fmt/ts.html        "Nov 14, 2026, 08:29 UTC"
+    ratio    {part, whole, noun}       fmt/ratio.html     "155 of 259"
+    lines    {adds, dels}              fmt/lines.html     "+417 −0"
+    id       {v}                       verbatim           "#1521", "SEP-2028"
+    ver      {v}                       verbatim           "1.30.0"
+    path     {v, dir}                  the .v-path primitive; dir: true for a directory row; "" or "." is "Repository root"
+    na       {reason, since}           the empty mark
+  A nil value in any kind is the missing state: the empty mark with reason (a fmt/na.html key, default no-data) in title and sr-only
+  text. Zero is a measured value: "0", with .is-zero (text-3 only inside a table cell).
+  title: overrides the default title (the long form for volume and dur). class: extra classes on the element. */ -}}
+{{- $c := . -}}
+{{- $kind := $c.kind | default "count" -}}
+{{- $cls := "" }}{{ with $c.class }}{{ $cls = printf " %s" . }}{{ end -}}
+{{- $f := dict "state" "na" -}}
+{{- if or (eq $kind "count") (eq $kind "stat") }}{{ $f = partial "fmt/count.html" (dict "v" $c.v "noun" $c.noun "stat" (or $c.stat (eq $kind "stat"))) -}}
+{{- else if eq $kind "volume" }}{{ $f = partial "fmt/volume.html" (dict "v" $c.v "noun" $c.noun) -}}
+{{- else if eq $kind "share" }}{{ $f = partial "fmt/share.html" (dict "v" $c.v "part" $c.part "whole" $c.whole) -}}
+{{- else if eq $kind "net" }}{{ $f = partial "fmt/change.html" (dict "d" $c.v "cur" $c.cur "prev" $c.prev "unit" ($c.unit | default "count") "metric" "net") -}}
+{{- else if eq $kind "dur" }}{{ $f = partial "fmt/dur.html" (dict "h" $c.h "d" $c.d "unit" ($c.unit | default "auto")) -}}
+{{- else if eq $kind "date" }}{{ $f = partial "fmt/date.html" (dict "d" ($c.d | default $c.v) "weekday" $c.weekday "year" $c.year) -}}
+{{- else if eq $kind "range" }}{{ $f = partial "fmt/range.html" (dict "from" $c.from "to" $c.to "year" $c.year) -}}
+{{- else if eq $kind "ts" }}{{ $f = partial "fmt/ts.html" (dict "t" ($c.t | default $c.v)) -}}
+{{- else if eq $kind "ratio" }}{{ $f = partial "fmt/ratio.html" (dict "part" $c.part "whole" $c.whole "noun" $c.noun) -}}
+{{- else if eq $kind "lines" }}{{ $f = partial "fmt/lines.html" (dict "adds" $c.adds "dels" $c.dels) -}}
+{{- else if or (eq $kind "id") (eq $kind "ver") (eq $kind "path") }}{{ if ne $c.v nil }}{{ $f = dict "state" "value" "text" (string $c.v) }}{{ end -}}
+{{- else if eq $kind "change" }}{{ $f = dict "state" "change" -}}
+{{- else if ne $kind "na" }}{{ errorf "ui/value: unknown kind %q (design system v4 3.5)" $kind }}{{ end -}}
+{{- if eq $f.state "change" -}}
+  {{- partial "ui/delta.html" (dict "cur" $c.cur "prev" $c.prev "d" $c.d "unit" $c.unit "metric" $c.metric "empty" true) -}}
+{{- else if eq $f.state "na" -}}
+  {{- $reason := (partial "fmt/na.html" (dict "reason" ($c.reason | default (cond (eq $kind "net") "no-baseline" "no-data")) "since" $c.since)).long -}}
+  <span class="v-val is-na{{ $cls }}" title="{{ $c.title | default $reason }}"><span class="sr-only">{{ $reason }}</span></span>
+{{- else if eq $kind "dur" -}}
+  {{- /* opened: the one title format of an age or waiting time (3.8): "Opened Oct 9, 2024 (767 days)" */ -}}
+  {{- with $c.opened }}{{ $f = merge $f (dict "long" (printf "Opened %s (%s)" (partial "fmt/date.html" (dict "d" . "year" true)).text $f.long)) }}{{ end -}}
+  {{- if $c.compact -}}
+  <span class="v-val{{ $cls }}" data-kind="dur" title="{{ $c.title | default $f.long }}">{{ $f.num }}<span class="v-unit">{{ $f.unit }}</span></span>
+  {{- else -}}
+  <span class="v-val{{ $cls }}" data-kind="dur" title="{{ $c.title | default $f.long }}"><span aria-hidden="true">{{ $f.num }}<span class="v-unit">{{ $f.unit }}</span></span><span class="sr-only">{{ $f.long }}</span></span>
+  {{- end -}}
+{{- else if eq $kind "ratio" -}}
+  <span class="v-val v-ratio{{ $cls }}" data-kind="ratio"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-ratio-part">{{ $f.part }}</span> <span class="v-ratio-whole">{{ $f.whole }}</span></span>
+{{- else if or (eq $kind "date") (eq $kind "ts") -}}
+  <time class="v-val{{ $cls }}" data-kind="{{ $kind }}" datetime="{{ $f.iso }}" title="{{ $c.title | default $f.long }}">{{ $f.text }}</time>
+{{- else if eq $kind "range" -}}
+  <span class="v-val{{ $cls }}" data-kind="range" title="{{ $c.title | default $f.long }}">{{ $f.text }}</span>
+{{- else if eq $kind "lines" -}}
+  <span class="v-val v-lines{{ $cls }}" data-kind="lines" title="{{ $c.title | default $f.long }}"><span>{{ $f.adds }}</span> <span>{{ $f.dels }}</span></span>
+{{- else if eq $kind "id" -}}
+  <span class="v-id{{ $cls }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ $f.text }}</span>
+{{- else if eq $kind "ver" -}}
+  <span class="v-ver{{ $cls }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ $f.text }}</span>
+{{- else if eq $kind "path" -}}
+  {{- $p := strings.TrimSuffix "/" (strings.TrimPrefix "./" $f.text) -}}
+  {{- if or (eq $p "") (eq $p ".") -}}
+  <span class="v-path{{ $cls }}"><span class="v-path-base">Repository root</span></span>
+  {{- else -}}
+  {{- $parts := split $p "/" }}{{ $n := len $parts -}}
+  {{- $base := index $parts (sub $n 1) }}{{ if $c.dir }}{{ $base = printf "%s/" $base }}{{ end -}}
+  {{- $dir := "" }}{{ if gt $n 1 }}{{ $dir = printf "%s/" (delimit (first (sub $n 1) $parts) "/") }}{{ end -}}
+  <span class="v-path{{ $cls }}" title="{{ $p }}{{ if $c.dir }}/{{ end }}">{{ with $dir }}<span class="v-path-dir"><bdi>{{ . }}</bdi></span>{{ end }}<span class="v-path-base">{{ $base }}</span></span>
+  {{- end -}}
+{{- else -}}
+  {{- $title := $c.title | default "" -}}
+  {{- if and (not $title) (eq $kind "volume") (ne $f.text $f.exact) }}{{ $title = $f.long }}{{ end -}}
+  <span class="v-val{{ if eq $f.state "zero" }} is-zero{{ end }}{{ $cls }}" data-kind="{{ $kind }}"{{ with $title }} title="{{ . }}"{{ end }}>{{ $f.text }}</span>
+{{- end -}}

@@ -1,36 +1,39 @@
-{{- /* Header (design system v3 §4.1): 56px, "VISR" brand (no subtitle), six nav items, icon-only theme toggle (.v-btn). Nav items
-  are unscoped (org views); the current item is chosen by section: home, issues, pulls, seps, downloads, repos (.Section, else the
-  content file's base name). DOM order is the desktop order; below 48rem the brand and toggle share row 1 and the six items form a
-  3 x 2 grid of 40px cells. Repositories is a ui/menu.html disclosure. */ -}}
+{{- /* Header with logo slot (design system v4 4.1). No arguments; reads the page for the current section.
+  Brand: a 24px mark image (rendered only when static/brand/visr-mark-64.png exists) and the live "VISR" wordmark.
+  Nav, identical at every width: Overview, Issues, PRs, SEPs, Downloads, then the Repositories menu ("All repositories", a separator,
+  one link per repository). The current item is chosen by section: home, issues, pulls, seps, downloads, repos.
+  From 40rem: one sticky 56px row. Below: two rows (brand, Repositories button and theme toggle; then the five section tabs). */ -}}
 {{- $cur := "" -}}
 {{- if .IsHome }}{{ $cur = "home" }}{{ else }}{{ $cur = .Section }}{{ if not $cur }}{{ with .File }}{{ $cur = .BaseFileName }}{{ end }}{{ end }}{{ end -}}
 {{- $curRepo := "" }}{{ if eq $cur "repos" }}{{ $curRepo = .Params.repo | default "" }}{{ end -}}
 {{- $items := slice
-  (dict "key" "home" "href" site.Home.RelPermalink "long" "Overview" "short" "Overview")
-  (dict "key" "issues" "href" ("issues/" | relURL) "long" "Issues" "short" "Issues")
-  (dict "key" "pulls" "href" ("pulls/" | relURL) "long" "Pull requests" "short" "PRs")
-  (dict "key" "seps" "href" ("seps/" | relURL) "long" "SEPs" "short" "SEPs")
-  (dict "key" "downloads" "href" ("downloads/" | relURL) "long" "Downloads" "short" "Downloads") -}}
-{{- $repoItems := slice -}}
+  (dict "key" "home" "href" site.Home.RelPermalink "text" "Overview")
+  (dict "key" "issues" "href" ("issues/" | relURL) "text" "Issues")
+  (dict "key" "pulls" "href" ("pulls/" | relURL) "text" "PRs")
+  (dict "key" "seps" "href" ("seps/" | relURL) "text" "SEPs")
+  (dict "key" "downloads" "href" ("downloads/" | relURL) "text" "Downloads") -}}
+{{- $repoItems := slice (dict "text" "All repositories" "href" ("repos/" | relURL) "current" (and (eq $cur "repos") (eq $curRepo "")) "sep" true) -}}
 {{- range site.Data.repos.repositories -}}
   {{- $repoItems = $repoItems | append (dict "text" (.name | default .repo) "href" (printf "repos/%s/" .repo | relURL)
     "current" (or (eq $curRepo (printf "%s/%s" .owner .repo)) (eq $curRepo .repo))) -}}
 {{- end }}
 <header class="v-header" id="site-header">
   <div class="v-shell v-header-row">
-    <a class="v-brand" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
+    <a class="v-brand" href="{{ site.Home.RelPermalink }}">
+      {{- if fileExists "static/brand/visr-mark-64.png" }}<img class="v-brand-mark" src="{{ "brand/visr-mark-64.png" | relURL }}" width="24" height="24" alt="">{{ end -}}
+      <span class="v-brand-word">{{ site.Title }}</span>
+    </a>
     <nav class="v-nav" aria-label="Main">
       <ul class="v-nav-list">
         {{- range $items }}
-        <li><a class="v-nav-item" href="{{ .href }}"{{ if eq .key $cur }} aria-current="page"{{ end }}>
-          {{- if eq .long .short }}{{ .long }}{{ else }}<span class="v-nav-long">{{ .long }}</span><span class="v-nav-short">{{ .short }}</span>{{ end -}}
-        </a></li>
+        <li><a class="v-nav-item" href="{{ .href }}"{{ if eq .key $cur }} aria-current="page"{{ end }}>{{ .text }}</a></li>
         {{- end }}
-        <li>{{ partial "ui/menu.html" (dict "id" "nav-repos" "variant" "nav" "align" "end" "current" (eq $cur "repos")
-          "labelHTML" (`<span class="v-nav-long">Repositories</span><span class="v-nav-short">Repos</span>` | safeHTML) "items" $repoItems) }}</li>
       </ul>
     </nav>
-    <button id="theme-toggle" type="button" class="v-btn is-icon v-theme" aria-pressed="false" aria-label="Dark theme">
+    <nav class="v-nav-repos" aria-label="Repositories">
+      {{- partial "ui/menu.html" (dict "id" "nav-repos" "variant" "nav" "label" "Repositories" "current" (eq $cur "repos") "items" $repoItems) -}}
+    </nav>
+    <button id="theme-toggle" type="button" class="v-btn is-icon v-theme" aria-label="Switch to dark theme">
       <span class="theme-icon-dark">{{ partial "ui/icon.html" "moon" }}</span>
       <span class="theme-icon-light">{{ partial "ui/icon.html" "sun" }}</span>
     </button>

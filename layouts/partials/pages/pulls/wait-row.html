@@ -1,0 +1,32 @@
+{{- /* One row of a "Waiting for first review" list (design system v4 4.16): /pulls/ and the queue of a repository without PR
+     classification. Ctx: dict {row, org, off, k}.
+       row  {w (days waiting), it (a metrics.json prs_without_maintainer_review item: number, title, url, createdAt, labels, isDraft,
+            additions, deletions, author), name, slug, view ("review" | "drafts" on a list with views, else ""), stage (the open SEP's
+            stage on the specification repository, else "")}.
+       org  true adds the Repository cell and the repository slot of the item cell (shown below 64rem).
+       off  true when the row is outside the default view. k: the row's index inside the default view (first-paint marks).
+     Cells in the fixed order: Repository, PR, Waiting. Item meta slots: id, repository, author (with the role tag "Bot" where the data
+     says so; these rows carry no other role), lines changed, "SEP {stage}", labels. Tokens: over7, repo:<slug>. */ -}}
+{{- $row := .row }}{{ $it := $row.it }}{{ $org := eq .org true }}{{ $k := int (.k | default 0) -}}
+{{- $num := int ($it.number | default 0) -}}
+{{- $author := string ($it.author | default "") -}}
+{{- $role := "" -}}
+{{- if or (eq $it.isBot true) (hasSuffix $author "[bot]") (hasPrefix $author "app/") }}{{ $role = "Bot" }}{{ end -}}
+{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "accepted" "final" "deferred" "dormant" -}}
+{{- $attrs := slice }}{{ $tags := slice -}}
+{{- with $row.stage }}{{ $attrs = $attrs | append (printf "SEP %s" (lower .)) }}{{ end -}}
+{{- range $it.labels | default slice -}}
+  {{- if not (and $row.stage (in $stageLabels (lower (string .)))) }}{{ $tags = $tags | append (string .) }}{{ end -}}
+{{- end -}}
+{{- $tok := slice -}}
+{{- if ge $row.w 7.0 }}{{ $tok = $tok | append "over7" }}{{ end -}}
+{{- if $org }}{{ $tok = $tok | append (printf "repo:%s" $row.slug) }}{{ end -}}
+<tr data-row data-row-link{{ if not $org }} id="pr-{{ $num }}"{{ end }}{{ with $row.view }} data-views="{{ . }}"{{ end }}{{ with $tok }} data-facets="{{ delimit . " " }}"{{ end }}{{ if .off }} data-off{{ else if ge $k 25 }} data-over{{ else if ge $k 10 }} data-over-phone{{ end }}>
+  {{- if $org }}
+  <td class="v-c-repo">{{ $row.name }}</td>
+  {{- end }}
+  {{ partial "ui/row-item.html" (dict "title" (string ($it.title | default "")) "href" $it.url "id" (printf "#%d" $num)
+      "repo" (cond $org ($row.name | default "") "") "author" $author "role" $role
+      "diff" (dict "add" $it.additions "del" $it.deletions) "attrs" $attrs "tags" $tags) }}
+  <td class="num" data-v="{{ printf "%.0f" $row.w }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $row.w "unit" "d" "compact" true "opened" $it.createdAt) }}</td>
+</tr>

@@ -1,11 +1,12 @@
-{{- /* Search field (design system v3 §4.14): 36px, radius 8, 1px border-strong, surface, a 16px text-3 search icon, text-3 placeholder,
-  2px accent focus ring; an sr-only label; a clear control (filter-x icon) inside the field, shown while there is a query.
-  The result count ("Showing 12 of 294 issues") sits right-aligned in the same row: ui/filterbar.html renders it.
-  Dict {id, label, placeholder, value}. id: the input id (required, unique on the page); label: sr-only text ("Search issues").
-  Plain substring search over each row's data-text, run by ui.js inside the enclosing [data-list]. No query syntax. */ -}}
+{{- /* Search field (design system v4 4.12): 280px from 64rem, full width below; a 16px search icon, the input, the "/" hint (fine
+  pointers, at rest) and a clear button (x) shown while there is a query. The wrapper draws the focus ring.
+  Dict {id, label, placeholder, value}. id: the input id (required, unique). label: sr-only ("Search PRs"); the placeholder is always
+  the same words. ui.js: "/" focuses it; Escape clears, then blurs; ArrowDown moves to the first row; whitespace separates terms and
+  every term must match. The search index is built from the row's cell text. */ -}}
 <div class="v-field">
   {{- partial "ui/icon.html" "search" -}}
   <label class="sr-only" for="{{ .id }}">{{ .label | default "Search" }}</label>
-  <input id="{{ .id }}" type="search" autocomplete="off" spellcheck="false" data-filter-input{{ with .placeholder }} placeholder="{{ . }}"{{ end }}{{ with .value }} value="{{ . }}"{{ end }}>
-  <button type="button" class="v-field-clear" aria-label="Clear search" data-filter-clear hidden>{{ partial "ui/icon.html" "filter-x" }}</button>
+  <input id="{{ .id }}" type="search" autocomplete="off" spellcheck="false" placeholder="{{ .placeholder | default .label | default "Search" }}" data-filter-input{{ with .value }} value="{{ . }}"{{ end }}>
+  <kbd class="v-kbd" aria-hidden="true">/</kbd>
+  <button type="button" class="v-field-clear" aria-label="Clear search" data-filter-clear hidden>{{ partial "ui/icon.html" (dict "name" "x" "size" 14) }}</button>
 </div>

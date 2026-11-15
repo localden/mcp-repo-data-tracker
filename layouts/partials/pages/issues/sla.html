@@ -1,95 +1,40 @@
-{{- /* Response SLAs (brief 3.2b-1): the rules as tables, not tiles. One card per group, side by side at >= 64rem: SEP-1730 (4 rules)
-  and Team targets (3 rules, never labeled SEP-1730, P3). Columns Rule, Overdue, [Oldest], Show. The deadline is line 2 of the Rule
-  cell ("Answer questions", then "2 business days", the 6.5 strings), so every count sits next to its rule and the half-width cards
-  still fit at 1024px.
-  Ctx: dict {r (data/repo.html), q (pages/issues/rows.html result, or nil when the repo has no issues.json), list (queue [data-list] id)}.
-    Non-SDK repo: the section head carries one description sentence. SDK repo without issue classification: the same, naming why.
-    Overdue (design system v3 §4.20): the issues.json summary count as status (danger value + 12px alert icon) when > 0, "0" in text-3
-      otherwise; "—" (not computed yet) until a field exists (first replies, D1-9). The P0 row adds its denominator ("of 3 open") as
-      line 2. A build warning fires when a summary count and the rows tagged with that rule disagree (P6).
-    Oldest: summary.sla_oldest.<rule> in days (D1-9); the column is omitted until it exists.
-    Show: a small .v-btn that switches the queue to the Overdue tab filtered to the rule's rows (ui.js data-show), so the list length
-      equals the count.
-    No priority labels in the repo: the P0 and P1 rows do not apply; their Overdue cell holds the one reason, "Not tracked" (small,
-      text-3; the tooltip says why), and the other cells stay blank.
-  Phone (< 40rem, .is-list): the same tables as list rows: rule and deadline on the left; the count with its Show button on the right
-  (the Show column hides, so a phone-only copy of the button follows the count). */ -}}
-{{- $r := .r }}{{ $q := .q }}{{ $list := .list | default "iq" -}}
-<section class="v-section" aria-labelledby="sla">
-  {{- if not $r.sdk }}
-  {{ partial "ui/section-head.html" (dict "title" "Response SLAs" "id" "sla" "description" "SEP-1730 SLAs apply to SDK repositories.") }}
-  {{- else if not $q }}
-  {{ partial "ui/section-head.html" (dict "title" "Response SLAs" "id" "sla" "description" "SEP-1730 SLAs need issue classification, which does not run for this repository.") }}
-  {{- else }}
-  {{ partial "ui/section-head.html" (dict "title" "Response SLAs" "id" "sla") }}
-  {{- $sum := $r.data.issues.summary | default dict -}}
-  {{- /* D1-9 marker: the first-reply count exists once the pipeline computes the redefined triage rule */ -}}
-  {{- $d19 := ne (index ($sum.sla | default dict) "first_reply_2bd_breach") nil -}}
-  {{- $oldest := dict }}{{ if reflect.IsMap $sum.sla_oldest }}{{ $oldest = $sum.sla_oldest }}{{ end -}}
-  {{- $hasOldest := gt (len $oldest) 0 -}}
-  {{- $rules := partial "pages/issues/rules.html" "rules" -}}
-  {{- /* one dict per rule with every cell's content */ -}}
-  {{- $items := slice -}}
-  {{- range $rules -}}
-    {{- $ru := . -}}
-    {{- /* walk the summary path; a missing step leaves nil (a bare nil cannot be assigned, so it comes from cond) */ -}}
-    {{- $v := $sum -}}
-    {{- range $ru.sum }}{{ if reflect.IsMap $v }}{{ $v = index $v . }}{{ else }}{{ $v = cond false 0 nil }}{{ end }}{{ end -}}
-    {{- $rowsN := int (index $q.counts $ru.key | default 0) -}}
-    {{- if and (ne $v nil) (ne (int $v) $rowsN) }}{{ warnf "VISR issues %s: %s summary count %d, %d rows flagged" $r.key $ru.key (int $v) $rowsN }}{{ end -}}
-    {{- $label := $ru.label -}}
-    {{- if and (eq $ru.key "triage") (not $d19) }}{{ $label = "Triage new issues (type label)" }}{{ end -}}
-    {{- $untracked := and $ru.prio (not $q.prio) -}}
-    {{- $cell := "" }}{{ $cellSub := "" -}}
-    {{- if $untracked -}}
-      {{- $cell = `<span class="v-caption" title="This repository has no priority labels">Not tracked</span>` -}}
-    {{- else if eq $v nil }}{{ $cell = partial "ui/num.html" (dict "v" nil "na" "not computed yet") -}}
-    {{- else -}}
-      {{- $cell = partial "ui/status.html" (dict "n" $v "title" $ru.title) -}}
-      {{- if and (eq $ru.key "p0") (ne $sum.p0_open nil) }}{{ $cellSub = printf "of %s open" (lang.FormatNumber 0 (float $sum.p0_open)) }}{{ end -}}
-    {{- end -}}
-    {{- $old := "" -}}
-    {{- if and $hasOldest (not $untracked) -}}
-      {{- $ov := index $oldest (replace $ru.key "-" "_") -}}
-      {{- range $ru.ids }}{{ if eq $ov nil }}{{ $ov = index $oldest . }}{{ end }}{{ end -}}
-      {{- /* if/else, not cond: cond evaluates both branches, and ui/dur.html is never called with a nil day count */ -}}
-      {{- if ne $ov nil }}{{ $old = (partial "ui/dur.html" (dict "d" $ov)).html }}{{ else }}{{ $old = partial "ui/num.html" (dict "v" nil "na" "none overdue") }}{{ end -}}
-    {{- end -}}
-    {{- $show := and (gt $rowsN 0) (not $untracked) (ne $v nil) -}}
-    {{- $items = $items | append (dict "key" $ru.key "group" $ru.group "label" $label "sub" $ru.deadline "cell" ($cell | safeHTML)
-      "cellSub" $cellSub "old" $old "show" $show) -}}
+{{- /* Response SLAs (design system v4 4.17, 5.3 module 3): the SLA rule table, one card at 12, seven rows in registry order.
+  Ctx: dict {r (data/repo.html), q (pages/issues/rows.html result)}. Rendered for classified repositories only; on the others the
+  section is omitted and Data notes says why.
+    Overdue: the rows of the queue that breach the rule (q.rules), so a rule row's count equals the list its link opens
+      (?view=all&overdue=1&rule=<key>#queue). A build warning fires when issues.json's own summary count disagrees.
+    Open: the open issues the rule applies to, where issues.json has it (P0 bugs, questions); else the empty mark "Not computed".
+    First reply has no breach field yet: empty marks, until summary.sla.first_reply_2bd_breach exists.
+    A repository without priority labels: the P0 and P1 rows show empty marks with the reason "No priority labels".
+    No rule has a stored weekly series, so the 12 weeks column is omitted (4.14 rule 8). */ -}}
+{{- $r := .r }}{{ $q := .q -}}
+{{- $sum := dict }}{{ with $r.data.issues }}{{ if reflect.IsMap . }}{{ with .summary }}{{ if reflect.IsMap . }}{{ $sum = . }}{{ end }}{{ end }}{{ end }}{{ end -}}
+{{- $sla := dict }}{{ with $sum.sla }}{{ if reflect.IsMap . }}{{ $sla = . }}{{ end }}{{ end -}}
+{{- $byType := dict }}{{ with $sum.by_type }}{{ if reflect.IsMap . }}{{ $byType = . }}{{ end }}{{ end -}}
+{{- /* the summary's own count per rule, for the consistency warning */ -}}
+{{- $check := dict "triage" $sla.triage_2bd_breach "p0" $sla.p0_7d_breach "question" $sum.questions_stale_2d "follow-up" $sla.reply_2bd_breach
+    "p1" $sla.p1_90d_breach "repro" $sum.needs_repro_14d -}}
+{{- $rules := slice -}}
+{{- range partial "data/sla-rules.html" "issue" -}}
+  {{- $key := .key -}}
+  {{- $n := int (index $q.rules $key | default 0) -}}
+  {{- $want := index $check $key -}}
+  {{- if ne $want nil }}{{ if ne (int $want) $n }}{{ warnf "VISR issues %s: rule %s has %d in the summary and %d rows" $r.key $key (int $want) $n }}{{ end }}{{ end -}}
+  {{- if eq $key "first-reply" -}}
+    {{- if ne $sla.first_reply_2bd_breach nil }}{{ $rules = $rules | append (dict "key" $key "overdue" $n) }}{{ end -}}
+  {{- else if and (in (slice "p0" "p1") $key) (not $q.prio) -}}
+    {{- $rules = $rules | append (dict "key" $key "reason" "no-priority-labels") -}}
+  {{- else if eq $key "p0" -}}
+    {{- $rules = $rules | append (dict "key" $key "open" $sum.p0_open "overdue" $n) -}}
+  {{- else if eq $key "question" -}}
+    {{- $rules = $rules | append (dict "key" $key "open" $byType.question "overdue" $n) -}}
+  {{- else -}}
+    {{- $rules = $rules | append (dict "key" $key "overdue" $n) -}}
   {{- end -}}
-  {{- $groups := slice (dict "key" "sep" "label" "SEP-1730") (dict "key" "team" "label" "Team targets") }}
+{{- end }}
+<section class="v-section" aria-labelledby="sla">
+  {{ partial "ui/section-head.html" (dict "id" "sla" "title" "Response SLAs" "desc" "Published deadlines and the open issues past them.") }}
   <div class="v-grid">
-    {{- range $g := $groups }}
-    <div class="v-span-6">
-      <div class="v-card">
-        {{ partial "ui/card-head.html" (dict "title" $g.label "id" (printf "sla-%s" $g.key)) }}
-        <table class="v-dt is-fixed is-list" aria-labelledby="sla-{{ $g.key }}">
-          <colgroup><col class="v-col-auto"><col class="v-col-32">{{ if $hasOldest }}<col class="v-col-20">{{ end }}<col class="v-col-24"></colgroup>
-          <thead><tr>
-            <th scope="col">Rule</th>
-            <th scope="col" class="num">Overdue</th>
-            {{- if $hasOldest }}<th scope="col" class="num">Oldest</th>{{ end }}
-            <th scope="col"><span class="sr-only">Show in the queue</span></th>
-          </tr></thead>
-          <tbody>
-            {{- range $items }}{{ if eq .group $g.key }}
-            <tr>
-              <th scope="row" class="v-title-cell">{{ .label }}<span class="sub">{{ .sub }}</span></th>
-              <td class="num v-verdict">{{ .cell }}
-                {{- if .show }}<span class="v-phone-only"> {{ partial "pages/issues/show.html" (dict "key" .key "label" .label "list" $list) }}</span>{{ end -}}
-                {{- with .cellSub }}<span class="sub">{{ . }}</span>{{ end -}}
-              </td>
-              {{- if $hasOldest }}<td class="num">{{ .old }}</td>{{ end }}
-              <td>{{ if .show }}{{ partial "pages/issues/show.html" (dict "key" .key "label" .label "list" $list) }}{{ end }}</td>
-            </tr>
-            {{- end }}{{ end }}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {{- end }}
+    {{ partial "ui/sla-table.html" (dict "id" "response-slas" "entity" "issue" "label" "Response SLAs" "rules" $rules) }}
   </div>
-  {{- end }}
 </section>

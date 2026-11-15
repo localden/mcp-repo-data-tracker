@@ -1,15 +1,15 @@
-{{- /* Repository page /repos/<repo>/ (brief 3.6); the /repos/ index when .Params.repo is empty (content/repos/_index.md sets page: repo).
-  Context: the page. This file reads the data once (metrics, daily series, downloads, maintainer groups) and hands one dict
-  {r, m, c, roles, dl, s, sla, d15, d110} to each module, in render order:
-    pages/repo/kpis.html       1. KPI card
-    pages/repo/attention.html  2. Needs attention: SEP-1730 line, oldest unanswered issues, oldest unreviewed PRs
-    pages/repo/activity.html   3. Activity, last 26 weeks
-    pages/repo/flow.html       4. Flow
-    pages/repo/downloads.html  5. Downloads (repos with a registry package only)
-    pages/repo/community.html  6. Community (pages/repo/maintainers.html: the compact maintainer list)
-  Definitions go to Data notes (7), never footnotes. Fields that later data packages add are used once present, with the brief's
-  fallback until then: summary.sla.first_reply_2bd_breach (D1-9), contributors.maintainers_present_30d (D1-5),
-  contributors.active_people and retained_30d (D1-10), repos.json roles (D1-6), downloads-daily.json (D2-1, via data/downloads.html). */ -}}
+{{- /* Repository page /repos/<repo>/ (design system v4 5.8); the /repos/ index when .Params.repo is empty (5.9; content/repos/_index.md
+  sets page: repo). Context: the page. This file reads the data once and hands one dict to each module, in render order:
+    pages/repo/summary.html    1. Summary: metric strip lg, trend, 4 link tiles
+    pages/repo/attention.html  2. Needs attention: the overdue strip, then two preview lists
+    pages/repo/activity.html   3. Activity: a pair of chart cards, Issues and PRs
+    pages/repo/flow.html       4. Opened and closed: one matrix table
+    pages/repo/downloads.html  5. Downloads: one chart card (repositories with a registry package)
+    pages/repo/community.html  6. Community: metric strip, chart pair, People list (pages/repo/people.html)
+  The dict: {r, m, c, roles, dl, s, sla, wi, wp, first}. wi and wp are data/waiting.html for issues and PRs: every waiting count on
+  the page and the lists those counts open come from them.
+  Page head: eyebrow "Repositories", the H1 is the scope switcher, the repository's description, meta: repository link, registry
+  link, Updated, and the info note "Tracking since {date}" while history is shorter than four weeks. Definitions go to Data notes. */ -}}
 {{- if not .Params.repo -}}
 {{ partial "pages/repo/index.html" . }}
 {{- else -}}
@@ -17,25 +17,20 @@
 {{- $m := $r.data.metrics | default dict -}}
 {{- $c := $m.contributors | default dict -}}
 {{- $roles := partial "pages/repo/roles.html" $r -}}
-
-{{- /* Data packages that change a definition on this page */ -}}
-{{- $d15 := isset $c "maintainers_present_30d" -}}
-{{- $d110 := or (isset $c "active_people") (isset $c "retained_30d") -}}
 {{- $sla := dict }}{{ with $r.data.issues }}{{ with .summary }}{{ with .sla }}{{ $sla = . }}{{ end }}{{ end }}{{ end -}}
-{{- $d19 := isset $sla "first_reply_2bd_breach" -}}
-{{- $slaLine := and $r.sdk (gt (len $sla) 0) -}}
+{{- $wi := partial "data/waiting.html" (dict "repo" $r.cfg "kind" "issues") -}}
+{{- $wp := partial "data/waiting.html" (dict "repo" $r.cfg "kind" "pulls") -}}
 
-{{- /* Daily series for the KPI sparklines and the Activity charts: 26 weeks ending on the site's newest snapshot */ -}}
+{{- /* daily series for the summary sparklines and the Activity charts: 26 weeks ending on the site's newest snapshot */ -}}
 {{- $s := dict
   "iOpen" (partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open"))
   "iWait" (partial "data/series.html" (dict "repo" $r.cfg "path" "issues.without_response_7d"))
   "pOpen" (partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.open"))
   "pWait" (partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.without_review_7d")) -}}
 
-{{- /* Complete-day downloads. A package with at least 7 complete days uses the window end every such SDK shares
-     (data/downloads-end.html), exactly as the Overview SDK adoption table and the Downloads page do, so one SDK never shows two
-     different "Last 7 days" numbers; a package with fewer keeps its own days (with the data-quality note "n of 7 days"). Same
-     partialCached keys as those pages and ui/sources.html, so each package is read once per build. */ -}}
+{{- /* complete-day downloads on the window every SDK shares (data/downloads-end.html), so one SDK never shows two different
+     "Last 7 days" numbers across pages; a package with fewer than 7 complete days keeps its own days. Same partialCached keys
+     as the other pages and ui/sources.html, so each package is read once per build. */ -}}
 {{- $d := dict -}}
 {{- if $r.package -}}
   {{- $d = partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "" -}}
@@ -44,70 +39,70 @@
 {{- end -}}
 {{- $reg := partial "ui/registry-name.html" ($r.package | default dict) -}}
 
-{{- /* Page head (brief 2.4, 3.6-0, design system v3 §4.2): eyebrow "Repository", H1 = the display name, the description, then the meta
-     row in v3 order: GitHub repo link, registry link (registry name in text-3 before the package), "Updated …" (page-head adds it
-     from the sources), stars, "Tracking since …", Data notes; the scope switcher sits at the end of the H1 row. */ -}}
-{{- $links := slice (dict "text" $r.key "href" (printf "https://github.com/%s" $r.key) "site" "GitHub") -}}
-{{- with $reg.url }}{{ $links = $links | append (dict "prefix" $reg.registry "text" $reg.package "href" . "site" $reg.registry) }}{{ end -}}
-{{- $meta := slice -}}
-{{- with $m.repository }}{{ with .stars -}}
-  {{- $meta = $meta | append (dict "icon" "star" "text" (printf "%s %s" (trim (string (partial "ui/num.html" (dict "v" . "plain" true))) " \n") (cond (eq (float .) 1.0) "star" "stars"))) -}}
-{{- end }}{{ end -}}
+{{- /* page head */ -}}
+{{- $meta := slice (dict "icon" "github" "text" $r.key "href" (printf "https://github.com/%s" $r.key) "site" "GitHub") -}}
+{{- with $reg.url }}{{ $meta = $meta | append (dict "icon" "package" "text" $reg.label "href" . "site" $reg.registry) }}{{ end -}}
 {{- $first := "" }}{{ range $k, $v := $r.snapshots }}{{ if and (eq $first "") (reflect.IsMap $v) }}{{ $first = $k }}{{ end }}{{ end -}}
-{{- with $first }}{{ $meta = $meta | append (dict "icon" "calendar" "text" (printf "Tracking since %s" (partial "ui/date.html" .))) }}{{ end -}}
+{{- $short := false -}}
+{{- with $first }}{{ $short = gt (((time.AsTime .).AddDate 0 0 28).Format "2006-01-02") $s.iOpen.to }}{{ end -}}
 {{- $use := slice "metrics" -}}
-{{- if $slaLine }}{{ $use = $use | append "issues" }}{{ end -}}
+{{- if gt (len $sla) 0 }}{{ $use = $use | append "issues" }}{{ end -}}
+{{- if $r.data.actionability }}{{ $use = $use | append "actionability" }}{{ end -}}
 {{- if $r.package }}{{ $use = $use | append "downloads" }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
 
-{{- /* Data notes: how each registry counts days, then the definitions of the metrics on this page */ -}}
+{{- /* Data notes: Sources facts, how the registry counts days, then the definitions of the metrics on this page */ -}}
+{{- $facts := slice -}}
+{{- with $first }}{{ $facts = $facts | append (dict "label" "Tracking since" "value" (dict "kind" "date" "d" . "year" true)) }}{{ end -}}
+{{- with $m.repository }}{{ if ne .stars nil }}{{ $facts = $facts | append (dict "label" "Stars" "value" (dict "kind" "count" "v" .stars)) }}{{ end }}{{ end -}}
 {{- $notes := slice -}}
 {{- $methods := dict
-  "npm" "npm: daily counts from the npm range API."
-  "pypi" "PyPI: BigQuery, complete UTC days."
-  "crates" "crates.io: daily range API."
-  "nuget" "NuGet: daily = change in lifetime total; days the total did not move are shown as missing."
-  "rubygems" "RubyGems: daily = change in lifetime total; days the total did not move are shown as missing." -}}
+  "npm" "npm downloads are daily counts from the npm range API."
+  "pypi" "PyPI downloads come from BigQuery, complete UTC days only."
+  "crates" "crates.io downloads come from the daily range API."
+  "nuget" "NuGet daily downloads are the change in the lifetime total. Days on which the total did not move are shown as missing."
+  "rubygems" "RubyGems daily downloads are the change in the lifetime total. Days on which the total did not move are shown as missing." -}}
 {{- with index $methods ($reg.key | default "") }}{{ $notes = $notes | append . }}{{ end -}}
+{{- if not $r.data.issues }}{{ $notes = $notes | append "Issues are not classified for this repository, so the response deadlines are not shown." }}{{ end -}}
+{{- if not $r.data.actionability }}{{ $notes = $notes | append "PRs are not classified for this repository, so the review deadlines are not shown." }}{{ end -}}
 {{- $defs := slice
-  (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened more than 7 days ago.")
-  (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
-  (dict "term" "Age and Waiting" "text" "Calendar days since the issue or PR opened.")
-  (dict "term" "Net change" "text" "Opened minus closed in the window.") -}}
-{{- if $slaLine -}}
-  {{- /* replies overdue is listed only once D1-9 computes it: until then the Needs attention line leaves it out */ -}}
-  {{- if $d19 }}{{ $defs = $defs | append (dict "term" "First reply overdue" "text" "SEP-1730: open issues by non-maintainers with no maintainer comment after 2 business days.") }}{{ end -}}
-  {{- $defs = $defs | append (dict "term" "Triage overdue" "text" (cond $d19
-      "SEP-1730: open issues without a type label and a priority or status label after 2 business days."
-      "SEP-1730: open issues without a type label after 2 business days.")) -}}
-  {{- $defs = $defs | append (dict "term" "P0 overdue" "text" "SEP-1730: open P0 issues older than 7 days.") -}}
+  (dict "term" "Issues waiting for a reply" "text" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 or more days ago.")
+  (dict "term" "PRs waiting for first review" "text" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago.")
+  (dict "term" "Waiting" "text" "Calendar days since the issue or PR opened.")
+  (dict "term" "Net change" "text" "Opened minus closed in the window. For PRs, opened minus merged minus closed without merging.") -}}
+{{- range slice "triage" "p0" "p1" "first-review" -}}
+  {{- $rule := partial "data/sla-rules.html" . -}}
+  {{- $defs = $defs | append (dict "term" (printf "%s deadline" $rule.name) "text" (printf "%s. Source: %s." $rule.deadline $rule.source)) -}}
 {{- end -}}
-{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "Sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported, so the number matches the Overview and the Downloads page. A package tracked for less than a week shows the sum of the days it has, with a note that says how many (5 of 7 days). A day the registry has not reported is missing, never 0.") }}{{ end -}}
-{{- $defs = $defs | append (dict "term" "Active contributors" "text" (cond $d110
+{{- $defs = $defs | append (dict "term" "Closed without merging" "text" "PRs closed without a merge. Tracked for 90 days only, and so is the PR net change.") -}}
+{{- if $r.package }}{{ $defs = $defs | append (dict "term" "Downloads, last 7 days" "text" "The sum of 7 complete days. Every SDK uses the same window, ending on the newest day all packages have reported. A package with fewer complete days shows the sum of the days it has, with a coverage note. A day the registry has not reported is missing, never zero.") }}{{ end -}}
+{{- $defs = $defs | append (dict "term" "Active contributors" "text" (cond (isset $c "active_people")
     "Distinct people, known bots excluded, who opened an issue or PR, authored a commit, reviewed or commented in the last 30 days."
     "Distinct people, known bots excluded, who opened an issue or PR or authored a commit in the last 30 days. Reviews and comments are not counted yet.")) -}}
+{{- $defs = $defs | append (dict "term" "New contributors" "text" (cond (isset $c "active_people") "People first seen in this repository in the last 30 days." "Active in the last 30 days with no activity in the prior 60 days.")) -}}
 {{- with $roles.labels -}}
-  {{- $defs = $defs | append (dict "term" "Maintainers" "text" (printf "Members of the %s %s in modelcontextprotocol/access, matched ignoring case."
+  {{- $defs = $defs | append (dict "term" "Maintainers" "text" (printf "Members of the %s %s in modelcontextprotocol/access, matched ignoring case. The trend of active contributors is not split by role."
       (delimit . ", " " and ") (cond (eq (len .) 1) "group" "groups"))) -}}
+{{- else -}}
+  {{- $defs = $defs | append (dict "term" "Maintainers" "text" "No maintainer group is defined for this repository.") -}}
 {{- end -}}
-{{- $defs = $defs | append (dict "term" "New contributors" "text" (cond $d110
-    "People first seen in this repository in the last 30 days."
-    "Active in the last 30 days with no activity in the prior 60 days.")) -}}
-{{- if and (ne $c.retained_30d nil) (ne $c.retention_base_30d nil) }}{{ $defs = $defs | append (dict "term" "Returned from last month" "text" "People active 30 to 60 days ago who were active again in the last 30 days.") }}{{ end -}}
+{{- $defs = $defs | append (dict "term" "People" "text" "Everyone active in the last 30 days, together with this repository's maintainers.") -}}
 {{- $defs = $defs | append (dict "term" "Commits per week" "text" "Commits on the default branch in each 7-day period up to the last data collection.") -}}
 
-{{ partial "ui/page-head.html" (dict
-    "title" .Title "eyebrow" "Repository" "description" ($r.cfg.description | default "")
-    "repo" $r.key "switch" "repo" "links" $links "meta" $meta "sources" $src
-    "gap" (dict "repos" (slice $r.key) "days" 364) "notes" $notes "defs" $defs) }}
+{{- $head := dict "scope" (dict "kind" "repo" "repo" $r.key) "desc" ($r.cfg.description | default "") "meta" $meta "sources" $src
+    "gap" (dict "repos" (slice $r.key) "days" 364) "notes" $notes "defs" $defs "facts" $facts -}}
+{{- if and $short $first }}{{ $head = merge $head (dict "note" (dict "since" $first)) }}{{ end }}
+{{ partial "ui/page-head.html" $head }}
 
 {{- if not $r.data.metrics }}
 <section class="v-section" aria-label="Summary">
-  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." ($r.name | default .Title))) }}
+  <div class="v-grid">
+    {{ partial "ui/empty.html" (dict "title" "No data collected" "body" "This repository has not been collected yet.") }}
+  </div>
 </section>
 {{- else }}
-{{- $ctx := dict "r" $r "m" $m "c" $c "roles" $roles "dl" $d "s" $s "sla" $sla "d15" $d15 "d110" $d110 }}
-{{ partial "pages/repo/kpis.html" $ctx }}
+{{- $ctx := dict "r" $r "m" $m "c" $c "roles" $roles "dl" $d "s" $s "sla" $sla "wi" $wi "wp" $wp "first" $first }}
+{{ partial "pages/repo/summary.html" $ctx }}
 {{ partial "pages/repo/attention.html" $ctx }}
 {{ partial "pages/repo/activity.html" $ctx }}
 {{ partial "pages/repo/flow.html" $ctx }}

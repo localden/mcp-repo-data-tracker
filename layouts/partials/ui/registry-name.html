@@ -12,7 +12,8 @@
   {{- $pkg := string (index . "name" | default "") -}}
   {{- $disp := index $names $key | default $key -}}
   {{- $url := "" }}{{ with index $base $key }}{{ $url = printf "%s%s" . $pkg }}{{ end -}}
-  {{- $html := printf `<span class="v-reg"><span class="v-reg-name">%s</span><span>%s</span></span>` (htmlEscape $disp) (htmlEscape $pkg) | safeHTML -}}
+  {{- /* v4: the registry and the package are plain text ("npm @modelcontextprotocol/sdk"); labelHTML stays for old callers */ -}}
+  {{- $html := printf "%s %s" $disp $pkg -}}
   {{- $out = dict "registry" $disp "key" $key "package" $pkg "url" $url "label" (printf "%s %s" $disp $pkg) "labelHTML" $html -}}
 {{- end -}}
 {{- return $out -}}

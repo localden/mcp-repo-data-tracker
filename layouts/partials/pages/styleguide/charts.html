@@ -1,0 +1,134 @@
+{{- /* Styleguide sections 20 to 23: charts, sparkline and bars and distribution, text primitives, the redirect stub (design system v4 6). */ -}}
+{{- $asof := .asof -}}
+{{- $day := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 240 "slope" 0.3 "gapFrom" 118 "gapTo" 150) -}}
+{{- $dayB := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 320 "slope" 0.2) -}}
+{{- $wait := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 150 "slope" 0.25 "gapFrom" 60 "gapTo" 75) -}}
+{{- $wk := partial "pages/styleguide/series.html" (dict "n" 26 "step" 7 "base" 80000000 "slope" 400000) -}}
+{{- $commits := partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 4 "slope" 0.4) -}}
+{{- $young := partial "pages/styleguide/series.html" (dict "n" 182 "step" 1 "base" 30 "slope" 0.5 "lead" 177) -}}
+{{- $t52 := partial "pages/styleguide/series.html" (dict "n" 52 "step" 7 "base" 60000000 "slope" 500000) -}}
+{{- $t52late := partial "pages/styleguide/series.html" (dict "n" 52 "step" 7 "base" 900000 "slope" 20000 "lead" 10) -}}
+{{- $t52small := partial "pages/styleguide/series.html" (dict "n" 52 "step" 7 "base" 3000 "slope" 150) -}}
+{{- $t52new := partial "pages/styleguide/series.html" (dict "n" 52 "step" 7 "base" 100 "slope" 10 "lead" 50) -}}
+{{- $mark := ((time.AsTime $asof).AddDate 0 0 -20).Format "2006-01-02" -}}
+{{- $w12 := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 600 "slope" 12)).points -}}
+{{- $w12gap := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 400 "slope" 9 "gapFrom" 4 "gapTo" 6)).points -}}
+{{- $w12lead := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 50 "slope" 3 "lead" 5)).points -}}
+{{- $w12flat := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 40 "slope" 0)).points -}}
+{{- $w12short := (partial "pages/styleguide/series.html" (dict "n" 12 "step" 7 "base" 20 "slope" 1 "lead" 10)).points -}}
+<section class="v-section" aria-labelledby="charts">
+  {{ partial "ui/section-head.html" (dict "id" "charts" "title" "Charts" "desc" "One chart card: head, readout, plot or table, notes. The canvas draws marks and axis ticks; every number is HTML.") }}
+  <div class="v-grid">
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-issues" "title" "Open issues" "metric" "open issues" "metric_one" "open issue" "scope" "Fixture" "class" "v-span-6" "pin" 100
+        "from" $day.from "to" $day.to "marks" (slice (dict "date" $mark "label" "Rust SDK and Ruby SDK added"))
+        "series" (slice (dict "label" "Open issues" "role" "accent" "points" $day.points))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-prs" "title" "Open PRs" "metric" "open PRs" "metric_one" "open PR" "scope" "Fixture" "class" "v-span-6" "reserve_notes" true
+        "from" $day.from "to" $day.to "series" (slice (dict "label" "Open PRs" "role" "accent" "points" $dayB.points))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-two" "title" "Issues" "metric" "issues" "metric_one" "issue" "scope" "Fixture" "class" "v-span-12" "pin" 68
+        "series" (slice (dict "label" "Waiting over 7 days" "role" "accent" "points" $wait.points) (dict "label" "Open" "role" "context" "points" $dayB.points))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-dl" "title" "Weekly downloads" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 26))).cadence
+        "metric" "downloads" "metric_one" "download" "scope" "Fixture" "unit" "downloads" "gran" "week" "kind" "column" "class" "v-span-12"
+        "series" (slice (dict "label" "Downloads" "role" "accent" "points" $wk.points))
+        "readout" (slice
+          (dict "label" "Last 7 days" "key" "accent" "value" (dict "kind" "volume" "v" 88208812) "delta" (dict "cur" 100.9 "prev" 100 "unit" "percent" "metric" "downloads") "range" (dict "from" "2024-11-03" "to" "2024-11-09") "base" "prior7")
+          (dict "label" "Week to date" "value" (dict "kind" "volume" "v" 58700000) "note" (dict "part" 4 "whole" 7 "noun" "day")))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-commits" "title" "Commits per week" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 12))).cadence
+        "metric" "commits" "metric_one" "commit" "scope" "Fixture" "gran" "week" "kind" "column" "class" "v-span-12" "avg" 6.4
+        "series" (slice (dict "label" "Commits" "role" "accent" "points" $commits.points))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-pending" "title" "Issues" "metric" "issues" "scope" "Fixture" "class" "v-span-6" "from" $young.from "to" $young.to
+        "series" (slice (dict "label" "Waiting over 7 days" "points" $young.points) (dict "label" "Open" "role" "context" "points" $young.points))) }}
+    {{ partial "ui/chart.html" (dict "id" "sg-ch-nodata" "title" "PRs" "metric" "PRs" "scope" "Fixture" "class" "v-span-6" "from" $young.from "to" $young.to "series" (slice (dict "label" "Open" "points" slice))) }}
+    {{ partial "ui/trellis.html" (dict "id" "sg-trellis" "title" "Weekly downloads" "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence
+        "metric" "downloads" "metric_one" "download" "unit" "downloads" "from" $t52.from "to" $t52.to "rows" (slice
+          (dict "id" "sg-tr-ts" "name" "TypeScript SDK" "href" ("repos/typescript-sdk/" | relURL) "points" $t52.points "readout" (dict "label" "Week to date" "value" (dict "kind" "volume" "v" 58700000) "note" (dict "part" 4 "whole" 7 "noun" "day")))
+          (dict "id" "sg-tr-py" "name" "Python SDK" "href" ("repos/python-sdk/" | relURL) "points" $t52late.points "readout" (dict "label" "Week to date" "value" (dict "kind" "volume" "v" 1240000)))
+          (dict "id" "sg-tr-cs" "name" "C# SDK" "href" ("repos/csharp-sdk/" | relURL) "points" $t52small.points "readout" (dict "label" "Week to date" "value" (dict "kind" "volume" "v" 8120)))
+          (dict "id" "sg-tr-rs" "name" "Rust SDK" "href" ("repos/rust-sdk/" | relURL) "points" $t52new.points))) }}
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="sparkline">
+  {{ partial "ui/section-head.html" (dict "id" "sparkline" "title" "Sparkline, bars, distribution" "desc" "One height and one colour for sparklines. A bar always sits beside its number.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Sparkline, tile size") }}<div class="v-card-body"><div class="v-sg-row">
+      {{- range slice (dict "p" $w12 "k" "level") (dict "p" $w12gap "k" "level") (dict "p" $w12 "k" "flow") (dict "p" $w12gap "k" "flow") (dict "p" $w12short "k" "level") }}
+      <div class="v-sg-cell">{{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "tile") }}</div>
+      {{- end }}
+      <div class="v-sg-cell">{{ partial "ui/spark.html" (dict "points" slice "size" "tile" "reason" "no-history") }}</div>
+    </div><p class="v-sg-cap">ui/spark.html: level, level with a gap, flow, flow with missing weeks, empty for short history, empty for no history</p></div></article>
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Sparkline, cell size") }}<div class="v-card-body"><div class="v-sg-row">
+      {{- range slice (dict "p" $w12 "k" "level") (dict "p" $w12lead "k" "level") (dict "p" $w12flat "k" "level") (dict "p" $w12 "k" "flow") (dict "p" $w12lead "k" "flow") (dict "p" $w12short "k" "flow") }}
+      {{ partial "ui/spark.html" (dict "points" .p "kind" .k "size" "cell") }}
+      {{- end }}
+    </div><p class="v-sg-cap">level, a leading gap, flat data, flow, flow with a leading gap, empty</p></div></article>
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Bars") }}
+      <table class="v-dt is-rank" aria-label="Bars, fixture">
+        <colgroup><col><col class="v-col-bar"><col class="v-col-bar"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Value") }}{{ partial "ui/th.html" (dict "label" "Share" "num" true) }}{{ partial "ui/th.html" (dict "label" "Rank" "num" true) }}</tr></thead>
+        <tbody>
+          {{- range slice 0 2 29 100 }}
+          <tr><th scope="row">{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</th>
+            <td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" . "max" 100 "mode" "share") }}{{ partial "ui/value.html" (dict "kind" "share" "v" .) }}</span></td>
+            <td class="num v-c-bar">{{ if eq . 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) }}{{ else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" . "max" 100 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" .) }}</span>{{ end }}</td></tr>
+          {{- end }}
+          <tr><th scope="row">Split</th><td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" 3 "max" 113 "mode" "share" "split" true) }}{{ partial "ui/value.html" (dict "kind" "count" "v" 3) }}</span></td><td class="num">{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") }}</td></tr>
+        </tbody>
+      </table>
+    </article>
+    {{ partial "ui/dist.html" (dict "title" "Open issues by last activity" "id" "sg-dist-six" "parts" (slice
+      (dict "name" (partial "fmt/label.html" (dict "bucket" "active30")).bucket "n" 127) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle30")).bucket "n" 0)
+      (dict "name" (partial "fmt/label.html" (dict "bucket" "idle60")).bucket "n" 0) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle90")).bucket "n" 115))) }}
+    <article class="v-card v-span-6">{{ partial "ui/card-head.html" (dict "title" "Labels on open issues") }}
+      <table class="v-dt is-rank is-list" aria-label="Labels, fixture">
+        <colgroup><col><col class="v-col-bar"><col class="v-col-num-sm"></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Label") }}{{ partial "ui/th.html" (dict "label" "Open" "num" true) }}{{ partial "ui/th.html" (dict "label" "Share" "num" true) }}</tr></thead>
+        <tbody>
+          {{- range slice (slice "enhancement" 96) (slice "bug" 71) (slice "question" 22) (slice "auth" 9) }}
+          <tr><th scope="row" class="v-name">{{ partial "ui/tag.html" (index . 0) }}</th><td class="num v-c-bar"><span class="v-barnum">{{ partial "ui/meter.html" (dict "value" (index . 1) "max" 96 "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" (index . 1)) }}</span></td><td class="num">{{ partial "ui/value.html" (dict "kind" "share" "part" (index . 1) "whole" 242) }}</td></tr>
+          {{- end }}
+        </tbody>
+      </table>
+    </article>
+    {{ partial "ui/dist.html" (dict "title" "Open issues by last activity" "id" "sg-dist-twelve" "class" "v-span-12" "parts" (slice
+      (dict "name" (partial "fmt/label.html" (dict "bucket" "active30")).bucket "n" 127) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle30")).bucket "n" 23)
+      (dict "name" (partial "fmt/label.html" (dict "bucket" "idle60")).bucket "n" 30) (dict "name" (partial "fmt/label.html" (dict "bucket" "idle90")).bucket "n" 115))) }}
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="text">
+  {{ partial "ui/section-head.html" (dict "id" "text" "title" "Text primitives" "desc" "Values, identifiers, paths and versions, each with one markup.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12">
+      <table class="v-dt is-matrix" aria-label="Text primitives">
+        <colgroup><col class="v-col-detail"><col></colgroup>
+        <thead><tr>{{ partial "ui/th.html" (dict "label" "Primitive") }}{{ partial "ui/th.html" (dict "label" "Rendering") }}</tr></thead>
+        <tbody>
+          <tr><th scope="row">Duration</th><td>{{ partial "ui/value.html" (dict "kind" "dur" "d" 744 "unit" "d") }}</td></tr>
+          <tr><th scope="row">Duration, compact</th><td>{{ partial "ui/value.html" (dict "kind" "dur" "d" 767 "unit" "d" "compact" true "opened" "2024-10-09") }}</td></tr>
+          <tr><th scope="row">Overdue</th><td><span class="v-over">{{ partial "ui/value.html" (dict "kind" "dur" "d" 514 "unit" "d" "compact" true) }}</span></td></tr>
+          <tr><th scope="row">Ratio</th><td>{{ partial "ui/value.html" (dict "kind" "ratio" "part" 155 "whole" 259) }}</td></tr>
+          <tr><th scope="row">Net change</th><td>{{ partial "ui/value.html" (dict "kind" "net" "v" -4) }}</td></tr>
+          <tr><th scope="row">Identifier</th><td>{{ partial "ui/value.html" (dict "kind" "id" "v" "SEP-2028") }}</td></tr>
+          <tr><th scope="row">Lines changed</th><td>{{ partial "ui/value.html" (dict "kind" "lines" "adds" 417 "dels" 0) }}</td></tr>
+          <tr><th scope="row">Path, file</th><td>{{ partial "ui/value.html" (dict "kind" "path" "v" "docs/migration/upgrade-to-v2.md") }}</td></tr>
+          <tr><th scope="row">Path, directory</th><td>{{ partial "ui/value.html" (dict "kind" "path" "v" "src/server/auth" "dir" true) }}</td></tr>
+          <tr><th scope="row">Path, root</th><td>{{ partial "ui/value.html" (dict "kind" "path" "v" "") }}</td></tr>
+          <tr><th scope="row">Version</th><td>{{ partial "ui/value.html" (dict "kind" "ver" "v" "1.30.0") }} {{ partial "ui/tag.html" (dict "text" "Latest" "kind" "attr") }}</td></tr>
+          <tr><th scope="row">Date, range, timestamp</th><td>{{ partial "ui/value.html" (dict "kind" "date" "d" $asof) }} {{ partial "ui/value.html" (dict "kind" "range" "from" "2024-10-08" "to" "2024-11-09") }} {{ partial "ui/value.html" (dict "kind" "ts" "t" (printf "%sT08:29:00Z" $asof)) }}</td></tr>
+          <tr><th scope="row">Cell link and quiet link</th><td><a class="v-cell-link" href="#text">{{ partial "ui/value.html" (dict "kind" "count" "v" 209) }}</a> <a class="v-link-quiet" href="#text">SEP-1913</a></td></tr>
+          <tr><th scope="row">Author and repository</th><td><span class="v-who">LucaButBoring</span> <span class="v-repo">TypeScript SDK</span> <span class="v-label">Label</span> <span class="v-caption">Caption</span></td></tr>
+        </tbody>
+      </table>
+    </article>
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="redirect">
+  {{ partial "ui/section-head.html" (dict "id" "redirect" "title" "Redirect stub" "desc" "A retired URL keeps a title and one link-action, nothing else.") }}
+  <div class="v-grid">
+    <article class="v-card v-span-12"><div class="v-card-body">
+      {{ partial "ui/page-head.html" (dict "id" "sg-ph-redirect" "eyebrow" "" "title" "Contributors moved") }}
+      {{ partial "ui/link-action.html" (dict "text" "The MCP Specification repository page" "href" ("repos/modelcontextprotocol/" | relURL)) }}
+    </div></article>
+  </div>
+</section>

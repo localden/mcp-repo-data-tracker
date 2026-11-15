@@ -1,40 +1,46 @@
-{{- /* 5. Downloads (brief 3.6-5, 5.4, 5.5, design system v3): 26 complete ISO weeks as columns. The card head carries the last 7 complete
-  days: title "Last 7 days", the value with its delta badge (v3 §4.7), and a caption line with the window and the badge's base
-  ("Nov 3–9 vs prior 7 days", the wording of the Downloads page charts). The unfinished week is stated under the plot, never plotted.
-  With fewer than 7 complete days the value is the partial sum with the data-quality note "n of 7 days" (v3 §4.18) and no badge.
-  With fewer than 4 complete weeks the card is the short-history card at plot height (v3 §4.19): "Tracking since …" when tracking
-  began less than 4 weeks ago (Rust SDK and Ruby SDK today), otherwise a plain statement that too few weeks are complete (a week with
-  a missing registry day is void, 5.4). Only rendered for repos with a registry package.
-  Context: the dict from pages/repo.html (dl = data/downloads.html for this package, on the window shared with the Overview). */ -}}
+{{- /* 5. Downloads (design system v4 5.8 module 5; repositories with a registry package only): one chart card at 12, "Weekly
+  downloads", complete weeks over the last 26 weeks, as columns. The section head carries the link-action "All downloads".
+  Readout, at most three items:
+    Last 7 days    the plotted measure's latest window: volume, change, the range of the window and the base "vs prior 7 days".
+                   With fewer than 7 complete days: the sum of the days it has, the coverage note and no change.
+    Week to date   the unfinished week, never plotted: volume with its coverage note.
+    Lifetime       the registry's running total; "From {date}" when the total was first recorded after the package began.
+  With fewer than 4 complete weeks ui/chart.html renders the pending card (a week counts only when the registry reported all 7 days).
+  Context: the dict from pages/repo.html (dl = data/downloads.html for this package, on the window shared with the other pages). */ -}}
 {{- $r := .r }}{{ $d := .dl -}}
 {{- $w := partial "data/week-bins.html" (dict "points" ($d.points | default slice) "agg" "sum" "weeks" 26 "end" ($d.complete_through | default "")) -}}
-{{- $val := "" }}{{ $sub := $d.window | default "" -}}
+{{- $readout := slice -}}
+{{- $l7 := (partial "fmt/label.html" (dict "window" (dict "n" 7 "unit" "day"))).window -}}
 {{- if ne $d.dl7 nil -}}
-  {{- $badge := trim (string (partial "ui/delta.html" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "polarity" "up" "bare" true))) " \n" -}}
-  {{- $val = string (partial "ui/num.html" (dict "v" $d.dl7 "mode" "compact")) -}}
-  {{- if $badge }}{{ $val = printf "%s %s" $val $badge }}{{ $sub = printf "%s vs prior 7 days" $sub }}{{ end -}}
+  {{- $it := dict "label" $l7 "key" "accent" "value" (dict "kind" "volume" "v" $d.dl7) "range" (dict "from" $d.from "to" $d.end) -}}
+  {{- if ne $d.prev7 nil }}{{ $it = merge $it (dict "delta" (dict "cur" $d.dl7 "prev" $d.prev7 "unit" "percent" "metric" "downloads") "base" "prior7") }}{{ end -}}
+  {{- $readout = $readout | append $it -}}
 {{- else if gt (int ($d.days_covered | default 0)) 0 -}}
-  {{- $val = printf "%s %s" (partial "ui/num.html" (dict "v" $d.sum7 "mode" "compact")) (partial "ui/note.html" (printf "%d of 7 days" (int $d.days_covered))) -}}
+  {{- $readout = $readout | append (dict "label" $l7 "key" "accent" "value" (dict "kind" "volume" "v" $d.sum7) "range" (dict "from" $d.from "to" $d.end)
+      "note" (dict "part" (int $d.days_covered) "whole" 7 "noun" "day")) -}}
 {{- end -}}
-{{- $value := $val | safeHTML -}}
-{{- $foot := "" -}}
-{{- with $w.wtd }}{{ if ne .value nil }}{{ $foot = printf "Week to date: %s (%d of 7 days)" (trim (string (partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true))) " \n") (int .days) }}{{ end }}{{ end }}
+{{- with $w.wtd }}{{ if ne .value nil -}}
+  {{- $readout = $readout | append (dict "label" (partial "fmt/label.html" (dict "window" "wtd")).window "key" "none"
+      "value" (dict "kind" "volume" "v" .value) "note" (dict "part" (int .days) "whole" 7 "noun" "day" "days" (dict "from" .start "to" .end))) -}}
+{{- end }}{{ end -}}
+{{- if ne $d.lifetime nil -}}
+  {{- $it := dict "label" "Lifetime" "key" "none" "value" (dict "kind" "volume" "v" $d.lifetime) -}}
+  {{- /* the npm total is a running sum the collector started itself, so it has a first day; the other registries report their own */ -}}
+  {{- if eq $d.registry "npm" -}}
+    {{- $seed := "" }}{{ with index $r.data "downloads-daily" }}{{ $seed = .seeded_from | default "" }}{{ end -}}
+    {{- if or (eq $seed "") (gt $seed "2024-11-01") }}{{ with $d.lifetime_since }}{{ $it = merge $it (dict "note" (dict "from" .)) }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- $readout = $readout | append $it -}}
+{{- end -}}
+{{- /* no complete week yet, though days exist: say so instead of "No data collected yet" */ -}}
+{{- $pending := "" }}{{ if and (eq (int $w.n) 0) (gt (int ($d.days_total | default 0)) 0) }}{{ $pending = "Too few complete weeks to draw a trend" }}{{ end }}
 <section class="v-section" aria-labelledby="downloads">
-  {{ partial "ui/section-head.html" (dict "title" "Downloads" "id" "downloads" "description" "Weekly downloads over the last 26 complete weeks."
-      "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
-  {{- if ge $w.n 4 }}
-  {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Last 7 days" "value" $value "sub" $sub "reserve_sub" true
-      "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column" "foot" $foot
-      "series" (slice (dict "label" "Downloads" "points" $w.points))) }}
-  {{- else if $d.first }}
-  {{- $young := gt (((time.AsTime $d.first).AddDate 0 0 28).Format "2006-01-02") ($d.complete_through | default $d.first) -}}
-  {{- if $young }}
-  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" $value "since" $d.first) }}
-  {{- else }}
-  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "value" $value
-      "body" "Too few complete weeks for a trend. A week counts only when the registry reported all 7 days.") }}
-  {{- end }}
-  {{- else }}
-  {{ partial "ui/empty.html" (dict "title" "Last 7 days" "body" (printf "No data collected for %s yet." $r.name)) }}
-  {{- end }}
+  {{ partial "ui/section-head.html" (dict "id" "downloads" "title" "Downloads" "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
+  <div class="v-grid">
+    {{ partial "ui/chart.html" (dict "id" "repo-downloads" "title" "Weekly downloads" "class" "v-span-12"
+        "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 26))).cadence
+        "metric" "downloads" "metric_one" "download" "scope" $r.name "unit" "downloads" "gran" "week" "kind" "column"
+        "series" (slice (dict "label" "Downloads" "role" "accent" "points" $w.points))
+        "since" ($d.first | default "") "pending" $pending "readout" $readout) }}
+  </div>
 </section>

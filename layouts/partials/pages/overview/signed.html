@@ -1,6 +1,0 @@
-{{- /* Signed count for net-change text (brief 6.3: real minus sign, no colour). Returns a string: "+114", "−5", "0".
-  Call: partial "pages/overview/signed.html" (sub (float $opened) (float $closed)) */ -}}
-{{- $n := math.Round (float .) -}}
-{{- $out := "0" -}}
-{{- if gt $n 0.0 }}{{ $out = printf "+%s" (lang.FormatNumber 0 $n) }}{{ else if lt $n 0.0 }}{{ $out = printf "−%s" (lang.FormatNumber 0 (math.Abs $n)) }}{{ end -}}
-{{- return $out -}}

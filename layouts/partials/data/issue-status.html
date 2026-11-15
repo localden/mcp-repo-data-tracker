@@ -1,0 +1,30 @@
+{{- /* Issue status vocabulary (design system v4 4.11): the one source of issue status labels. Replaces the page-local tier dictionary.
+  Call with a classifier tier ("untriaged") or a status key ("needs-triage"): returns {key, label, tone, tip, order, view}.
+  An unknown tier falls back to {the humanized slug, "neutral", "", 99}. Call with "*" for the whole vocabulary as an ordered slice.
+  key is the status key of the URL facet (?status=needs-triage) and of the row's data-facets token "status:needs-triage".
+  view is the queue view the status belongs to (4.10): needs, ready, reporter or close. order is the workflow order: sort a Status
+  column by it (data-v), never by the alphabet. tip is the definition (the badge title, also in Data notes). Render with ui/badge.html. */ -}}
+{{- $rows := slice
+  (dict "key" "needs-triage" "label" "Needs triage" "tone" "action" "view" "needs" "tip" "No maintainer has labelled or answered this issue yet." "states" (slice "untriaged"))
+  (dict "key" "needs-reply" "label" "Needs reply" "tone" "action" "view" "needs" "tip" "The reporter wrote last and is waiting for a maintainer." "states" (slice "needs-maintainer"))
+  (dict "key" "unanswered-question" "label" "Unanswered question" "tone" "action" "view" "needs" "tip" "A question with no maintainer answer." "states" (slice "answer"))
+  (dict "key" "needs-decision" "label" "Needs decision" "tone" "action" "view" "needs" "tip" "A maintainer has to decide whether this is wanted." "states" (slice "decide"))
+  (dict "key" "needs-design" "label" "Needs design" "tone" "action" "view" "needs" "tip" "Accepted, but the approach is not settled." "states" (slice "design"))
+  (dict "key" "needs-fix-review" "label" "Needs fix review" "tone" "action" "view" "needs" "tip" "A PR proposes a fix and is waiting for review." "states" (slice "fix-proposed"))
+  (dict "key" "ready-for-work" "label" "Ready for work" "tone" "neutral" "view" "ready" "tip" "Triaged and open for anyone to pick up." "states" (slice "ready" "ready-for-work"))
+  (dict "key" "in-progress" "label" "In progress" "tone" "neutral" "view" "ready" "tip" "Someone is working on it." "states" (slice "in-progress"))
+  (dict "key" "needs-docs" "label" "Needs docs" "tone" "neutral" "view" "ready" "tip" "The remaining work is documentation." "states" (slice "docs"))
+  (dict "key" "backlog" "label" "Backlog" "tone" "neutral" "view" "ready" "tip" "Accepted, with no plan to work on it soon." "states" (slice "backlog"))
+  (dict "key" "waiting-on-reporter" "label" "Waiting on reporter" "tone" "waiting" "view" "reporter" "tip" "A maintainer asked the reporter for more and is waiting." "states" (slice "waiting"))
+  (dict "key" "close-candidate" "label" "Close candidate" "tone" "neutral" "view" "close" "tip" "Likely resolved, stale or out of scope: a maintainer can close it." "states" (slice "close-candidates" "close-candidate")) -}}
+{{- $k := string . -}}
+{{- $out := dict "key" $k "label" (partial "ui/humanize.html" $k) "tone" "neutral" "tip" "" "order" 99 "view" "" -}}
+{{- $all := slice -}}
+{{- range $i, $r := $rows -}}
+  {{- $e := merge $r (dict "order" $i) -}}
+  {{- $all = $all | append $e -}}
+  {{- if or (eq $k $r.key) (in $r.states $k) }}{{ $out = $e }}{{ end -}}
+{{- end -}}
+{{- $ret := $out -}}
+{{- if eq $k "*" }}{{ $ret = $all }}{{ end -}}
+{{- return $ret -}}

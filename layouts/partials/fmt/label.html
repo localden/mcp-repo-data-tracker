@@ -1,0 +1,74 @@
+{{- /* Labels, windows, thresholds and bases (design system v4 3.2, 3.6). The closed phrase list lives here; templates never type one.
+  Dict {metric, stat, scope, window, threshold, base, cadence, bucket, record}. Every key is optional. Returns
+    {main, sub, text, record, qual, window, threshold, base, cadence, bucket}; never emits.
+  metric: the metric's canonical name in sentence case ("Merged", "Net change", "Waiting for a reply"). stat: the statistic that leads
+    it ("Median" with metric "time to merge" gives "Median time to merge").
+  window: {n, unit: "day" | "week"} ("Last 7 days"), or "wtd" ("Week to date"), or "latest-week" ("Latest week").
+  threshold: "over7" ("over 7 days"), "any" ("any age"), "answered" ("answered only").
+  base: {date} ("vs Oct 7", a level against a snapshot), or "prior7" ("vs prior 7 days"), or "4w" ("vs 4 weeks earlier") for a flow.
+  cadence: {every: "day" | "week" | "complete-week", weeks, since, own_scale}: "Daily, last 26 weeks", "Weekly, last 52 weeks",
+    "Complete weeks, last 52 weeks, each row on its own scale", "Daily, since Nov 10" (since replaces the window).
+  bucket: "active30" | "idle30" | "idle60" | "idle90", the last-activity parts.
+  scope: "Issues" or "PRs", the spanner a record line has to carry below 64rem.
+  Outputs: main and sub are a column header and its sub line (the sub line is the window, else the base); text is a tile or stat-list
+    label ("Merged, last 7 days", "Waiting for a reply, any age"); qual is a tile qualifier ("last 7 days", "over 7 days"); record is
+    the record-line label ("PRs merged, last 7 days", "Issues waiting over 7 days", "Issues, net change", "Change vs prior 7 days");
+    pass record to override it. */ -}}
+{{- $c := . -}}
+{{- $metric := string ($c.metric | default "") -}}
+{{- $main := $metric -}}
+{{- with $c.stat }}{{ $main = printf "%s %s" . $metric | strings.TrimSpace }}{{ end -}}
+{{- $window := "" -}}
+{{- with $c.window -}}
+  {{- if reflect.IsMap . -}}
+    {{- $n := int (.n | default 7) -}}
+    {{- $window = printf "Last %d %s" $n (partial "fmt/noun.html" (dict "key" (.unit | default "day") "n" $n)).text -}}
+  {{- else if eq . "wtd" }}{{ $window = "Week to date" -}}
+  {{- else if eq . "latest-week" }}{{ $window = "Latest week" -}}
+  {{- else }}{{ errorf "fmt/label: unknown window %q (design system v4 3.2)" . }}{{ end -}}
+{{- end -}}
+{{- $threshold := "" -}}
+{{- with $c.threshold -}}
+  {{- $threshold = index (dict "over7" "over 7 days" "any" "any age" "answered" "answered only") . | default "" -}}
+  {{- if not $threshold }}{{ errorf "fmt/label: unknown threshold %q (design system v4 3.2)" . }}{{ end -}}
+{{- end -}}
+{{- $base := "" -}}
+{{- with $c.base -}}
+  {{- if reflect.IsMap . }}{{ with .date }}{{ $base = printf "vs %s" (partial "fmt/date.html" .).text }}{{ end -}}
+  {{- else if eq . "prior7" }}{{ $base = "vs prior 7 days" -}}
+  {{- else if eq . "4w" }}{{ $base = "vs 4 weeks earlier" -}}
+  {{- else }}{{ errorf "fmt/label: unknown base %q (design system v4 3.2)" . }}{{ end -}}
+{{- end -}}
+{{- $cadence := "" -}}
+{{- with $c.cadence -}}
+  {{- $every := .every | default "day" -}}
+  {{- $lead := index (dict "day" "Daily" "week" "Weekly" "complete-week" "Complete weeks") $every | default "Daily" -}}
+  {{- if .since }}{{ $cadence = printf "%s, since %s" $lead (partial "fmt/date.html" .since).text -}}
+  {{- else }}{{ $cadence = printf "%s, last %d weeks" $lead (int (.weeks | default 26)) }}{{ end -}}
+  {{- if .own_scale }}{{ $cadence = printf "%s, each row on its own scale" $cadence }}{{ end -}}
+{{- end -}}
+{{- $bucket := "" -}}
+{{- with $c.bucket -}}
+  {{- $bucket = index (dict "active30" "Active in the last 30 days" "idle30" "Idle 30–59 days" "idle60" "Idle 60–89 days" "idle90" "Idle 90 days or more") . | default "" -}}
+  {{- if not $bucket }}{{ errorf "fmt/label: unknown bucket %q (design system v4 3.2)" . }}{{ end -}}
+{{- end -}}
+{{- $lowWindow := "" }}{{ with $window }}{{ $lowWindow = printf "%s%s" (lower (substr . 0 1)) (substr . 1) }}{{ end -}}
+{{- $text := $main -}}
+{{- with $threshold }}{{ $text = printf "%s, %s" $text . }}{{ end -}}
+{{- with $lowWindow }}{{ $text = printf "%s, %s" $text . }}{{ end -}}
+{{- $qual := $threshold | default $lowWindow -}}
+{{- $sub := $window | default $base -}}
+{{- /* record: verbs join the scope directly ("PRs merged"), nouns after a comma ("Issues, net change") */ -}}
+{{- $record := $main -}}
+{{- if and $c.scope $main }}{{ with $c.scope -}}
+  {{- $low := printf "%s%s" (lower (substr $main 0 1)) (substr $main 1) -}}
+  {{- $first := index (split $low " ") 0 -}}
+  {{- if or (hasSuffix $first "ed") (hasSuffix $first "ing") }}{{ $record = printf "%s %s" . $low }}{{ else }}{{ $record = printf "%s, %s" . $low }}{{ end -}}
+{{- end }}{{ end -}}
+{{- with $threshold }}{{ if ne . "any age" }}{{ $record = printf "%s %s" (replaceRE ` for a reply$| for first review$` "" $record) . }}{{ else }}{{ $record = printf "%s, %s" $record . }}{{ end }}{{ end -}}
+{{- with $lowWindow }}{{ $record = printf "%s, %s" $record . }}{{ end -}}
+{{- with $base }}{{ if not $window }}{{ $record = printf "%s %s" $record . }}{{ end }}{{ end -}}
+{{- with $c.record }}{{ $record = . }}{{ end -}}
+{{- if and (not $main) $bucket }}{{ $main = $bucket }}{{ $text = $bucket }}{{ $record = $bucket }}{{ end -}}
+{{- return dict "main" $main "sub" $sub "text" $text "record" $record "qual" $qual "window" $window "threshold" $threshold
+  "base" $base "cadence" $cadence "bucket" $bucket -}}

@@ -1,0 +1,78 @@
+{{- /* The SDK packages and their download windows (design system v4 5.1 module 5, 5.7), shared by the Overview "SDK adoption" table and
+  every module of the Downloads page. Returns a dict, never emits. Call: $x := partial "pages/downloads/packages.html" .
+  Every figure is a sum of complete days from data/downloads.html: a missing day is never counted as zero. One common window end for
+  every package with at least 7 complete days (data/downloads-end.html); a package with fewer keeps its own days and its value
+  carries the coverage note.
+  Returns:
+    common   data/downloads-end.html: {end, from, window}                keys: the "owner/repo" of every package
+    from30   the first day of the common 30-day window ("" without a common end)
+    weeks    the 12 week starts every row's sparkline covers            wFrom, wTo: the shared 52-week trellis domain
+    n28      rows that have a change against 4 weeks earlier (the column renders from 3)
+    pkgs     in repos.json order, each:
+      r, reg, d, short     data/repo.html, ui/registry-name.html, data/downloads.html, fewer than 7 complete days
+      spark                12 weekly bins on the shared week starts [{date, value | nil}]
+      sum30                the sum of the complete days in the 30-day window (d.dl30 is nil when a day is missing)
+      days7, days30        {from, to}: the days a partial window actually covers, for the title of its coverage note
+      na                   {reason, since}: why a window with no complete day has no value
+      life_from            the date a lifetime figure starts from, when it is not the registry's all-time total ("" otherwise) */ -}}
+{{- $common := partialCached "data/downloads-end.html" (dict) "dl-end" -}}
+{{- $base := slice }}{{ $keys := slice -}}
+{{- range site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- if $r.package -}}
+    {{- $d := partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "" -}}
+    {{- $short := or (eq $common.end "") (lt $d.days_total 7) -}}
+    {{- if not $short }}{{ $d = partialCached "data/downloads.html" (dict "repo" $r.cfg "end" $common.end) "dl" $r.repo $common.end }}{{ end -}}
+    {{- $base = $base | append (dict "r" $r "reg" (partial "ui/registry-name.html" $r.package) "d" $d "short" $short) -}}
+    {{- $keys = $keys | append $r.key -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* one x domain for the trellis (52 weeks ending on the newest complete week of any package) and one set of 12 weeks for the
+     sparklines, so every row covers the same weeks */ -}}
+{{- $wTo := "" }}{{ range $base }}{{ with .d.weekly.to }}{{ if gt . $wTo }}{{ $wTo = . }}{{ end }}{{ end }}{{ end -}}
+{{- $wFrom := "" }}{{ $weeks := slice -}}
+{{- with $wTo -}}
+  {{- $t := time.AsTime . -}}
+  {{- $wFrom = ($t.AddDate 0 0 -357).Format "2006-01-02" -}}
+  {{- range $k := seq 11 -1 0 }}{{ $weeks = $weeks | append (($t.AddDate 0 0 (int (mul -7 $k))).Format "2006-01-02") }}{{ end -}}
+{{- end -}}
+{{- $from30 := "" }}{{ with $common.end }}{{ $from30 = ((time.AsTime .).AddDate 0 0 -29).Format "2006-01-02" }}{{ end -}}
+
+{{- $pkgs := slice }}{{ $n28 := 0 -}}
+{{- range $base -}}
+  {{- $p := . }}{{ $d := .d -}}
+  {{- /* 12 weeks on the shared week starts: complete weekly sums only */ -}}
+  {{- $sc := newScratch -}}
+  {{- range $d.weekly.points }}{{ if ne .value nil }}{{ $sc.SetInMap "w" .date .value }}{{ end }}{{ end -}}
+  {{- $wm := $sc.Get "w" | default dict -}}
+  {{- $spark := slice }}{{ range $w := $weeks }}{{ $spark = $spark | append (dict "date" $w "value" (index $wm $w)) }}{{ end -}}
+
+  {{- /* the 30-day window of this row, its partial sum, and the days each partial window covers */ -}}
+  {{- $sum30 := 0.0 }}{{ $f30 := "" }}{{ $days7 := dict }}{{ $days30 := dict -}}
+  {{- with $d.end -}}
+    {{- $f30 = ((time.AsTime .).AddDate 0 0 -29).Format "2006-01-02" -}}
+    {{- range $d.points }}{{ if and (ne .value nil) (ge .date $f30) (le .date $d.end) }}{{ $sum30 = add $sum30 (float .value) }}{{ end }}{{ end -}}
+    {{- $to := $d.end }}{{ if and $d.complete_through (lt $d.complete_through $to) }}{{ $to = $d.complete_through }}{{ end -}}
+    {{- $a7 := $d.from }}{{ if and $d.first (gt $d.first $a7) }}{{ $a7 = $d.first }}{{ end -}}
+    {{- $a30 := $f30 }}{{ if and $d.first (gt $d.first $a30) }}{{ $a30 = $d.first }}{{ end -}}
+    {{- if le $a7 $to }}{{ $days7 = dict "from" $a7 "to" $to }}{{ end -}}
+    {{- if le $a30 $to }}{{ $days30 = dict "from" $a30 "to" $to }}{{ end -}}
+  {{- end -}}
+
+  {{- /* why a window without a complete day has no value */ -}}
+  {{- $na := dict "reason" "no-data" -}}
+  {{- if and $d.first $d.end (gt $d.first $d.end) }}{{ $na = dict "reason" "tracking-since" "since" $d.first -}}
+  {{- else if gt (int $d.days_total) 0 }}{{ $na = dict "reason" "no-complete-days" }}{{ end -}}
+
+  {{- /* Lifetime is the registry's own total. npm reports none, so its figure is a running sum from the first tracked day */ -}}
+  {{- $lifeFrom := "" -}}
+  {{- if and (ne $d.lifetime nil) (eq $d.registry "npm") -}}
+    {{- $seed := "" }}{{ with index $p.r.data "downloads-daily" }}{{ if reflect.IsMap . }}{{ $seed = .seeded_from | default "" }}{{ end }}{{ end -}}
+    {{- if or (eq $seed "") (gt $seed "2024-11-01") }}{{ $lifeFrom = $d.lifetime_since | default "" }}{{ end -}}
+  {{- end -}}
+
+  {{- if and (ne $d.dl7 nil) (ne $d.dl7_28 nil) }}{{ if gt (float $d.dl7_28) 0.0 }}{{ $n28 = add $n28 1 }}{{ end }}{{ end -}}
+  {{- $pkgs = $pkgs | append (dict "r" $p.r "reg" $p.reg "d" $d "short" $p.short "spark" $spark "sum30" $sum30 "days7" $days7 "days30" $days30 "na" $na "life_from" $lifeFrom) -}}
+{{- end -}}
+{{- return dict "common" $common "keys" $keys "from30" $from30 "weeks" $weeks "wFrom" $wFrom "wTo" $wTo "n28" $n28 "pkgs" $pkgs -}}

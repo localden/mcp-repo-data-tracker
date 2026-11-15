@@ -1,0 +1,59 @@
+{{- /* Backlog trend (design system v4 5.1 module 4, 4.19): a 6 + 6 pair of chart cards for the same measure, "Open issues" and "Open
+  PRs", each the org sum of the last reading per week over 26 weeks (data/org-weekly.html). Context: the page.
+  Both cards share the x domain, so their plots align and their hover is shared. Readout: "Latest", the newest weekly sum, with the
+  date of that reading. A repository whose history starts inside the window is summed from its first week; an event marker keys the
+  date it was added. The gap key and the event key are in each card's notes row. */ -}}
+{{- $anchor := partialCached "ui/latest-date.html" "latest" "latest" -}}
+{{- $i := partial "data/org-weekly.html" (dict "path" "issues.open" "weeks" 26) -}}
+{{- $p := partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 26) -}}
+
+{{- /* late starters across both series: the earliest first date per repository, grouped by date, in repos.json order */ -}}
+{{- $sc := newScratch -}}
+{{- range slice $i.late $p.late -}}
+  {{- range . -}}
+    {{- $have := index ($sc.Get "late" | default dict) .name -}}
+    {{- if or (not $have) (lt .first $have) }}{{ $sc.SetInMap "late" .name .first }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $lm := $sc.Get "late" | default dict -}}
+{{- $dates := slice -}}
+{{- range site.Data.repos.repositories }}{{ with index $lm (.name | default .repo) }}{{ if not (in $dates .) }}{{ $dates = $dates | append . }}{{ end }}{{ end }}{{ end -}}
+{{- $marks := slice -}}
+{{- range $dt := $dates -}}
+  {{- $names := slice -}}
+  {{- range site.Data.repos.repositories }}{{ $n := .name | default .repo }}{{ if eq (index $lm $n) $dt }}{{ $names = $names | append $n }}{{ end }}{{ end -}}
+  {{- $label := printf "%s added" (delimit $names ", " " and ") -}}
+  {{- if gt (len $label) 40 }}{{ $label = "Repositories added" }}{{ end -}}
+  {{- $marks = $marks | append (dict "date" $dt "label" $label) -}}
+{{- end -}}
+
+{{- $sub := (partial "fmt/label.html" (dict "cadence" (dict "every" "week" "weeks" 26))).cadence -}}
+{{- $cards := slice -}}
+{{- range $c := slice
+    (dict "id" "overview-open-issues" "title" "Open issues" "metric" "open issues" "one" "open issue" "s" $i)
+    (dict "id" "overview-open-prs" "title" "Open PRs" "metric" "open PRs" "one" "open PR" "s" $p) -}}
+  {{- /* the newest weekly sum and the date it was read: the end of its week, or the newest snapshot when the week is unfinished */ -}}
+  {{- $last := dict -}}
+  {{- range $c.s.points }}{{ if ne .value nil }}{{ $last = . }}{{ end }}{{ end -}}
+  {{- $readout := slice -}}
+  {{- with $last.date -}}
+    {{- $end := ((time.AsTime .).AddDate 0 0 6).Format "2006-01-02" -}}
+    {{- if gt $end $anchor }}{{ $end = $anchor }}{{ end -}}
+    {{- $readout = slice (dict "label" "Latest" "key" "accent" "value" (dict "kind" "count" "v" $last.value) "date" $end) -}}
+  {{- end -}}
+  {{- $cards = $cards | append (dict "id" $c.id "title" $c.title "class" "v-span-6" "sub" $sub
+      "metric" $c.metric "metric_one" $c.one "scope" "All repositories" "unit" "count" "gran" "week" "kind" "line"
+      "from" $i.from "to" $i.to
+      "series" (slice (dict "label" $c.title "role" "accent" "points" $c.s.points))
+      "readout" $readout "marks" $marks "reserve_notes" (gt (len $marks) 0)) -}}
+{{- end -}}
+{{- if or $i.n $p.n }}
+<section class="v-section" aria-labelledby="backlog-trend">
+  {{ partial "ui/section-head.html" (dict "id" "backlog-trend" "title" "Backlog trend") }}
+  <div class="v-grid">
+    {{- range $cards }}
+    {{ partial "ui/chart.html" . }}
+    {{- end }}
+  </div>
+</section>
+{{- end }}

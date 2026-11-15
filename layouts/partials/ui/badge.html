@@ -1,0 +1,16 @@
+{{- /* Status badge (design system v4 4.8): a state from a fixed vocabulary. 20px, radius 6, soft fill, the tone's lead.
+  Dict {text, tone, title}, or a status dict from data/pr-status.html or data/issue-status.html ({label, tone, tip}), or a string.
+  tone: action (a maintainer has the next move: accent dot), waiting (someone else has it: ring), neutral (default), success
+    (healthy: green dot), warning (the data could not say, or stopped: circle-alert), danger (overdue, days unknown: alert-triangle).
+  An unknown tone renders neutral. A badge has no states and is never a link. Empty text renders nothing. */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
+{{- $tone := $c.tone | default "neutral" -}}
+{{- if not (in (slice "action" "waiting" "neutral" "success" "warning" "danger") $tone) }}{{ $tone = "neutral" }}{{ end -}}
+{{- $title := $c.title | default $c.tip -}}
+{{- with $c.text | default $c.label -}}
+<span class="v-badge is-{{ $tone }}"{{ with $title }} title="{{ . }}"{{ end }}>
+  {{- if in (slice "action" "waiting" "success") $tone }}<span class="v-badge-lead" aria-hidden="true"></span>
+  {{- else if eq $tone "warning" }}{{ partial "ui/icon.html" (dict "name" "circle-alert" "size" 12) }}
+  {{- else if eq $tone "danger" }}{{ partial "ui/icon.html" (dict "name" "alert-triangle" "size" 12) }}{{ end -}}
+  {{ . }}</span>
+{{- end -}}

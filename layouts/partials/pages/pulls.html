@@ -1,85 +1,143 @@
-{{- /* Pull requests (brief 3.3). Context: the page; its title is the bare scope, the H1 ("All repositories", "TypeScript SDK"), and
-     the eyebrow "Pull requests" comes from the switcher kind. /pulls/ (3.3a, .Params.repo empty) renders pages/pulls/org.html;
-     /pulls/<repo>/ (3.3b) renders the same skeleton for every repo, classification only changes what fills it:
-       0 page head (scope switcher; one "Updated" time = the older of metrics.json timestamp and actionability.json lastUpdated)
-       1 Review SLAs (pulls/sla)
-       2 Queue (pulls/queue, or pulls/unclassified without actionability.json)
-       3 Backlog trend (pulls/backlog)
-       4 Review speed (pulls/speed)
-       5 Where merged PRs land (pulls/hotspots)
-     Helpers: pulls/rows (actionability -> table rows, partialCached per repo), pulls/row, pulls/reason (the only reader of
-     short_reason), pulls/state-label, pulls/meta (the row meta line under a PR title), pulls/wait (whole days), pulls/typical-week,
-     pulls/sep-stages. */ -}}
+{{- /* Pull requests (design system v4 5.4, 5.5). Context: the page. /pulls/ (.Params.repo empty) renders pages/pulls/org.html;
+     /pulls/<repo>/ renders the modules below. The H1 is the scope switcher; meta: repository link, Updated; the tracking note when
+     history is short.
+     Classified repository (actionability.json has tiers):
+       1 Summary        metric strip lg, no visual, 4 tiles: Overdue, Needs a maintainer, Estimated review effort, Open PRs
+       2 Queue          pulls/queue (list card "pq" with views and six facets)
+       3 Review SLAs    pulls/sla (the SLA rule table)
+       4 Backlog trend  pulls/backlog
+       5 Review speed   pulls/speed
+       6 Where merged PRs land  pulls/hotspots
+     Unclassified repository:
+       1 Summary        metric strip lg, no visual, 3 tiles: Waiting for first review over 7 days and any age, Open PRs
+       2 Queue          pulls/waiting (list card "pq", views "Waiting for first review" and "Drafts", facet Over 7 days)
+       3 Backlog trend, 4 Review speed, 5 Where merged PRs land. Review SLAs is omitted; Data notes says why.
+     Helpers: pulls/rows (actionability to rows, partialCached per repository), pulls/row, pulls/reason (the only reader of
+     short_reason), pulls/wait-row, pulls/typical-week, pulls/sep-stages.
+     Every tile value is the count of the rows its URL selects. A list counts its top-level rows: the other PRs of a duplicate
+     cluster sit behind their primary's expander and are counted once, with it. */ -}}
 {{- $key := .Params.repo | default "" -}}
 {{- if not $key }}
 {{ partial "pages/pulls/org.html" . }}
 {{- else }}
 {{- $r := partial "data/repo.html" $key -}}
 {{- $m := dict }}{{ with $r.data.metrics }}{{ if reflect.IsMap . }}{{ $m = . }}{{ end }}{{ end -}}
+{{- $pl := dict }}{{ with $m.pulls }}{{ if reflect.IsMap . }}{{ $pl = . }}{{ end }}{{ end -}}
 {{- $a := dict }}{{ with $r.data.actionability }}{{ if reflect.IsMap . }}{{ $a = . }}{{ end }}{{ end -}}
 {{- $classified := and (gt (len $a) 0) (ne $a.tiers nil) -}}
+{{- $w := partial "data/waiting.html" (dict "repo" $r.cfg "kind" "pulls") -}}
+{{- $openS := partial "data/series.html" (dict "repo" $r.cfg "path" "pulls.open") -}}
 
-{{- /* page head: sources, gap notice (GitHub data first; once that gap is backfilled, the classification gap that cannot be), definitions */ -}}
+{{- /* page head: sources, the gap callout (GitHub data first; once that is backfilled, the classification gap), definitions */ -}}
 {{- $use := slice "metrics" }}{{ if $classified }}{{ $use = $use | append "actionability" }}{{ end -}}
 {{- $src := partial "ui/sources.html" (dict "repo" $r.key "use" $use) -}}
-{{- /* the default tail adds "7-day comparisons use the nearest earlier snapshot"; this page shows no 7-day comparison, so it is left out */ -}}
-{{- $gap := dict "repos" (slice $r.key) "days" 182 "tail" "Charts show the gap." -}}
-{{- $notes := slice -}}
+{{- $gap := dict "repos" (slice $r.key) "days" 182 -}}
 {{- if $classified -}}
-  {{- $gh := partial "ui/page-gaps.html" $gap -}}
-  {{- $ag := dict "repos" (slice $r.key) "days" 182 "key" "actionability" "noun" "PR classification history" "tail" "" -}}
-  {{- if not $gh.runs }}{{ $gap = $ag -}}
-  {{- else -}}
-    {{- /* the notice names the GitHub gap; Data notes also list the classification runs the "Needs a maintainer" line skips */ -}}
-    {{- $ranges := slice -}}
-    {{- range (partial "ui/page-gaps.html" $ag).runs }}{{ $ranges = $ranges | append (partial "data/date-range.html" (dict "from" .from "to" .to)) }}{{ end -}}
-    {{- with $ranges }}{{ $notes = $notes | append (printf "No PR classification history for %s." (delimit . ", " " and ")) }}{{ end -}}
-  {{- end -}}
+  {{- if not (partial "ui/page-gaps.html" $gap).runs }}{{ $gap = dict "repos" (slice $r.key) "days" 182 "key" "actionability" "noun" "PR classification history" }}{{ end -}}
 {{- end -}}
-{{- $defs := slice -}}
+{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 or more days ago." -}}
+{{- $defEffort := "The PR classifier's estimate of the review time the Needs a maintainer view asks for." -}}
+{{- $defs := slice -}}{{ $notes := slice -}}
 {{- if $classified -}}
-  {{- /* the queue rows, cached per repo (pages/pulls/queue.html reads the same cache entry): Age until the classifier exports waiting_days */ -}}
-  {{- $q := partialCached "pages/pulls/rows.html" $a $r.key -}}
   {{- $defs = $defs | append
-    (dict "term" "First review overdue" "text" "Classified PRs with no maintainer review yet (none, or community reviews only) waiting more than 7 days. Team SLA.")
-    (dict "term" "Re-review overdue" "text" "The author updated the PR after a change request and no maintainer re-reviewed it within 24 hours. Team SLA.")
-    (dict "term" "Maintainer PRs unreviewed" "text" "Maintainer-authored PRs with no review from another maintainer within 24 hours. Team SLA.")
-    (dict "term" "Needs a maintainer" "text" "Open PRs whose next step is a maintainer's, according to the PR classifier. Duplicate PRs fold under their primary PR and still count.")
-    (dict "term" "Author waiting on us" "text" "PRs whose author is waiting on a maintainer: the author did what was asked, or a maintainer's own PR awaits a review.")
-    (dict "term" "Housekeeping" "text" "Open PRs that need a nudge or a cleanup rather than a review.")
-    (dict "term" "Close candidates" "text" "Open PRs the classifier suggests closing, such as inactive PRs with failing CI.")
-    (dict "term" "Waiting on author" "text" "Open PRs whose next step is not a maintainer's, such as drafts, parked maintainer drafts and release PRs.") -}}
-  {{- if $q.wait -}}
-    {{- $defs = $defs | append (dict "term" "Waiting on us" "text" "Whole days since the next step moved to a maintainer, from the PR classifier.") -}}
-  {{- else -}}
-    {{- $defs = $defs | append (dict "term" "Age" "text" "Calendar days since the PR opened.") -}}
-  {{- end -}}
+    (dict "term" "Overdue" "text" "Past a deadline in the Review SLAs table. All three are team targets.")
+    (dict "term" "Overdue column" "text" "Calendar days past the first-review deadline. The 24-hour rules carry no day count and show the Overdue badge.")
+    (dict "term" "Needs a maintainer" "text" "Open PRs whose next step is a maintainer's, according to the PR classifier.")
+    (dict "term" "Housekeeping" "text" "Open PRs that need a nudge or a cleanup instead of a review.")
+    (dict "term" "Close candidates" "text" "Open PRs the classifier suggests closing, such as inactive PRs with failing checks.")
+    (dict "term" "Waiting on author" "text" "Open PRs whose next step is not a maintainer's, such as drafts, parked maintainer drafts and release PRs.")
+    (dict "term" "Author waiting" "text" "The author did what was asked, or a maintainer's own PR awaits a review.")
+    (dict "term" "Duplicates" "text" "PRs that fix the same issue fold under one primary PR, behind its expander. Counts on views, tiles and filters count the primary only, so they can be lower than Open PRs.")
+    (dict "term" "Estimated review effort" "text" $defEffort)
+    (dict "term" "Actionable" "text" "The classifier's daily count of PRs a maintainer can act on. It is the plotted series, not the same set as the Needs a maintainer view.")
+    (dict "term" "Not draft" "text" "Open PRs minus drafts, from the daily snapshot.")
+    (dict "term" "Age" "text" "Calendar days since the PR opened.") -}}
+  {{- range partial "data/pr-status.html" "*" }}{{ $defs = $defs | append (dict "term" .label "text" .tip) }}{{ end -}}
+  {{- range partial "data/sla-rules.html" "pr" }}{{ $defs = $defs | append (dict "term" (printf "%s rule" .name) "text" (printf "%s. Source: %s." .deadline .source)) }}{{ end -}}
 {{- else -}}
   {{- $defs = $defs | append
-    (dict "term" "PRs waiting for first review" "text" "Open, non-draft PRs not opened by a maintainer or a bot, with no review from a repository maintainer, opened more than 7 days ago.")
+    (dict "term" "Waiting for first review" "text" $defWait)
+    (dict "term" "Waiting for first review, any age" "text" "The same PRs at any age: the Waiting for first review view of the queue.")
     (dict "term" "Drafts" "text" "Decided by GitHub's draft state, not by a draft label.")
     (dict "term" "Waiting" "text" "Calendar days since the PR opened.") -}}
+  {{- $notes = $notes | append "Review SLAs need PR classification, which does not run for this repository." -}}
 {{- end -}}
 {{- $defs = $defs | append
-  (dict "term" "Open, not draft" "text" "Open PRs minus drafts, from the daily snapshot.")
+  (dict "term" "Open PRs" "text" "PRs open now, drafts included.")
+  (dict "term" "Net change" "text" "PRs opened minus PRs merged and PRs closed without merging in the window.")
   (dict "term" "Typical week" "text" "Median of the weekly merged-PR counts over the prior 12 complete weeks, weeks without data skipped. Shown from 4 weeks of data.")
-  (dict "term" "Time to merge" "text" "Median time from opening to merge.")
-  (dict "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that touched each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
-{{ partial "ui/page-head.html" (dict
-    "title" .Title "eyebrow" "Pull requests" "repo" $r.key "switch" "pulls"
-    "links" (slice (dict "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))
-    "sources" $src "gap" $gap "notes" $notes "defs" $defs) }}
+  (dict "term" "Median time to merge" "text" "Median time from opening to merge, over PRs merged in the last 90 days.")
+  (dict "term" "Where merged PRs land" "text" "Merged PRs from the last 90 days that changed each file or directory. Lockfiles, .changeset files and changelogs are left out.") -}}
+{{- $head := dict "scope" (dict "kind" "pulls" "repo" $r.key)
+    "meta" (slice (dict "icon" "github" "text" $r.key "href" (printf "https://github.com/%s/pulls" $r.key) "site" "GitHub"))
+    "sources" $src "gap" $gap "defs" $defs "notes" $notes -}}
+{{- if and $openS.first (gt (string $openS.first) (string $openS.from)) }}{{ $head = merge $head (dict "note" (dict "since" $openS.first)) }}{{ end }}
+{{ partial "ui/page-head.html" $head }}
 
 {{- if not $m }}
-<section class="v-section" aria-label="No data">
-  {{ partial "ui/empty.html" (dict "size" "none" "body" (printf "No data collected for %s yet." $r.name)) }}
+<section class="v-section" aria-labelledby="queue">
+  {{ partial "ui/section-head.html" (dict "id" "queue" "title" "Queue") }}
+  <div class="v-grid">
+    {{ partial "ui/empty.html" (dict "title" "No PR data" "body" "Nothing has been collected for this repository yet.") }}
+  </div>
 </section>
 {{- else }}
-{{ partial "pages/pulls/sla.html" (dict "r" $r "a" $a "m" $m "classified" $classified) }}
+{{- $openTile := dict "name" "Open PRs" "title" "PRs open now, drafts included." "value" (dict "kind" "count" "v" $pl.open_count)
+    "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" (dict "n" 30 "unit" "day"))).text
+      "value" (dict "kind" "count" "v" $pl.merged_30d)) -}}
 {{- if $classified }}
-{{ partial "pages/pulls/queue.html" (dict "r" $r "a" $a) }}
+{{- $q := partialCached "pages/pulls/rows.html" $a $r.key -}}
+{{- $needs := int (index $q.views "needs") -}}
+{{- $viewArg := "" }}{{ if ne $q.def "needs" }}{{ $viewArg = "view=needs" }}{{ end -}}
+{{- /* Open PRs links to the All view only when that view lists every open PR (no duplicates folded): count equality */ -}}
+{{- if ne $pl.open_count nil }}{{ if eq (int $pl.open_count) (int $q.all) }}{{ $openTile = merge $openTile (dict "href" "?view=all#queue" "drill" true) }}{{ end }}{{ end -}}
+{{- $effort := dict "kind" "dur" "unit" "h" "reason" "not-computed" -}}
+{{- with $a.summary }}{{ if reflect.IsMap . }}{{ with .effort_hours }}{{ if gt (float .) 0.0 }}{{ $effort = dict "kind" "dur" "h" (math.Round (float .)) "unit" "h" }}{{ end }}{{ end }}{{ end }}{{ end }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice
+      (dict "name" "Overdue" "title" "Open PRs past a deadline in the Review SLAs table." "tone" "breach"
+        "value" (dict "kind" "count" "v" $q.over) "context" (dict "kind" "whole" "n" $needs "of" "in Needs a maintainer")
+        "href" (printf "?%s%soverdue=1#queue" $viewArg (cond (eq $viewArg "") "" "&")) "drill" true)
+      (dict "name" "Needs a maintainer" "title" "Open PRs whose next step is a maintainer's, according to the PR classifier."
+        "value" (dict "kind" "count" "v" $needs)
+        "href" (cond (eq $viewArg "") "#queue" "?view=needs#queue") "drill" true)
+      (dict "name" "Estimated review effort" "title" $defEffort "value" $effort)
+      $openTile)) }}
+  </div>
+</section>
+{{ partial "pages/pulls/queue.html" (dict "r" $r "q" $q) }}
+{{ partial "pages/pulls/sla.html" (dict "r" $r "a" $a "q" $q) }}
 {{- else }}
-{{ partial "pages/pulls/unclassified.html" (dict "r" $r "m" $m) }}
+{{- $stages := partial "pages/pulls/sep-stages.html" $r.data -}}
+{{- $rows := slice }}{{ $drafts := slice -}}
+{{- range $w.rows -}}
+  {{- $rows = $rows | append (dict "w" (float (.daysWaiting | default 0)) "it" . "name" "" "slug" "" "stage" (index $stages (string (int (.number | default 0))) | default "")) -}}
+{{- end -}}
+{{- range $w.drafts -}}
+  {{- $drafts = $drafts | append (dict "w" (float (.daysWaiting | default 0)) "it" . "name" "" "slug" "" "stage" (index $stages (string (int (.number | default 0))) | default "")) -}}
+{{- end -}}
+{{- if $drafts }}{{ $drafts = sort $drafts "w" "desc" }}{{ end -}}
+{{- $viewArg := "" }}{{ if and (eq (len $rows) 0) (gt (len $drafts) 0) }}{{ $viewArg = "view=review" }}{{ end }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "none" "tiles" (slice
+      (dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
+        "value" (dict "kind" "count" "v" $w.over7)
+        "href" (printf "?%s%sover7=1#queue" $viewArg (cond (eq $viewArg "") "" "&")) "drill" true)
+      (dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual
+        "title" "The same PRs at any age: the Waiting for first review view of the queue."
+        "value" (dict "kind" "count" "v" $w.any)
+        "href" (cond (eq $viewArg "") "#queue" "?view=review#queue") "drill" true)
+      $openTile)) }}
+  </div>
+</section>
+<section class="v-section" aria-labelledby="queue">
+  {{ partial "ui/section-head.html" (dict "id" "queue" "title" "Queue" "desc" "Open PRs with no maintainer review, longest wait first.") }}
+  <div class="v-grid">
+    {{ partial "pages/pulls/waiting.html" (dict "id" "pq" "rows" $rows "drafts" $drafts "views" true "labelledby" "queue") }}
+  </div>
+</section>
 {{- end }}
 {{ partial "pages/pulls/backlog.html" (dict "r" $r "m" $m "classified" $classified) }}
 {{ partial "pages/pulls/speed.html" (dict "r" $r "m" $m) }}

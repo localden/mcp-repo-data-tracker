@@ -1,31 +1,37 @@
-{{- /* Flatten actionability.json into the one queue table's rows (brief 3.3b-2, 8a-8, P6). Input: the actionability map. Returns dict:
-     rows: top-level rows sorted by wait, longest first; each {pr, tab, state, n, over, waiting, bot, id, kids}. kids are the other PRs of
-       a duplicate cluster as rows of the same shape (rendered right after their primary, collapsed behind its "2 PRs" expander).
-     count: rendered rows per tab {needs, housekeeping, close, author}; all: every rendered row; over: overdue rows (needs tab only);
-     waiting: rows of classifier tier 1, glossary "Author waiting on us" (the author did what was asked; Overview Needs attention
-       column 9 counts summary.by_tier[0] = this tier), cluster members excluded so the chip count matches that column;
-     auth, maint, bot: rows carrying each chip token; wait: true once the classifier exports waiting_days (D3-2), else rows sort by age.
-   Called with partialCached (variant key = the repo key) by pages/pulls.html and pages/pulls/queue.html, so it runs once per page.
-   Tabs (6.5 "PR tier labels"): tiers 0-3 and unclassified rows -> needs ("Needs a maintainer"); tier 4 and bot rows -> housekeeping;
-     tier 5 -> close; not_our_move -> author ("Waiting on author"). Tab counts and the segments sum to all, because every rendered row
-     (cluster members included) belongs to exactly one tab.
-   over (8a-8): sla_breach is true and the row is in the needs tab; never on age alone, never on a cluster member (the summary counts a
-     cluster once). */ -}}
+{{- /* Flatten actionability.json into the rows of the classified PR queue (design system v4 4.10 to 4.16, 5.5). Input: the
+   actionability map. Returns a dict, never emits. Called with partialCached (variant key = the repo key), so it runs once per page.
+     rows: the top-level rows in the default sort (days overdue descending, then age descending). Each is
+       {pr, view, state, st (data/pr-status.html), role, rules, tok, id, age, opened, k, kids}.
+       kids: the other PRs of a duplicate cluster, rows of the same shape with no tokens; they render right after their primary,
+       behind its expander, and are not counted: a list counts its top-level rows (as ui.js does), so every tile, tab and link that
+       carries a count equals the result count of the list it opens.
+     views: rows per view {needs, housekeeping, close, author}; def: the default view (the first that is not empty); all: every
+       top-level row; over: rows past a review deadline (needs view only).
+   Views (disjoint piles, by who has the next step): classifier tiers 0 to 3 and unclassified PRs are needs ("Needs a maintainer");
+     tier 4 and bot PRs housekeeping; tier 5 close; the rest author ("Waiting on author").
+   Overdue: sla_breach is true, the row is in the needs view and its sla_kind names a rule of data/sla-rules.html (first-review,
+     re-review, maintainer-pr). Days overdue are known for a first review only (age minus 7 days, at least 1); the 24-hour rules carry
+     no day count, so their Overdue cell is the danger badge.
+   Tokens: status:<key>, author:<maintainer|bot|contributor>, overdue, rule:<key>, author-waiting (classifier tier 1: the author did
+     what was asked and waits for a maintainer), auth. */ -}}
 {{- $a := . | default dict -}}
+{{- $asof := now -}}
+{{- with $a.lastUpdated }}{{ $asof = time.AsTime . }}{{ end -}}
+{{- $ruleOf := dict "1st-review" "first-review" "re-review" "re-review" "maintainer" "maintainer-pr" -}}
 {{- $groups := slice -}}
 {{- range $a.tiers | default slice -}}
   {{- $i := float (.idx | default 0) -}}
-  {{- $tab := "housekeeping" -}}
-  {{- if le $i 3.0 }}{{ $tab = "needs" }}{{ else if eq $i 5.0 }}{{ $tab = "close" }}{{ end -}}
-  {{- $groups = $groups | append (dict "tab" $tab "tier" $i "states" (.states | default slice)) -}}
+  {{- $view := "housekeeping" -}}
+  {{- if le $i 3.0 }}{{ $view = "needs" }}{{ else if eq $i 5.0 }}{{ $view = "close" }}{{ end -}}
+  {{- $groups = $groups | append (dict "view" $view "tier" $i "states" (.states | default slice)) -}}
 {{- end -}}
-{{- $groups = $groups | append (dict "tab" "needs" "tier" -1.0 "states" ($a.untriaged | default slice)) -}}
-{{- $groups = $groups | append (dict "tab" "housekeeping" "tier" -1.0 "states" ($a.bot_corner | default slice)) -}}
-{{- $groups = $groups | append (dict "tab" "author" "tier" -1.0 "states" ($a.not_our_move | default slice)) -}}
+{{- $groups = $groups | append (dict "view" "needs" "tier" -1.0 "states" ($a.untriaged | default slice)) -}}
+{{- $groups = $groups | append (dict "view" "housekeeping" "tier" -1.0 "states" ($a.bot_corner | default slice)) -}}
+{{- $groups = $groups | append (dict "view" "author" "tier" -1.0 "states" ($a.not_our_move | default slice)) -}}
 
-{{- $top := slice }}{{ $wait := false -}}
+{{- $top := slice -}}
 {{- $cnt := dict "needs" 0 "housekeeping" 0 "close" 0 "author" 0 -}}
-{{- $all := 0 }}{{ $over := 0 }}{{ $auth := 0 }}{{ $maint := 0 }}{{ $bots := 0 }}{{ $waiting := 0 -}}
+{{- $all := 0 }}{{ $over := 0 -}}
 {{- range $g := $groups -}}
   {{- range $s := $g.states -}}
     {{- $clusters := $s.clusters | default slice -}}
@@ -41,26 +47,47 @@
       {{- end -}}
       {{- $built := slice -}}
       {{- range $j, $p := $members -}}
-        {{- $st := string ($p.state | default $s.name) -}}
+        {{- $state := string ($p.state | default $s.name | default "unknown") -}}
+        {{- $st := partialCached "data/pr-status.html" $state $state -}}
         {{- $author := string ($p.author | default "") -}}
-        {{- $bot := or $p.is_bot (hasPrefix $author "app/") (hasSuffix $author "[bot]") -}}
-        {{- $o := and $p.sla_breach (eq $g.tab "needs") (ne $st "duplicate-cluster-member") -}}
+        {{- $role := "" -}}
+        {{- if $author -}}
+          {{- $role = "Contributor" -}}
+          {{- if eq $p.is_maintainer true }}{{ $role = "Maintainer" -}}
+          {{- else if or (eq $p.is_bot true) (hasPrefix $author "app/") (hasSuffix $author "[bot]") }}{{ $role = "Bot" }}{{ end -}}
+        {{- end -}}
+        {{- $age := float ($p.age_days | default 0) -}}
+        {{- $rule := "" }}{{ with $p.sla_kind }}{{ $rule = index $ruleOf (string .) | default "" }}{{ end -}}
+        {{- $o := and (eq $p.sla_breach true) (eq $g.view "needs") (eq $j 0) (ne $rule "") -}}
         {{- $aw := and (eq (float $g.tier) 1.0) (eq $j 0) -}}
-        {{- if ne $p.waiting_days nil }}{{ $wait = true }}{{ end -}}
-        {{- $w := float ($p.age_days | default 0) }}{{ if ne $p.waiting_days nil }}{{ $w = float $p.waiting_days }}{{ end -}}
-        {{- $built = $built | append (dict "pr" $p "tab" $g.tab "state" $st "n" (cond (eq $j 0) (len $members) 0) "over" $o "waiting" $aw
-              "bot" $bot "w" $w "id" (printf "pq-%d" (int ($p.number | default 0)))) -}}
-        {{- $all = add $all 1 }}{{ $cnt = merge $cnt (dict $g.tab (add (index $cnt $g.tab) 1)) -}}
-        {{- if $o }}{{ $over = add $over 1 }}{{ end -}}
-        {{- if $aw }}{{ $waiting = add $waiting 1 }}{{ end -}}
-        {{- if $p.is_auth }}{{ $auth = add $auth 1 }}{{ end -}}
-        {{- if $p.is_maintainer }}{{ $maint = add $maint 1 }}{{ end -}}
-        {{- if $bot }}{{ $bots = add $bots 1 }}{{ end -}}
+        {{- $rules := slice }}{{ $k := -1.0 -}}
+        {{- if $o -}}
+          {{- if eq $rule "first-review" -}}
+            {{- $k = math.Max 1.0 (math.Floor (sub $age 7.0)) -}}
+            {{- $rules = slice (dict "key" $rule "days" $k) -}}
+          {{- else -}}
+            {{- $k = 0.0 -}}
+            {{- $rules = slice (dict "key" $rule) -}}
+          {{- end -}}
+        {{- end -}}
+        {{- $tok := slice -}}
+        {{- if eq $j 0 -}}
+          {{- $tok = slice (printf "status:%s" $st.key) (printf "author:%s" (lower ($role | default "contributor"))) -}}
+          {{- if $o }}{{ $tok = $tok | append "overdue" (printf "rule:%s" $rule) }}{{ $over = add $over 1 }}{{ end -}}
+          {{- if $aw }}{{ $tok = $tok | append "author-waiting" }}{{ end -}}
+          {{- if eq $p.is_auth true }}{{ $tok = $tok | append "auth" }}{{ end -}}
+          {{- $all = add $all 1 }}{{ $cnt = merge $cnt (dict $g.view (add (index $cnt $g.view) 1)) -}}
+        {{- end -}}
+        {{- $built = $built | append (dict "pr" $p "view" $g.view "state" $state "st" $st "role" $role "rules" $rules "tok" $tok
+            "id" (printf "pr-%d" (int ($p.number | default 0))) "age" $age "opened" ($asof.AddDate 0 0 (int (sub 0 (math.Floor $age))))
+            "k" (add (mul $k 100000.0) (math.Min $age 99999.0))) -}}
       {{- end -}}
-      {{- $head := index $built 0 -}}
-      {{- $top = $top | append (merge $head (dict "kids" (after 1 $built))) -}}
+      {{- $top = $top | append (merge (index $built 0) (dict "kids" (after 1 $built))) -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- if $top }}{{ $top = sort $top "w" "desc" }}{{ end -}}
-{{- return dict "rows" $top "count" $cnt "all" $all "over" $over "waiting" $waiting "auth" $auth "maint" $maint "bot" $bots "wait" $wait -}}
+{{- if $top }}{{ $top = sort $top "k" "desc" }}{{ end -}}
+{{- $def := "" -}}
+{{- range slice "needs" "housekeeping" "close" "author" }}{{ if and (eq $def "") (gt (index $cnt .) 0) }}{{ $def = . }}{{ end }}{{ end -}}
+{{- if eq $def "" }}{{ $def = "all" }}{{ end -}}
+{{- return dict "rows" $top "views" $cnt "def" $def "all" $all "over" $over -}}

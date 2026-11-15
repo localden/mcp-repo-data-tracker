@@ -1,61 +1,22 @@
-{{- /* Weekly downloads small multiples (brief 3.5-2, 5.6; design system v3 §4.7, §4.16, §4.19): one column chart per SDK, complete ISO
-  weeks only, on one shared 52-week x-domain, each with its own y-axis (the section description says so). Context: none (a dict).
-  Chart card head: the SDK name, then Last 7 days (the table's window) with its change as a bare delta badge after the value; the
-  line under it names the window and the badge's base ("Nov 3–9 vs prior 7 days"), or carries the data-quality note "5 of 7 days"
-  when the window is not complete. The unfinished week is stated under the plot, never plotted (5.4). Fewer than 4 complete weeks:
-  the same card frame and head with the short-history body at plot height (clock icon, "Tracking since …"). 3-up from 64rem, 2-up
-  from 40rem, 1-up below.
-  Call: partial "pages/downloads/weekly.html" (dict "pkgs" $pkgs "from" $wFrom "to" $wTo)
-    pkgs: the page's package list (with cells); from, to: the first and last shared week start ("" lets each chart use its own). */ -}}
-{{- $c := . -}}
-{{- $nb := printf "%c" 160 }}
-<div class="v-grid">
-  {{- range $p := $c.pkgs }}
-  {{- $d := $p.d }}{{ $x := $p.cells }}{{ $id := printf "dl-%s" $p.r.repo -}}
-  {{- /* value: Last 7 days (sr-only label), then the bare change badge */ -}}
-  {{- $badge := "" }}{{ if $x.has7 }}{{ $badge = printf " %s" $x.chg7 }}{{ end -}}
-  {{- $value := printf `<span class="sr-only">Last 7 days </span>%s%s` $x.value $badge | safeHTML -}}
-  {{- /* line 2: the window, then the badge's base or the data-quality note */ -}}
-  {{- $sub := $x.win | default "" -}}
-  {{- if $x.has7 }}{{ $sub = printf "%s vs prior 7 days" $sub -}}
-  {{- else if $x.note }}{{ $sub = printf "%s %s" $sub $x.note }}{{ end -}}
-  {{- $sub = trim $sub " " | safeHTML -}}
-  {{- $foot := "" -}}
-  {{- with $d.wtd }}{{ if ne .value nil }}{{ $foot = printf "Week to date: %s (%d of 7 days)" (partial "ui/num.html" (dict "v" .value "mode" "compact" "plain" true)) .days }}{{ end }}{{ end }}
-  <div class="v-span-4">
-    {{- if ge $d.weekly.n 4 }}
-    {{ partial "ui/chart.html" (dict "id" $id "title" $p.r.name "metric" "downloads" "metric_one" "download" "scope" $p.r.name
-        "unit" "downloads" "gran" "week" "kind" "column" "size" "small" "from" $c.from "to" $c.to
-        "value" $value "sub" $sub "reserve_sub" true "foot" $foot
-        "series" (slice (dict "label" "Downloads" "points" $d.weekly.points))) }}
-    {{- else }}
-    {{- /* Short history: when the 4th complete Monday-to-Sunday week will exist, counted from the first complete day. A no-break
-         space holds the date in the parentheses together, so a narrow card never breaks it between "(Dec" and "7)". */ -}}
-    {{- $note := printf "No data collected for %s yet." $p.r.name -}}
-    {{- with $d.first -}}
-      {{- $ft := time.AsTime . -}}
-      {{- $dow := index (dict "Mon" 0 "Tue" 1 "Wed" 2 "Thu" 3 "Fri" 4 "Sat" 5 "Sun" 6) ($ft.Format "Mon") -}}
-      {{- $start := $ft }}{{ if gt $dow 0 }}{{ $start = $ft.AddDate 0 0 (int (sub 7 $dow)) }}{{ end -}}
-      {{- $at := $start.AddDate 0 0 28 -}}
-      {{- if gt ($at.Format "2006-01-02") $d.complete_through -}}
-        {{- $note = printf "Tracking since %s. The trend appears after 4 weeks of data (%s)." ($ft.Format "Jan 2, 2006") (replace ($at.Format "Jan 2") " " $nb) -}}
-      {{- else -}}
-        {{- $note = printf "Tracking since %s. %s of the 4 complete weeks a trend needs." ($ft.Format "Jan 2, 2006") (string (int $d.weekly.n)) -}}
-      {{- end -}}
-    {{- end }}
-    <div class="v-card v-chart is-small">
-      <div class="v-card-head v-chart-head">
-        <div class="v-chart-heading">
-          <h3 class="v-card-title" id="{{ $id }}-title">{{ $p.r.name }}</h3>
-          {{- if $d.complete_through }}<span class="v-chart-value">{{ $value }}</span>{{ end }}
-          <p class="v-chart-sub">{{ $sub }}</p>
-        </div>
-      </div>
-      <div class="v-card-body v-chart-body">
-        {{ partial "ui/empty.html" (dict "card" false "size" "sm" "body" $note) }}
-      </div>
-    </div>
-    {{- end }}
-  </div>
-  {{- end }}
-</div>
+{{- /* Weekly downloads (design system v4 5.7 module 2, 4.19): one trellis card, one row per SDK in the summary's order, complete
+  Monday to Sunday weeks on one shared 52-week domain, each row on its own scale.
+  Call: partial "pages/downloads/weekly.html" $x          ($x: pages/downloads/packages.html)
+  The label cell holds the name (the row link), then the one figure the table above does not show: "Week to date" with its coverage
+  note. ui/trellis.html adds the coverage note of a row with missing weeks and the pending line of a row that cannot draw yet. */ -}}
+{{- $x := . -}}
+{{- $wtd := (partial "fmt/label.html" (dict "window" "wtd")).window -}}
+{{- $rows := slice -}}
+{{- range $x.pkgs -}}
+  {{- $row := dict "id" (printf "dl-%s" .r.repo) "name" .r.name "href" (printf "repos/%s/" .r.repo | relURL) "points" .d.weekly.points -}}
+  {{- with .d.wtd }}{{ if reflect.IsMap . }}{{ if ne .value nil -}}
+    {{- $of := int (.of | default 7) -}}
+    {{- $ro := dict "label" $wtd "value" (dict "kind" "volume" "v" .value) -}}
+    {{- if lt (int .days) $of }}{{ $ro = dict "label" $wtd "value" (dict "kind" "volume" "v" .value) "note" (dict "part" (int .days) "whole" $of "noun" "day" "days" (dict "from" .start "to" .end)) }}{{ end -}}
+    {{- $row = merge $row (dict "readout" $ro) -}}
+  {{- end }}{{ end }}{{ end -}}
+  {{- $rows = $rows | append $row -}}
+{{- end -}}
+{{ partial "ui/trellis.html" (dict "id" "weekly-downloads" "title" "Weekly downloads"
+    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence
+    "metric" "downloads" "metric_one" "download" "unit" "downloads" "gran" "week" "kind" "column"
+    "from" $x.wFrom "to" $x.wTo "rows" $rows) }}

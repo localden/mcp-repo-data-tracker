@@ -1,7 +1,8 @@
 {{- /* Median of a slice of numbers (median age per stage, median time to final). Returns a float, or -1.0 for an empty slice. */ -}}
-{{- $v := sort (. | default slice) -}}
-{{- $n := len $v }}{{ $m := -1.0 -}}
+{{- $in := . | default slice -}}
+{{- $n := len $in }}{{ $m := -1.0 -}}
 {{- if gt $n 0 -}}
+  {{- $v := sort $in -}}
   {{- $mid := div $n 2 -}}
   {{- if modBool $n 2 -}}
     {{- $m = div (add (float (index $v (sub $mid 1))) (float (index $v $mid))) 2.0 -}}

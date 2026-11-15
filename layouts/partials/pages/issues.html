@@ -1,7 +1,9 @@
-{{- /* Issues (brief 3.2). Context: the page. /issues/ (3.2a, all repositories) when .Params.repo is empty, from content/issues/_index.md;
-     /issues/<repo>/ (3.2b, one repository) from content/issues/_content.gotmpl. The scope is the URL (P1); the H1 is .Title.
-     Page-local partials live in pages/issues/: org (3.2a), repo (3.2b), rules (the SLA rules), rows (queue rows and SLA flags),
-     sla, queue, row, show, noreply, wait-row, trend, responsiveness, backlog-age, labels. */ -}}
+{{- /* Issues (design system v4 5.2, 5.3). Context: the page. /issues/ (all repositories) when .Params.repo is empty, from
+     content/issues/_index.md; /issues/<repo>/ (one repository) from content/issues/_content.gotmpl. The scope is the URL; the H1 is
+     the scope switcher.
+     Page-local partials in pages/issues/: org (5.2), repo (5.3), org-change (the dated change of an org-wide count), waiting and
+     wait-row (the "Waiting for a reply" list card), rows (the classified queue's rows, views and tokens), queue and row (the
+     classified list card), sla (Response SLAs), trend, responsiveness, composition. */ -}}
 {{- if .Params.repo }}
 {{ partial "pages/issues/repo.html" . }}
 {{- else }}

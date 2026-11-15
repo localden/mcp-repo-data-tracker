@@ -16,7 +16,8 @@
 {{- if $pts -}}
   {{- $p0 := (time.AsTime (index $pts 0).date).Unix -}}
   {{- $end := time.AsTime (.end | default (index $pts (sub (len $pts) 1)).date) -}}
-  {{- $dow := index (dict "Mon" 0 "Tue" 1 "Wed" 2 "Thu" 3 "Fri" 4 "Sat" 5 "Sun" 6) ($end.Format "Mon") -}}
+  {{- /* Monday is 0: time.Weekday counts from Sunday, read as a number (no date text is formatted outside fmt/) */ -}}
+  {{- $dow := mod (add (int (printf "%d" $end.Weekday)) 6) 7 -}}
   {{- $curStart := $end.AddDate 0 0 (int (sub 0 $dow)) -}}
   {{- $lastStart := $curStart }}{{ if and (ne $dow 6) (not $partial) }}{{ $lastStart = $curStart.AddDate 0 0 -7 }}{{ end -}}
   {{- range $k := seq 0 (sub $weeks 1) -}}

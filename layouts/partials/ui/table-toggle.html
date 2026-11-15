@@ -1,5 +1,3 @@
-{{- /* "Table" toggle (design system v3 §4.9, §4.16) for a hand-built plot/table pair inside one card: a small .v-btn, aria-pressed.
-  Chart cards from ui/chart.html render their own toggle (charts.js builds that table); use this only when the page renders both views.
-  Dict {table, plot, label}. table, plot: ids of the two containers (the table one starts hidden). ui.js swaps their hidden state,
-  flips aria-pressed and dispatches "visr:tabletoggle" on document with detail {button, table, plot, open}. */ -}}
-<button type="button" class="v-btn v-btn-sm" data-table-toggle aria-pressed="false" aria-controls="{{ .table }}" data-plot="{{ .plot }}">{{ .label | default "Table" }}</button>
+{{- /* RETIRED (design system v4 8.1): the Chart and Table switch is ui/tabs.html variant "seg", rendered by ui/chart.html and
+  ui/trellis.html. Renders nothing; deleted with its last caller. */ -}}
+{{- warnf "ui/table-toggle.html is retired: ui/chart.html and ui/trellis.html render the Chart and Table switch (design system v4 8.1)" -}}

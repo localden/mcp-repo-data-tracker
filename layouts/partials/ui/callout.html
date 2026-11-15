@@ -1,0 +1,22 @@
+{{- /* Callout (design system v4 4.8): the one boxed notice, last row of the page head, at most one per page.
+  Dict {title, items}. title: strong ("Data gap"). items: slice of {text, from, to, date}; each is one sentence. The token {range} in
+  text is replaced by a range built from from and to, the token {date} by a date built from date, so no date is typed:
+    "No GitHub data from {range} (collection outage). Charts show the gap."     "PyPI data is complete through {date}."
+  It holds no metric value. Renders nothing without items. */ -}}
+{{- $c := . -}}
+{{- with $c.items -}}
+<div class="v-callout" role="note">{{ partial "ui/icon.html" "circle-alert" }}<div class="v-callout-body">
+  {{- with $c.title }}<span class="v-callout-title">{{ . }}</span>{{ end -}}
+  {{- range . -}}
+    {{- $it := . -}}{{- if not (reflect.IsMap $it) }}{{ $it = dict "text" . }}{{ end -}}
+    {{- $t := string ($it.text | default "") -}}
+    <span class="v-callout-item">
+    {{- if and (in $t "{range}") $it.from -}}
+      {{- $p := split $t "{range}" -}}{{ index $p 0 }}{{ partial "ui/value.html" (dict "kind" "range" "from" $it.from "to" $it.to) }}{{ index $p 1 }}
+    {{- else if and (in $t "{date}") $it.date -}}
+      {{- $p := split $t "{date}" -}}{{ index $p 0 }}{{ partial "ui/value.html" (dict "kind" "date" "d" $it.date) }}{{ index $p 1 }}
+    {{- else }}{{ $t }}{{ end -}}
+    </span>
+  {{- end -}}
+</div></div>
+{{- end -}}

@@ -1,89 +1,77 @@
-{{- /* /pulls/ (brief 3.3a): all repositories. Context: the page (title "All repositories", the H1; the eyebrow "Pull requests"
-     comes from the switcher kind). Page head with the scope switcher on "All repositories", repo chips (navigation chips to
-     /pulls/<repo>/ with metrics › pulls.open_count, led by an "Open PRs" label as on /issues/), then one merged list "Waiting for
-     first review": every repo's metrics › pulls.prs_without_maintainer_review with isDraft false, longest wait first, a search field
-     (title, repository, author), 25 rows then "Show all" (the same list scope as /issues/).
-     Columns (design system v3 §4.8): Repository, Pull request (the title, then the row meta from pages/pulls/meta.html: "#103",
-     "stephaneberle9", "+256 −6", then up to 2 tags), Waiting. No row status (no SLA tier, never on age alone, 8a-8).
-     Phones (.is-list) keep the title and Waiting; the row meta adds the repository (a phone-only span), the column that hides.
-     "Waiting" is defined in Data notes. */ -}}
-{{- $keys := slice }}{{ range site.Data.repos.repositories }}{{ $keys = $keys | append (printf "%s/%s" .owner .repo) }}{{ end -}}
-{{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
-{{ partial "ui/page-head.html" (dict "title" .Title "eyebrow" "Pull requests" "repo" "" "switch" "pulls" "sources" $src
-    "defs" (slice
-      (dict "term" "Waiting for first review" "text" "Open PRs that are not drafts, not authored by a maintainer, and have no review from a maintainer of that repository, at any age, longest wait first.")
-      (dict "term" "Waiting" "text" "Calendar days since the PR opened."))) }}
-
-{{- /* chips and rows in one pass over repos.json */ -}}
-{{- $chips := slice }}{{ $rows := slice -}}
+{{- /* /pulls/ (design system v4 5.4): all repositories. Context: the section page (content/pulls/_index.md).
+     0 page head: the H1 is the scope switcher on "All repositories"; meta: Updated.
+     1 Summary: metric strip lg, trend, 3 tiles: Waiting for first review over 7 days (drill ?over7=1#waiting), any age (drill
+       #waiting), Open PRs with the reference pair "Merged, last 30 days" (no link).
+     2 By repository: ui/repo-table.html, kind pulls. It replaces the loose row of repository links with counts.
+     3 Waiting for first review, any age (id waiting): the list card "pw" (pages/pulls/waiting.html) with the facets Over 7 days and
+       Repository.
+   Every waiting number comes from data/waiting.html, so a tile and the list it opens count the same rows. */ -}}
+{{- $keys := slice }}{{ $rows := slice }}{{ $opts := slice -}}
+{{- $nAny := 0 }}{{ $n7 := 0 }}{{ $open := 0.0 }}{{ $hasOpen := false }}{{ $merged := 0.0 }}{{ $hasMerged := false -}}
 {{- range site.Data.repos.repositories -}}
   {{- $r := partial "data/repo.html" . -}}
-  {{- /* the chip title is the repo slug, as on /issues/ */ -}}
-  {{- $chip := dict "label" $r.name "href" (printf "pulls/%s/" $r.repo | relURL) "title" $r.key -}}
+  {{- $keys = $keys | append $r.key -}}
+  {{- $w := partial "data/waiting.html" (dict "repo" $r.cfg "kind" "pulls") -}}
+  {{- $nAny = add $nAny (int $w.any) }}{{ $n7 = add $n7 (int $w.over7) -}}
+  {{- $opts = $opts | append (dict "value" $r.repo "label" $r.name "count" $w.any) -}}
   {{- $stages := partial "pages/pulls/sep-stages.html" $r.data -}}
+  {{- range $w.rows -}}
+    {{- $rows = $rows | append (dict "w" (float (.daysWaiting | default 0)) "it" . "name" $r.name "slug" $r.repo
+        "stage" (index $stages (string (int (.number | default 0))) | default "")) -}}
+  {{- end -}}
   {{- with $r.data.metrics }}{{ with .pulls }}{{ if reflect.IsMap . -}}
-    {{- if ne .open_count nil }}{{ $chip = merge $chip (dict "count" .open_count) }}{{ end -}}
-    {{- range .prs_without_maintainer_review | default slice -}}
-      {{- if ne .isDraft true -}}
-        {{- $rows = $rows | append (dict "pr" . "name" $r.name "w" (float (.daysWaiting | default 0)) "stage" (index $stages (string (int (.number | default 0))))) -}}
-      {{- end -}}
-    {{- end -}}
+    {{- if ne .open_count nil }}{{ $open = add $open (float .open_count) }}{{ $hasOpen = true }}{{ end -}}
+    {{- if ne .merged_30d nil }}{{ $merged = add $merged (float .merged_30d) }}{{ $hasMerged = true }}{{ end -}}
   {{- end }}{{ end }}{{ end -}}
-  {{- $chips = $chips | append $chip -}}
 {{- end -}}
 {{- if $rows }}{{ $rows = sort $rows "w" "desc" }}{{ end -}}
-{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "accepted" "final" "deferred" "dormant" -}}
-{{- $n := len $rows }}
 
-<nav class="v-section" aria-label="Open PRs by repository">
-  <div class="v-chiplinks items-baseline"><span class="v-label">Open PRs</span>{{ range $chips }}{{ partial "ui/chip.html" . }}{{ end }}</div>
-</nav>
+{{- $defWait := "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a maintainer of their repository, opened 7 or more days ago." -}}
+{{- $defAny := "The same PRs at any age: every row of the list on this page." -}}
+{{- $defOpen := "PRs open now, drafts included, summed over all tracked repositories." -}}
+{{- $src := partial "ui/sources.html" (dict "repo" $keys "use" (slice "metrics")) -}}
+{{ partial "ui/page-head.html" (dict "scope" (dict "kind" "pulls" "repo" "") "sources" $src
+    "defs" (slice
+      (dict "term" "Waiting for first review" "text" $defWait)
+      (dict "term" "Waiting for first review, any age" "text" $defAny)
+      (dict "term" "Waiting" "text" "Calendar days since the PR opened.")
+      (dict "term" "Longest wait" "text" "The longest wait among a repository's PRs that have waited 7 or more days.")
+      (dict "term" "Open PRs" "text" $defOpen)
+      (dict "term" "Change on the waiting tile" "text" "Compares the repositories that have a snapshot about 30 days older; the note under the value says how many that is."))) }}
+
+{{- /* 1 Summary */ -}}
+{{- $ch := partial "pages/issues/org-change.html" "pulls.without_review_7d" -}}
+{{- $t1 := dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "over7")).qual "title" $defWait
+    "value" (dict "kind" "count" "v" $n7)
+    "points" (partial "data/org-weekly.html" (dict "path" "pulls.without_review_7d" "weeks" 12)).points
+    "href" "?over7=1#waiting" "drill" true -}}
+{{- if $ch.has -}}
+  {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting") "context" (dict "kind" "base" "date" $ch.date)) -}}
+  {{- if lt $ch.k $ch.n }}{{ $t1 = merge $t1 (dict "note" (dict "part" $ch.k "whole" $ch.n "noun" "repository")) }}{{ end -}}
+{{- end -}}
+{{- $t2 := dict "name" "Waiting for first review" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual "title" $defAny
+    "value" (dict "kind" "count" "v" $nAny) "reason" "no-history" "href" "#waiting" "drill" true -}}
+{{- $t3 := dict "name" "Open PRs" "title" $defOpen "value" (dict "kind" "count" "v" (cond $hasOpen $open nil))
+    "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" (dict "n" 30 "unit" "day"))).text
+      "value" (dict "kind" "count" "v" (cond $hasMerged $merged nil)))
+    "points" (partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 12)).points }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" (slice $t1 $t2 $t3)) }}
+  </div>
+</section>
+
+<section class="v-section" aria-labelledby="by-repository">
+  {{ partial "ui/section-head.html" (dict "id" "by-repository" "title" "By repository") }}
+  <div class="v-grid">
+    {{ partial "ui/repo-table.html" (dict "kind" "pulls") }}
+  </div>
+</section>
 
 <section class="v-section" aria-labelledby="waiting">
-  {{ partial "ui/section-head.html" (dict "title" "Waiting for first review" "id" "waiting"
-      "description" "Open PRs that are not drafts and have no maintainer review, longest wait first.") }}
-  {{- if $rows }}
-  <div data-list id="pw" data-limit="25" data-url>
-    {{ partial "ui/filterbar.html" (dict "id" "pw-search" "label" "Search pull requests" "placeholder" "Search titles, repositories, authors"
-        "noun" "PRs" "one" "PR" "total" $n) }}
-    <div class="v-card">
-      <table class="v-dt is-fixed is-list" id="pw-table" aria-labelledby="waiting">
-        <colgroup><col class="v-col-40"><col class="v-col-auto"><col class="v-col-24"></colgroup>
-        <thead><tr>
-          {{ partial "ui/th-sort.html" (dict "label" "Repository" "sort" "text") }}
-          <th scope="col">Pull request</th>
-          {{ partial "ui/th-sort.html" (dict "label" "Waiting" "num" true "active" "descending") }}
-        </tr></thead>
-        <tbody>
-          {{- range $i, $row := $rows -}}
-            {{- $pr := $row.pr -}}
-            {{- $num := int ($pr.number | default 0) -}}
-            {{- $author := strings.TrimPrefix "app/" (string ($pr.author | default "")) -}}
-            {{- $tags := slice -}}
-            {{- with $row.stage }}{{ $tags = $tags | append (printf "SEP: %s" .) }}{{ end -}}
-            {{- $nl := 0 -}}
-            {{- range $pr.labels | default slice -}}
-              {{- if and (lt $nl 2) (not (and $row.stage (in $stageLabels (lower .)))) }}{{ $tags = $tags | append . }}{{ $nl = add $nl 1 }}{{ end -}}
-            {{- end -}}
-            {{- $adds := float ($pr.additions | default 0) }}{{ $dels := float ($pr.deletions | default 0) -}}
-            {{- $lines := printf "+%s −%s" (lang.FormatNumber 0 $adds) (lang.FormatNumber 0 $dels) -}}
-            {{- $wd := partial "pages/pulls/wait.html" ($pr.daysWaiting | default 0) }}
-          <tr data-row data-row-link data-text="{{ lower (printf "%s|%s|%s" (string ($pr.title | default "")) $row.name $author) }}"{{ if ge $i 25 }} data-over{{ end }}>
-            <td>{{ $row.name }}</td>
-            <td class="v-title-cell">
-              <a class="v-row-link v-clamp" href="{{ $pr.url }}" target="_blank" rel="noopener">{{ $pr.title }}<span class="sr-only"> (opens GitHub)</span></a>
-              {{ partial "pages/pulls/meta.html" (dict "num" $num "repo" $row.name "author" $author "lines" $lines "tags" $tags) }}
-            </td>
-            <td class="num v-verdict"{{ with $wd.v }} data-v="{{ . }}"{{ end }}>{{ $wd.html }}</td>
-          </tr>
-          {{- end }}
-        </tbody>
-      </table>
-      {{ partial "ui/more.html" (dict "list" "pw" "controls" "pw-table" "n" $n) }}
-    </div>
-    <p class="v-empty-text" data-filter-empty hidden>No PRs match.</p>
+  {{ partial "ui/section-head.html" (dict "id" "waiting" "title" (partial "fmt/label.html" (dict "metric" "Waiting for first review" "threshold" "any")).text
+      "desc" "Open PRs that are not drafts and have no maintainer review, longest wait first.") }}
+  <div class="v-grid">
+    {{ partial "pages/pulls/waiting.html" (dict "id" "pw" "rows" $rows "org" true "repos" $opts "labelledby" "waiting") }}
   </div>
-  {{- else }}
-  {{ partial "ui/empty.html" (dict "size" "none" "icon" false "body" "No open PRs are waiting for a maintainer review.") }}
-  {{- end }}
 </section>

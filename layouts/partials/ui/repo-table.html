@@ -1,0 +1,62 @@
+{{- /* Repository breakdown, "By repository" (design system v4 4.18): compare repositories and decide where to look. One .v-dt.is-rank in
+  a 12-column card, the second module of /issues/ and /pulls/; one 48px row per repository. It replaces the loose row of repository
+  links with counts: going to one repository is the scope switcher, looking at one repository's items is the Repository select chip.
+  Dict {kind, repos, id, class}. kind: "issues" or "pulls". repos: slice of repos.json entries (default: every repository).
+  Columns (pulls; issues in brackets):
+    Repository                                     auto        the row link, to /pulls/<repo>/ [/issues/<repo>/]
+    Waiting for first review [Waiting for a reply] v-col-bar   data/waiting.html .over7: rank bar and number; the default sort
+                                                               (descending); a cell link to /pulls/?repo=<slug>&over7=1#waiting
+    Longest wait                                   v-col-num   the longest of those waits, in days; empty mark when the count is 0
+    Open PRs [Open issues]                         v-col-num   metrics.json open_count
+    12 weeks                                       v-col-spark level sparkline of the open count; not sortable
+  Every numeric column sorts. Everything is nil-safe: a repository with no metrics shows empty marks. Below 64rem: rank list form,
+  five rows on a phone, then the list foot. */ -}}
+{{- $c := . -}}
+{{- $kind := cond (eq $c.kind "pulls") "pulls" "issues" -}}
+{{- $id := $c.id | default (printf "by-repo-%s" $kind) -}}
+{{- $waitLabel := cond (eq $kind "pulls") "Waiting for first review" "Waiting for a reply" -}}
+{{- $openLabel := cond (eq $kind "pulls") "Open PRs" "Open issues" -}}
+{{- $noun := cond (eq $kind "pulls") "pr" "issue" -}}
+{{- $rows := slice }}{{ $max := 0.0 -}}
+{{- range $c.repos | default site.Data.repos.repositories -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $w := partial "data/waiting.html" (dict "repo" $r.cfg "kind" $kind) -}}
+  {{- $over := float $w.over7 }}{{ if gt $over $max }}{{ $max = $over }}{{ end -}}
+  {{- $open := "" }}{{ $hasOpen := false -}}
+  {{- with $r.data.metrics }}{{ with index . $kind }}{{ if reflect.IsMap . }}{{ if ne .open_count nil }}{{ $open = .open_count }}{{ $hasOpen = true }}{{ end }}{{ end }}{{ end }}{{ end -}}
+  {{- $s := partial "data/series.html" (dict "repo" $r.cfg "path" (printf "%s.open" $kind) "days" 91) -}}
+  {{- $bins := partial "data/week-bins.html" (dict "points" $s.points "agg" "last" "weeks" 12) -}}
+  {{- $rows = $rows | append (dict "r" $r "w" $w "over" $over "open" $open "hasOpen" $hasOpen "points" $bins.points) -}}
+{{- end -}}
+{{- if $rows }}{{ $rows = sort $rows "over" "desc" }}{{ end -}}
+{{- $n := len $rows -}}
+<article class="v-card is-list {{ $c.class | default "v-span-12" }}" id="{{ $id }}" data-list data-limit="0" data-limit-phone="5" data-step="50" data-noun="repositories" data-noun-one="repository">
+  <table class="v-dt is-rank is-list" id="{{ $id }}-table" aria-label="{{ $waitLabel }}, by repository">
+    <colgroup><col><col class="v-col-bar"><col class="v-col-num"><col class="v-col-num"><col class="v-col-spark"></colgroup>
+    <thead><tr>
+      {{ partial "ui/th.html" (dict "label" "Repository" "sort" (dict "key" "repo" "type" "text" "asc" "Repository, A to Z" "desc" "Repository, Z to A")) }}
+      {{ partial "ui/th.html" (dict "label" $waitLabel "num" true "active" "descending" "title" (cond (eq $kind "pulls") "Open PRs that are not drafts and have had no maintainer review for 7 days or more." "Open issues with no maintainer reply for 7 days or more.")
+          "sort" (dict "key" "waiting" "type" "num" "desc" "Most waiting first" "asc" "Fewest waiting first")) }}
+      {{ partial "ui/th.html" (dict "label" "Longest wait" "num" true "unit" ", days" "sort" (dict "key" "longest" "type" "num" "desc" "Longest wait first" "asc" "Shortest wait first")) }}
+      {{ partial "ui/th.html" (dict "label" $openLabel "num" true "sort" (dict "key" "open" "type" "num" "desc" "Most open first" "asc" "Fewest open first")) }}
+      {{ partial "ui/th.html" (dict "label" "12 weeks" "record" (partial "fmt/label.html" (dict "metric" $openLabel "window" (dict "n" 12 "unit" "week"))).text "class" "v-c-spark") }}
+    </tr></thead>
+    <tbody>
+      {{- range $i, $row := $rows }}
+      {{- $r := $row.r }}{{ $w := $row.w }}
+      <tr data-row data-row-link data-views="all"{{ if ge $i 5 }} data-over-phone{{ end }}>
+        {{ partial "ui/name-cell.html" (dict "name" $r.name "href" (printf "%s/%s/" $kind $r.repo | relURL)) }}
+        <td class="num v-c-bar" data-v="{{ if $w.has }}{{ $w.over7 }}{{ end }}">
+          {{- if not $w.has }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") -}}
+          {{- else if eq $w.over7 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" $row.over "max" $max "mode" "rank") }}<a class="v-cell-link" href="{{ printf "%s/?repo=%s&over7=1#waiting" $kind $r.repo | relURL }}">{{ partial "ui/value.html" (dict "kind" "count" "v" $w.over7) }}<span class="sr-only"> {{ lower $waitLabel }}, {{ $r.name }}</span></a></span>{{ end -}}
+        </td>
+        <td class="num" data-v="{{ with $w.longest }}{{ printf "%.0f" . }}{{ end }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" $w.longest "unit" "d" "compact" true "reason" "no-data") }}</td>
+        <td class="num" data-v="{{ if $row.hasOpen }}{{ $row.open }}{{ end }}">{{ if $row.hasOpen }}{{ partial "ui/value.html" (dict "kind" "count" "v" $row.open) }}{{ else }}{{ partial "ui/value.html" (dict "kind" "na" "reason" "no-data") }}{{ end }}</td>
+        <td class="v-c-spark">{{ partial "ui/spark.html" (dict "points" $row.points "kind" "level" "size" "cell") }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+  {{ partial "ui/list-foot.html" (dict "list" $id "n" $n "limit" $n) }}
+</article>

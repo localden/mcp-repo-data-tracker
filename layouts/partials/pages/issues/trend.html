@@ -1,29 +1,30 @@
-{{- /* Backlog trend (brief 3.2b-3): one line of snapshots issues.open, 26 weeks of daily points, with the gap band and an end label
-  (charts.js); the 10% wash only when charts.js finds no gap run. Short history renders the value and "Tracking since …" (5.5).
-  The net flow from metrics.json is a stat list (design system v3 §4.6) directly under the section head, above the chart card: one
-  item per window (7, 30 and 90 days), label "Net change, 7 days", value opened_Nd minus closed_Nd (signed, neutral text; "—" when a
-  count is missing), caption "12 opened, 3 closed". A stat list cannot sit inside the chart's foot line (a paragraph), so it leads the
-  section instead. Ctx: dict {r (data/repo.html)}. */ -}}
+{{- /* Backlog trend (design system v4 5.3 module 4, 4.19, 4.6, 4.22). Ctx: dict {r (data/repo.html)}.
+    8 + 4: the chart card "Open issues" (snapshots issues.open, daily, last 26 weeks; readout "Latest" with its date; the gap key in
+    the notes row) beside the stat list "Opened and closed", five rows: Opened and Closed over the last 30 days, then Net change over
+    7, 30 and 90 days (opened minus closed, a plain signed value).
+    Short history (fewer than 14 daily points): the pending chart card at 12, then the stat list wide at 12. */ -}}
 {{- $r := .r -}}
-{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ $iss = . }}{{ end }}{{ end -}}
+{{- $iss := dict }}{{ with $r.data.metrics }}{{ with .issues }}{{ if reflect.IsMap . }}{{ $iss = . }}{{ end }}{{ end }}{{ end -}}
 {{- $open := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.open") -}}
-{{- $items := slice -}}
-{{- range $w := slice "7" "30" "90" -}}
-  {{- $o := index $iss (printf "opened_%sd" $w) }}{{ $c := index $iss (printf "closed_%sd" $w) -}}
-  {{- $it := dict "label" (printf "Net change, %s days" $w) "value" nil "na" "not tracked" "title" "Issues opened minus issues closed" -}}
-  {{- if and (ne $o nil) (ne $c nil) -}}
-    {{- $d := sub (float $o) (float $c) -}}
-    {{- $txt := cond (gt $d 0.0) (printf "+%s" (lang.FormatNumber 0 $d)) (cond (lt $d 0.0) (printf "−%s" (lang.FormatNumber 0 (math.Abs $d))) "0") -}}
-    {{- $it = merge $it (dict "valueHTML" $txt "caption" (printf "%s opened, %s closed" (lang.FormatNumber 0 (float $o)) (lang.FormatNumber 0 (float $c)))) -}}
-  {{- end -}}
-  {{- $items = $items | append $it -}}
+{{- $drawn := ge (int $open.n) 14 -}}
+{{- $rows := slice
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" (dict "n" 30 "unit" "day"))).text "value" (dict "kind" "count" "v" $iss.opened_30d))
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Closed" "window" (dict "n" 30 "unit" "day"))).text "value" (dict "kind" "count" "v" $iss.closed_30d)) -}}
+{{- range $w := slice 7 30 90 -}}
+  {{- $o := index $iss (printf "opened_%dd" $w) }}{{ $c := index $iss (printf "closed_%dd" $w) -}}
+  {{- $v := dict "kind" "net" "reason" "no-data" -}}
+  {{- if and (ne $o nil) (ne $c nil) }}{{ $v = dict "kind" "net" "v" (sub (float $o) (float $c)) }}{{ end -}}
+  {{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" (dict "n" $w "unit" "day"))).text
+      "title" "Issues opened minus issues closed in the window." "value" $v) -}}
 {{- end }}
 <section class="v-section" aria-labelledby="backlog">
-  {{ partial "ui/section-head.html" (dict "title" "Backlog trend" "id" "backlog" "description" "Open issues over the last 26 weeks.") }}
-  <div class="v-flow">
-    {{ partial "ui/stats.html" (dict "label" "Net change in open issues" "items" $items) }}
-    {{ partial "ui/chart.html" (dict "id" "issues-backlog" "metric" "open issues" "metric_one" "open issue" "scope" $r.name
-        "unit" "count" "gran" "day"
+  {{ partial "ui/section-head.html" (dict "id" "backlog" "title" "Backlog trend") }}
+  <div class="v-grid">
+    {{ partial "ui/chart.html" (dict "id" "issues-open" "title" "Open issues" "class" (cond $drawn "v-span-8" "v-span-12")
+        "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "day" "weeks" 26))).cadence
+        "metric" "open issues" "metric_one" "open issue" "scope" $r.name "unit" "count" "gran" "day" "kind" "line"
+        "from" $open.from "to" $open.to "since" $open.first
         "series" (slice (dict "label" "Open issues" "role" "accent" "points" $open.points "reconstructed" $open.reconstructed))) }}
+    {{ partial "ui/stat-list.html" (dict "title" "Opened and closed" "rows" $rows "wide" (not $drawn)) }}
   </div>
 </section>

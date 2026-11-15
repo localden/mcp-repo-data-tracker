@@ -1,0 +1,24 @@
+{{- /* Date range (design system v4 3.2, ruling 4). Dict {from, to, year}. Returns {text, long, from, to, state, kind}.
+  Same month: "Nov 3–9" (an unspaced en dash between two numbers). Otherwise the word: "Oct 8 to Nov 9". The year is printed once,
+  at the end, only when it differs from the as-of year (or with year: true); across years both dates carry theirs. A single day is
+  a date. A week is its Monday to Sunday range. No from is the missing state. */ -}}
+{{- $out := dict "text" "" "long" "No data" "from" "" "to" "" "state" "na" "kind" "range" -}}
+{{- if .from -}}
+  {{- $a := (time.AsTime .from).UTC }}{{ $b := (time.AsTime (.to | default .from)).UTC -}}
+  {{- $asof := time.AsTime (partialCached "ui/latest-date.html" "latest" "latest") -}}
+  {{- $y := "" }}{{ if or (eq .year true) (ne $b.Year $asof.Year) }}{{ $y = printf ", %s" ($b.Format "2006") }}{{ end -}}
+  {{- $text := "" -}}
+  {{- if eq ($a.Format "2006-01-02") ($b.Format "2006-01-02") -}}
+    {{- $text = printf "%s%s" ($a.Format "Jan 2") $y -}}
+  {{- else if ne $a.Year $b.Year -}}
+    {{- $text = printf "%s to %s" ($a.Format "Jan 2, 2006") ($b.Format "Jan 2, 2006") -}}
+  {{- else if eq ($a.Format "Jan") ($b.Format "Jan") -}}
+    {{- $text = printf "%s–%s%s" ($a.Format "Jan 2") ($b.Format "2") $y -}}
+  {{- else -}}
+    {{- $text = printf "%s to %s%s" ($a.Format "Jan 2") ($b.Format "Jan 2") $y -}}
+  {{- end -}}
+  {{- $long := printf "%s to %s" ($a.Format "Jan 2") ($b.Format "Jan 2, 2006") -}}
+  {{- if eq ($a.Format "2006-01-02") ($b.Format "2006-01-02") }}{{ $long = $a.Format "Jan 2, 2006" }}{{ end -}}
+  {{- $out = dict "text" $text "long" $long "from" ($a.Format "2006-01-02") "to" ($b.Format "2006-01-02") "state" "value" "kind" "range" -}}
+{{- end -}}
+{{- return $out -}}

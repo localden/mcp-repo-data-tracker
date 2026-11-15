@@ -13,7 +13,8 @@
     "lint:fix": "eslint src/ --fix",
     "typecheck": "tsc --noEmit",
     "css:build": "tailwindcss -i assets/css/main.css -o assets/gen/main.css --minify",
-    "css:watch": "tailwindcss -i assets/css/main.css -o assets/gen/main.css --watch"
+    "css:watch": "tailwindcss -i assets/css/main.css -o assets/gen/main.css --watch",
+    "fonts:copy": "mkdir -p static/fonts && cp node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2 static/fonts/"
   },
   "keywords": [
     "mcp",
@@ -25,6 +26,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@fontsource-variable/inter": "5.2.5",
     "@tailwindcss/cli": "4.3.3",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",

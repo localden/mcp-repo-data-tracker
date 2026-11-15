@@ -1,0 +1,28 @@
+{{- /* Duration (design system v4 3.2, ruling 2). A number of hours, or a dict {h | d, unit}. Returns {text, long, state, kind, num, unit, v}.
+  Whole numbers, always floored; no decimals, no years. unit "auto" (default): hours through 47, days from 48 hours ("3h", "36h",
+  "2d", "471d", "<1h"). unit "d": every table column ("<1d", "1d", "1,024d"). unit "h": effort ("113h").
+  num and unit are the two halves of text, for the .v-unit span. long is for title and screen readers ("744 days"). */ -}}
+{{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "h" . }}{{ end -}}
+{{- $unit := $c.unit | default "auto" -}}
+{{- $h := $c.h -}}
+{{- if and (eq $h nil) (ne $c.d nil) }}{{ $h = mul (float $c.d) 24.0 }}{{ end -}}
+{{- $out := dict "text" "" "long" "No data" "state" "na" "kind" "dur" "num" "" "unit" "" -}}
+{{- if ne $h nil -}}
+  {{- $h = math.Abs (float $h) -}}
+  {{- $rh := math.Floor $h -}}
+  {{- $rd := math.Floor (div $h 24.0) -}}
+  {{- $num := "" }}{{ $u := "d" }}{{ $long := "" -}}
+  {{- if and (eq $unit "d") (lt $h 24.0) -}}
+    {{- $num = "<1" }}{{ $long = "Less than 1 day" -}}
+  {{- else if and (ne $unit "d") (lt $h 1.0) -}}
+    {{- $num = "<1" }}{{ $u = "h" }}{{ $long = "Less than 1 hour" -}}
+  {{- else if or (eq $unit "h") (and (eq $unit "auto") (lt $h 48.0)) -}}
+    {{- $num = lang.FormatNumber 0 $rh }}{{ $u = "h" -}}
+    {{- $long = printf "%s %s" $num (cond (eq $rh 1.0) "hour" "hours") -}}
+  {{- else -}}
+    {{- $num = lang.FormatNumber 0 $rd -}}
+    {{- $long = printf "%s %s" $num (cond (eq $rd 1.0) "day" "days") -}}
+  {{- end -}}
+  {{- $out = dict "text" (printf "%s%s" $num $u) "long" $long "state" "value" "kind" "dur" "num" $num "unit" $u "v" $h -}}
+{{- end -}}
+{{- return $out -}}

@@ -1,0 +1,58 @@
+{{- /* "Stages and pace" (design system v4 5.6 module 3, and the Overview's "Spec proposals" row, 5.1 module 6): one 8 + 4 row.
+  Call: {{ partial "pages/seps/stages.html" . }} inside a section's .v-grid. The context is not read; the partial emits the two
+  cards and nothing else, so each page writes its own section head around it.
+    8  rank table card "Open SEPs by stage", stage order, no sort: Stage, Open (rank bar and number), Median age, No sponsor.
+    4  stat list "Pace": Opened and Reached final in the last 90 days, Median time to final, Oldest open (a link to its row).
+  Four stage rows of 48px under a 56px head and a 40px header are 288px; the four stat rows share that height.
+  Without seps.json it emits the build-time empty card. Guard a section with (partialCached "pages/seps/data.html" "seps" "seps").has
+  to leave the section out instead. */ -}}
+{{- $d := partialCached "pages/seps/data.html" "seps" "seps" -}}
+{{- if $d.has -}}
+{{- $max := 0 }}{{ range $d.groups }}{{ if gt .n $max }}{{ $max = .n }}{{ end }}{{ end -}}
+{{- $w90 := dict "n" 90 "unit" "day" -}}
+<article class="v-card v-span-8">
+  {{ partial "ui/card-head.html" (dict "title" "Open SEPs by stage" "id" "sep-stages-title") }}
+  <table class="v-dt is-rank is-list" aria-labelledby="sep-stages-title">
+    <colgroup><col><col class="v-col-bar"><col class="v-col-num-sm"><col class="v-col-num"></colgroup>
+    <thead><tr>
+      {{ partial "ui/th.html" (dict "label" "Stage") }}
+      {{ partial "ui/th.html" (dict "label" "Open" "num" true "record" "Open SEPs") }}
+      {{ partial "ui/th.html" (dict "label" "Median age" "num" true "unit" ", days" "title" "Median calendar days since the open SEPs of the stage were opened.") }}
+      {{ partial "ui/th.html" (dict "label" "No sponsor" "num" true "title" "Open SEPs of the stage with no sponsor whose author is not a core or lead maintainer.") }}
+    </tr></thead>
+    <tbody>
+      {{- range $d.groups }}
+      {{- $med := dict "kind" "dur" "unit" "d" }}{{ if ge .med_h 0.0 }}{{ $med = merge $med (dict "h" .med_h) }}{{ end }}
+      <tr>
+        {{ partial "ui/name-cell.html" (dict "name" .label) }}
+        <td class="num v-c-bar">
+          {{- if eq .n 0 }}{{ partial "ui/value.html" (dict "kind" "count" "v" 0) -}}
+          {{- else }}<span class="v-barnum">{{ partial "ui/meter.html" (dict "value" .n "max" $max "mode" "rank") }}{{ partial "ui/value.html" (dict "kind" "count" "v" .n) }}</span>{{ end -}}
+        </td>
+        <td class="num">{{ partial "ui/value.html" $med }}</td>
+        <td class="num">{{ partial "ui/value.html" (dict "kind" "count" "v" .noSponsor) }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+</article>
+{{- $rows := slice
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Opened" "window" $w90)).text
+        "title" "SEP PRs opened in the last 90 days, whatever their stage now."
+        "value" (dict "kind" "count" "v" $d.opened90))
+  (dict "label" (partial "fmt/label.html" (dict "metric" "Reached final" "window" $w90)).text
+        "title" "SEP PRs merged in the last 90 days."
+        "value" (dict "kind" "count" "v" (len $d.final))) -}}
+{{- $mf := dict "kind" "dur" "unit" "d" }}{{ if ge $d.medFinal 0.0 }}{{ $mf = merge $mf (dict "d" $d.medFinal) }}{{ end -}}
+{{- $rows = $rows | append (dict "label" (partial "fmt/label.html" (dict "stat" "Median" "metric" "time to final")).text
+    "title" "Median calendar days from opening the PR to merging it, over the SEPs that reached final in the last 90 days."
+    "value" $mf) -}}
+{{- with $d.oldest }}{{ if ge .age_h 0.0 -}}
+  {{- $rows = $rows | append (dict "label" "Oldest open" "title" "The open SEP that was opened longest ago, over every stage."
+      "detail" (dict "link" (dict "text" .sep "href" (printf "seps/#sep-%d" .num | relURL)))
+      "value" (dict "kind" "dur" "unit" "d" "h" .age_h "opened" .createdAt)) -}}
+{{- end }}{{ end }}
+{{ partial "ui/stat-list.html" (dict "title" "Pace" "rows" $rows "id" "sep-pace") }}
+{{- else }}
+{{ partial "ui/empty.html" (dict "title" "No SEP data" "body" "SEP data has not been collected for the specification repository yet.") }}
+{{- end -}}

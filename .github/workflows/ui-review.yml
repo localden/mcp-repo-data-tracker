@@ -36,6 +36,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Inter Variable is shipped with the site: the two woff2 files go from node_modules to static/fonts (git-ignored).
+      - name: Copy fonts
+        run: npm run fonts:copy
+
       - name: Typecheck pipeline
         id: tsc
         continue-on-error: true
@@ -69,19 +73,10 @@ jobs:
           nohup python3 -m http.server 8080 -d _serve >/dev/null 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/mcp-repo-data-tracker/ >/dev/null && break; sleep 0.5; done
 
-      # system-ui resolves to DejaVu on a bare runner; Inter is a closer stand-in for SF/Segoe.
+      # No Inter from the system and no fontconfig alias: the screenshots must prove the font shipped in static/fonts loads.
       - name: Install fonts
         run: |
-          sudo apt-get install -y -q fonts-inter fonts-noto-color-emoji >/dev/null
-          mkdir -p ~/.config/fontconfig
-          cat > ~/.config/fontconfig/fonts.conf <<'XML'
-          <?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-          <fontconfig>
-            <alias><family>system-ui</family><prefer><family>Inter</family></prefer></alias>
-            <alias><family>sans-serif</family><prefer><family>Inter</family></prefer></alias>
-            <alias><family>sans</family><prefer><family>Inter</family></prefer></alias>
-          </fontconfig>
-          XML
+          sudo apt-get install -y -q fonts-noto-color-emoji >/dev/null
           fc-cache -f >/dev/null
 
       - name: Setup Python

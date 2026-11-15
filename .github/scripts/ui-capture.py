@@ -25,7 +25,9 @@ PAGES = [('overview', ''), ('issues', 'issues/'), ('issues-ts', 'issues/typescri
          ('issues-spec', 'issues/modelcontextprotocol/'), ('issues-rust', 'issues/rust-sdk/'),
          ('pulls', 'pulls/'), ('pulls-ts', 'pulls/typescript-sdk/'), ('pulls-spec', 'pulls/modelcontextprotocol/'),
          ('seps', 'seps/'), ('downloads', 'downloads/'), ('repo-spec', 'repos/modelcontextprotocol/'),
-         ('repo-ts', 'repos/typescript-sdk/'), ('repo-rust', 'repos/rust-sdk/')]
+         ('repo-ts', 'repos/typescript-sdk/'), ('repo-rust', 'repos/rust-sdk/'),
+         # design system v4 section 6: the living styleguide, captured in all four viewport/theme combinations like every page
+         ('styleguide', 'styleguide/')]
 # Old URLs that must land on the new ones (brief §2.1): stub pages and ui.js ?repo= redirects.
 LEGACY = [('health/', 'repos/modelcontextprotocol/'), ('contributors/', 'repos/modelcontextprotocol/'),
           ('issues/?repo=modelcontextprotocol/typescript-sdk', 'issues/typescript-sdk/'),
@@ -46,22 +48,33 @@ MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('mobile', 'dark', 3, ('menu',))]
 AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 SERIOUS = ('serious', 'critical')
-# design system v3 §2: seven roles (display 30/600, title 24/600, heading 17/600, subhead 14/600, body 14/400, small 13/400,
-# label 11/600) plus body 500 (row titles) and small 500 (buttons, segments, chips, data-quality notes) = 9; v3 §4.7 and §4.2 add
-# two fixed combinations the role table does not list: the delta badge (12/600) and the page callout's lead (13/600). Phone sizes
-# swap within the same combinations. The check counts text inside <main> only, so header/footer chrome is outside the budget.
-MAX_FONT_COMBOS = 11
+# design system v4 2.2: nine roles (display 32/600, title 24/600, heading 20/600, subhead 16/600, strong 14/600, medium 14/500,
+# body 14/400, label 12/500, caption 12/400) plus 16/400 inputs on phones and coarse pointers = 10. There is no 12/600 and no size
+# outside 12, 14, 16, 20, 24, 32. The phone display size (24/32) is the title combination, so phones stay inside the same set.
+# The check counts text inside <main> only, so header/footer chrome is outside the budget.
+MAX_FONT_COMBOS = 10
 # brief §5.10 / §7.4 item 8: (check name, tokens in slot order, validator flags). Backlog age is a one-hue ramp, light = young.
 PALETTE_SETS = [('categorical', ['--chart-1', '--chart-2'], []),
-                ('ordinal-stages', ['--ord-1', '--ord-2', '--ord-3', '--ord-4'], ['--ordinal']),
-                ('ordinal-age', ['--ord-1', '--ord-2', '--ord-3', '--ord-5'], ['--ordinal'])]
+                # design system v4 2.1: one ordered ramp of four steps (--ord-5 is removed)
+                ('ordinal', ['--ord-1', '--ord-2', '--ord-3', '--ord-4'], ['--ordinal'])]
 # brief §7.4 item 5, on the rendered text of the whole page
 TEXT_BANS = [(re.compile(r'\b1000(?:\.0+)?K\b'), '1000K'), (re.compile(r'\bNaN\b'), 'NaN'),
              (re.compile(r'\bundefined\b'), 'undefined'), (re.compile('Suspect'), 'Suspect'),
              (re.compile('Over target'), 'Over target'), (re.compile('Past SLA'), 'Past SLA'),
              (re.compile(r'\d[¹²³⁰⁴-⁹]'), 'superscript digit on a number'),
-             # design system v3 §0.1: no glyph separators anywhere in rendered text (U+00B7 middot, U+2022 bullet)
+             # no glyph separators anywhere in rendered text (U+00B7 middot, U+2022 bullet)
              (re.compile('[' + chr(0xB7) + chr(0x2022) + ']'), 'glyph separator (middot or bullet)')]
+# design system v4 7.3 "text-bans": run on the text of <main> with item titles, GitHub labels, paths, package names, the page
+# description and Data notes stripped (the probe's banText), so verbatim GitHub text never trips a rule.
+_DASHES = chr(0x2014) + chr(0x2013)
+TEXT_BANS_V4 = [(re.compile(p, re.M), label) for p, label in [
+    (r' \| ', 'spaced pipe'), (r' / ', 'spaced slash'), (r'(^|\s)[' + _DASHES + r'](\s|$)', 'spaced or lone dash'),
+    (r'\b\d+(\.\d)?y\b', 'years in a duration'), (r'\b\d+\.\d+[hd]\b', 'decimal in a duration'), (r'\b\d+[hd] over\b', '"over" meaning overdue'),
+    (r'\bwk\b', 'wk'), (r'\bavg\b', 'avg'), (r'\brepos?\b', 'repo'), (r'\bn ?= ?\d', 'n = '), (r'\(\d+%\)', 'percent in parentheses'),
+    (r'\d+(\.\d+)?K stars', 'compact star count'), (r'^Since [A-Z]', 'Since ...'), (r'Week of ', 'Week of'), (r'No change', 'No change'),
+    (r'days old', 'days old'), (r'\bvs\.', 'vs.'), (r'Team SLA', 'Team SLA'), (r'WG ', 'WG'), (r'PR \d+\b', 'PR 123'),
+    (r'OPEN PRS', 'OPEN PRS'), (r'OPEN ISSUES', 'OPEN ISSUES'), (r'Untriaged', 'Untriaged'), (r'Data through', 'Data through'),
+    (r'Need a ', 'Need a')]]
 RULES = {
     'capture': 'the capture itself ran (an error here means the page could not be rendered or probed)',
     'states': 'the state captures ran (an error here stopped the remaining states of that capture)',
@@ -76,15 +89,17 @@ RULES = {
     'kbd-menu-open': 'Enter on the scope switcher (or the Repositories menu) expands it and focuses the current item',
     'kbd-menu-escape': 'ArrowDown then Escape collapses it and returns focus to the button',
     'kbd-menu-activate': 'activating a repo link loads a page whose document.title names the repo',
-    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations inside <main> (design system v3 §2 roles: display, '
-                   'title, heading, subhead, body, small, label, plus body 500, small 500, the delta badge and the callout lead); '
+    'font-combos': f'at most {MAX_FONT_COMBOS} font size/weight combinations inside <main> (design system v4 2.2: the nine roles '
+                   'display, title, heading, subhead, strong, medium, body, label, caption, plus 16/400 inputs); '
                    'reports/<capture>.json fontSamples names one element per combo',
     'text-bans': '1000K, NaN, undefined, Suspect, Over target, Past SLA, a superscript digit on a number, and any middot or bullet '
-                 'glyph anywhere in the rendered text (design system v3 §0.1)',
+                 'glyph anywhere in the rendered text; plus the design system v4 7.3 list (spaced pipe, slash or dash, years or '
+                 'decimals in a duration, wk, avg, repo, "No change", "Week of", "Untriaged", "Data through" and the rest) on the '
+                 'text of <main> with titles, labels, paths, package names and Data notes stripped',
     'cell-overflow': 'no table cell content runs past its cell (a fixed column narrower than its header or value)',
     'tiles': 'the full-page tiles were written (an error keeps the tiles shot so far; states and the keyboard walk still run)',
     'canvas-labels': 'every canvas has an aria-label containing its data-metric',
-    'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical, ord-1..4 (SEP stages) and ord-1/2/3/5 (backlog age) ordinal',
+    'palette': 'validate_palette.py on the live tokens: chart-1/2 categorical (chart-2 is declared for the validator only), ord-1..4 ordinal',
     'redirect': 'a legacy URL lands on its new URL',
 }
 
@@ -139,7 +154,12 @@ PROBE = r"""() => {
     charts: { total: canvases.length, shown: canvases.filter(shown).length, mounted: canvases.filter(mounted).length,
               shownNotMounted: canvases.filter(c => shown(c) && !mounted(c)).map(c => c.id || path(c)) },
     canvases: [...document.querySelectorAll('canvas')].map(c => ({ el: c.id || path(c), metric: c.dataset.metric || null, label: c.getAttribute('aria-label') })),
-    text: (document.querySelector('main') || document.body).innerText, pageText: document.body.innerText };
+    text: (document.querySelector('main') || document.body).innerText, pageText: document.body.innerText,
+    // design system v4 7.3 text-bans: <main> without verbatim GitHub text (titles, labels, paths, package names), descriptions and notes
+    banText: (() => { const m = (document.querySelector('main') || document.body).cloneNode(true);
+      m.querySelectorAll('.v-row-link, .v-tag.is-label, .v-path, .v-cell-sub, .v-page-desc, .v-notes, .v-who, .v-kbd, .sr-only, [data-fixture], [hidden]').forEach(n => n.remove());
+      m.querySelectorAll('td, th, li, p, div, dt, dd, h1, h2, h3, button, a').forEach(n => n.append('\n'));
+      return m.textContent; })() };
 }"""
 
 # Tags the controls a state needs with data-cap="<kind>-<n>" and returns their labels per kind. Kinds follow
@@ -537,7 +557,15 @@ def text_bans(text):
     return hits
 
 
-def page_checks(cid, vp, rep, page_text):
+def text_bans_v4(text):
+    hits = []
+    for rx, label in TEXT_BANS_V4:
+        for m in list(rx.finditer(text))[:2]:
+            hits.append(f"{label}: '...{text[max(0, m.start() - 30):m.end() + 30]}...'".replace('\n', ' '))
+    return hits
+
+
+def page_checks(cid, vp, rep, page_text, ban_text=''):
     """brief §7.4 items 1, 4, 5, 6 on one capture."""
     record('R1-page-width', cid, rep['scrollWidth'] <= rep['clientWidth'],
            f"scrollWidth {rep['scrollWidth']}, clientWidth {rep['clientWidth']}")
@@ -554,7 +582,8 @@ def page_checks(cid, vp, rep, page_text):
     record('font-combos', cid, len(fonts) <= MAX_FONT_COMBOS, detail)
     co = rep.get('cellOverflow', [])
     record('cell-overflow', cid, not co, '; '.join(f"{c['el']} {c['text']!r} +{c['over']}px" for c in co[:5]) or 'none')
-    hits = text_bans(page_text) + [f"a middot starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']]
+    hits = (text_bans(page_text) + text_bans_v4(ban_text)
+            + [f"a middot starts a wrapped line in {x['el']}: {x['text']!r}" for x in rep['lineStartDots']])
     record('text-bans', cid, not hits, '; '.join(hits[:8]) + (f' (+{len(hits) - 8} more)' if len(hits) > 8 else '') or 'none')
     cv = rep['canvases']
     bad = [c for c in cv if not c['metric'] or not c['label'] or c['metric'].lower() not in c['label'].lower()
@@ -583,12 +612,12 @@ def capture(ctx, base, out, pid, path, vp, theme, cap, wanted, axe_src, validato
         record('http-status', cid, rep['status'] == 200, f"HTTP {rep['status']}")
         settle(page)
         probe = page.evaluate(PROBE)
-        text, page_text = probe.pop('text'), probe.pop('pageText')
+        text, page_text, ban_text = probe.pop('text'), probe.pop('pageText'), probe.pop('banText', '')
         rep.update(probe)
         (out / 'text' / f'{cid}.txt').write_text(text, encoding='utf-8')
         rep['axe'] = run_axe(page, axe_src)
         record_axe('axe', cid, rep['axe'])
-        page_checks(cid, vp, rep, page_text)
+        page_checks(cid, vp, rep, page_text, ban_text)
         try:
             tiles(page, out, cid, vw, vh, cap, entry['tiles'])
             record('tiles', cid, True, f"{len(entry['tiles'])} tiles")

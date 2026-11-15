@@ -1,11 +1,9 @@
-{{- /* Single date or timestamp (brief 6.3). Call with a date/time string or time, or a dict {d, style}. Returns a string ("" for empty input).
-  style "date" (default) "Nov 13, 2026"; "short" "Nov 13"; "month" "Nov 2026"; "day" "Thu, Jul 10, 2026"; "ts" "Nov 14, 2026, 00:42 UTC".
-  Ranges ("Nov 6–12", "Oct 8 – Nov 9, 2026") come from data/date-range.html. No relative "ago" text (static build). */ -}}
+{{- /* RETIRED (design system v4 8.1): use ui/value.html kind date or ts. Kept as a thin shim over fmt/date.html and fmt/ts.html until
+  the last caller is rebuilt, then deleted. Call with a date or a dict {d, style}. Returns a string ("" for empty input).
+  style "ts" is the timestamp; "date" and "day" carry the year; "short" follows the v4 year rule; "month" is "Nov 2026". */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "d" . }}{{ end -}}
+{{- $style := $c.style | default "date" -}}
 {{- $out := "" -}}
-{{- with $c.d -}}
-  {{- $t := (time.AsTime .).UTC -}}
-  {{- $layouts := dict "date" "Jan 2, 2006" "short" "Jan 2" "month" "Jan 2006" "day" "Mon, Jan 2, 2006" "ts" "Jan 2, 2006, 15:04 UTC" -}}
-  {{- $out = $t.Format (index $layouts ($c.style | default "date") | default "Jan 2, 2006") -}}
-{{- end -}}
+{{- if eq $style "ts" }}{{ $out = (partial "fmt/ts.html" (dict "t" $c.d)).text -}}
+{{- else }}{{ $out = (partial "fmt/date.html" (dict "d" $c.d "year" (in (slice "date" "day") $style) "weekday" (eq $style "day") "style" $style)).text }}{{ end -}}
 {{- return $out -}}

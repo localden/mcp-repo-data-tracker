@@ -1,0 +1,61 @@
+{{- /* Overview summary (design system v4 5.1 module 1): the page's one large metric strip, four link tiles. Context: the page.
+  Issues waiting for a reply and PRs waiting for first review, over 7 days: the value is the sum of data/waiting.html over every
+    repository, so it equals the result count of the list its link opens. The delta compares the stored org sums with a snapshot
+    about 30 days older (pages/overview/org-delta.html); its base is that date, and a coverage note says how many repositories the
+    comparison covers when it is not all of them.
+  Open issues: reference pair "Net change, last 30 days". Open PRs: reference pair "Merged, last 30 days". Neither has a delta.
+  Sparklines are 12 weekly org sums (data/org-weekly.html: each week sums the repositories that have a reading that week). */ -}}
+{{- $repos := site.Data.repos.repositories -}}
+{{- $total := len $repos -}}
+{{- $over7 := (partial "fmt/label.html" (dict "threshold" "over7")).qual -}}
+{{- $d30 := dict "n" 30 "unit" "day" -}}
+{{- $tiles := slice -}}
+{{- range $t := slice
+    (dict "kind" "issues" "name" "Issues waiting for a reply" "path" "issues.without_response_7d"
+      "title" "Open issues not opened by a maintainer or a bot, with no comment from a repository maintainer, opened 7 days ago or earlier.")
+    (dict "kind" "pulls" "name" "PRs waiting for first review" "path" "pulls.without_review_7d"
+      "title" "Open PRs that are not drafts, not opened by a maintainer or a bot, with no review from a repository maintainer, opened 7 days ago or earlier.") -}}
+  {{- $sum := 0 }}{{ $has := false -}}
+  {{- range $repos -}}
+    {{- $w := partial "data/waiting.html" (dict "repo" . "kind" $t.kind) -}}
+    {{- if $w.has }}{{ $has = true }}{{ $sum = add $sum $w.over7 }}{{ end -}}
+  {{- end -}}
+  {{- $tile := dict "name" $t.name "qual" $over7 "title" $t.title
+      "value" (dict "kind" "count" "v" (cond $has $sum nil))
+      "points" (partial "data/org-weekly.html" (dict "path" $t.path "weeks" 12)).points
+      "href" (printf "%s/?over7=1#waiting" $t.kind | relURL) -}}
+  {{- $cmp := partial "pages/overview/org-delta.html" $t.path -}}
+  {{- if and $has (ne $cmp.prev nil) -}}
+    {{- $tile = merge $tile (dict "delta" (dict "cur" $cmp.cur "prev" $cmp.prev "metric" "waiting") "context" (dict "kind" "base" "date" $cmp.date)) -}}
+    {{- if lt (int $cmp.k) $total }}{{ $tile = merge $tile (dict "note" (dict "part" $cmp.k "whole" $total "noun" "repository")) }}{{ end -}}
+  {{- end -}}
+  {{- $tiles = $tiles | append $tile -}}
+{{- end -}}
+
+{{- $oi := partial "pages/overview/sum.html" "issues.open_count" -}}
+{{- $iO := partial "pages/overview/sum.html" "issues.opened_30d" }}{{ $iC := partial "pages/overview/sum.html" "issues.closed_30d" -}}
+{{- $t3 := dict "name" "Open issues" "title" "Issues open now, added up over every tracked repository."
+    "value" (dict "kind" "count" "v" $oi.v)
+    "points" (partial "data/org-weekly.html" (dict "path" "issues.open" "weeks" 12)).points
+    "href" ("issues/" | relURL) -}}
+{{- if and (ne $iO.v nil) (ne $iC.v nil) -}}
+  {{- $t3 = merge $t3 (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Net change" "window" $d30)).text
+      "value" (dict "kind" "net" "v" (sub (float $iO.v) (float $iC.v))))) -}}
+{{- end -}}
+
+{{- $op := partial "pages/overview/sum.html" "pulls.open_count" -}}
+{{- $pM := partial "pages/overview/sum.html" "pulls.merged_30d" -}}
+{{- $t4 := dict "name" "Open PRs" "title" "PRs open now, drafts included, added up over every tracked repository."
+    "value" (dict "kind" "count" "v" $op.v)
+    "points" (partial "data/org-weekly.html" (dict "path" "pulls.open" "weeks" 12)).points
+    "href" ("pulls/" | relURL) -}}
+{{- if ne $pM.v nil -}}
+  {{- $t4 = merge $t4 (dict "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" $d30)).text
+      "value" (dict "kind" "count" "v" $pM.v))) -}}
+{{- end -}}
+{{- $tiles = $tiles | append $t3 $t4 }}
+<section class="v-section v-summary" aria-label="Summary">
+  <div class="v-grid">
+    {{ partial "ui/metrics.html" (dict "label" "Summary" "size" "lg" "visual" "trend" "tiles" $tiles) }}
+  </div>
+</section>

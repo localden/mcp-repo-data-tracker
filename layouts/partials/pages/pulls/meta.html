@@ -1,7 +1,0 @@
-{{- /* Row meta for PR rows (brief 3.3b-2; design system v3 §4.8): the line under the title, span.v-rowmeta = small text-2 spans in a
-     flex row with a 12px gap ("#1521", "LucaButBoring", "+417 −0"), then the tags as text-3 spans in the same row ("Touches auth",
-     "Maintainer", "SEP: Draft", GitHub labels verbatim). No separator glyphs: the gap separates the items. Tags are plain text, so the
-     title stays the row's single link.
-     Dict {num (int), repo, author, lines, tags}. repo: a phone-only span (.v-phone-only) for /pulls/, where the Repository column
-     hides below 40rem. tags: a slice for ui/tag.html. Emits HTML. */ -}}
-<span class="v-rowmeta"><span>#{{ .num }}</span>{{ with .repo }}<span class="v-phone-only">{{ . }}</span>{{ end }}{{ with .author }}<span>{{ . }}</span>{{ end }}{{ with .lines }}<span>{{ . }}</span>{{ end }}{{ partial "ui/tag.html" (.tags | default slice) }}</span>

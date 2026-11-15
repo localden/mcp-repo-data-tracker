@@ -1,12 +1,28 @@
-{{- /* Chip (design system v3 §4.13). Dict {label, tag, pressed, count, group, for, href, title}.
-  Without href: a filter chip, button[aria-pressed][data-chip=tag]: 28px, radius 6, 1px border-strong, surface, small 500 text-2,
-  optional count in text-3. Pressed: accent-soft, accent-text, border accent at 40%, and a check icon. Chips sit in one row after
-  the search field (ui/filterbar.html). ui.js keeps rows whose data-tags contain every pressed tag.
-    group: chips in one group are mutually exclusive; for: the id of the [data-list] it filters when the chip sits outside it.
-  With href: a navigation chip (repo links with a count on org views), a.v-chiplink: accent-text, no underline at rest, the label
-    underlines on hover; the count is text-3. count 0 still prints "0". */ -}}
-{{- if .href -}}
-<a class="v-chiplink" href="{{ .href }}"{{ with .title }} title="{{ . }}"{{ end }}><span class="v-chiplink-text">{{ .label }}</span>{{ if ne .count nil }}<span class="v-count">{{ partial "ui/num.html" (dict "v" .count "mode" "full") }}</span>{{ end }}</a>
+{{- /* Facet chip (design system v4 4.12): one filter of a list's filter bar. ui/filterbar.html renders these from its facets.
+  Dict {key, label, title, kind, count, options, pressed, disabled, id}.
+    key      the facet key of 4.15 (overdue, over7, status, rule, repo...): the URL parameter and the data-facets token.
+    title    the one-line definition (required on pages).
+    kind     "check" (default): an attribute a row has or lacks. button.v-chip[aria-pressed] with a checkbox mark, the label and a
+               count bubble. Its width never changes when toggled. A count of zero disables it while it is not pressed.
+             "select": an attribute with several values. button.v-chip.is-select with a chevron, opening a multi-select menu of
+               options with counts. With one value chosen the chip shows it in accent-text; several: "2 selected".
+    count    rows that would match (check). options: slice of {value, label, count} (select); a row matches an option through the
+               data-facets token "key:value".
+    id       the list's id prefix; the select menu is "{id}-{key}-menu".
+  Rows carry data-facets="overdue auth author:maintainer rule:first-review"; ui.js keeps the counts live. Sorting is never a chip, and
+  a chip never navigates. */ -}}
+{{- $c := . -}}
+{{- $key := $c.key | default $c.tag | default "" -}}
+{{- if $c.href }}{{ warnf "ui/chip: the href form is retired (design system v4 4.18): use ui/repo-table.html, the scope menu or a Repository select chip" -}}
+{{- else if eq $c.kind "select" -}}
+{{- $menuID := printf "%s-%s-menu" ($c.id | default "list") $key -}}
+{{- $items := slice -}}
+{{- range $c.options }}{{ $items = $items | append (dict "text" (.label | default .value) "value" .value "count" .count "checked" .checked) }}{{ end -}}
+<div class="v-menu-wrap" data-menu data-facet="{{ $key }}">
+  <button type="button" class="v-chip is-select" aria-haspopup="menu" aria-expanded="false" aria-controls="{{ $menuID }}"{{ with $c.title }} title="{{ . }}"{{ end }}{{ if $c.value }} data-active{{ end }}{{ if $c.disabled }} disabled{{ end }}><span class="v-chip-label">{{ $c.label }}</span><span class="v-chip-value" data-facet-value{{ if not $c.value }} hidden{{ end }}>{{ $c.value }}</span>{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 14 "class" "is-chev") }}</button>
+  {{ partial "ui/menu.html" (dict "id" $menuID "bare" true "variant" "select" "multi" true "label" $c.label "items" $items "open" $c.open) }}
+</div>
 {{- else -}}
-<button type="button" class="v-chip" data-chip="{{ .tag }}"{{ with .group }} data-chip-group="{{ . }}"{{ end }}{{ with .for }} data-for="{{ . }}"{{ end }}{{ with .title }} title="{{ . }}"{{ end }} aria-pressed="{{ if .pressed }}true{{ else }}false{{ end }}">{{ partial "ui/icon.html" (dict "name" "check" "class" "v-chip-check" "size" 14) }}{{ .label }}{{ if ne .count nil }}<span class="v-count">{{ partial "ui/num.html" (dict "v" .count "mode" "full") }}</span>{{ end }}</button>
+{{- $zero := false }}{{ if ne $c.count nil }}{{ $zero = eq (float $c.count) 0.0 }}{{ end -}}
+<button type="button" class="v-chip" data-facet="{{ $key }}" aria-pressed="{{ if $c.pressed }}true{{ else }}false{{ end }}"{{ with $c.title }} title="{{ . }}"{{ end }}{{ if or $c.disabled (and $zero (not $c.pressed)) }} disabled{{ end }}><span class="v-check" aria-hidden="true"></span>{{ $c.label }}{{ if ne $c.count nil }}<span class="v-count" data-facet-count>{{ (partial "fmt/count.html" (dict "v" $c.count)).text }}</span>{{ end }}</button>
 {{- end -}}

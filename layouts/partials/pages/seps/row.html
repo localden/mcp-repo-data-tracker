@@ -1,40 +1,17 @@
-{{- /* One row of the Open SEPs work list (brief 3.4-4, design system v3 §4.8). Context: dict "r" (pages/seps/entry.html) "review" (bool:
-  the Maintainer review column, D1-11). The last cell is Last updated or Last activity; entry.html already picked the source.
-  The title is the row's single link. Under it the row meta, always visible, as separate spans in a gap-12 row: the SEP id ("SEP-2028",
-  or "PR 3440" when the title names none), the author, then up to 3 topic labels as tags. Below 640px (.is-list) only the title cell
-  and Age stay, so the sponsor (and the review, D1-11) go to a second meta line that only phone lists show (.v-listmeta).
-  Sponsor cell: the handle; "Needs sponsor" in text; "self" and "Not assigned" in text-3. No colour (v3 §0.3: colour is for
-  overdue, deltas and data quality). */ -}}
-{{- $r := .r }}{{ $review := .review -}}
-{{- $age := "" }}{{ if ge $r.age_h 0.0 }}{{ $age = (partial "ui/dur.html" (dict "h" $r.age_h "years" true)).html }}{{ end -}}
-{{- $upd := "" }}{{ if ge $r.upd_h 0.0 }}{{ $upd = (partial "ui/dur.html" (dict "h" $r.upd_h)).html }}{{ end -}}
-{{- $spLine := "No sponsor assigned" -}}
-{{- if eq $r.sponsorKind "handle" }}{{ $spLine = printf "Sponsor %s" $r.sponsor -}}
-{{- else if eq $r.sponsorKind "self" }}{{ $spLine = "Self-sponsored" -}}
-{{- else if $r.needsSponsor }}{{ $spLine = "Needs sponsor" }}{{ end }}
-<tr data-row data-row-link id="sep-{{ $r.num }}" data-tags="{{ delimit $r.tags " " }}" data-text="{{ $r.text }}">
-  <td class="v-title-cell">
-    <a class="v-row-link v-clamp" href="{{ $r.url }}" target="_blank" rel="noopener"{{ with $r.reviewTitle }} title="{{ . }}"{{ end }}>{{ $r.title }}<span class="sr-only"> (opens GitHub)</span></a>
-    <span class="v-rowmeta">
-      {{- if and (not $r.isPR) (ne $r.sepNum (string $r.num)) }}<span id="sep-{{ $r.sepNum }}" title="PR #{{ $r.num }}">{{ $r.sep }}</span>
-      {{- else }}<span>{{ $r.sep }}</span>{{ end -}}
-      {{- with $r.author }}<span>{{ . }}</span>{{ end -}}
-      {{- partial "ui/tag.html" ($r.labels | default slice) -}}
-    </span>
-    <span class="v-listmeta">
-      {{- if $r.needsSponsor }}<span class="v-ink">{{ $spLine }}</span>{{ else }}<span>{{ $spLine }}</span>{{ end -}}
-      {{- if and $review $r.reviewKnown }}<span>{{ cond $r.reviewed "Maintainer reviewed" "No maintainer review" }}</span>{{ end -}}
-    </span>
-  </td>
-  <td>
-    {{- if eq $r.sponsorKind "handle" }}{{ $r.sponsor -}}
-    {{- else if eq $r.sponsorKind "self" }}<span class="v-faint" title="Sponsored by the author">self</span>
-    {{- else if $r.needsSponsor }}Needs sponsor
-    {{- else }}<span class="v-faint">Not assigned</span>{{ end -}}
-  </td>
-  {{- if $review }}
-  <td>{{ if not $r.reviewKnown }}{{ partial "ui/num.html" (dict "v" nil "na" "not computed yet") }}{{ else if $r.reviewed }}Yes{{ else }}None{{ end }}</td>
-  {{- end }}
-  <td class="num v-verdict"{{ if ge $r.age_h 0.0 }} data-v="{{ $r.age_h }}"{{ end }}>{{ with $age }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "unknown") }}{{ end }}</td>
-  <td class="num"{{ if ge $r.upd_h 0.0 }} data-v="{{ $r.upd_h }}"{{ end }}>{{ with $upd }}{{ . }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "no activity recorded") }}{{ end }}</td>
+{{- /* One row of the Open SEPs list (design system v4 4.16): SEP, Sponsor, Last activity, Age. One tr per SEP.
+  Dict {r, ord}: r is a pages/seps/entry.html row, ord the handle ranks from pages/seps/data.html.
+  Meta slots: id, author, the attribute tag "Needs working group", label tags. The row carries data-facets ("needs-sponsor", "wg")
+  and the sort keys only. Both time columns are whole days. */ -}}
+{{- $r := .r -}}
+{{- $attrs := slice -}}
+{{- if $r.wg }}{{ $attrs = $attrs | append (dict "text" "Needs working group" "title" "Carries the wg-support-needed label.") }}{{ end -}}
+{{- $age := dict "kind" "dur" "unit" "d" "compact" true -}}
+{{- if ge $r.age_h 0.0 }}{{ $age = merge $age (dict "h" $r.age_h) }}{{ with $r.createdAt }}{{ $age = merge $age (dict "opened" .) }}{{ end }}{{ end -}}
+{{- $upd := dict "kind" "dur" "unit" "d" "compact" true -}}
+{{- if ge $r.upd_h 0.0 }}{{ $upd = merge $upd (dict "h" $r.upd_h) }}{{ end }}
+<tr data-row data-row-link id="sep-{{ $r.num }}"{{ with $r.tags }} data-facets="{{ delimit . " " }}"{{ end }}>
+  {{ partial "ui/row-item.html" (dict "title" $r.title "href" $r.url "id" $r.sep "author" $r.author "attrs" $attrs "tags" $r.labels) }}
+  {{ partial "pages/seps/sponsor.html" (dict "r" $r "ord" .ord) }}
+  <td class="num v-c-num"{{ if ge $r.upd_h 0.0 }} data-v="{{ printf "%.1f" $r.upd_h }}"{{ end }}>{{ partial "ui/value.html" $upd }}</td>
+  <td class="num"{{ if ge $r.age_h 0.0 }} data-v="{{ printf "%.1f" $r.age_h }}"{{ end }}>{{ partial "ui/value.html" $age }}</td>
 </tr>

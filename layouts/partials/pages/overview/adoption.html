@@ -1,131 +1,15 @@
-{{- /* SDK adoption (brief 3.1-5, 5.4; design system v3 §4.7, §4.8, §4.15, §4.18): one row per SDK package, each compared with
-  itself (Q5). Context: the page.
-  Every figure is a sum of complete days from data/downloads.html (never a snapshot "daily", never a partial day, a missing day is never
-  0). D is the common window end from data/downloads-end.html: the newest day every package with at least 7 complete days covers.
-  Every row uses that one window, including packages with a short history. A window with a missing day shows the partial sum in
-  text-2 with the data-quality note "3 of 7 days" under it and no change (pages/overview/dl-value.html).
-  A package whose tracking began after D has no window to show: its window columns stay blank and the first of them says
-  "Since Nov 10" once (small text-3), instead of a row of dashes.
-  Change vs prior 7 days: a bare delta badge, up is good; the header names the base.
-  12 weeks: the weekly sums of the package's last 12 complete ISO weeks (data/week-bins.html "sum": a week needs all 7 days) as the
-  80 x 24 column sparkline (ui/spark.html kind "column", the same form as the Downloads page): a week with a missing day is an empty
-  slot, never a zero bar. With fewer than 4 complete weeks the cell says "Since Nov 9" when tracking began inside the 12 weeks, else
-  the data-quality note "3 of 12 weeks".
-  Row title: the SDK name, the row's one link (to its repository page); under it the registry and package as row meta
-  (ui/registry-name.html labelHTML). No Daily, Total, Share or cross-SDK sum. Table at >= 64rem with fixed numeric columns; blocks
-  below, where the window dates join the labels. */ -}}
-{{- $common := partialCached "data/downloads-end.html" . "dl-end" -}}
-{{- $win30 := "" -}}
-{{- with $common.end }}{{ $t := time.AsTime . }}{{ $win30 = partial "data/date-range.html" (dict "from" (($t.AddDate 0 0 -29).Format "2006-01-02") "to" . "year" false) }}{{ end -}}
-{{- $weeksTitle := "Complete weeks (all 7 days counted) out of the last 12. A week with a missing day is not plotted." -}}
-{{- $rows := slice -}}
-{{- range site.Data.repos.repositories -}}
-  {{- $r := partial "data/repo.html" . -}}
-  {{- with $r.package -}}
-    {{- $reg := partial "ui/registry-name.html" . -}}
-    {{- $d := partialCached "data/downloads.html" (dict "repo" $r.cfg) "dl" $r.repo "" -}}
-    {{- with $common.end }}{{ $d = partialCached "data/downloads.html" (dict "repo" $r.cfg "end" .) "dl" $r.repo . }}{{ end -}}
-    {{- /* the 30-day window's partial sum, for the noted case (data/downloads.html returns dl30 only when all 30 days exist) */ -}}
-    {{- $sum30 := 0.0 }}{{ $w30 := "" -}}
-    {{- with $d.end -}}
-      {{- $end := . }}{{ $from30 := ((time.AsTime .).AddDate 0 0 -29).Format "2006-01-02" -}}
-      {{- $w30 = partial "data/date-range.html" (dict "from" $from30 "to" $end "year" false) -}}
-      {{- range $d.points }}{{ if and (ne .value nil) (ge .date $from30) (le .date $end) }}{{ $sum30 = add $sum30 (float .value) }}{{ end }}{{ end -}}
-    {{- end -}}
-    {{- /* 12 weeks: column sparkline, "Since …", or the "n of 12 weeks" note */ -}}
-    {{- $last12 := slice }}{{ $wFrom := "" }}{{ $wN := 0 }}{{ $lo := 0.0 }}{{ $hi := 0.0 -}}
-    {{- with $d.weekly }}{{ with .points -}}
-      {{- $last12 = last 12 . -}}
-      {{- $wFrom = (index $last12 0).date -}}
-      {{- range $last12 -}}
-        {{- if ne .value nil -}}
-          {{- $f := float .value -}}
-          {{- if or (eq $wN 0) (lt $f $lo) }}{{ $lo = $f }}{{ end }}{{ if or (eq $wN 0) (gt $f $hi) }}{{ $hi = $f }}{{ end }}{{ $wN = add $wN 1 -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end }}{{ end -}}
-    {{- $spark := "" -}}
-    {{- if ge $wN 4 -}}
-      {{- $missing := "" }}{{ if lt $wN (len $last12) }}{{ $missing = printf ", %d of %d weeks complete" $wN (len $last12) }}{{ end -}}
-      {{- $spark = printf `%s<span class="sr-only">Lowest week %s, highest week %s%s</span>` (partial "ui/spark.html" (dict "points" $last12 "kind" "column" "size" "cell"))
-          (partial "ui/num.html" (dict "v" $lo "mode" "compact" "plain" true)) (partial "ui/num.html" (dict "v" $hi "mode" "compact" "plain" true)) $missing -}}
-    {{- end -}}
-    {{- $since := "" }}{{ $weeksNote := "" -}}
-    {{- if and (eq $spark "") $d.first -}}
-      {{- if or (eq $wFrom "") (ge $d.first $wFrom) }}{{ $since = printf "Since %s" (partial "ui/date.html" (dict "d" $d.first "style" "short")) }}
-      {{- else }}{{ $weeksNote = printf "%d of 12 weeks" $wN }}{{ end -}}
-    {{- end -}}
-    {{- /* tracking began after the common window ends: the window columns do not apply */ -}}
-    {{- $late := "" -}}
-    {{- if and $d.first $d.end (gt $d.first $d.end) }}{{ $late = printf "Since %s" (partial "ui/date.html" (dict "d" $d.first "style" "short")) }}{{ end -}}
-    {{- $chg := and (ne $d.dl7 nil) (ne $d.prev7 nil) -}}
-    {{- if $chg }}{{ $chg = gt (float $d.prev7) 0.0 }}{{ end -}}
-    {{- $rows = $rows | append (dict "r" $r "reg" $reg "d" $d "sum30" $sum30 "w30" $w30
-      "spark" $spark "since" $since "weeksNote" $weeksNote "late" $late "chg" $chg) -}}
-  {{- end -}}
-{{- end -}}
-{{- $cap := "Complete days only; each SDK is compared with its own prior 7 days." -}}
-{{- with $common.end }}{{ $cap = printf "Complete days only, ending %s for every SDK; each SDK is compared with its own prior 7 days." (partial "ui/date.html" (dict "d" . "style" "short")) }}{{ end -}}
-{{- with $rows }}
+{{- /* SDK adoption (design system v4 5.1 module 5): one row per SDK package, each compared with itself. Context: the page.
+  The table is the Downloads page's package summary without its last columns, from the same data and the same partial
+  (pages/downloads/packages.html, pages/downloads/table.html), so the two pages can never disagree. The section is omitted when no
+  repository has a package. */ -}}
+{{- $x := partial "pages/downloads/packages.html" . -}}
+{{- if $x.pkgs }}
 <section class="v-section" aria-labelledby="sdk-adoption">
-  {{ partial "ui/section-head.html" (dict "title" "SDK adoption" "id" "sdk-adoption" "action" (dict "text" "All downloads" "href" ("downloads/" | relURL)) "description" $cap) }}
-  <div class="v-card">
-    <ul class="v-blocks lg:hidden">
-      {{- range . }}
-      <li class="v-block">
-        <p class="v-block-title"><a href="{{ printf "repos/%s/" .r.repo | relURL }}">{{ .r.name }}</a></p>
-        {{- with .reg.labelHTML }}
-        <p class="v-rowmeta">{{ . }}</p>
-        {{- end }}
-        {{- with .late }}
-        <p class="v-caption">{{ . }}</p>
-        {{- else }}
-        <dl class="v-kv">
-          <div><dt>Last 7 days{{ with $common.window }}, {{ . }}{{ end }}</dt><dd class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl7 "sum" .d.sum7 "days" .d.days_covered "of" 7 "window" .d.window "end" .d.end "first" .d.first "total" .d.days_total) }}</dd></div>
-          {{- if .chg }}
-          <div><dt>Change vs prior 7 days</dt><dd>{{ partial "ui/delta.html" (dict "cur" .d.dl7 "prev" .d.prev7 "unit" "percent" "polarity" "up" "bare" true) }}</dd></div>
-          {{- end }}
-          <div><dt>Last 30 days{{ with $win30 }}, {{ . }}{{ end }}</dt><dd class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl30 "sum" .sum30 "days" .d.days_covered30 "of" 30 "window" .w30 "end" .d.end "first" .d.first "total" .d.days_total) }}</dd></div>
-        </dl>
-        {{- end }}
-      </li>
-      {{- end }}
-    </ul>
-    <table class="v-dt is-fixed hidden lg:table" aria-labelledby="sdk-adoption">
-      <colgroup><col class="v-col-auto"><col class="v-col-32"><col class="v-col-28"><col class="v-col-36"><col class="v-col-36"></colgroup>
-      <thead>
-        <tr>
-          <th scope="col">SDK</th>
-          <th scope="col" class="num whitespace-normal">Last 7 days{{ with $common.window }}<span class="sub">{{ . }}</span>{{ end }}</th>
-          <th scope="col" class="num whitespace-normal">Change<span class="sub">vs prior 7 days</span></th>
-          <th scope="col">12 weeks<span class="sub">weekly totals</span></th>
-          <th scope="col" class="num whitespace-normal">Last 30 days{{ with $win30 }}<span class="sub">{{ . }}</span>{{ end }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{- range . }}
-        <tr data-row-link>
-          <th scope="row"><a class="v-row-link" href="{{ printf "repos/%s/" .r.repo | relURL }}" title="{{ .r.key }}">{{ .r.name }}</a>{{ with .reg.labelHTML }}<span class="v-rowmeta">{{ . }}</span>{{ end }}</th>
-          {{- with .late }}
-          <td><span class="v-caption">{{ . }}</span></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          {{- else }}
-          <td class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl7 "sum" .d.sum7 "days" .d.days_covered "of" 7 "window" .d.window "end" .d.end "first" .d.first "total" .d.days_total) }}</td>
-          <td class="num">{{ if .chg }}{{ partial "ui/delta.html" (dict "cur" .d.dl7 "prev" .d.prev7 "unit" "percent" "polarity" "up" "bare" true) }}{{ else }}{{ partial "ui/num.html" (dict "v" nil "na" "needs two complete 7-day windows") }}{{ end }}</td>
-          <td>
-            {{- with .spark }}{{ . | safeHTML }}
-            {{- else }}{{ with .since }}<span class="v-caption">{{ . }}</span>
-            {{- else }}{{ with .weeksNote }}{{ partial "ui/note.html" (dict "text" . "title" $weeksTitle) }}
-            {{- else }}{{ partial "ui/num.html" (dict "v" nil "na" "no download data yet") }}{{ end }}{{ end }}{{ end -}}
-          </td>
-          <td class="num">{{ partial "pages/overview/dl-value.html" (dict "v" .d.dl30 "sum" .sum30 "days" .d.days_covered30 "of" 30 "window" .w30 "end" .d.end "first" .d.first "total" .d.days_total) }}</td>
-          {{- end }}
-        </tr>
-        {{- end }}
-      </tbody>
-    </table>
+  {{ partial "ui/section-head.html" (dict "id" "sdk-adoption" "title" "SDK adoption"
+      "desc" "Complete days only. Each SDK is compared with its own previous week."
+      "action" (dict "text" "All downloads" "href" ("downloads/" | relURL))) }}
+  <div class="v-grid">
+    {{ partial "pages/downloads/table.html" (dict "data" $x "id" "sdk-adoption") }}
   </div>
 </section>
 {{- end }}

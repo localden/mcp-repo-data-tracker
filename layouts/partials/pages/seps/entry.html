@@ -1,31 +1,26 @@
-{{- /* One seps.json entry, normalised once for every module of the SEPs page (brief 3.4, 6.2). Returns a dict, never emits.
+{{- /* One seps.json entry, normalised once for every module that shows SEPs (design system v4 4.16, 5.6). Returns a dict, never emits.
   Context: dict "e" (the seps.json entry) "stage" (one of "proposal", "draft", "in-review", "accepted", "parked", "merged")
-  "ref" (Unix seconds of seps.json lastUpdated) "core" (lowercased core and lead maintainer logins) "act" (bool: the data carries
-  lastActivity*, D1-11; the activity column then reads it instead of updatedAt).
+  "ref" (Unix seconds of seps.json lastUpdated) "core" (lowercased core and lead maintainer logins).
   Keys:
-    num; sep ("SEP-2028", parsed anywhere in the title; "PR 3440" when there is none) and isPR; sepNum (digits or "");
-    title (the "sep(SEP-NNNN):", "SEP-NNNN:" and "SEP:" prefixes stripped, first letter capitalised); url; author;
-    sponsor + sponsorKind: "handle", "self" (sponsor is the author, or no sponsor and the author is a core or lead maintainer,
-      glossary 6.2) or "none";
-    age_h, upd_h, stage_h: hours (pages/seps/age.html), -1.0 when unknown; upd_h follows "act";
-    labels: up to 3 display labels for the sub-line (stage labels dropped; "WG support needed" and deferred/dormant first);
-    wg; notReady (isDraft, D1-11); reviewKnown/reviewed (maintainerReviewed, D1-11); coreKnown/coreReviewed (coreReviewed, D1-11);
-    needsLabel, sponsoredButProposal (D1-11 hygiene flags); reviewTitle ("13 review events, 0 from maintainers");
-    tile: the first "Waiting on maintainers" tile the SEP matches, so the tiles are disjoint ("t-sponsor", "t-review",
-      "t-decision", "t-accepted" or ""); tags: data-tags tokens for the tiles and chips; text: the lowercased search haystack. */ -}}
+    num (the PR number); sep: the id of the first meta slot, "SEP-2028" parsed anywhere in the title, else "#3440";
+    title: verbatim, minus the leading "SEP-2028: " prefix (the id is the first meta slot); url; author; createdAt;
+    sponsor + sponsorKind: "handle", "self" (the sponsor is the author, or there is no sponsor and the author is a core or lead
+      maintainer) or "none"; needsSponsor: a proposal with none;
+    age_h, upd_h: hours (pages/seps/age.html), -1.0 when unknown; upd_h reads lastActivity* when the data carries it, else the
+      time since the PR last changed;
+    labels: GitHub labels verbatim for the label tags (stage labels are the group, wg-support-needed is the attribute tag);
+    wg: carries wg-support-needed; tags: the data-facets tokens ("needs-sponsor", "wg"). */ -}}
 {{- $e := .e }}{{ $stage := .stage }}{{ $ref := .ref }}{{ $core := .core | default slice -}}
 {{- $num := int ($e.number | default 0) -}}
 {{- $raw := strings.TrimSpace (string ($e.title | default "")) -}}
 
-{{- /* SEP id (§8a-13): "SEP-NNNN" anywhere in the title, case-insensitive */ -}}
 {{- $sepNum := "" -}}
 {{- with findRE `(?i)SEP-[0-9]+` $raw 1 }}{{ $sepNum = replaceRE `(?i)^SEP-` "" (index . 0) }}{{ end -}}
-{{- $sep := printf "PR %d" $num }}{{ with $sepNum }}{{ $sep = printf "SEP-%s" . }}{{ end -}}
+{{- $sep := printf "#%d" $num }}{{ with $sepNum }}{{ $sep = printf "SEP-%s" . }}{{ end -}}
 {{- $title := strings.TrimSpace (replaceRE `^\s*(?i:sep\(\s*SEP-[0-9]+\s*\)|SEP(-[0-9]+)?)\s*:\s*` "" $raw) -}}
 {{- if not $title }}{{ $title = $raw }}{{ end -}}
-{{- $title = strings.FirstUpper $title -}}
 
-{{- /* people: sponsor per the glossary, so the tile, the chip, the stage table and the Sponsor column agree */ -}}
+{{- /* people: one sponsor rule, so the tile, the facet, the stage table and the Sponsor column agree */ -}}
 {{- $author := string ($e.author | default "") -}}
 {{- $sp := string ($e.sponsor | default "") -}}
 {{- $kind := "none" }}{{ $sponsor := "" -}}
@@ -34,69 +29,32 @@
 {{- else if and $author (in $core (lower $author)) -}}
   {{- $kind = "self" }}{{ $sponsor = $author -}}
 {{- end -}}
+{{- $needsSponsor := and (eq $stage "proposal") (eq $kind "none") -}}
 
 {{- /* durations in hours */ -}}
 {{- $age_h := partial "pages/seps/age.html" (dict "days" $e.daysWaiting "at" $e.createdAt "ref" $ref) -}}
 {{- $upd_h := -1.0 -}}
-{{- if .act -}}
+{{- if or (ne $e.lastActivityDays nil) $e.lastActivityAt -}}
   {{- $upd_h = partial "pages/seps/age.html" (dict "days" $e.lastActivityDays "at" $e.lastActivityAt "ref" $ref) -}}
 {{- else -}}
   {{- $upd_h = partial "pages/seps/age.html" (dict "days" $e.daysInCurrentStatus "at" $e.updatedAt "ref" $ref) -}}
 {{- end -}}
-{{- $stage_h := partial "pages/seps/age.html" (dict "days" $e.daysInStage "ref" $ref) -}}
 
-{{- /* sub-line labels: GitHub labels verbatim except wg-support-needed (6.5); stage labels are the group, so they are dropped */ -}}
-{{- $stageLabels := slice "sep" "proposal" "draft" "in-review" "in review" "accepted" "final" -}}
+{{- /* label tags: GitHub labels verbatim; the stage labels are the group row and wg-support-needed is an attribute tag */ -}}
+{{- $skip := slice "sep" "proposal" "draft" "in-review" "in review" "accepted" "final" "wg-support-needed" -}}
 {{- $labels := slice }}{{ $wg := false -}}
 {{- range ($e.labels | default slice) -}}
   {{- $k := lower (string .) -}}
-  {{- if eq $k "wg-support-needed" }}{{ $wg = true }}{{ $labels = $labels | append "WG support needed" -}}
-  {{- else if and (in (slice "deferred" "dormant") $k) (ne $stage "parked") }}{{ $labels = $labels | append (string .) }}{{ end -}}
+  {{- if eq $k "wg-support-needed" }}{{ $wg = true }}{{ end -}}
+  {{- if not (in $skip $k) }}{{ $labels = $labels | append (string .) }}{{ end -}}
 {{- end -}}
-{{- range ($e.labels | default slice) -}}
-  {{- $k := lower (string .) -}}
-  {{- if not (in (slice "wg-support-needed" "deferred" "dormant") $k) }}{{ if not (in $stageLabels $k) }}{{ $labels = $labels | append (string .) }}{{ end }}{{ end -}}
-{{- end -}}
-{{- $labels = first 3 $labels -}}
-
-{{- /* D1-11 fields: absent (or null) means unknown, never false */ -}}
-{{- $notReady := eq $e.isDraft true -}}
-{{- $reviewKnown := ne $e.maintainerReviewed nil }}{{ $reviewed := eq $e.maintainerReviewed true -}}
-{{- $coreKnown := ne $e.coreReviewed nil }}{{ $coreReviewed := eq $e.coreReviewed true -}}
-{{- $parked := eq $stage "parked" -}}
-
-{{- /* review events go in the title tooltip (3.4 Removed: raw Reviews count) */ -}}
-{{- $reviewTitle := "" -}}
-{{- if ne $e.reviewCount nil -}}
-  {{- $reviewTitle = partial "ui/plural.html" (dict "n" $e.reviewCount "one" "review event") -}}
-  {{- if $reviewKnown -}}
-    {{- if not $reviewed }}{{ $reviewTitle = printf "%s, 0 from maintainers" $reviewTitle -}}
-    {{- else }}{{ with $e.maintainerReviewers }}{{ $reviewTitle = printf "%s, reviewed by %s" $reviewTitle (delimit . ", ") }}{{ end }}{{ end -}}
-  {{- end -}}
-{{- end -}}
-
-{{- /* Waiting on maintainers (3.4-1): the first tile that matches, in tile order */ -}}
-{{- $needsSponsor := and (eq $stage "proposal") (eq $kind "none") -}}
-{{- $tile := "" -}}
-{{- if $needsSponsor }}{{ $tile = "t-sponsor" -}}
-{{- else if and $reviewKnown (not $reviewed) (not $notReady) (not $parked) (ne $stage "merged") }}{{ $tile = "t-review" -}}
-{{- else if eq $stage "in-review" }}{{ $tile = "t-decision" -}}
-{{- else if eq $stage "accepted" }}{{ $tile = "t-accepted" }}{{ end -}}
 
 {{- $tags := slice -}}
-{{- with $tile }}{{ $tags = $tags | append . }}{{ end -}}
 {{- if $needsSponsor }}{{ $tags = $tags | append "needs-sponsor" }}{{ end -}}
-{{- if and $reviewKnown (not $reviewed) }}{{ $tags = $tags | append "no-review" }}{{ end -}}
 {{- if $wg }}{{ $tags = $tags | append "wg" }}{{ end -}}
-{{- if $notReady }}{{ $tags = $tags | append "not-ready" }}{{ end -}}
-{{- if $parked }}{{ $tags = $tags | append "parked" }}{{ end -}}
-
-{{- $text := lower (delimit (slice $sep $title $author $sponsor (delimit $labels " ")) "|") -}}
 
 {{- return dict
-  "num" $num "sep" $sep "sepNum" $sepNum "isPR" (eq $sepNum "") "title" $title "url" (string ($e.url | default ""))
-  "author" $author "sponsor" $sponsor "sponsorKind" $kind "stage" $stage
-  "age_h" $age_h "upd_h" $upd_h "stage_h" $stage_h "labels" $labels "wg" $wg "notReady" $notReady
-  "reviewKnown" $reviewKnown "reviewed" $reviewed "coreKnown" $coreKnown "coreReviewed" $coreReviewed
-  "needsLabel" (eq $e.needsLabel true) "sponsoredButProposal" (eq $e.sponsoredButProposal true)
-  "reviewTitle" $reviewTitle "needsSponsor" $needsSponsor "tile" $tile "tags" $tags "text" $text -}}
+  "num" $num "sep" $sep "title" $title "url" (string ($e.url | default "")) "author" $author
+  "createdAt" (string ($e.createdAt | default ""))
+  "sponsor" $sponsor "sponsorKind" $kind "needsSponsor" $needsSponsor "stage" $stage
+  "age_h" $age_h "upd_h" $upd_h "labels" $labels "wg" $wg "tags" $tags -}}

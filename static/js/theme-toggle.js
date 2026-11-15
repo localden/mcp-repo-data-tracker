@@ -1,20 +1,21 @@
-/* VISR theme toggle (brief 7.2 D5, D6): flips html[data-theme]; icons, tokens and charts react to the attribute.
-   The button (an icon-only .v-btn) is "Dark theme" with aria-pressed. meta[name=theme-color] follows --bg on load and on every change.
+/* VISR theme toggle (design system v4 4.1): flips html[data-theme]; icons, tokens and charts react to the attribute.
+   The button (an icon-only .v-btn) names what it does: "Switch to dark theme" or "Switch to light theme". It is an action, not a
+   pressed state. Every meta[name=theme-color] follows the header surface (--surface) on load and on every change.
    A stored choice overrides the system preference; storage access is always guarded. */
 (function () {
   'use strict';
   var KEY = 'theme', root = document.documentElement;
   function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
-  function meta() {
-    var m = document.querySelector('meta[name="theme-color"]');
-    if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
-    return m;
-  }
   function sync() {
     var dark = root.getAttribute('data-theme') === 'dark';
-    document.querySelectorAll('#theme-toggle').forEach(function (b) { b.setAttribute('aria-pressed', String(dark)); });
-    var c = getComputedStyle(root).getPropertyValue('--bg').trim();
-    if (c) meta().setAttribute('content', c);
+    document.querySelectorAll('#theme-toggle').forEach(function (b) {
+      b.removeAttribute('aria-pressed');
+      b.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    });
+    var c = getComputedStyle(root).getPropertyValue('--surface').trim();
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    if (c && !metas.length) { var m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); metas = [m]; }
+    if (c) Array.prototype.forEach.call(metas, function (m) { m.setAttribute('content', c); });
   }
   function set(theme, persist) {
     root.setAttribute('data-theme', theme);
@@ -22,7 +23,7 @@
     sync();
   }
   document.addEventListener('click', function (e) {
-    if (!e.target.closest('#theme-toggle')) return;
+    if (!e.target.closest || !e.target.closest('#theme-toggle')) return;
     set(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
   });
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;

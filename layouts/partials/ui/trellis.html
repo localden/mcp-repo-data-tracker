@@ -1,0 +1,75 @@
+{{- /* Trellis (design system v4 4.19): small multiples of one metric in one card. One row per series: a label cell and a 96px panel;
+  every panel shares the x domain and the 44px y axis, each on its own scale; the last drawn panel carries the x labels. Hover is
+  synchronised across panels with one tooltip, and the switch swaps the whole trellis for one pivot table (charts.js).
+  Dict {id, title, sub, metric, metric_one, unit, gran, kind, from, to, rows, class}.
+    id, title, sub   required; sub is a cadence phrase from fmt/label.html ("Complete weeks, last 52 weeks, each row on its own scale").
+    metric, metric_one, unit, gran, kind, from, to   as in ui/chart.html; from and to are the shared domain (required).
+    rows   slice of {id, name, href, points, readout, note, pending}:
+             id        the row's canvas id (unique on the page).   name, href: the row link, in strong.
+             points    [{date, value}] (weekly bins).
+             readout   one item {label, value: {kind, ...}, note}: a figure about this row that the table above does not already show
+                       ("Week to date" with its value and coverage note).
+             note      a ui/note.html dict; default: when the row has missing weeks, their coverage ratio ("10 of 52 weeks").
+             pending   the pending text for a row that cannot draw (default: "Trend available from {date}", or the closed list).
+  Leading untracked weeks are gap bands. The notes row keys the gap band ("No data") without a figure, since coverage is per row.
+  Below 64rem the label cell sits above its panel. Sets the page's "charts" flag. */ -}}
+{{- $c := . -}}
+{{- page.Store.Set "charts" true -}}
+{{- $id := $c.id | default "trellis" -}}
+{{- $kind := cond (eq ($c.kind | default "column") "line") "line" "column" -}}
+{{- $gran := cond (eq ($c.gran | default "week") "day") "day" "week" -}}
+{{- $unit := $c.unit | default "downloads" -}}
+{{- $vk := cond (eq $unit "downloads") "volume" (cond (eq $unit "hours") "dur" "count") -}}
+{{- $rows := slice }}{{ $lastDrawn := -1 }}{{ $anyGap := false }}{{ $nl := 0 -}}
+{{- range $i, $row := $c.rows -}}
+  {{- $d := partial "ui/chart-canvas.html" (dict "kind" $kind "unit" $unit "gran" $gran "metric" ($c.metric | default "downloads") "metric_one" $c.metric_one
+      "scope" $row.name "from" $c.from "to" $c.to "series" (slice (dict "label" $row.name "role" "accent" "points" ($row.points | default slice)))) -}}
+  {{- $n := 0 }}{{ with index $d.rows 0 }}{{ $n = .n }}{{ end -}}
+  {{- $nl = len $d.labels -}}
+  {{- if $d.canvas }}{{ $lastDrawn = $i }}{{ if lt $n $nl }}{{ $anyGap = true }}{{ end }}{{ end -}}
+  {{- $rows = $rows | append (dict "row" $row "d" $d "n" $n) -}}
+{{- end -}}
+<article class="v-card is-trellis {{ $c.class | default "v-span-12" }}" data-chart data-trellis aria-labelledby="{{ $id }}-title">
+  <header class="v-card-head">
+    <div class="v-card-heading"><h3 class="v-card-title" id="{{ $id }}-title">{{ $c.title }}</h3><p class="v-card-sub">{{ $c.sub }}</p></div>
+    {{- if ge $lastDrawn 0 }}
+    <div class="v-card-actions">{{ partial "ui/tabs.html" (dict "id" $id "variant" "seg" "label" (printf "%s view" ($c.title | default "Chart")) "selected" "chart"
+      "tabs" (slice (dict "key" "chart" "label" "Chart" "panel" (printf "%s-plot" $id)) (dict "key" "table" "label" "Table" "panel" (printf "%s-table" $id)))) }}</div>
+    {{- end }}
+  </header>
+  <div class="v-trellis" id="{{ $id }}-plot" role="tabpanel"{{ if ge $lastDrawn 0 }} aria-labelledby="{{ $id }}-tab-chart"{{ end }}>
+    {{- range $i, $e := $rows }}
+    {{- $row := $e.row }}{{ $d := $e.d }}
+    {{- $rid := $row.id | default (printf "%s-%d" $id $i) }}
+    <div class="v-trellis-row">
+      <div class="v-trellis-label">
+        {{- if $row.href }}<a class="v-trellis-name" href="{{ $row.href }}">{{ $row.name }}</a>{{ else }}<span class="v-trellis-name">{{ $row.name }}</span>{{ end -}}
+        {{- $ro := $row.readout }}{{ if reflect.IsSlice $ro }}{{ if $ro }}{{ $ro = index $ro 0 }}{{ end }}{{ end -}}
+        {{- if reflect.IsMap $ro }}
+        <p class="v-trellis-fact">{{ $ro.label }} {{ partial "ui/value.html" ($ro.value | default (dict "kind" "na")) }}{{ with $ro.note }}{{ partial "ui/note.html" . }}{{ end }}</p>
+        {{- end }}
+        {{- if $row.note }}{{ partial "ui/note.html" $row.note -}}
+        {{- else if and $d.canvas (lt $e.n (len $d.labels)) }}{{ partial "ui/note.html" (dict "part" $e.n "whole" (len $d.labels) "noun" (cond (eq $gran "week") "week" "day")) }}{{ end -}}
+      </div>
+      {{- if $d.canvas }}
+      <div class="v-trellis-panel"><canvas id="{{ $rid }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $row.name }}" data-size="panel" data-xaxis="{{ if eq $i $lastDrawn }}on{{ else }}off{{ end }}" data-series="{{ $d.json }}"></canvas></div>
+      {{- else }}
+      {{- $at := "" }}{{ if and (not $row.pending) $d.first }}{{ $at = ((time.AsTime $d.first).AddDate 0 0 (cond (eq $gran "week") 28 13)).Format "2006-01-02" }}{{ end }}
+      <div class="v-card-pending">{{ partial "ui/icon.html" "clock" }}<span>
+        {{- if $row.pending }}{{ $row.pending -}}
+        {{- else if and $at (gt $at $d.to) }}Trend available from {{ partial "ui/value.html" (dict "kind" "date" "d" $at) -}}
+        {{- else if $d.any }}Too few complete weeks to draw a trend
+        {{- else }}No data collected yet{{ end -}}
+      </span></div>
+      {{- end }}
+    </div>
+    {{- end }}
+  </div>
+  {{- if ge $lastDrawn 0 }}
+  <div class="v-chart-table v-trellis-table" id="{{ $id }}-table" role="tabpanel" aria-labelledby="{{ $id }}-tab-table" tabindex="0" hidden></div>
+  <p class="sr-only" aria-live="polite" data-chart-live></p>
+  {{- if $anyGap }}
+  <ul class="v-chart-notes"><li><span class="v-key is-gap" aria-hidden="true"></span><span class="v-chart-note-label">No data</span></li></ul>
+  {{- end }}
+  {{- end }}
+</article>

@@ -1,0 +1,48 @@
+{{- /* The people of one repository (design system v4 5.8 module 6): the union of everyone active in the last 30 days and this
+  repository's maintainers. Returns a dict, never emits.
+  Dict {c, roles}: c is metrics.json contributors, roles the result of pages/repo/roles.html.
+  Active people: contributors.active_people when the data carries it (one entry per person with their counts), else
+  contributors.previousPeriodContributors, which despite its name is the set active in the last 30 days. A maintainer is active when
+  they are in that set, or in contributors.maintainers_present_30d when the data carries it (it also counts reviews and comments).
+  Returns:
+    rows       one per person, A to Z ignoring case: {k (lowercased login), h (display login), maint, active, stats}
+               stats: the person's active_people entry (an empty dict without one)
+    nM, nC     maintainers and contributors (they partition rows); n: all
+    nActiveM   maintainers who are active
+    detail     true when the data carries per-person counts (the PRs, Issues, Reviews and Commits columns) */ -}}
+{{- $c := .c | default dict }}{{ $roles := .roles | default dict -}}
+{{- $sc := newScratch -}}
+{{- $detail := false -}}
+{{- $mLower := $roles.lower | default slice -}}
+{{- if $c.active_people -}}
+  {{- $detail = true -}}
+  {{- range $c.active_people -}}
+    {{- $person := . -}}
+    {{- if reflect.IsMap . }}{{ with .login -}}
+      {{- $k := lower (string .) -}}
+      {{- $sc.SetInMap "p" $k (dict "k" $k "h" (string .) "maint" (in $mLower $k) "active" true "stats" $person) -}}
+    {{- end }}{{ end -}}
+  {{- end -}}
+{{- else -}}
+  {{- range $c.previousPeriodContributors | default slice -}}
+    {{- $k := lower (string .) -}}
+    {{- if $k }}{{ $sc.SetInMap "p" $k (dict "k" $k "h" (string .) "maint" (in $mLower $k) "active" true "stats" dict) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $present := slice -}}
+{{- range $c.maintainers_present_30d | default slice }}{{ $present = $present | append (lower (string .)) }}{{ end -}}
+{{- range $i, $h := $roles.handles | default slice -}}
+  {{- $k := lower (string $h) -}}
+  {{- $have := index ($sc.Get "p" | default dict) $k -}}
+  {{- if not $have -}}
+    {{- $sc.SetInMap "p" $k (dict "k" $k "h" (string $h) "maint" true "active" (in $present $k) "stats" dict) -}}
+  {{- end -}}
+{{- end -}}
+{{- $rows := slice }}{{ $nM := 0 }}{{ $nC := 0 }}{{ $nActiveM := 0 -}}
+{{- if $sc.Get "p" -}}
+  {{- range $sc.GetSortedMapValues "p" -}}
+    {{- $rows = $rows | append . -}}
+    {{- if .maint }}{{ $nM = add $nM 1 }}{{ if .active }}{{ $nActiveM = add $nActiveM 1 }}{{ end }}{{ else }}{{ $nC = add $nC 1 }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- return dict "rows" $rows "nM" $nM "nC" $nC "n" (len $rows) "nActiveM" $nActiveM "detail" $detail -}}

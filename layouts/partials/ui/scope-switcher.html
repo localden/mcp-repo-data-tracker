@@ -1,18 +1,34 @@
-{{- /* Scope switcher (design system v3 §4.2, §4.12): a "Switch repository" .v-btn with a chevron that opens a menu of sibling URLs of the
-  same page kind. ui/page-head.html places it at the right end of the H1 row (under the meta row on phone); the H1 names the scope.
-  Dict {repo, kind, id, label}. repo: the current "owner/repo" (or bare repo; "" = the org view). kind: "issues" | "pulls" | "repo".
-  label: button text (default "Switch repository").
-  issues and pulls lead with "All repositories" (/issues/, /pulls/); every kind then lists the repositories in repos.json order
-  (/issues/<repo>/, /pulls/<repo>/, /repos/<repo>/), with aria-current="page" (600 + check) on the current one. Built on ui/menu.html. */ -}}
+{{- /* Scope switcher (design system v4 4.2, ruling 16): the H1 IS the switcher. Renders the title row's wrap: the heading holding only
+  the button, and the menu as its sibling. ui/page-head.html calls it when it gets a scope; identical at every width.
+  Dict {kind, repo, id}. kind: "issues" | "pulls" | "repo" (the page family whose sibling URLs it lists). repo: the current
+  "owner/repo" or bare repo ("" is the org view, "All repositories"). id: element id prefix (default "page"): the H1 is "{id}-title",
+  the menu "{id}-scope-menu".
+  Menu rows: a column label row ("Repository" and "Open issues" or "Open PRs"), "All repositories" with the org total, a separator,
+  then one link per repository with its open count (metrics.json open_count); the current row has the check. On /repos/** the same
+  rows without the count column. */ -}}
 {{- $kind := .kind | default "repo" -}}{{- $cur := .repo | default "" -}}
+{{- $id := .id | default "page" -}}
 {{- $base := index (dict "issues" "issues" "pulls" "pulls" "repo" "repos") $kind | default "repos" -}}
-{{- $items := slice -}}
-{{- if ne $kind "repo" }}{{ $items = $items | append (dict "text" "All repositories" "href" (printf "%s/" $base | relURL) "current" (eq $cur "") "sep" true) }}{{ end -}}
+{{- $counted := ne $kind "repo" -}}
+{{- $rows := slice }}{{ $total := 0 }}{{ $any := false }}{{ $title := "All repositories" -}}
 {{- range site.Data.repos.repositories -}}
-  {{- $on := or (eq $cur (printf "%s/%s" .owner .repo)) (eq $cur .repo) -}}
-  {{- $items = $items | append (dict "text" (.name | default .repo) "href" (printf "%s/%s/" $base .repo | relURL) "current" $on) -}}
+  {{- $r := partial "data/repo.html" . -}}
+  {{- $on := or (eq $cur $r.key) (eq $cur $r.repo) -}}
+  {{- if $on }}{{ $title = $r.name }}{{ end -}}
+  {{- $row := dict "text" $r.name "href" (printf "%s/%s/" $base $r.repo | relURL) "current" $on -}}
+  {{- if $counted -}}
+    {{- with $r.data.metrics }}{{ with index . $kind }}{{ if reflect.IsMap . }}{{ if ne .open_count nil -}}
+      {{- $row = merge $row (dict "count" .open_count) }}{{ $total = add $total (int .open_count) }}{{ $any = true -}}
+    {{- end }}{{ end }}{{ end }}{{ end -}}
+  {{- end -}}
+  {{- $rows = $rows | append $row -}}
 {{- end -}}
-{{- /* phones keep the switcher on the H1 row, so the label shortens there */ -}}
-{{- $lbl := .label | default "Switch repository" -}}
-{{- $html := cond (eq $lbl "Switch repository") (safeHTML `<span class="max-sm:hidden">Switch repository</span><span class="sm:hidden">Switch</span>`) "" -}}
-{{- partial "ui/menu.html" (dict "id" (.id | default "scope") "label" $lbl "labelHTML" $html "items" $items) -}}
+{{- $all := dict "text" "All repositories" "href" (printf "%s/" $base | relURL) "current" (eq $cur "") "sep" true -}}
+{{- if and $counted $any }}{{ $all = merge $all (dict "count" $total) }}{{ end -}}
+{{- $items := slice $all | append $rows -}}
+{{- $cols := slice -}}
+{{- if and $counted $any }}{{ $cols = slice "Repository" (cond (eq $kind "issues") "Open issues" "Open PRs") }}{{ end -}}
+<div class="v-menu-wrap v-page-titlewrap" data-menu>
+  <h1 class="v-page-title" id="{{ $id }}-title"><button type="button" class="v-scope" aria-haspopup="menu" aria-expanded="{{ if .open }}true{{ else }}false{{ end }}" aria-controls="{{ $id }}-scope-menu">{{ .title | default $title }}{{ partial "ui/icon.html" "chevron-up-down" }}<span class="sr-only">, switch repository</span></button></h1>
+  {{ partial "ui/menu.html" (dict "id" (printf "%s-scope-menu" $id) "bare" true "label" "Repositories" "items" $items "cols" $cols "open" .open) }}
+</div>
