@@ -971,6 +971,12 @@
     .v-dt.has-barfill > colgroup > col.v-col-bar { width: auto; }
     .v-span-8 > .v-dt.is-rank:not(.has-barfill) > colgroup > col.v-col-bar { width: 22rem; }
   }
+  /* a 6-column card below 80rem is too narrow for the fixed name column: beside two figure columns it leaves the bar column 60px
+     at 1024, less than the number slot and its gap, so no bar is drawn. There the name column stays auto and shares the spare
+     width with the bar column; from 80rem the fixed plan leaves the bar its 96px again. */
+  @media (width >= 64rem) and (width < 80rem) {
+    .v-span-6 > .v-dt.has-barfill > colgroup > col:first-child:not([class]) { width: auto; }
+  }
   /* the header rule is a shadow under the header cells, so it paints over the top rule of whichever row is first visible after
      a view, filter or sort: one 1px rule, always */
   .v-dt thead th { @apply type-label; position: relative; z-index: 1; height: var(--th-h); padding: 0 var(--cell-gap); white-space: nowrap; vertical-align: middle; color: var(--text-2);
