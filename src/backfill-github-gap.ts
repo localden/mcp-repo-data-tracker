@@ -296,12 +296,23 @@ async function main() {
     const truncation = !commitsTruncated ? ''
       : Number.isFinite(commitsFrom) ? ` (truncated; complete from ${new Date(commitsFrom).toISOString().split('T')[0]})`
       : ' (truncated; none fetched)';
-    const stars = await fetchEventTimestamps(client, owner, repo, 'stargazers', oldest - DAY_MS);
-    const forks = await fetchEventTimestamps(client, owner, repo, 'forks', oldest - DAY_MS);
+    // Star and fork timestamps need a token scope the CI token may lack; without
+    // them the counts are interpolated between the real neighbouring snapshots.
+    const history = async (field: 'stargazers' | 'forks') => {
+      try {
+        return await fetchEventTimestamps(client, owner, repo, field, oldest - DAY_MS);
+      } catch (err) {
+        console.log(`  ${field} history unavailable (${(err as Error).message.split('
+').pop()?.trim()}); interpolating`);
+        return null;
+      }
+    };
+    const stars = await history('stargazers');
+    const forks = await history('forks');
     console.log(
       `  fetched ${issues.open.length + issues.closed.length} issues, ` +
       `${pulls.open.length + pulls.closed.length} PRs, ${commits.length}/${totalCount} commits${truncation}, ` +
-      `${stars.recent.length} recent stars, ${forks.recent.length} recent forks`
+      `${stars ? stars.recent.length : 'no'} recent stars, ${forks ? forks.recent.length : 'no'} recent forks`
     );
 
     const allIssues = [...issues.open, ...issues.closed];
@@ -380,10 +391,11 @@ async function main() {
         avg_reviews_per_pr: prMetrics.avg_reviews_per_pr,
         by_size: null,
       };
-      snapshot.repository = {
-        stars: countAsOf(stars.current, stars.recent, asOf),
-        forks: countAsOf(forks.current, forks.recent, asOf),
-      };
+      const starCount = stars ? countAsOf(stars.current, stars.recent, asOf)
+        : interpolate(before?.repository?.stars, after?.repository?.stars, beforeDate, afterDate, date) ?? null;
+      const forkCount = forks ? countAsOf(forks.current, forks.recent, asOf)
+        : interpolate(before?.repository?.forks, after?.repository?.forks, beforeDate, afterDate, date) ?? null;
+      snapshot.repository = { stars: starCount, forks: forkCount };
       // loadContributors() unions in today's all-time roster, so the raw total
       // is anachronistic; interpolate between the real neighbours or write null.
       const total = interpolate(before?.contributors?.total, after?.contributors?.total, beforeDate, afterDate, date) ?? null;
@@ -405,7 +417,12 @@ async function main() {
       };
       snapshot.meta = {
         source: 'reconstructed',
-        approx: cpwExact ? [...APPROX_FIELDS] : [...APPROX_FIELDS, 'contributors.commits_per_week_avg'],
+        approx: [
+          ...APPROX_FIELDS,
+          ...(cpwExact ? [] : ['contributors.commits_per_week_avg']),
+          ...(stars ? [] : ['repository.stars']),
+          ...(forks ? [] : ['repository.forks']),
+        ],
       };
 
       await writeFile(path, JSON.stringify(snapshot, null, 2));
