@@ -394,7 +394,8 @@ async function main() {
         : interpolate(before?.repository?.stars, after?.repository?.stars, beforeDate, afterDate, date) ?? null;
       const forkCount = forks ? countAsOf(forks.current, forks.recent, asOf)
         : interpolate(before?.repository?.forks, after?.repository?.forks, beforeDate, afterDate, date) ?? null;
-      snapshot.repository = { stars: starCount, forks: forkCount };
+      // With no history and no neighbour to interpolate from, keep what the file had.
+      if (starCount !== null && forkCount !== null) snapshot.repository = { stars: starCount, forks: forkCount };
       // loadContributors() unions in today's all-time roster, so the raw total
       // is anachronistic; interpolate between the real neighbours or write null.
       const total = interpolate(before?.contributors?.total, after?.contributors?.total, beforeDate, afterDate, date) ?? null;
@@ -433,7 +434,7 @@ async function main() {
       sample = snapshot;
       console.log(
         `  ${date}: issues.open=${issueMetrics.open_count} pulls.open=${prMetrics.open_count} ` +
-        `stars=${snapshot.repository.stars} contributors.total=${total ?? 'null'} ` +
+        `stars=${snapshot.repository?.stars ?? 'null'} contributors.total=${total ?? 'null'} ` +
         `commits_per_week_avg=${cpw ?? 'null'}${cpwExact ? '' : ' (interpolated)'}${existing ? '' : ' [new file]'}`
       );
     }
