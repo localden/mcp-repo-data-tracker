@@ -302,8 +302,7 @@ async function main() {
       try {
         return await fetchEventTimestamps(client, owner, repo, field, oldest - DAY_MS);
       } catch (err) {
-        console.log(`  ${field} history unavailable (${(err as Error).message.split('
-').pop()?.trim()}); interpolating`);
+        console.log(`  ${field} history unavailable (${(err as Error).message.split('\n').pop()?.trim()}); interpolating`);
         return null;
       }
     };
