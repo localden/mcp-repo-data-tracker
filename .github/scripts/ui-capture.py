@@ -48,7 +48,7 @@ VIEWPORTS = {'desktop': (1440, 900, 1), 'mobile': (390, 844, 2), 'laptop': (1024
 ALL_STATES = ('menu', 'switcher', 'notes', 'table', 'hover', 'tabs', 'filter', 'select', 'empty', 'expander', 'focus')
 MATRIX = [('desktop', 'light', 40, ALL_STATES),
           ('mobile', 'light', 16, ('menu', 'switcher', 'notes', 'focus', 'facets', 'sort', 'views', 'stuck', 'empty', 'expander')),
-          ('desktop', 'dark', 4, ('menu', 'switcher', 'notes', 'table', 'hover')),
+          ('desktop', 'dark', 4, ('menu', 'switcher', 'notes', 'table', 'hover', 'focus')),
           ('mobile', 'dark', 16, ('menu',)),
           ('laptop', 'light', 12, ()),
           ('tablet', 'light', 12, ())]
@@ -123,7 +123,7 @@ RULES = {
     'spark-attached': 'no level sparkline shows a loose point: the end dot is the end of the line or of a bridge (design system v4 4.20)',
     'chart-fill': 'every mounted canvas is as wide and as tall as its plot box, within 2px (a chart that kept a transient size at mount)',
     'spark-range': 'no date in a sparkline range row is later than the as-of day (html[data-asof])',
-    'tag-fold': 'below 64rem no tag line shows a +N beside fewer than six labels, or two +N tags',
+    'tag-fold': 'below 64rem no tag line shows a +N beside fewer than six pills (priority, role, flag and attribute tags count), or two +N tags',
     'name-fit': 'from 64rem no row name link in a matrix, rank or kept table is truncated',
     'controls': 'at 390 every button, tab, link-action, nav item and footer link is at least 44px tall or has a 44px ::after hit area',
     'head-geometry': 'at 1440 the title text and the first section start at the same y on Overview, Issues, PRs and SEPs',
@@ -166,7 +166,7 @@ PROBE = r"""() => {
   const fontLoaded = !!(document.fonts && document.fonts.check && document.fonts.check('500 14px "Inter Variable"'));
   const tab = el => /tabular-nums/.test(getComputedStyle(el).fontVariantNumeric);
   const numerals = [];
-  [...document.querySelectorAll('.v-dt td.num .v-val:not(.is-na), .v-meta-id > .v-id')].filter(shown)
+  [...document.querySelectorAll('.v-dt td.num .v-val:not(.is-na), .v-meta-id > .v-id:not(.is-sep), .v-meta-id > .v-id > .v-id-num')].filter(shown)
     .filter(el => !tab(el)).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'tabular', text: el.textContent.trim().slice(0, 30) }));
   [...document.querySelectorAll('main .v-row-link, main .v-tag, main .v-who, main .v-detail .v-id, main .v-prose')].filter(shown)
     .filter(tab).slice(0, 5).forEach(el => numerals.push({ el: path(el), want: 'proportional', text: el.textContent.trim().slice(0, 30) }));
@@ -222,7 +222,7 @@ PROBE = r"""() => {
     .map(t => ({ el: path(t), date: t.getAttribute('datetime') })) : [];
   // below 64rem a row shows up to six labels and a +N only past six: a visible +N beside six or fewer labels is a false count
   const tagFold = vw < 1024 ? [...document.querySelectorAll('.v-dt .v-tags')].filter(shown).filter(b => {
-    const more = [...b.querySelectorAll('.v-tag.is-more')].filter(shown), labels = [...b.querySelectorAll('.v-tag.is-label')].filter(shown);
+    const more = [...b.querySelectorAll('.v-tag.is-more')].filter(shown), labels = [...b.querySelectorAll('.v-tag:not(.is-more, .is-blank)')].filter(shown);
     return more.length > 1 || (more.length === 1 && labels.length < 6); }).slice(0, 10).map(b => ({ el: path(b), text: b.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) })) : [];
   // from 64rem a row's name link is never truncated in a matrix, rank or kept table (2.3: each plan leaves the name its width)
   const nameCut = vw >= 1024 ? [...document.querySelectorAll('.v-dt th.v-name > a.v-row-link')].filter(shown).filter(a => a.scrollWidth > a.clientWidth + 1).slice(0, 10)

@@ -374,17 +374,25 @@
        a gap band; "No data" is the reason of a single missing reading) */
     if (!rows) note(others.length || inBand(st, i) ? 'Data gap' : 'No data');
     else if (missing.length) note(missing.join(', ') + ' not recorded');
-    if (st.single && !others.length && st.kind === 'column' && st.gran === 'week' && i > 0) {   /* change against the prior week */
+    if (st.single && !others.length && st.kind === 'column' && st.gran === 'week' && i > 0) {
+      /* change against the bin before it: the prior week, or the prior period when the bins are rolling 7-day periods (the card
+         then never says "week") */
       var ch = changeOf(st.unit, st.polarity, st.series[0].data[i], st.series[0].data[i - 1]);
-      if (ch) changeRow(ch, F.base('prior-week').text);
+      if (ch) changeRow(ch, F.base(st.period === 'rolling' ? 'prior-period' : 'prior-week').text);
     }
     tip.hidden = false;
     var host = tip.parentNode, a = c.chartArea, x = c.scales.x.getPixelForValue(i), w = tip.offsetWidth, h = tip.offsetHeight;
     var hb = host.getBoundingClientRect(), cb = c.canvas.getBoundingClientRect(), ox = cb.left - hb.left, oy = cb.top - hb.top, hx = ox + x;
+    /* the tooltip never covers the hovered mark: it stands 12px from the crosshair of a line, and 8px clear of the edge of the
+       hovered column (a column is up to 40px wide, so 12px from its centre would sit on it) */
+    var off = 12;
+    if (st.kind !== 'line') c.data.datasets.forEach(function (ds, d) {
+      var bar = c.getDatasetMeta(d).data[i]; if (bar && ds.data[i] != null && bar.width) off = Math.max(off, bar.width / 2 + 8);
+    });
     var sides = [];   /* right of the crosshair first, then left; each only when it fits */
-    if (hx + 12 + w <= host.clientWidth) sides.push(hx + 12);
-    if (hx - 12 - w >= 0) sides.push(hx - 12 - w);
-    if (!sides.length) sides.push(Math.max(0, Math.min(host.clientWidth - w, hx + 12)));
+    if (hx + off + w <= host.clientWidth) sides.push(hx + off);
+    if (hx - off - w >= 0) sides.push(hx - off - w);
+    if (!sides.length) sides.push(Math.max(0, Math.min(host.clientWidth - w, hx + off)));
     var left = sides[0], top = oy + a.top;
     if (others.length) {
       /* trellis below 64rem (from 64rem the label cells carry the reading, see scrub): beside the selected slot, at the top of
@@ -452,7 +460,8 @@
     if (!line) datasets.forEach(function (ds) { ds.maxBarThickness = barMax(boxW, labels.length); });
     state.set(canvas, { kind: kind, unit: unit, gran: gran, spec: spec, labels: labels, series: series, info: info, bands: bands, marks: marksAt,
       single: single, index: null, tip: null, live: host && host.querySelector('[data-chart-live]'), scope: canvas.dataset.scope || '',
-      metric: canvas.dataset.metric || '', metricOne: spec.metricOne || canvas.dataset.metric || '', polarity: canvas.getAttribute('data-polarity-key') || '' });
+      metric: canvas.dataset.metric || '', metricOne: spec.metricOne || canvas.dataset.metric || '', polarity: canvas.getAttribute('data-polarity-key') || '',
+      period: canvas.getAttribute('data-period') || '' });
     return {
       type: line ? 'line' : 'bar',
       data: { labels: labels, datasets: datasets },
@@ -467,7 +476,10 @@
         hover: { mode: 'visrIndex', intersect: false },
         scales: {
           x: { type: 'category', offset: !line, border: { color: T.axis }, grid: { display: false, tickLength: 0 },
+               /* month ticks (more than 14 slots): the first label starts at its tick and the last ends at its tick ("inner"), so
+                  "Dec 2025" on the first slot never runs left of the plot, under the y axis labels. Short-date ticks stay centred */
                ticks: { display: xaxis, autoSkip: false, maxTicksLimit: labels.length + 1, maxRotation: 0, color: T.text3, padding: 8,
+                        align: labels.length > 14 ? 'inner' : 'center',
                         callback: function (v, i) { if (i === 0 || !this._visr) this._visr = xTicks(this, labels, gran); var t = this._visr[i]; return t == null ? '' : t; } },
                afterFit: function (s) { s.height = xaxis ? 24 : 0; } },
           y: { min: 0, max: sc.max, beginAtZero: true, border: { display: false }, grid: { color: T.grid, drawTicks: false },
@@ -535,7 +547,7 @@
   /* Table view: the switch swaps the plot for a flush compact table in the same box, newest first, across the full card width (CSS:
      a fixed period column, the value columns share the rest). Values use the one format of their kind; a volume carries its exact
      figure in title. A column of weeks shows each week by its Monday, as a date under the header "Week of", with the range of the
-     week in title: one form down the column. A daily series
+     week in title: one form down the column (rolling 7-day periods: "Period from", and the base "vs prior period"). A daily series
      over 90 days is shown as weeks, and the header says so. A gap is one ordinary row: it is a span, so its first cell is a range,
      and each value cell holds the empty mark. A "Change" column (one series) carries its base as the sub line of its header, like
      every Change column on the site. A series with no value anywhere has no column (4.14 rule 8); a trellis row that cannot draw
@@ -572,11 +584,13 @@
     cap.textContent = cap1(first.dataset.metric || '') + (trellis ? '' : (first.dataset.scope ? ', ' + first.dataset.scope : '')) + (how ? '. ' + how : '');
     var hr = tbl.createTHead().insertRow();
     function th(text, num, sub) { var h = el('th', num ? 'num' : '', text); h.scope = 'col'; if (sub) h.appendChild(el('span', 'v-th-sub', sub)); hr.appendChild(h); return h; }
-    var ph = th(g === 'week' ? 'Week of' : 'Date', false);
+    /* rolling 7-day periods (data-period="rolling") are never called weeks: the column is "Period from", the base "vs prior period" */
+    var rolling = first.getAttribute('data-period') === 'rolling' && !binned;
+    var ph = th(g === 'week' ? (rolling ? 'Period from' : 'Week of') : 'Date', false);
     if (how) ph.title = how;
     /* a daily level shown as weeks: each value column says which reading a week shows (fmt/label.html reading "week-end") */
     cols.forEach(function (c) { th(c.label, true, binned && !flow ? 'End of week' : ''); });
-    if (change) th('Change', true, F.base(g === 'week' ? 'prior-week' : 'prior-day').text);
+    if (change) th('Change', true, F.base(g === 'week' ? (rolling ? 'prior-period' : 'prior-week') : 'prior-day').text);
     var tb = tbl.createTBody();
     function empty(i) { return cols.every(function (c) { return c.data[i] == null; }); }
     /* slots before the first measured one are not rows: nothing was tracked yet */

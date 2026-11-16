@@ -108,7 +108,9 @@
 {{- $s7 := partial "data/series.html" (dict "repo" $r.cfg "path" "issues.without_response_7d" "days" 91) -}}
 {{- /* every tile has one context (4.5): the dated change when a snapshot about 30 days older exists, else the longest wait; the whole
      the any-age pile is part of; the fixed pair of Open issues. The any-age count has no stored history, so the strip has no
-     sparklines (one visual per strip, all tiles or none). */ -}}
+     sparklines (one visual per strip, all tiles or none). Every tile is a link, as on /issues/: this page has no list of every
+     open issue, so Open issues opens the Backlog trend, whose Open issues series ends on the tile's value (the org tile opens By
+     repository the same way). */ -}}
 {{- $longest := dict "kind" "dur" "unit" "d" "reason" "no-data" -}}
 {{- if ne $w.longest nil }}{{ $longest = dict "kind" "dur" "d" (float $w.longest) "unit" "d" }}{{ end -}}
 {{- $t1 := dict "name" "Waiting for a reply" "qual" $over7 "title" $defWait "value" (dict "kind" "count" "v" $w.over7)
@@ -125,7 +127,8 @@
         "title" "The same issues at any age: every row of the list on this page."
         "value" (dict "kind" "count" "v" $w.any) "context" (dict "kind" "whole" "n" $iss.open_count "of" "open")
         "href" "#queue" "drill" true)
-      (dict "name" "Open issues" "title" "Issues open now." "value" (dict "kind" "count" "v" $iss.open_count) "context" $netCtx))) }}
+      (dict "name" "Open issues" "title" "Issues open now." "value" (dict "kind" "count" "v" $iss.open_count) "context" $netCtx
+        "href" "#backlog"))) }}
   </div>
 </section>
 <section class="v-section" aria-labelledby="queue">

@@ -27,6 +27,9 @@
     polarity               the fmt/change.html metric key that tones a change of the first series in the table view and the
                            tooltip ("open-issues", "open-prs", "waiting", "contributors", "merged", "downloads"; "" for a neutral
                            measure such as commits). Default: read from metric and unit.
+    period                 "rolling": the bins are rolling 7-day periods, not calendar weeks. The tooltip's change row then reads
+                           "vs prior period" and the table view heads its first column "Period from", so the card has one name
+                           for its unit. Default: read from the sub line (the cadence "7-day periods, last 12" is rolling).
     pin                    a slot index: opens the tooltip there on mount (styleguide only).
     class                  the grid span ("v-span-8", "v-span-6").
   Too little history (fewer than 14 daily points or 4 weekly bins) renders the pending card: head without the switch, then the
@@ -62,6 +65,9 @@
 {{- if and $since $d.from (gt (string $since) $d.from) -}}
   {{- $sub = (partial "fmt/label.html" (dict "cadence" (dict "every" $every "since" $since))).cadence -}}
 {{- end -}}
+
+{{- /* rolling 7-day periods are never called weeks: the caller says so, or the cadence phrase of the sub line does */ -}}
+{{- $rolling := or (eq $c.period "rolling") (hasPrefix (string $sub) "7-day periods") -}}
 
 {{- /* readout: the override, else one item per series, then the average */ -}}
 {{- $items := slice -}}
@@ -160,7 +166,7 @@
   {{- end }}
   {{- if $d.canvas }}
   <div class="v-plot" id="{{ $id }}-plot" role="tabpanel" aria-labelledby="{{ $id }}-tab-chart">
-    <canvas id="{{ $id }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $c.scope | default "" }}" data-size="main" data-xaxis="on" data-polarity-key="{{ $d.polarity }}"{{ if ne $c.pin nil }} data-chart-pin="{{ $c.pin }}"{{ end }}{{ with $gapTitle }} data-gap-title="{{ . }}" data-gap-from="{{ $gap.from }}" data-gap-to="{{ $gap.to }}"{{ end }} data-series="{{ $d.json }}"></canvas>
+    <canvas id="{{ $id }}" tabindex="0" role="img" aria-label="{{ $d.aria }}" data-viz="{{ $kind }}" data-unit="{{ $unit }}" data-gran="{{ $gran }}" data-metric="{{ $d.metric }}" data-scope="{{ $c.scope | default "" }}" data-size="main" data-xaxis="on" data-polarity-key="{{ $d.polarity }}"{{ if $rolling }} data-period="rolling"{{ end }}{{ if ne $c.pin nil }} data-chart-pin="{{ $c.pin }}"{{ end }}{{ with $gapTitle }} data-gap-title="{{ . }}" data-gap-from="{{ $gap.from }}" data-gap-to="{{ $gap.to }}"{{ end }} data-series="{{ $d.json }}"></canvas>
   </div>
   <div class="v-chart-table" id="{{ $id }}-table" role="tabpanel" aria-labelledby="{{ $id }}-tab-table" tabindex="0" hidden></div>
   <p class="sr-only" aria-live="polite" data-chart-live></p>

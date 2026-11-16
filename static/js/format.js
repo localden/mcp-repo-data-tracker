@@ -180,7 +180,7 @@
   }
 
   /* the closed list of delta bases (3.2), the mirror of fmt/label.html "base" */
-  var BASES = { prior7: 'vs prior 7' + NBSP + 'days', '4w': 'vs 4' + NBSP + 'weeks earlier', 'prior-week': 'vs prior week', 'prior-day': 'vs prior day' };
+  var BASES = { prior7: 'vs prior 7' + NBSP + 'days', '4w': 'vs 4' + NBSP + 'weeks earlier', 'prior-week': 'vs prior week', 'prior-day': 'vs prior day', 'prior-period': 'vs prior period' };
   function base(a) {
     a = arg(a, 'key');
     var text = a.date ? 'vs ' + date(a.date).text : (BASES[String(a.key || '')] || '');

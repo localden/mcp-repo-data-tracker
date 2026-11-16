@@ -7,10 +7,13 @@
   The card sub line is the cadence and the window; "every row on its own scale" is the section description above the card, which
   never truncates on a phone.
   A package that has days but no complete week yet cannot draw: its pending line is "Too few complete weeks to draw a trend", the
-  same text its repository page shows (pages/repo/downloads.html), never "No data collected yet" beside a week-to-date figure. */ -}}
+  same text its repository page shows (pages/repo/downloads.html), never "No data collected yet" beside a week-to-date figure.
+  Packages that cannot draw (fewer than four complete weeks inside the domain, the rule of ui/chart-canvas.html) stand in a second
+  trellis card of their own, "No weekly trend yet": the pending line then closes a card that holds only the rows it is about, and
+  the "Data gap" key of the first card sits directly under its last drawn plot. With no drawable package there is one card. */ -}}
 {{- $x := . -}}
 {{- $wtd := (partial "fmt/label.html" (dict "window" "wtd")).window -}}
-{{- $rows := slice -}}
+{{- $rows := slice }}{{ $drawn := slice }}{{ $rest := slice -}}
 {{- range $x.pkgs -}}
   {{- $row := dict "id" (printf "dl-%s" .r.repo) "name" .r.name "href" (printf "repos/%s/" .r.repo | relURL) "points" (.d.weekly.points | default slice) -}}
   {{- $hasWtd := false -}}
@@ -23,15 +26,26 @@
     {{- end -}}
     {{- $row = merge $row (dict "readout" $ro) -}}
   {{- end }}{{ end }}{{ end -}}
-  {{- /* days exist, but no week is complete yet */ -}}
-  {{- $weeks := 0 -}}
-  {{- range .d.weekly.points | default slice }}{{ if ne .value nil }}{{ $weeks = add $weeks 1 }}{{ end }}{{ end -}}
+  {{- /* days exist, but no week is complete yet; inDomain: the complete weeks the shared domain holds */ -}}
+  {{- $weeks := 0 }}{{ $inDomain := 0 -}}
+  {{- range .d.weekly.points | default slice }}{{ if ne .value nil -}}
+    {{- $weeks = add $weeks 1 -}}
+    {{- $day := string .date -}}
+    {{- if and (or (not $x.wFrom) (ge $day (string $x.wFrom))) (or (not $x.wTo) (le $day (string $x.wTo))) }}{{ $inDomain = add $inDomain 1 }}{{ end -}}
+  {{- end }}{{ end -}}
   {{- if and (eq $weeks 0) (or $hasWtd (gt (int (.d.days_total | default 0)) 0)) -}}
     {{- $row = merge $row (dict "pending" "Too few complete weeks to draw a trend") -}}
   {{- end -}}
   {{- $rows = $rows | append $row -}}
+  {{- if ge $inDomain 4 }}{{ $drawn = $drawn | append $row }}{{ else }}{{ $rest = $rest | append $row }}{{ end -}}
 {{- end -}}
-{{ partial "ui/trellis.html" (dict "id" "weekly-downloads" "title" "Weekly downloads"
-    "sub" (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52))).cadence
+{{- $sub := (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52))).cadence -}}
+{{- $split := and (gt (len $drawn) 0) (gt (len $rest) 0) -}}
+{{ partial "ui/trellis.html" (dict "id" "weekly-downloads" "title" "Weekly downloads" "sub" $sub
     "metric" "downloads" "metric_one" "download" "unit" "downloads" "gran" "week" "kind" "column"
-    "from" $x.wFrom "to" $x.wTo "rows" $rows) }}
+    "from" $x.wFrom "to" $x.wTo "rows" (cond $split $drawn $rows)) }}
+{{- if $split }}
+{{ partial "ui/trellis.html" (dict "id" "weekly-downloads-pending" "title" "No weekly trend yet" "sub" $sub
+    "metric" "downloads" "metric_one" "download" "unit" "downloads" "gran" "week" "kind" "column"
+    "from" $x.wFrom "to" $x.wTo "rows" $rest) }}
+{{- end }}

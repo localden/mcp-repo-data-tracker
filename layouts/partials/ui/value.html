@@ -10,11 +10,12 @@
     change   {cur, prev} | {d}, {unit, metric}            the delta badge (ui/delta.html), or the empty mark "No baseline"
     dur      {h | d, unit, opened}     fmt/dur.html       "3h", "471d"; compact: true is the short form for work-list time columns;
                                                           opened: a date, makes the title "Opened Oct 9, 2024 (767 days)"
-    date     {d, weekday, year}        fmt/date.html      <time datetime>
+    date     {d, weekday, year}        fmt/date.html      <time datetime>: the month and the day are two spans (.v-mon, .v-day), so a date in
+                                                          a column is a slot with both edges fixed (CSS, the date slot of 2.6)
     range    {from, to}                fmt/range.html     "Nov 3 to Nov 9", "Oct 8 to Nov 9" (one form)
     ts       {t}                       fmt/ts.html        "Nov 14, 2026, 08:29 UTC"
     ratio    {part, whole, noun}       fmt/ratio.html     "155 of 259"
-    lines    {adds, dels, icon}        fmt/lines.html     "+417 −0"; icon: true puts the 12px diff icon before it (a row's identity line)
+    lines    {adds, dels}              fmt/lines.html     "+417 −0": two spans, the additions and the removals; no icon (the signs say it)
     id       {v}                       verbatim           "#1521", "SEP-2028"
     ver      {v}                       verbatim           "1.30.0"
     path     {v, dir}                  the .v-path primitive; dir: true for a directory row; "" or "." is "Repository root"
@@ -55,11 +56,12 @@
 {{- else if eq $kind "ratio" -}}
   <span class="v-val v-ratio{{ $cls }}" data-kind="ratio"{{ with $c.title }} title="{{ . }}"{{ end }}><span class="v-ratio-part">{{ $f.part }}</span> <span class="v-ratio-whole">{{ $f.whole }}</span></span>
 {{- else if or (eq $kind "date") (eq $kind "ts") -}}
-  <time class="v-val{{ $cls }}" data-kind="{{ $kind }}" datetime="{{ $f.iso }}" title="{{ $c.title | default $f.long }}">{{ $f.text }}</time>
+  {{- /* one line, so the only white space inside the element is the single space between the two spans */ -}}
+  <time class="v-val{{ $cls }}" data-kind="{{ $kind }}" datetime="{{ $f.iso }}" title="{{ $c.title | default $f.long }}">{{ if $f.mon }}{{ $f.lead }}<span class="v-mon">{{ $f.mon }}</span> <span class="v-day">{{ $f.day }}</span>{{ $f.tail }}{{ else if $f.clock }}<span>{{ $f.day }}</span> <span>{{ $f.clock }}</span>{{ else }}{{ $f.text }}{{ end }}</time>
 {{- else if eq $kind "range" -}}
   <span class="v-val{{ $cls }}" data-kind="range" title="{{ $c.title | default $f.long }}">{{ $f.text }}</span>
 {{- else if eq $kind "lines" -}}
-  <span class="v-val v-lines{{ $cls }}" data-kind="lines" title="{{ $c.title | default $f.long }}">{{ if $c.icon }}{{ partial "ui/icon.html" (dict "name" "diff" "size" 12) }}{{ end }}<span>{{ $f.adds }}</span> <span>{{ $f.dels }}</span></span>
+  <span class="v-val v-lines{{ $cls }}" data-kind="lines" title="{{ $c.title | default $f.long }}"><span>{{ $f.adds }}</span> <span>{{ $f.dels }}</span></span>
 {{- else if eq $kind "id" -}}
   <span class="v-id{{ $cls }}"{{ with $c.title }} title="{{ . }}"{{ end }}>{{ $f.text }}</span>
 {{- else if eq $kind "ver" -}}

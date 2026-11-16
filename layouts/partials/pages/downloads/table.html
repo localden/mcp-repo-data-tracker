@@ -9,7 +9,8 @@
     Change           v-col-num     sub line "vs prior 7 days"; the empty mark "No baseline" without two complete windows
     Change           v-col-num-lg  sub line "vs 4 weeks earlier" (full)
     12 weeks         v-col-spark   flow sparkline of complete weeks; the empty baseline with fewer than four
-    Last 30 days     v-col-num     sub line: its window
+    Last 30 days     v-col-num-lg  sub line: its window; wider than a plain figure, so the coverage note under a partial window never
+                                   starts against the bars of the 12 weeks column
     Lifetime         v-col-num     the registry's total; the note "From {date}" under a figure whose series starts later (full)
   Below 64rem each row is a record; the record labels carry the windows and bases. */ -}}
 {{- $c := . -}}
@@ -28,7 +29,7 @@
 {{- end }}
 <article class="v-card {{ $c.class | default "v-span-12" }}">
   <table class="v-dt is-matrix has-sub"{{ with $c.id }} aria-labelledby="{{ . }}"{{ end }}>
-    <colgroup><col><col class="v-col-num"><col class="v-col-num">{{ if $show28 }}<col class="v-col-num-lg">{{ end }}<col class="v-col-spark"><col class="v-col-num">{{ if $full }}<col class="v-col-num">{{ end }}</colgroup>
+    <colgroup><col><col class="v-col-num"><col class="v-col-num">{{ if $show28 }}<col class="v-col-num-lg">{{ end }}<col class="v-col-spark"><col class="v-col-num-lg">{{ if $full }}<col class="v-col-num">{{ end }}</colgroup>
     <thead>
       <tr>
         {{ partial "ui/th.html" (dict "label" "SDK") }}

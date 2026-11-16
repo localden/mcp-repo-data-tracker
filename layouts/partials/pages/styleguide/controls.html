@@ -52,7 +52,7 @@
         (dict "key" "needs" "label" "Needs a maintainer" "count" 288) (dict "key" "housekeeping" "label" "Housekeeping" "count" 31)
         (dict "key" "close" "label" "Close candidates" "count" 0) (dict "key" "author" "label" "Waiting on author" "count" 56) (dict "key" "all" "label" "All" "count" 375))) }}
       </div>
-      <div class="v-card-body" id="sg-views-open-panel" role="tabpanel"><p class="v-sg-cap">the same five views with the view button open (below 64rem): radio rows, the current row with the check, the count column, the view at zero disabled</p></div>
+      <div class="v-card-body" id="sg-views-open-panel" role="tabpanel"><p class="v-sg-cap">the same five views as the view button, the form the band takes below 64rem, drawn open here at every width: radio rows, the current row with the check, the count column, the view at zero disabled</p></div>
     </article>
     <article class="v-card v-span-6">
       {{ partial "ui/tabs.html" (dict "id" "sg-views-two" "label" "Views, two" "panel" "sg-views-two-panel" "selected" "drafts" "tabs" (slice
@@ -172,7 +172,7 @@
             {{- range $k := seq $r.kids }}
             <tr data-row data-child-of="{{ $rid }}" data-views="{{ $r.view }}">
               {{ partial "ui/row-item.html" (dict "title" (printf "%s, attempt %d" $r.title $k) "href" (printf "https://github.com/modelcontextprotocol/typescript-sdk/pull/%d" (add $r.n (mul $k 7))) "id" (printf "#%d" (add $r.n (mul $k 7)))
-                  "author" "copycat" "role" "Contributor" "attrs" (slice (printf "Duplicate of #%d" $r.n))) }}
+                  "author" "copycat" "role" "Contributor" "diff" (dict "add" (mul $k 14) "del" $k) "attrs" (slice (printf "Duplicate of #%d" $r.n))) }}
               {{ partial "ui/status-cell.html" (dict "status" (partial "data/pr-status.html" "duplicate-cluster-member")) }}
               {{ partial "ui/sla.html" (dict "rules" slice) }}
               <td class="num" data-v="{{ sub $r.age $k }}">{{ partial "ui/value.html" (dict "kind" "dur" "d" (sub $r.age $k) "unit" "d" "compact" true) }}</td>

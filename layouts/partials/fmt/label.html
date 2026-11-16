@@ -6,7 +6,8 @@
   window: {n, unit: "day" | "week"} ("Last 7 days"), or "wtd" ("Week to date"), or "latest-week" ("Latest week").
   threshold: "over7" ("over 7 days"), "any" ("any age"), "answered" ("answered only").
   base: {date} ("vs Oct 7", a level against a snapshot), or "prior7" ("vs prior 7 days"), or "4w" ("vs 4 weeks earlier") for a flow;
-    "prior-week" ("vs prior week") and "prior-day" ("vs prior day") for the Change column of a chart's table view.
+    "prior-week" ("vs prior week"), "prior-day" ("vs prior day") and "prior-period" ("vs prior period": rolling 7-day periods, which
+    are never called weeks) for the Change column of a chart's table view and the change row of its tooltip.
   cadence: {every: "day" | "week" | "complete-week" | "period7", weeks, since, own_scale}: "Daily, last 26 weeks", "Weekly, last 52 weeks",
     "7-day periods, last 12" (period7: rolling 7-day buckets that do not start on a Monday, so they are never called weeks; weeks is
     then the number of periods),
@@ -44,6 +45,7 @@
   {{- else if eq . "4w" }}{{ $base = "vs 4 weeks earlier" -}}
   {{- else if eq . "prior-week" }}{{ $base = "vs prior week" -}}
   {{- else if eq . "prior-day" }}{{ $base = "vs prior day" -}}
+  {{- else if eq . "prior-period" }}{{ $base = "vs prior period" -}}
   {{- else }}{{ errorf "fmt/label: unknown base %q (design system v4 3.2)" . }}{{ end -}}
 {{- end -}}
 {{- $cadence := "" -}}

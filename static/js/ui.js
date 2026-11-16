@@ -433,31 +433,58 @@
   /* ---- label tags that do not fit the meta line fold into the +N tag. Every work table, in a list card or not (the preview
      lists of a repository page are plain cards). From 64rem only: below, the tag line wraps and shows every tag. The tag line is
      one 20px line that wraps into a clipped second line (CSS), so a tag that does not fit has dropped out whole; here the labels
-     that dropped are folded, last first, until the line holds. Priority, flag and attribute tags, the +N and the expander never
-     fold: when they alone do not fit, the meta line goes tight and the author gives way (ellipsis) instead. */
+     that dropped are folded, last first, until the line holds; when the labels are gone and the line still does not hold, the
+     attribute, role and flag tags follow, in that order, and the priority last. Tags are the variable items and the last in
+     the line, so they are what shortens: the identity slots before them (id, author, lines changed) never give way, and the
+     first tag starts at one x in every row (the fixed-slot rule, 2.6). The +N and the expander never fold. */
   function tagBox(r) { return r.querySelector ? r.querySelector('.v-tags') : null; }
+  /* a line spills when one of its items has wrapped to the clipped second line, or ends past the box. Measured on the items'
+     own boxes (the expander included: a control is never clipped), never on scrollWidth, which a hit-area pseudo-element or an
+     sr-only child can widen */
   function spills(box) {
     var kids = Array.prototype.filter.call(box.children, function (k) { return k.offsetParent !== null; });
     if (!kids.length) return false;
-    return kids[kids.length - 1].offsetTop > kids[0].offsetTop + 4 || box.scrollWidth > box.clientWidth + 1;
+    var edge = box.getBoundingClientRect().right + 1, top = kids[0].offsetTop + 4;
+    return kids.some(function (k) { return k.offsetTop > top || k.getBoundingClientRect().right > edge; });
   }
+  /* fixed slots that a row lacks (2.6): in a list where any row carries a priority tag, a row with tags but no priority keeps the
+     empty priority slot, and in a list that shows lines changed, a row without them keeps the empty lines slot, so the first tag
+     of every row starts at one x (ui/row-item.html renders the same slots when its caller passes prioSlot or diffSlot). CSS
+     shows the slots from 64rem only. */
+  function fillSlots(table) {
+    if (table._slotted) return; table._slotted = true;
+    if (table.querySelector('.v-tags > .v-tag.is-prio:not(.is-blank)')) all('.v-tags', table).forEach(function (box) {
+      if (!box.children.length || box.querySelector('.v-tag.is-prio')) return;
+      var s = el('span', 'v-tag is-prio is-blank'); s.setAttribute('aria-hidden', 'true'); box.insertBefore(s, box.firstChild);
+    });
+    if (table.querySelector('.v-meta-id > .v-lines:not(.is-blank)')) all('.v-meta-id', table).forEach(function (id) {
+      if (id.querySelector('.v-lines')) return;
+      var s = el('span', 'v-lines is-blank'); s.setAttribute('aria-hidden', 'true'); s.appendChild(el('span')); s.appendChild(el('span'));
+      id.insertBefore(s, id.querySelector('.v-meta-n'));
+    });
+  }
+  var FOLD_ORDER = ['.v-tag.is-label', '.v-tag.is-attr', '.v-tag.is-role', '.v-tag.is-flag', '.v-tag.is-prio:not(.is-blank)'];
   function foldTags(table) {
+    fillSlots(table);
     if (!wide.matches) return;
     all('tbody > tr', table).forEach(function (r) {
       if (r.hidden || r._folded) return;
       var box = tagBox(r); if (!box) { r._folded = true; return; }
       if (box.offsetParent === null || box.clientWidth === 0) return;   /* not laid out yet: fold when the row is shown */
-      var labels = all('.v-tag.is-label', box).filter(function (t) { return t.offsetParent !== null; });
       var more = box.querySelector('.v-tag.is-more:not([data-fold="narrow"])');
       if (!box._more0) box._more0 = more ? { text: more.textContent, title: more.getAttribute('title') || '' } : { text: '', title: '' };
       var n = parseInt(box._more0.text.replace(/\D/g, ''), 10) || 0, names = box._more0.title ? [box._more0.title] : [];
-      while (labels.length && spills(box)) {
-        var t = labels.pop(); names.unshift(t.textContent.trim()); t.hidden = true; t.setAttribute('data-folded', ''); n++;
-        if (!more) { more = el('span', 'v-tag is-more'); more.setAttribute('data-made', ''); box.insertBefore(more, t.nextSibling); }
-        more.textContent = '+' + n; more.setAttribute('title', names.join(', '));
-      }
-      var meta = box.parentElement;
-      if (meta && spills(box)) meta.classList.add('is-tight');
+      FOLD_ORDER.forEach(function (sel) {
+        var tags = all(sel, box).filter(function (t) { return t.offsetParent !== null; });
+        while (tags.length && spills(box)) {
+          var t = tags.pop(); names.unshift(t.textContent.trim()); t.hidden = true; t.setAttribute('data-folded', ''); n++;
+          if (!more) {   /* the +N stands where the labels end: before the expander, after every tag */
+            more = el('span', 'v-tag is-more'); more.setAttribute('data-made', '');
+            box.insertBefore(more, box.querySelector('.v-btn'));
+          }
+          more.textContent = '+' + n; more.setAttribute('title', names.join(', '));
+        }
+      });
       r._folded = true;
     });
   }
@@ -465,7 +492,6 @@
     all('tbody > tr', table).forEach(function (r) {
       r._folded = false;
       var box = tagBox(r); if (!box) return;
-      if (box.parentElement) box.parentElement.classList.remove('is-tight');
       if (!box._more0) return;
       all('.v-tag[data-folded]', box).forEach(function (t) { t.hidden = false; t.removeAttribute('data-folded'); });
       var more = box.querySelector('.v-tag.is-more:not([data-fold="narrow"])'); if (!more) return;

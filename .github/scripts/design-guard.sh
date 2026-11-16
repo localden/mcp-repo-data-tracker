@@ -200,6 +200,11 @@ if [ -f "$root/static/js/charts.js" ]; then
   report "text painted on a canvas: charts.js draws marks and axis ticks only (design system v4 4.19)" \
     "$(cd "$root" && grep -n 'fillText' static/js/charts.js 2>/dev/null)"
 fi
+# Fixed slots (design system v4 2.6): the identity slots of a work row never give way to its tags (the tags fold), and the lines
+# changed carry no icon (an icon before a right-aligned slot stands apart from its number by a gap that changes row to row).
+report "identity slot that gives way (.is-tight): tags fold into +N, the id, author and lines slots keep their width (design system v4 2.6, 4.16)" \
+  "$(cd "$root" && grep -n 'is-tight' static/js/ui.js assets/css/main.css 2>/dev/null)"
+check "diff icon: lines changed are the two signed counts, with no icon (design system v4 4.16)" '"name" "diff"|icon\.html" "diff"'
 if [ -e "$root/static/js/repo-picker.js" ]; then report "static/js/repo-picker.js must not exist: the scope is the URL and the switcher is ui/menu.html + menu.js" "static/js/repo-picker.js"; fi
 check "reference to repo-picker.js: the scope switcher is ui/menu.html + static/js/menu.js" 'repo-picker\.js'
 exit $fail

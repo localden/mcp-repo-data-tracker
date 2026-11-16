@@ -1,28 +1,34 @@
 {{- /* Item cell (design system v4 4.16): the first content cell of every work row. Emits the whole <td class="v-item">: the title link,
   then one meta line of designed sub-components in a fixed order. A slot with no data is omitted and the order never changes.
   The decisions live HERE, not in the callers, so the same issue or PR is drawn the same way on every page.
-  Dict {title, href, id, repo, author, role, diff, prio, flags, attrs, tags, kids, external, site}.
-    title     verbatim, never re-cased; one line with ellipsis from 64rem, two lines below. (A SEP title drops its "SEP-2028: " prefix
-              in the row template, because the id is the first meta slot.)
+  Dict {title, href, id, repo, author, role, diff, diffSlot, prio, prioSlot, flags, attrs, tags, kids, external, site}.
+    title     verbatim, never re-cased; one line with ellipsis from 80rem, two lines below. The full title is also the link's title
+              attribute, so a title that is cut can be read in place. (A SEP title drops its "SEP-2028: " prefix in the row
+              template, because the id is the first meta slot.)
     href      the row link (a.v-row-link). external: default true, opens a new tab with sr-only " (opens {site})"; site default GitHub.
-    id        "#1521", "SEP-2028" (verbatim).
+    id        "#1521", "SEP-2028" (verbatim). A SEP id is tabular in its digits only (.v-id-num), so its hyphen keeps its own width.
     repo      the repository name: only on org lists, shown only below 64rem (from 64rem the Repository column carries it).
     author    the handle ("app/" is stripped). role: from data/role.html. A role tag is drawn only for "Maintainer" and "Bot", in the
               tag line (after the priority tag), never beside the handle; "Contributor" is the default and prints nothing (the Author facet still has it, from data-facets).
-    diff      {add, del}: lines changed (PRs).
-    comments  the comment count of a list that has a Comments column: below 64rem it is the last identity item ("3 comments") and
-              the Comments cell (td.v-c-num of the same row) is not drawn, so a minor fact never takes a full-width line.
+    diff      {add, del}: lines changed (PRs). diffSlot: true on a row with no diff in a list whose other rows have one keeps the
+              empty slot, so the row's tags start at the list's x (ui.js adds the slot where a caller did not).
+    comments  the comment count of a list that has a Comments column: below 64rem it closes the identity line on the row's right
+              edge ("3 comments") and the Comments cell (td.v-c-num of the same row) is not drawn, so a minor fact never takes a
+              full-width line.
     prio      "P0" to "P3". Left empty, the first label P0 to P3 in tags is taken out of the labels and drawn as the priority tag,
-              so callers pass raw labels and never pre-sort.
+              so callers pass raw labels and never pre-sort. prioSlot: true when any row of the list carries a priority: a row
+              without one then keeps the empty priority slot (from 64rem), so the first label starts at one x down the list
+              (ui.js adds the slot where a caller did not pass it).
     flags     slice of {text, title} (flag tags). attrs: slice of strings or {text, title} (attribute tags; a PR's SEP stage comes
               from data/sep-stage.html).
-    tags      GitHub labels. From 64rem a row shows two and a "+N" tag that names the rest in its title; ui.js folds any label that
-              does not fit the line into that +N. Below 64rem the tag line wraps and shows up to six (a title is no use on touch),
-              with a "+N" only past six. Priority, flag and attribute tags, the +N and the expander are never clipped.
+    tags      GitHub labels. From 64rem a row shows two and a "+N" tag that names the rest in its title; ui.js folds any tag that
+              does not fit the line into that +N (labels first, then attribute, role and flag tags, the priority last). Below
+              64rem the tag line wraps and shows up to six pills, the priority, role, flag and attribute tags counted, with a
+              "+N" for the labels past that (a title is no use on touch). The expander is never clipped.
     kids      {n, id}: the row expander for a duplicate cluster, last in the line; id is this row's id (children carry
               data-child-of="{id}").
   Identity slots are designed sub-components, never three runs of grey text: the id is the label role in text; the author is a 12px
-  user icon and the handle; lines changed are a 12px diff icon and the two counts. 12px apart.
+  user icon and the handle; lines changed are the two signed counts, with no icon. 12px apart.
   Fixed slots (design system v4 2.6): the identity line holds only values with a fixed slot, in the order id, author, lines changed
   (CSS gives each its width; an id that starts with "SEP-" takes the wider slot through .is-sep), so the tag line starts at one x
   in every row of a list. Everything of variable width is a tag and comes after them: no tag ever sits between two identity values.
@@ -43,29 +49,39 @@
 {{- $nl := len $labels -}}
 {{- $role := "" }}{{ if in (slice "Maintainer" "Bot") (string ($c.role | default "")) }}{{ $role = string $c.role }}{{ end -}}
 {{- $hasTags := or $prio $role $c.flags $c.attrs $c.kids $labels -}}
+{{- /* the narrow budget: six pills in all. The priority, role, flag and attribute tags are never folded by the server, so the labels
+     get what is left of six (at least two, the number a row shows from 64rem) */ -}}
+{{- $nSys := 0 -}}
+{{- with $c.flags }}{{ $nSys = add $nSys (len .) }}{{ end }}{{ with $c.attrs }}{{ $nSys = add $nSys (len .) }}{{ end -}}
+{{- if $prio }}{{ $nSys = add $nSys 1 }}{{ end }}{{ if $role }}{{ $nSys = add $nSys 1 }}{{ end -}}
+{{- $budget := sub 6 $nSys }}{{ if lt $budget 2 }}{{ $budget = 2 }}{{ end -}}
+{{- $hasDiff := false }}{{ with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ $hasDiff = true }}{{ end }}{{ end -}}
+{{- $sepNum := "" }}{{ with $c.id }}{{ if hasPrefix (string .) "SEP-" }}{{ $sepNum = strings.TrimPrefix "SEP-" (string .) }}{{ end }}{{ end -}}
 <td class="v-item">
   {{- if $c.href -}}
-  <a class="v-row-link" href="{{ $c.href }}"{{ if $ext }} target="_blank" rel="noopener"{{ end }}>{{ $c.title }}{{ if $ext }}<span class="sr-only"> (opens {{ $c.site | default "GitHub" }})</span>{{ end }}</a>
+  <a class="v-row-link" href="{{ $c.href }}" title="{{ $c.title }}"{{ if $ext }} target="_blank" rel="noopener"{{ end }}>{{ $c.title }}{{ if $ext }}<span class="sr-only"> (opens {{ $c.site | default "GitHub" }})</span>{{ end }}</a>
   {{- else -}}
-  <span class="v-row-link">{{ $c.title }}</span>
+  <span class="v-row-link" title="{{ $c.title }}">{{ $c.title }}</span>
   {{- end -}}
   {{- if or $c.id $c.repo $c.author $role $c.diff $hasTags (ne $c.comments nil) -}}
   <span class="v-meta"><span class="v-meta-id">
-    {{- with $c.id }}<span class="v-id{{ if hasPrefix (string .) "SEP-" }} is-sep{{ end }}">{{ . }}</span>{{ end -}}
+    {{- with $c.id }}{{ if $sepNum }}<span class="v-id is-sep">SEP-<span class="v-id-num">{{ $sepNum }}</span></span>{{ else }}<span class="v-id">{{ . }}</span>{{ end }}{{ end -}}
     {{- with $c.repo }}<span class="v-repo">{{ . }}</span>{{ end -}}
     {{- with $c.author }}{{ $h := strings.TrimPrefix "app/" (string .) }}<span class="v-who" title="{{ $h }}">{{ partial "ui/icon.html" (dict "name" "user" "size" 12) }}<span>{{ $h }}</span></span>{{ end -}}
-    {{- with $c.diff }}{{ if or (ne .add nil) (ne .del nil) }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" .add "dels" .del "icon" true) }}{{ end }}{{ end -}}
+    {{- if $hasDiff }}{{ partial "ui/value.html" (dict "kind" "lines" "adds" $c.diff.add "dels" $c.diff.del) -}}
+    {{- else if $c.diffSlot }}<span class="v-lines is-blank" aria-hidden="true"><span></span><span></span></span>{{ end -}}
     {{- if ne $c.comments nil }}<span class="v-meta-n">{{ partial "ui/value.html" (dict "kind" "count" "v" $c.comments "noun" "comment") }}</span>{{ end -}}
   </span>
   {{- if $hasTags -}}
   <span class="v-tags">
-    {{- with $prio }}{{ partial "ui/tag.html" (dict "text" . "kind" "prio") }}{{ end -}}
+    {{- if $prio }}{{ partial "ui/tag.html" (dict "text" $prio "kind" "prio") -}}
+    {{- else if $c.prioSlot }}<span class="v-tag is-prio is-blank" aria-hidden="true"></span>{{ end -}}
     {{- with $role }}{{ partial "ui/tag.html" (dict "text" . "kind" "role") }}{{ end -}}
     {{- range $c.flags }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "flag")) }}{{ end -}}
     {{- range $c.attrs }}{{ partial "ui/tag.html" (merge (cond (reflect.IsMap .) . (dict "text" .)) (dict "kind" "attr")) }}{{ end -}}
-    {{- range $i, $l := first 6 $labels }}{{ partial "ui/tag.html" (dict "text" $l "kind" "label" "extra" (ge $i 2)) }}{{ end -}}
+    {{- range $i, $l := first $budget $labels }}{{ partial "ui/tag.html" (dict "text" $l "kind" "label" "extra" (ge $i 2)) }}{{ end -}}
     {{- if gt $nl 2 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 2)) "kind" "more" "only" "wide" "title" (delimit (after 2 $labels) ", ")) }}{{ end -}}
-    {{- if gt $nl 6 }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl 6)) "kind" "more" "only" "narrow" "title" (delimit (after 6 $labels) ", ")) }}{{ end -}}
+    {{- if gt $nl $budget }}{{ partial "ui/tag.html" (dict "text" (printf "+%d" (sub $nl $budget)) "kind" "more" "only" "narrow" "title" (delimit (after $budget $labels) ", ")) }}{{ end -}}
     {{- with $c.kids }}{{ if gt (int (.n | default 0)) 0 -}}
       <button type="button" class="v-btn v-btn-xs is-ghost" data-expander="{{ .id }}" aria-expanded="false">{{ (partial "fmt/count.html" (dict "v" .n "noun" "duplicate")).text }}{{ partial "ui/icon.html" (dict "name" "chevron-down" "size" 12 "class" "is-chev") }}</button>
     {{- end }}{{ end -}}

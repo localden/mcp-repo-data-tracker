@@ -74,7 +74,7 @@
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-specs">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "Figures and wrapping") }}<div class="v-card-body"><div class="v-sg-specs is-four">
       <div class="v-sg-spec">
         <table class="v-dt is-compact" aria-label="Tabular figures"><tbody>
           {{- range slice 1111 8888 13765 }}
@@ -152,7 +152,7 @@
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Kind") }}{{ partial "ui/th.html" (dict "label" "Input") }}{{ partial "ui/th.html" (dict "label" "Expected") }}{{ partial "ui/th.html" (dict "label" "Hugo") }}{{ partial "ui/th.html" (dict "label" "JavaScript") }}</tr></thead>
         <tbody>
           {{- range $fx }}
-          <tr data-fixture><th scope="row" title="{{ jsonify .args }}">{{ .fmt }}</th><td class="v-sg-wide">{{ jsonify .args }}</td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
+          <tr data-fixture><th scope="row" title="{{ jsonify .args }}">{{ .fmt }}</th><td class="v-sg-wide">{{ safeHTML (replace (string (jsonify .args)) "," ",<wbr>") }}</td><td><span class="v-val" data-fmt-expected>{{ .expect }}</span></td><td><span class="v-val" data-fmt-hugo>{{ (partial (printf "fmt/%s.html" .fmt) .args).text }}</span></td><td><span class="v-val" data-fmt="{{ .fmt }}" data-args="{{ jsonify .args }}"></span></td></tr>
           {{- end }}
         </tbody>
       </table>
@@ -184,7 +184,7 @@
       (dict "use" "Threshold" "k" "threshold" "slot" "Tile qualifier, label" "a" (slice (dict "threshold" "over7") (dict "threshold" "any") (dict "threshold" "answered")))
       (dict "use" "Base of a level" "k" "base" "slot" "Base slot, header sub line" "a" (slice (dict "base" (dict "date" (printf "%s-10-07" $y)))))
       (dict "use" "Base of a flow" "k" "base" "slot" "Base slot, header sub line" "a" (slice (dict "base" "prior7") (dict "base" "4w")))
-      (dict "use" "Base in a chart table" "k" "base" "slot" "Change column sub line" "a" (slice (dict "base" "prior-week") (dict "base" "prior-day")))
+      (dict "use" "Base in a chart table" "k" "base" "slot" "Change column sub line" "a" (slice (dict "base" "prior-week") (dict "base" "prior-day") (dict "base" "prior-period")))
       (dict "use" "Reading of a period" "k" "reading" "slot" "Chart table sub line" "a" (slice (dict "reading" "week-end")))
       (dict "use" "Chart cadence" "k" "cadence" "slot" "Chart card sub line" "a" (slice (dict "cadence" (dict "every" "day" "weeks" 26)) (dict "cadence" (dict "every" "week" "weeks" 26))
           (dict "cadence" (dict "every" "week" "weeks" 52)) (dict "cadence" (dict "every" "complete-week" "weeks" 26)) (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))
@@ -201,7 +201,7 @@
         </tbody>
       </table>
     </article>
-    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "One metric, every label form") }}<div class="v-card-body"><div class="v-sg-specs">
+    <article class="v-card v-span-12">{{ partial "ui/card-head.html" (dict "title" "One metric, every label form") }}<div class="v-card-body"><div class="v-sg-specs is-text">
       {{- $l := partial "fmt/label.html" (dict "metric" "Merged" "scope" "PRs" "window" (dict "n" 7 "unit" "day")) }}
       <div class="v-sg-spec"><span class="v-label">{{ $l.text }}</span><p class="v-sg-cap">A tile or stat-list label: a window follows a comma</p></div>
       <div class="v-sg-spec"><span class="v-caption">{{ $l.sub }}</span><p class="v-sg-cap">The same window as a header sub line</p></div>
@@ -211,10 +211,10 @@
       <div class="v-sg-spec"><span class="v-t-body">{{ $l.record }}</span><p class="v-sg-cap">Its record label</p></div>
       {{- $l = partial "fmt/label.html" (dict "metric" "Net change" "scope" "Issues" "window" (dict "n" 30 "unit" "day")) }}
       <div class="v-sg-spec"><span class="v-t-body">{{ $l.record }}</span><p class="v-sg-cap">A noun metric takes its scope with "in": one comma, never two</p></div>
-      <div class="v-sg-spec"><span class="v-sg-row">{{ range slice "prior7" "4w" }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" (dict "date" (printf "%s-10-07" $y)))).base }}</span></span><p class="v-sg-cap">Bases: a flow against a window, a level against a date</p></div>
-      <div class="v-sg-spec"><span class="v-sg-stack">{{ range slice "active30" "idle30" "idle60" "idle90" }}<span class="v-caption">{{ (partial "fmt/label.html" (dict "bucket" .)).bucket }}</span>{{ end }}</span><p class="v-sg-cap">Last-activity buckets</p></div>
       <div class="v-sg-spec"><span class="v-caption">{{ (partial "fmt/label.html" (dict "cadence" (dict "every" "complete-week" "weeks" 52 "own_scale" true))).cadence }}</span><p class="v-sg-cap">A chart cadence</p></div>
       <div class="v-sg-spec"><span class="v-caption">{{ (partial "fmt/label.html" (dict "window" "wtd")).window }}</span><p class="v-sg-cap">A window</p></div>
+      <div class="v-sg-spec is-wide"><span class="v-sg-row">{{ range slice "prior7" "4w" }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" .)).base }}</span>{{ end }}<span class="v-base">{{ (partial "fmt/label.html" (dict "base" (dict "date" (printf "%s-10-07" $y)))).base }}</span></span><p class="v-sg-cap">Bases: a flow against a window, a level against a date</p></div>
+      <div class="v-sg-spec is-wide"><span class="v-sg-row">{{ range slice "active30" "idle30" "idle60" "idle90" }}<span class="v-caption">{{ (partial "fmt/label.html" (dict "bucket" .)).bucket }}</span>{{ end }}</span><p class="v-sg-cap">Last-activity buckets</p></div>
     </div></div></article>
   </div>
 </section>
@@ -247,11 +247,11 @@
         <thead><tr>{{ partial "ui/th.html" (dict "label" "Icon") }}{{ partial "ui/th.html" (dict "label" "Sizes") }}{{ partial "ui/th.html" (dict "label" "The one meaning") }}</tr></thead>
         <tbody>
           {{- range slice
-            (slice "alert-triangle" "Past a deadline") (slice "circle-alert" "Data is incomplete") (slice "clock" "Time: updated at, history too short")
-            (slice "calendar" "A date the data runs through") (slice "info" "Definitions") (slice "arrow-up" "Sort direction, ascending")
+            (slice "alert-triangle" "Past a deadline") (slice "circle-alert" "Data is incomplete") (slice "clock" "Time: updated at, history too short to draw")
+            (slice "calendar" "A date the data starts on or runs through") (slice "info" "Definitions") (slice "arrow-up" "Sort direction, ascending")
             (slice "arrow-down" "Sort direction, descending") (slice "chevron-up-down" "Pick one of several") (slice "arrow-right" "Follows a link to a list or page")
             (slice "chevron-right" "This row navigates") (slice "chevron-down" "Opens below") (slice "check" "Selected") (slice "x" "Clear")
-            (slice "sliders" "Filters") (slice "user" "The author of a row") (slice "diff" "Lines changed") (slice "search" "Search") (slice "github" "Repository link") (slice "package" "Registry link")
+            (slice "sliders" "Filters") (slice "user" "The author of a row") (slice "search" "Search") (slice "github" "Repository link") (slice "package" "Registry link")
             (slice "sun" "Switch to light theme") (slice "moon" "Switch to dark theme") }}
           <tr><th scope="row">{{ index . 0 }}</th><td><span class="v-sg-row">{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 12) }}{{ partial "ui/icon.html" (dict "name" (index . 0) "size" 14) }}{{ partial "ui/icon.html" (index . 0) }}</span></td><td>{{ index . 1 }}</td></tr>
           {{- end }}

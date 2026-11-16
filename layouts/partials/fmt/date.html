@@ -1,15 +1,18 @@
-{{- /* Date (design system v4 3.2, ruling 3). A date or time value, or a dict {d, weekday, year, style}. Returns {text, long, iso, state, kind}.
+{{- /* Date (design system v4 3.2, ruling 3). A date or time value, or a dict {d, weekday, year, style}. Returns {text, long, iso, state, kind, lead, mon, day, tail}.
   "Nov 14"; the year is added only when it differs from the as-of year ("Nov 14, 2025") or with year: true. weekday: true is for a
-  daily chart tooltip ("Tue, Sep 8"). long always carries the year. style "month" ("Nov 2026") serves the retired ui/date.html only. */ -}}
+  daily chart tooltip ("Tue, Sep 8"). long always carries the year. style "month" ("Nov 2026") serves the retired ui/date.html only.
+  lead, mon, day and tail are the parts of text ("Tue, " + "Sep" + " " + "8" + ", 2025"): ui/value.html prints the month and the
+  day as two spans, so a date in a column is a slot with both edges fixed (the date slot, 2.6). They are empty for style "month". */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "d" . }}{{ end -}}
-{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "date" -}}
+{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "date" "lead" "" "mon" "" "day" "" "tail" "" -}}
 {{- with $c.d -}}
   {{- $t := (time.AsTime .).UTC -}}
   {{- $asof := time.AsTime (partialCached "ui/latest-date.html" "latest" "latest") -}}
-  {{- $layout := "Jan 2" -}}
-  {{- if or (eq $c.year true) (ne $t.Year $asof.Year) }}{{ $layout = "Jan 2, 2006" }}{{ end -}}
-  {{- if eq $c.weekday true }}{{ $layout = printf "Mon, %s" $layout }}{{ end -}}
-  {{- if eq $c.style "month" }}{{ $layout = "Jan 2006" }}{{ end -}}
-  {{- $out = dict "text" ($t.Format $layout) "long" ($t.Format "Jan 2, 2006") "iso" ($t.Format "2006-01-02") "state" "value" "kind" "date" -}}
+  {{- $layout := "Jan 2" }}{{ $lead := "" }}{{ $tail := "" }}{{ $mon := $t.Format "Jan" }}{{ $day := $t.Format "2" -}}
+  {{- if or (eq $c.year true) (ne $t.Year $asof.Year) }}{{ $layout = "Jan 2, 2006" }}{{ $tail = $t.Format ", 2006" }}{{ end -}}
+  {{- if eq $c.weekday true }}{{ $layout = printf "Mon, %s" $layout }}{{ $lead = $t.Format "Mon, " }}{{ end -}}
+  {{- if eq $c.style "month" }}{{ $layout = "Jan 2006" }}{{ $lead = "" }}{{ $tail = "" }}{{ $mon = "" }}{{ $day = "" }}{{ end -}}
+  {{- $out = dict "text" ($t.Format $layout) "long" ($t.Format "Jan 2, 2006") "iso" ($t.Format "2006-01-02") "state" "value" "kind" "date"
+    "lead" $lead "mon" $mon "day" $day "tail" $tail -}}
 {{- end -}}
 {{- return $out -}}

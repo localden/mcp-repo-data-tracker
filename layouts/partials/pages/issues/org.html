@@ -53,13 +53,12 @@
     "context" (dict "kind" "ref" "label" "Longest wait" "value" $longest)
     "href" "?over7=1#waiting" "drill" true -}}
 {{- if $ch.has -}}
-  {{- /* fixed slots (2.6): the base of the delta is a pair like the third tile's, so the date is alone on the tile's right edge and
-       nothing follows it. When only some repositories have the older snapshot the label says how many are compared (the Coverage
-       row of Data notes carries the same ratio). */ -}}
-  {{- $baseLabel := "Change since" -}}
-  {{- if lt $ch.k $ch.n }}{{ $baseLabel = printf "Change in %s since" (partial "fmt/ratio.html" (dict "part" $ch.k "whole" $ch.n "noun" "repository")).text }}{{ end -}}
+  {{- /* the same anatomy as the Overview tile (pages/overview/summary.html) and the repository page: the delta, its base
+       "vs {date}", and a coverage note when only some repositories have the older snapshot (the Coverage row of Data notes carries
+       the same ratio). ui/metrics.html keeps the note out of the date's line (2.6). */ -}}
   {{- $t1 = merge $t1 (dict "delta" (dict "cur" $ch.cur "prev" $ch.prev "metric" "waiting")
-      "context" (dict "kind" "ref" "label" $baseLabel "value" (dict "kind" "date" "d" $ch.date))) -}}
+      "context" (dict "kind" "base" "date" $ch.date)) -}}
+  {{- if lt (int $ch.k) (int $ch.n) }}{{ $t1 = merge $t1 (dict "note" (dict "part" $ch.k "whole" $ch.n "noun" "repository")) }}{{ end -}}
 {{- end -}}
 {{- $t2 := dict "name" "Waiting for a reply" "qual" (partial "fmt/label.html" (dict "threshold" "any")).qual "title" $defAny
     "value" (dict "kind" "count" "v" $nAny) "context" (dict "kind" "whole" "n" (cond $hasOpen $open nil) "of" "open")

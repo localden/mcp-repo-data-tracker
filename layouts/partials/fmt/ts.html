@@ -1,10 +1,13 @@
-{{- /* Timestamp (design system v4 3.2). A time value, or a dict {t}. Returns {text, long, iso, state, kind}.
-  "Nov 14, 2026, 08:29 UTC": always with the year. One is visible at rest per page, in the page head. */ -}}
+{{- /* Timestamp (design system v4 3.2). A time value, or a dict {t}. Returns {text, long, iso, state, kind, day, clock}.
+  "Nov 14, 2026, 08:29 UTC": always with the year. One is visible at rest per page, in the page head. day ("Nov 14, 2026,") and
+  clock ("08:29 UTC") are the two halves of text: ui/value.html prints each as a span that never breaks inside, so in a narrow
+  Sources column a timestamp breaks once, between its date and its time. */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "t" . }}{{ end -}}
-{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "ts" -}}
+{{- $out := dict "text" "" "long" "No data" "iso" "" "state" "na" "kind" "ts" "day" "" "clock" "" -}}
 {{- with $c.t -}}
   {{- $t := (time.AsTime .).UTC -}}
   {{- $text := $t.Format "Jan 2, 2006, 15:04 UTC" -}}
-  {{- $out = dict "text" $text "long" $text "iso" ($t.Format "2006-01-02T15:04:05Z") "state" "value" "kind" "ts" -}}
+  {{- $out = dict "text" $text "long" $text "iso" ($t.Format "2006-01-02T15:04:05Z") "state" "value" "kind" "ts"
+    "day" ($t.Format "Jan 2, 2006,") "clock" ($t.Format "15:04 UTC") -}}
 {{- end -}}
 {{- return $out -}}

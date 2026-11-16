@@ -5,7 +5,8 @@
     {from}               "From Jan 15", a figure whose series starts late; tone info
     {text, tone}         a text from the closed lists of 4.8 (a string is read as text); tone default warning
   Optional: title, or days: {from, to}, which names the days covered in title through fmt/range.html.
-  tone warning: circle-alert, the value beside it is built from incomplete data. tone info: clock, the data is young or starts late.
+  tone warning: circle-alert, the value beside it is built from incomplete data. tone info: clock, the data is young or starts late
+  (in the page head the same fact is a meta item with the calendar, ui/page-head.html, so it never repeats the clock of "Updated").
   One note per value: under the value in a table cell, in a tile's context row, after a readout value, after the page-head meta. */ -}}
 {{- $c := . -}}{{- if not (reflect.IsMap $c) }}{{ $c = dict "text" . }}{{ end -}}
 {{- $text := $c.text | default "" }}{{ $tone := $c.tone | default "" -}}

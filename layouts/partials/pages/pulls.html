@@ -87,7 +87,10 @@
   </div>
 </section>
 {{- else }}
+{{- /* every tile of a strip is a link or none is: Open PRs opens the Backlog trend (its Open PRs series ends on the tile's value)
+     unless the queue below lists every open PR, in which case it drills into the All view */ -}}
 {{- $openTile := dict "name" "Open PRs" "title" "PRs open now, drafts included." "value" (dict "kind" "count" "v" $pl.open_count)
+    "href" "#backlog"
     "context" (dict "kind" "ref" "label" (partial "fmt/label.html" (dict "metric" "Merged" "window" (dict "n" 30 "unit" "day"))).text
       "value" (dict "kind" "count" "v" $pl.merged_30d)) -}}
 {{- if $classified }}
@@ -98,7 +101,7 @@
      equality. When the two differ a build warning names both, so the stale file is found. */ -}}
 {{- if ne $pl.open_count nil -}}
   {{- if eq (int $pl.open_count) (int $q.all) }}{{ $openTile = merge $openTile (dict "href" "?view=all#queue" "drill" true) -}}
-  {{- else }}{{ warnf "VISR pulls %s: %d open PRs in metrics.json and %d classified rows; the Open PRs tile is not linked" $r.key (int $pl.open_count) (int $q.all) }}{{ end -}}
+  {{- else }}{{ warnf "VISR pulls %s: %d open PRs in metrics.json and %d classified rows; the Open PRs tile opens the Backlog trend, not the All view" $r.key (int $pl.open_count) (int $q.all) }}{{ end -}}
 {{- end -}}
 {{- $sum := dict }}{{ with $a.summary }}{{ if reflect.IsMap . }}{{ $sum = . }}{{ end }}{{ end -}}
 {{- $effort := dict "kind" "dur" "unit" "h" "reason" "not-computed" -}}
