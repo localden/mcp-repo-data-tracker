@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-11-21T09:15:39.322Z",
+  "timestamp": "2026-11-21T17:14:31.104Z",
   "repository": {
     "stars": 957,
     "forks": 146
   },
   "issues": {
-    "open_count": 3,
+    "open_count": 4,
     "closed_7d": 2,
     "closed_30d": 13,
     "closed_90d": 29,
     "opened_7d": 2,
-    "opened_30d": 13,
-    "opened_90d": 31,
+    "opened_30d": 14,
+    "opened_90d": 32,
     "without_response_24h": 1,
     "without_response_7d": 1,
     "without_response_30d": 1,
@@ -26,11 +26,22 @@
           "enhancement"
         ],
         "commentCount": 0
+      },
+      {
+        "number": 702,
+        "title": "Stream modern-request notifications as they are emitted (opt-in)",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/issues/702",
+        "createdAt": "2026-11-21T15:00:05Z",
+        "daysWaiting": 0,
+        "labels": [
+          "enhancement"
+        ],
+        "commentCount": 0
       }
     ],
     "by_label": {
-      "bug": 1,
-      "enhancement": 2
+      "enhancement": 3,
+      "bug": 1
     },
     "response_time": {
       "avg_hours": 15,
@@ -51,16 +62,16 @@
     "reopen_rate": 0
   },
   "pulls": {
-    "open_count": 6,
-    "merged_7d": 11,
-    "merged_30d": 54,
-    "merged_90d": 130,
-    "opened_7d": 16,
+    "open_count": 3,
+    "merged_7d": 14,
+    "merged_30d": 56,
+    "merged_90d": 131,
+    "opened_7d": 15,
     "opened_30d": 60,
     "opened_90d": 143,
     "closed_not_merged_90d": 10,
     "draft_count": 0,
-    "without_review_24h": 0,
+    "without_review_24h": 1,
     "without_review_7d": 0,
     "prs_without_maintainer_review": [
       {
@@ -68,83 +79,57 @@
         "title": "fix: refuse a duplicate SSE request that loses the stream claim",
         "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/699",
         "createdAt": "2026-11-20T09:36:30Z",
-        "daysWaiting": 0,
+        "daysWaiting": 1,
         "labels": [],
         "isDraft": false,
         "additions": 101,
         "deletions": 7,
         "reviewCount": 0,
         "author": "yorzi"
-      },
-      {
-        "number": 698,
-        "title": "fix: cancel a request that reaches a session as it ends",
-        "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/698",
-        "createdAt": "2026-11-20T09:35:04Z",
-        "daysWaiting": 0,
-        "labels": [],
-        "isDraft": false,
-        "additions": 133,
-        "deletions": 8,
-        "reviewCount": 0,
-        "author": "yorzi"
-      },
-      {
-        "number": 697,
-        "title": "fix: send no error response to a cancelled request",
-        "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/697",
-        "createdAt": "2026-11-20T09:32:33Z",
-        "daysWaiting": 0,
-        "labels": [],
-        "isDraft": false,
-        "additions": 163,
-        "deletions": 1,
-        "reviewCount": 0,
-        "author": "yorzi"
       }
     ],
     "review_time": {
-      "avg_hours": 18.1,
+      "avg_hours": 18.6,
       "median_hours": 6.7,
       "p90_hours": 32.4,
-      "p95_hours": 74.6
+      "p95_hours": 77.7
     },
     "merge_time": {
       "avg_hours": 37.1,
-      "median_hours": 24.1
+      "median_hours": 24.4
     },
-    "code_review_rate_pct": 57.7,
+    "code_review_rate_pct": 55.7,
     "rejection_rate_pct": 7.1,
     "avg_reviews_per_pr": 0.8,
     "by_size": {
       "small": 2,
-      "medium": 4,
+      "medium": 1,
       "large": 0
     }
   },
   "contributors": {
     "total_known": 29,
-    "active_30d": 13,
+    "active_30d": 14,
     "first_time_30d": 10,
-    "retention_rate_pct": 37.5,
-    "churned_30d": 5,
-    "commits_per_week_avg": 20.3,
+    "retention_rate_pct": 50,
+    "churned_30d": 4,
+    "commits_per_week_avg": 20.8,
     "commits_per_week_trend": [
-      13,
       12,
-      19,
-      18,
-      19,
-      15,
-      22,
-      25,
+      13,
+      20,
+      17,
+      20,
+      14,
       21,
-      29,
-      30,
-      21
+      25,
+      22,
+      31,
+      28,
+      26
     ],
     "active_maintainers_30d": 2,
-    "active_community_30d": 11,
+    "active_community_30d": 12,
     "allContributors": [
       "activefx",
       "almathie",
@@ -183,6 +168,7 @@
       "dominikklein",
       "emirn",
       "jihtsan",
+      "jonasporto",
       "koic",
       "langalex",
       "mmcrockett",
@@ -195,19 +181,19 @@
   "hotspots": {
     "by_file": [
       {
-        "path": "lib/mcp/server/transports/streamable_http_transport.rb",
-        "pr_count": 36,
-        "total_changes": 2242
+        "path": "test/mcp/server/transports/streamable_http_transport_test.rb",
+        "pr_count": 38,
+        "total_changes": 2896
       },
       {
-        "path": "test/mcp/server/transports/streamable_http_transport_test.rb",
-        "pr_count": 36,
-        "total_changes": 2804
+        "path": "lib/mcp/server/transports/streamable_http_transport.rb",
+        "pr_count": 37,
+        "total_changes": 2284
       },
       {
         "path": "lib/mcp/server.rb",
-        "pr_count": 17,
-        "total_changes": 750
+        "pr_count": 20,
+        "total_changes": 797
       },
       {
         "path": "docs/_client/authorization.md",
@@ -245,19 +231,14 @@
         "total_changes": 215
       },
       {
-        "path": "docs/_client/transports.md",
-        "pr_count": 10,
-        "total_changes": 61
-      },
-      {
         "path": "test/mcp/client/http_test.rb",
         "pr_count": 9,
         "total_changes": 1211
       },
       {
-        "path": "docs/_server/subscriptions.md",
-        "pr_count": 8,
-        "total_changes": 66
+        "path": "docs/_client/transports.md",
+        "pr_count": 9,
+        "total_changes": 59
       },
       {
         "path": "test/mcp/client/oauth/http_oauth_test.rb",
@@ -265,9 +246,9 @@
         "total_changes": 650
       },
       {
-        "path": "docs/_server/transports.md",
+        "path": "lib/mcp/server_session.rb",
         "pr_count": 7,
-        "total_changes": 186
+        "total_changes": 119
       },
       {
         "path": "lib/json_rpc_handler.rb",
@@ -280,56 +261,61 @@
         "total_changes": 173
       },
       {
+        "path": "docs/_server/subscriptions.md",
+        "pr_count": 7,
+        "total_changes": 60
+      },
+      {
         "path": "lib/mcp/client/oauth/provider.rb",
         "pr_count": 7,
         "total_changes": 130
       },
       {
-        "path": "lib/mcp/server_session.rb",
+        "path": "docs/_server/cancellation.md",
         "pr_count": 6,
-        "total_changes": 86
+        "total_changes": 26
       },
       {
-        "path": "lib/mcp/client/stdio.rb",
+        "path": "docs/_server/transports.md",
         "pr_count": 6,
-        "total_changes": 96
+        "total_changes": 166
       }
     ],
     "by_directory": [
       {
         "path": "test/mcp/server/transports/",
-        "pr_count": 42,
+        "pr_count": 45,
         "file_count": 7
       },
       {
         "path": "lib/mcp/",
-        "pr_count": 39,
+        "pr_count": 42,
         "file_count": 15
       },
       {
         "path": "lib/mcp/server/transports/",
-        "pr_count": 39,
+        "pr_count": 40,
         "file_count": 3
       },
       {
-        "path": "/",
-        "pr_count": 27,
-        "file_count": 8
-      },
-      {
-        "path": "docs/_client/",
-        "pr_count": 27,
-        "file_count": 6
-      },
-      {
         "path": "test/mcp/",
-        "pr_count": 26,
+        "pr_count": 28,
         "file_count": 18
       },
       {
         "path": "docs/_server/",
-        "pr_count": 24,
-        "file_count": 23
+        "pr_count": 26,
+        "file_count": 22
+      },
+      {
+        "path": "docs/_client/",
+        "pr_count": 26,
+        "file_count": 5
+      },
+      {
+        "path": "/",
+        "pr_count": 25,
+        "file_count": 7
       },
       {
         "path": "lib/mcp/client/oauth/",
@@ -350,9 +336,9 @@
     "top_n": 20
   },
   "downloads": {
-    "daily": 31628,
-    "total": 13717145,
-    "last_week": 445604,
-    "last_month": 710474
+    "daily": 40656,
+    "total": 13726173,
+    "last_week": 454632,
+    "last_month": 719502
   }
 }
