@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-11-26T10:32:45.590Z",
+  "timestamp": "2026-11-26T21:01:20.066Z",
   "repository": {
     "stars": 957,
-    "forks": 147
+    "forks": 146
   },
   "issues": {
-    "open_count": 3,
-    "closed_7d": 4,
-    "closed_30d": 17,
-    "closed_90d": 30,
-    "opened_7d": 5,
-    "opened_30d": 17,
-    "opened_90d": 32,
+    "open_count": 5,
+    "closed_7d": 5,
+    "closed_30d": 18,
+    "closed_90d": 31,
+    "opened_7d": 7,
+    "opened_30d": 20,
+    "opened_90d": 35,
     "without_response_24h": 1,
     "without_response_7d": 1,
     "without_response_30d": 1,
@@ -26,10 +26,44 @@
           "enhancement"
         ],
         "commentCount": 0
+      },
+      {
+        "number": 717,
+        "title": "The HTTP client returns another request's SSE response and crashes on a server request with id 1e400",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/issues/717",
+        "createdAt": "2026-11-26T11:36:26Z",
+        "daysWaiting": 0,
+        "labels": [
+          "bug"
+        ],
+        "commentCount": 0
+      },
+      {
+        "number": 715,
+        "title": "A malformed client reply to a server request gives 500 and leaves the request waiting for its timeout",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/issues/715",
+        "createdAt": "2026-11-26T11:35:50Z",
+        "daysWaiting": 0,
+        "labels": [
+          "bug"
+        ],
+        "commentCount": 0
+      },
+      {
+        "number": 713,
+        "title": "RequestStateSecurity rejects every token sealed with a fractional ttl",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/issues/713",
+        "createdAt": "2026-11-26T11:35:09Z",
+        "daysWaiting": 0,
+        "labels": [
+          "bug"
+        ],
+        "commentCount": 0
       }
     ],
     "by_label": {
-      "enhancement": 3
+      "bug": 3,
+      "enhancement": 2
     },
     "response_time": {
       "avg_hours": 21.5,
@@ -38,9 +72,9 @@
       "p95_hours": 45.1
     },
     "close_time": {
-      "avg_days": 3.8,
+      "avg_days": 3.9,
       "median_days": 2.4,
-      "p90_days": 4.9
+      "p90_days": 5.1
     },
     "label_coverage_pct": 100,
     "unlabeled_count": 0,
@@ -50,18 +84,58 @@
     "reopen_rate": 0
   },
   "pulls": {
-    "open_count": 1,
-    "merged_7d": 16,
-    "merged_30d": 58,
-    "merged_90d": 134,
-    "opened_7d": 14,
-    "opened_30d": 60,
-    "opened_90d": 144,
+    "open_count": 4,
+    "merged_7d": 17,
+    "merged_30d": 59,
+    "merged_90d": 135,
+    "opened_7d": 18,
+    "opened_30d": 64,
+    "opened_90d": 147,
     "closed_not_merged_90d": 10,
     "draft_count": 0,
     "without_review_24h": 0,
     "without_review_7d": 0,
-    "prs_without_maintainer_review": [],
+    "prs_without_maintainer_review": [
+      {
+        "number": 718,
+        "title": "fix: check the ids of SSE messages in the HTTP client",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/718",
+        "createdAt": "2026-11-26T11:36:47Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 84,
+        "deletions": 5,
+        "reviewCount": 0,
+        "author": "yorzi"
+      },
+      {
+        "number": 716,
+        "title": "fix: answer a server request whose client reply is malformed",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/716",
+        "createdAt": "2026-11-26T11:36:13Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 120,
+        "deletions": 4,
+        "reviewCount": 0,
+        "author": "yorzi"
+      },
+      {
+        "number": 714,
+        "title": "fix: unseal requestState tokens sealed with a fractional ttl",
+        "url": "https://github.com/modelcontextprotocol/ruby-sdk/pull/714",
+        "createdAt": "2026-11-26T11:35:34Z",
+        "daysWaiting": 0,
+        "labels": [],
+        "isDraft": false,
+        "additions": 24,
+        "deletions": 3,
+        "reviewCount": 0,
+        "author": "yorzi"
+      }
+    ],
     "review_time": {
       "avg_hours": 20.5,
       "median_hours": 7.1,
@@ -69,16 +143,16 @@
       "p95_hours": 93.4
     },
     "merge_time": {
-      "avg_hours": 38.3,
-      "median_hours": 24.6
+      "avg_hours": 38.9,
+      "median_hours": 24.7
     },
-    "code_review_rate_pct": 53,
+    "code_review_rate_pct": 53.3,
     "rejection_rate_pct": 6.9,
     "avg_reviews_per_pr": 0.8,
     "by_size": {
-      "small": 0,
-      "medium": 0,
-      "large": 1
+      "small": 3,
+      "medium": 1,
+      "large": 0
     }
   },
   "contributors": {
@@ -90,17 +164,17 @@
     "commits_per_week_avg": 21.8,
     "commits_per_week_trend": [
       16,
-      12,
-      23,
+      11,
+      25,
       20,
       13,
-      20,
+      21,
       28,
       17,
-      30,
-      30,
-      22,
-      30
+      28,
+      31,
+      20,
+      32
     ],
     "active_maintainers_30d": 2,
     "active_community_30d": 12,
@@ -155,19 +229,19 @@
   "hotspots": {
     "by_file": [
       {
+        "path": "lib/mcp/server/transports/streamable_http_transport.rb",
+        "pr_count": 39,
+        "total_changes": 2504
+      },
+      {
         "path": "test/mcp/server/transports/streamable_http_transport_test.rb",
         "pr_count": 39,
         "total_changes": 3105
       },
       {
-        "path": "lib/mcp/server/transports/streamable_http_transport.rb",
-        "pr_count": 38,
-        "total_changes": 2259
-      },
-      {
         "path": "lib/mcp/server.rb",
-        "pr_count": 24,
-        "total_changes": 866
+        "pr_count": 25,
+        "total_changes": 888
       },
       {
         "path": "test/mcp/server_test.rb",
@@ -240,6 +314,11 @@
         "total_changes": 130
       },
       {
+        "path": "docs/_server/transports.md",
+        "pr_count": 6,
+        "total_changes": 186
+      },
+      {
         "path": "docs/_server/tools.md",
         "pr_count": 6,
         "total_changes": 108
@@ -248,27 +327,22 @@
         "path": "docs/_server/cancellation.md",
         "pr_count": 6,
         "total_changes": 26
-      },
-      {
-        "path": "lib/mcp/client/stdio.rb",
-        "pr_count": 6,
-        "total_changes": 96
       }
     ],
     "by_directory": [
       {
-        "path": "test/mcp/server/transports/",
-        "pr_count": 46,
-        "file_count": 7
-      },
-      {
         "path": "lib/mcp/",
-        "pr_count": 46,
+        "pr_count": 47,
         "file_count": 16
       },
       {
+        "path": "test/mcp/server/transports/",
+        "pr_count": 47,
+        "file_count": 8
+      },
+      {
         "path": "lib/mcp/server/transports/",
-        "pr_count": 41,
+        "pr_count": 42,
         "file_count": 3
       },
       {
@@ -278,7 +352,7 @@
       },
       {
         "path": "docs/_server/",
-        "pr_count": 26,
+        "pr_count": 27,
         "file_count": 22
       },
       {
@@ -310,9 +384,9 @@
     "top_n": 20
   },
   "downloads": {
-    "daily": 46516,
-    "total": 14013116,
-    "last_week": 410327,
-    "last_month": 1006445
+    "daily": 79783,
+    "total": 14046383,
+    "last_week": 443594,
+    "last_month": 1039712
   }
 }
